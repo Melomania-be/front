@@ -1,0 +1,12 @@
+
+
+---
+deployment:
+  tasks:
+    - /bin/npm ci --omit=dev
+    - /bin/cp style.css $DEPLOYPATH
+    - export BACKEND_API_HOST=localhost
+    - export BACKEND_API_PORT=3333
+    - export ENV=production
+    - export ORIGIN=http://ciro3903.odns.fr
+    - /bin/npm run build
