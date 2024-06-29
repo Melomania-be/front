@@ -1,12 +1,12 @@
-import type { ContentRegistration } from "./ContentRegistration";
-import type { Form } from "./Form";
-import type { GenericDataType } from "./GenericDataType";
-import type { Project } from "./Project";
+import type { ContentRegistration } from './ContentRegistration';
+import type { Form } from './Form';
+import type { GenericDataType } from './GenericDataType';
+import type { Project } from './Project';
 
-export interface Registration  {
-    id: number;
-    project: Project | null;
-    contents: ContentRegistration[];
-    forms: Form[];
-    //status: boolean
-};
+export interface Registration {
+	id: number;
+	project: Project | null;
+	contents: ContentRegistration[];
+	forms: Form[];
+	//status: boolean
+}

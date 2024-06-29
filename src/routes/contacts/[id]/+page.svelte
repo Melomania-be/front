@@ -10,7 +10,7 @@
 	let instruments: Array<Instrument> = structuredClone(data.instruments);
 </script>
 
-<ContactModifier mode='modify' contact={contact} instruments={instruments}/>
+<ContactModifier mode="modify" {contact} {instruments} />
 <div
 	class="w-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
 >

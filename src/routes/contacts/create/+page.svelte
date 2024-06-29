@@ -5,9 +5,8 @@
 	import type { Instrument } from '$lib/types/Instrument';
 	import { onMount } from 'svelte';
 
-
 	let listInstruments: Array<Instrument>;
-	const contact : Contact = {
+	const contact: Contact = {
 		id: null,
 		firstName: '',
 		lastName: '',
@@ -29,11 +28,11 @@
 		});
 
 		const responseHandler = new ResponseHandlerClient();
-		
+
 		responseHandler.handle(response, async () => {
 			listInstruments = await response.json();
 		});
 	});
 </script>
 
-<ContactModifier mode='create' contact={contact} instruments={listInstruments} />
+<ContactModifier mode="create" {contact} instruments={listInstruments} />

@@ -1,88 +1,298 @@
 <script lang="ts">
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
-	import DateShow from '$lib/components/DateShow.svelte';
 	import { onMount } from 'svelte';
+	import Filterer from '../../lib/components/Filterer.svelte';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import type { TableData } from '$lib/types/TableData';
+	import type { Project } from '$lib/types/Project';
 
-	type Project = any;
+	let aaaaa: string = '';
+	let projectsDone: Project[] = [];
+	let projectsToDo: Project[] = [];
+	let projects: Project[] = [];
+	let meta: any = {};
+	let options: any = {
+		filter: '',
+		limit: 10,
+		page: 1,
+		order: 'asc',
+		orderBy: 'id'
+	};
+	let url: string = '/api/projects';
+	let urlFront: string = '/projects/';
+	let allProjects: boolean = true;
+	let currentProjects: boolean = false;
+	let passedProjects: boolean = false;
 
-	let projectsDone: Project = [];
-	let projectsToDo: Project = [];
+	let group: TableData<Project>;
+	let groupDone: TableData<Project>;
+	let groupCurrent: TableData<Project>;
+
+	$: if (browser) options && fetchData();
+	$: console.log(projects);
+	$: console.log(options.order);
+	$: console.log(meta);
+	$: console.log(options);
 
 	onMount(async () => {
-		let response = await fetch('/api/projects', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || '',
+			limit: parseInt(urlParams.get('limit') || '10'),
+			page: parseInt(urlParams.get('page') || '1'),
+			order: urlParams.get('order') || 'asc',
+			orderBy: urlParams.get('orderBy') || 'name'
+		};
+
+		fetchData();
+	});
+
+	async function fetchData() {
+		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
+		optionInUrls += '&filter=' + options.filter;
+		optionInUrls += '&orderBy=' + options.orderBy;
+		optionInUrls += '&order=' + options.order;
+
+		if (browser) goto(`${urlFront}${optionInUrls}`);
+
+		const response = await fetch(`${url}${optionInUrls}`, {
+			method: 'GET'
 		});
 
-		const responseHandlerClient = new ResponseHandlerClient();
+		const responseHandler = new ResponseHandlerClient();
 
-		responseHandlerClient.handle(response, async () => {
-			const data = (await response.json()).map((project: Project) => {
-				project.concerts = project.concerts.map((concert: any) => {
+		responseHandler.handle(response, async () => {
+			const data = await response.json();
+
+			projects = data.data.map((project: Project) => {
+				project.concerts = project?.concerts?.map((concert: any) => {
 					concert.date = new Date(concert.date);
 					return concert;
 				});
 				return project;
 			});
-			projectsDone = data.filter((project: Project) =>
+			meta = data.meta;
+
+			projectsDone = projects.filter((project: Project) =>
 				project.concerts.every((concert: any) => concert.date < new Date())
 			);
-			projectsToDo = data.filter((project: Project) =>
+
+			projectsToDo = projects.filter((project: Project) =>
 				project.concerts.some((concert: any) => concert.date >= new Date())
 			);
+
+			group = {
+				data: projects,
+				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
+				notOrderedColumns: []
+			};
+
+			groupDone = {
+				data: projectsDone,
+				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
+				notOrderedColumns: []
+			};
+
+			groupCurrent = {
+				data: projectsToDo,
+				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
+				notOrderedColumns: []
+			};
+
+			console.log('All projects', projects);
+			console.log('Done projects', projectsDone);
+			console.log('Current projects', projectsToDo);
 		});
-	});
+	}
 </script>
 
-<div class="grid grid-cols-1 w-full p-2">
-	<h1 class="w-full text-center p-4">Choose project</h1>
-	<button
-		type="button"
-		class="w-fit text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-		>New project</button
-	>
-	<div class="m-2">
-		{#each projectsToDo as project}
-			<div class="border border-gray-500 rounded p-2.5 mb-2">
-				<h2>{project.name}</h2>
-				<div>
-					<h4>Concerts :</h4>
-					<ul>
-						{#each project.concerts as concert}
-							<DateShow bind:date={concert.date} />
-						{/each}
-					</ul>
-				</div>
-				<div>
-					<button
-						type="button"
-						class="w-fit text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-						>Edit</button
-					>
-				</div>
-			</div>
-		{/each}
+<main>
+	<br />
+
+	<!--
+	<div class="mb-2  grid grid-cols-2">
+		<a href="/projects/create" class="bg-blue-700 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center" >Create a new project</a>
+		{#if !allProjects}
+		<button class="bg-red-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
+		on:click={() => allProjects = true} >See all projects</button>
+		{:else}
+		{#if !currentProjects}
+		<button class="bg-red-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
+		on:click={() => allProjects = false} >See passed projects</button>
+		{:else}
+		<button class="bg-red-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
+		on:click={() => currentProjects = false} >See current projects</button>
+		{/if}
+		{/if}
 	</div>
-	<div class="m-2">
-		{#each projectsDone as project}
-			<div class="border border-gray-500 rounded p-2.5 mb-2 opacity-60 hover:opacity-100">
-				<h2>{project.name}</h2>
-				<div>
-					<h4>Concerts :</h4>
-					<ul>
-						{#each project.concerts as concert}
-							<DateShow bind:date={concert.date} />
-						{/each}
-					</ul>
-				</div>
-				<button
-					type="button"
-					class="w-fit text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 opacity-60"
-					disabled>Edit</button
+-->
+	<div class="mb-2 grid grid-cols-3">
+		<a
+			href="/projects/create"
+			class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
+		>
+			Create a new project
+		</a>
+		{#if !allProjects}
+			<button
+				class="bg-red-500 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
+				on:click={() => {
+					allProjects = true;
+					currentProjects = false;
+					passedProjects = false;
+				}}
+			>
+				See all projects
+			</button>
+		{/if}
+		{#if !currentProjects}
+			<button
+				class="bg-red-500 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
+				on:click={() => {
+					currentProjects = true;
+					allProjects = false;
+					passedProjects = false;
+				}}
+			>
+				See current projects
+			</button>
+		{/if}
+		{#if !passedProjects}
+			<button
+				class="bg-red-500 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
+				on:click={() => {
+					passedProjects = true;
+					currentProjects = false;
+					allProjects = false;
+				}}
+			>
+				See passed projects
+			</button>
+		{/if}
+	</div>
+	<br />
+
+	{#if allProjects === true}
+		<div
+			class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
+		>
+			<h1>All projects</h1>
+		</div>
+		<div>
+			{#if group}
+				<div
+					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
 				>
+					<Filterer
+						showData={false}
+						bind:data={group}
+						bind:meta
+						bind:options
+						bind:uniqueUrl={aaaaa}
+					>
+						<div class=" bg-white bordermx-auto justify-center col col-1">
+							{#each projects as project}
+								<button
+									class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
+									on:click={() => (window.location.href = `/projects/${project.id}`)}
+									role="button"
+								>
+									<h2>{project.name}</h2>
+									<ul>
+										{#each project.concerts as concert}
+											<li>{concert.date.toLocaleDateString()} - {concert.place}</li>
+										{/each}
+									</ul>
+								</button>
+								<br />
+							{/each}
+						</div>
+					</Filterer>
+				</div>
+			{/if}
+		</div>
+	{/if}
+
+	{#if currentProjects === true}
+		{#if groupCurrent}
+			<div
+				class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
+			>
+				<h1>Current projects</h1>
 			</div>
-		{/each}
-	</div>
-</div>
+			<div
+				class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
+			>
+				<Filterer
+					showData={false}
+					bind:data={groupCurrent}
+					bind:meta
+					bind:options
+					bind:uniqueUrl={aaaaa}
+				>
+					<div class=" bg-white bordermx-auto justify-center col col-1">
+						{#each projects as project}
+							<button
+								class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
+								on:click={() => (window.location.href = `/projects/${project.id}`)}
+								role="button"
+							>
+								<h2>{project.name}</h2>
+								<ul>
+									{#each project.concerts as concert}
+										<li>{concert.date.toLocaleDateString()} - {concert.place}</li>
+									{/each}
+								</ul>
+							</button>
+							<br />
+						{/each}
+					</div>
+				</Filterer>
+			</div>
+		{:else}
+			<div
+				class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
+			>
+				<h1>No current projects</h1>
+			</div>
+		{/if}
+	{/if}
+
+	{#if passedProjects === true}
+		<div
+			class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
+		>
+			<h1>Passed projects</h1>
+		</div>
+		<div
+			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
+		>
+			<Filterer
+				showData={false}
+				bind:data={groupDone}
+				bind:meta
+				bind:options
+				bind:uniqueUrl={aaaaa}
+			>
+				<div class=" bg-white bordermx-auto justify-center col col-1">
+					{#each projects as project}
+						<button
+							class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
+							on:click={() => (window.location.href = `/projects/${project.id}`)}
+							role="button"
+						>
+							<h2>{project.name}</h2>
+							<ul>
+								{#each project.concerts as concert}
+									<li>{concert.date.toLocaleDateString()} - {concert.place}</li>
+								{/each}
+							</ul>
+						</button>
+						<br />
+					{/each}
+				</div>
+			</Filterer>
+		</div>
+	{/if}
+</main>

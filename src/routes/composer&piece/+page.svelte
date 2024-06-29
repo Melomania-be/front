@@ -4,6 +4,7 @@
 	import type { Piece } from '$lib/types/Piece';
 	import type { TypeOfPiece } from '$lib/types/TypeOfPiece';
 	import { onMount } from 'svelte';
+	import Swal from 'sweetalert2'
 
 
 	//tableau initaliser vide pour les ajouts
@@ -162,13 +163,30 @@
 		}
 	}
 
+
+	async function PopupdeletePiece() {
+		Swal.fire({
+			title: "Are you sure?",
+			text: "You won't be able to revert this!",
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonColor: "#3085d6",
+			cancelButtonColor: "#d33",
+			confirmButtonText: "Yes, delete it!"
+		}).then((result) => {
+			if (result.isConfirmed) {
+				deletePiece()
+				Swal.fire({
+				title: "Deleted!",
+				text: "Your file has been deleted.",
+				icon: "success"
+				});
+			}
+		});
+	}
+
 	async function deletePiece() {
-		isLoadingDeletePiece = true;
-
-		const validated = confirm('Are you sure you want to delete this file ?');
-
-		if (!validated) return;
-
+		
 		const response = await fetch('/api/pieces', {
 			method: 'DELETE',
 			headers: {
@@ -476,7 +494,7 @@
 					<button class="p-1 border-2 border-green-500" on:click={addPiece}> add </button>
 				{:else}
 					<button class="p-1 border-2 border-orange-500" on:click={addPiece}> modify </button>
-					<button class="p-1 border-2 border-red-500" on:click={deletePiece}> Delete </button>
+					<button class="p-1 border-2 border-red-500" on:click={PopupdeletePiece}> Delete </button>
 				{/if}
 			</div>
 		</div>

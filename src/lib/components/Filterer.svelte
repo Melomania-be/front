@@ -26,7 +26,7 @@
 		prevPageUrl: string;
 	};
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
-	export let uniqueUrl: string = "";
+	export let uniqueUrl: string = '';
 
 	function changePage(newPage: number) {
 		options.page = newPage;
@@ -42,7 +42,7 @@
 
 <div class="grid grid-cols-1 place-items-center p-2">
 	<div class="grid grid-cols-2 w-full mt-2">
-		<div class="relative {!paginatorTop ? "col-span-2" : ""}">
+		<div class="relative {!paginatorTop ? 'col-span-2' : ''}">
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<svg
 					class="w-4 h-4 text-gray-500 dark:text-gray-400"
@@ -117,7 +117,7 @@
 		</div>
 		<slot />
 	{:else}
-		<Table {data} bind:options bind:meta bind:uniqueUrl bind:editable {changePage}/>
+		<Table {data} bind:options bind:meta bind:uniqueUrl bind:editable {changePage} />
 	{/if}
 	<div class="my-2">
 		<Paginator

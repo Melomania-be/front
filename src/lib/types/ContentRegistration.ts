@@ -1,8 +1,8 @@
-import type { GenericDataType } from "./GenericDataType";
+import type { GenericDataType } from './GenericDataType';
 
 export interface ContentRegistration {
-    id: number;
-    title: string;
-    text: string;
-    registration_id: number;
-};
+	id: number;
+	title: string;
+	text: string;
+	registration_id: number;
+}

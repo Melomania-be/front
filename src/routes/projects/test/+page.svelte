@@ -7,6 +7,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Project } from '$lib/types/Project';
 
+	let aaaaa: string = '';
 	let projectsDone: Project[] = [];
 	let projectsToDo: Project[] = [];
 	let projects: Project[] = [];
@@ -78,14 +79,15 @@
 
 			group = {
 				data: projects,
-				columns: ['name', 'registrationId','sectionGroupId','id']
+				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
+				notOrderedColumns: []
 			};
 		});
 	}
 </script>
 
 {#if group}
-	<Filterer bind:data={group} bind:meta bind:options>
+	<Filterer showData={false} bind:data={group} bind:meta bind:options bind:uniqueUrl={aaaaa}>
 		{#each projects as project}
 			<div class="border-2 border-blue-500">
 				<h2>{project.name}</h2>

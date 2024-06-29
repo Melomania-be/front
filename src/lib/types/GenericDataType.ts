@@ -30,14 +30,13 @@ export type GenericDataType =
 	| Folder
 	| Form
 	| Instrument
-    | Piece
+	| Piece
 	| Project
 	| Registration
-    | Rehearsal
-    | Section
-    | SectionGroup
-    | TypeOfPiece
+	| Rehearsal
+	| Section
+	| SectionGroup
+	| TypeOfPiece
 	| CustomContact
 	| List
-	| CustomList
-    ;
+	| CustomList;

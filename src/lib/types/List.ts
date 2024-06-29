@@ -1,10 +1,10 @@
-import type { Contact } from "./Contact";
+import type { Contact } from './Contact';
 
-export interface List  {
+export interface List {
 	id: number | null;
 	name: string;
 	contacts: Contact[];
-    mailTemplate: any;
+	mailTemplate: any;
 	createdAt: string;
 	updatedAt: string;
-};
+}

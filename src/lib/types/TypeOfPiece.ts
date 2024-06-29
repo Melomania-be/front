@@ -1,6 +1,6 @@
 import type { GenericDataType } from './GenericDataType';
 
-export interface TypeOfPiece  {
+export interface TypeOfPiece {
 	createdAt: Date;
 	id: Number | null;
 	name: String | null;

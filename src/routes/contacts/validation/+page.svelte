@@ -5,10 +5,11 @@
 		faArrowLeft,
 		faMagnifyingGlass,
 		faCheck,
-		faXmark,
+		faXmark
 	} from '@fortawesome/free-solid-svg-icons';
 
 	type Instrument = {
+		pivot_proficiency_level: string;
 		id: number | null;
 		name: string;
 		family: string;
@@ -26,23 +27,18 @@
 		comments: string;
 		validated: boolean;
 		instruments: Array<Instrument>;
-		proficiency_level: string;
 		recommendation_pending: Boolean;
-		created_at: Date;
-		last_update: Date;
 		[key: string]: any;
 	};
 
-	let listContacts: Array<Contacts> = [];
+	let notValidatedContacts: Array<Contacts> = [];
 	let allContacts: Array<Contacts> = [];
 	let selectedContact: Contacts | null = null;
 	let similartoSelected: Array<Contacts> = [];
 	let comparedContact: Contacts | null = null;
 	let filteredContacts: Array<Contacts> = [];
-	let search: string = '';
-	let currentPage: number = 1;
-	let selectedData:   {[key: string]: any} = {};
-
+	let selectedData: { [key: string]: any } = {};
+	let instrumentsComp: boolean = false;
 	//
 
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
@@ -50,8 +46,8 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
-	import type { CustomContact } from '$lib/types/CustomContact';
 	import type { Contact } from '$lib/types/Contact';
+	import { updated } from '$app/stores';
 	let meta: any = {};
 	let options: any = {
 		filter: '',
@@ -63,16 +59,16 @@
 	let url: string = '/api/contacts';
 	let urlFront: string = '/contacts/validation';
 	let uniqueUrl: string = '/contacts';
-	let contacts: CustomContact[] = [];
-	let dataHolder: TableData<CustomContact>;
-
+	let contacts: Contact[] = [];
+	let dataHolder: TableData<Contact>;
 
 	onMount(async () => {
 		try {
-			const res = await fetch('/api/contacts/validations', { method: 'GET' });
-			if (res.ok) {
-				const contacts = await res.json();
-				listContacts = contacts.map((contact: any) => ({
+			const resAll = await fetch('/api/contacts/validations', { method: 'GET' });
+			if (resAll.ok) {
+				const contactsAll = await resAll.json();
+				console.log('All Contacts:', contactsAll);
+				allContacts = contactsAll.map((contact: any) => ({
 					id: contact.id,
 					firstName: contact.firstName,
 					lastName: contact.lastName,
@@ -80,18 +76,29 @@
 					phone: contact.phone,
 					messenger: contact.messenger,
 					comments: contact.comments,
-					validated: contact.validated_contact,
-					instruments: contact.instruments,
-					proficiency_level: contact.proficiency_level,
+					validated: contact.validated,
+					instruments:
+						contact.instruments.map((instrument: any) => ({
+							created_at: instrument.created_at,
+							id: instrument.id,
+							name: instrument.name,
+							family: instrument.family,
+							pivot_proficiency_level: instrument.pivot_proficiency_level,
+							updated_at: instrument.updated_at
+						})) || [],
 					recommendation_pending: contact.recommendation_pending,
 					created_at: new Date(contact.created_at),
 					last_update: new Date(contact.last_update)
 				}));
+
+				notValidatedContacts = allContacts.filter((contact) => !contact.validated);
+
+				console.log('Not validated contacts:', notValidatedContacts);
 			} else {
-				console.error('Failed to fetch contacts waiting for validation, status:', res.status);
+				console.error('Failed to fetch all contacts, status:', resAll.status);
 			}
 		} catch (error) {
-			console.error('Error fetching contacts waiting for validation:', error);
+			console.error('Error fetching every contacts:', error);
 		}
 
 		const urlParams = new URLSearchParams(window.location.search);
@@ -104,34 +111,6 @@
 		};
 
 		fetchData();
-
-		try {
-			const resAll = await fetch('/api/contacts', { method: 'GET' });
-			if (resAll.ok) {
-				const contactsAll = await resAll.json();
-				allContacts = contactsAll.map((contact: any) => ({
-					id: contact.id,
-					firstName: contact.firstName,
-					lastName: contact.lastName,
-					email: contact.email,
-					phone: contact.phone,
-					messenger: contact.messenger,
-					comments: contact.comments,
-					validated: contact.validated_contact,
-					instruments: contact.instruments,
-					proficiency_level: contact.proficiency_level,
-					recommendation_pending: contact.recommendation_pending,
-					created_at: new Date(contact.created_at),
-					last_update: new Date(contact.last_update)
-				}));
-				filteredContacts = [...allContacts];
-				console.log('All contacts:', allContacts);
-			} else {
-				console.error('Failed to fetch all contacts, status:', resAll.status);
-			}
-		} catch (error) {
-			console.error('Error fetching all contacts:', error);
-		}
 	});
 
 	async function fetchData() {
@@ -145,64 +124,59 @@
 		const response = await fetch(`${url}${optionInUrls}`, {
 			method: 'GET'
 		});
-	
-	const responseHandler = new ResponseHandlerClient();
+
+		const responseHandler = new ResponseHandlerClient();
 
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			let tmpContacts: Contact[] = data.data;
-
-			contacts = tmpContacts.map((contact) => {
-				return {
-					...contact,
-					instruments: contact.instruments
-						.map((instrument) => {
-							return `${instrument.name} - ${instrument.pivot_proficiency_level} - ${instrument.family}`;
-						})
-						.join(', ')
-				};
-			});
+			contacts = data.data;
 			meta = data.meta;
 
 			dataHolder = {
 				data: contacts,
-				columns: [
-					'id',
-					'firstName',
-					'lastName',
-					'email',
-					'messenger',
-					'phone',
-					'comments'
-				],
-				notOrderedColumns: [
-					'instruments'
-				]
+				columns: ['id', 'firstName', 'lastName'],
+				notOrderedColumns: []
 			};
 		});
 	}
 
-
 	function selectContact(contact: Contacts) {
 		selectedContact = contact;
-		similartoSelected = [];
-
-		for (let i = 0; i < allContacts.length; i++) {
-			if (allContacts[i].id != selectedContact.id) {
-				if (
-					allContacts[i].firstName === selectedContact.firstName ||
-					allContacts[i].lastName === selectedContact.lastName ||
-					allContacts[i].email === selectedContact.email
-				) {
-					similartoSelected.push(allContacts[i]);
-				}
-			}
-		}
+		similartoSelected = allContacts.filter(
+			(contact) =>
+				(contact.firstName === selectedContact?.firstName ||
+					contact.lastName === selectedContact?.lastName ||
+					contact.email === selectedContact?.email) &&
+				contact.id !== selectedContact?.id
+		);
+		console.log('Selected:', contact);
 	}
 
 	function selectedCompared(contact: Contacts) {
+		console.log('Selected compared:', contact);
 		comparedContact = contact;
+
+		if (comparedContact?.instruments.length > 0 && selectedContact?.instruments.length > 0) {
+			for (let i = 0; i < selectedContact?.instruments.length; i++) {
+				if (
+					selectedContact?.instruments[i].id === comparedContact?.instruments[i].id &&
+					selectedContact?.instruments[i].pivot_proficiency_level ===
+						comparedContact?.instruments[i].pivot_proficiency_level
+				) {
+					instrumentsComp = true;
+				} else {
+					instrumentsComp = false;
+				}
+			}
+		} else if (
+			comparedContact?.instruments.length === 0 &&
+			selectedContact?.instruments.length === 0
+		) {
+			instrumentsComp = true;
+		} else {
+			instrumentsComp = false;
+		}
 	}
 
 	function deselectContact() {
@@ -215,15 +189,6 @@
 		comparedContact = null;
 	}
 
-	/*
-	function searchContacts(query: string) {
-		filteredContacts = allContacts.filter((contact) => {
-			const fullName = `${contact.firstName} ${contact.lastName}`;
-			return fullName.toLowerCase().includes(query.toLowerCase());
-		});
-	}
-	*/
-
 	function checkboxChange(field: string, contact: Contacts | null, event: Event) {
 		if (contact === null) return;
 		const checked = (event.target as HTMLInputElement).checked;
@@ -232,49 +197,70 @@
 		} else {
 			delete selectedData[field];
 		}
-
-		console.log('Selected data:', selectedData);
 	}
 
-	function submitMerged(data: {[key: string]: any}) {
-		if (
-			data.firstName &&
-			data.lastName &&
-			data.email &&
-			data.phone &&
-			data.messenger &&
-			data.comments &&
-			data.instruments &&
-			data.proficiency_level
-		) {
-			console.log('OKKKKKKK');
-		} else {
-			console.log('Need more data to do anything.');
-			alert('Please check one box for each field to merge 2 contacts.')
+	async function submitMerged(data: { [key: string]: any }) {
+		const requiredFields = [
+			'firstName',
+			'lastName',
+			'email',
+			'phone',
+			'messenger',
+			'comments',
+			'instruments'
+		];
+		const missingFields = requiredFields.filter((field) => !data.hasOwnProperty(field));
+		if (missingFields.length > 0) {
+			`Missing required fields: ${missingFields.join(', ')}`;
+			return;
 		}
-		console.log('Merged data:', data);
 
-		fetch(`/api/contacts/`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(data)
-		})
-			.then((res) => {
-				if (res.ok) {
-					console.log('Contact updated');
-				} else {
-					console.error('Failed to update contact, status:', res.status);
-				}
-			})
-			.catch((error) => {
-				console.error('Error updating contact:', error);
+		let mergedContact = {
+			id: comparedContact?.id || -1,
+			first_name: data.firstName,
+			last_name: data.lastName,
+			email: data.email,
+			phone: data.phone,
+			messenger: data.messenger,
+			comments: data.comments,
+			validated: true,
+			instruments: data.instruments,
+			participant: comparedContact?.participant || [],
+			proficiency_level: data.proficiency_level || '',
+			recommendation_pending: false,
+			created_at: comparedContact?.created_at || new Date(),
+			last_update: new Date()
+		};
+
+		try {
+			const res = await fetch(`/api/contacts/`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(mergedContact)
 			});
+
+			if (res.ok) {
+				console.log('Contact updated');
+				alert('Contact successfully updated');
+				filteredContacts = filteredContacts.filter((contact) => contact.id !== comparedContact?.id);
+				notValidatedContacts = notValidatedContacts.filter(
+					(contact) => contact.id !== comparedContact?.id
+				);
+				deselectContact();
+			} else {
+				const responseText = await res.text();
+				console.error('Failed to update contact, status:', res.status, 'Response:', responseText);
+				alert(`Failed to update contact: ${responseText}`);
+			}
+		} catch (error) {
+			console.error('Error updating contact:', error);
+			alert('An error occurred while updating the contact.');
+		}
 	}
 
 	function deletion(id: number) {
-
 		if (id === -1) {
 			console.error('Cannot delete contact, id unknown.');
 			return;
@@ -283,7 +269,7 @@
 			.then((res) => {
 				if (res.ok) {
 					console.log('Contact deleted');
-					listContacts = listContacts.filter((contact) => contact.id !== id);
+					notValidatedContacts = notValidatedContacts.filter((contact) => contact.id !== id);
 				} else {
 					console.error('Failed to delete contact, status:', res.status);
 				}
@@ -297,14 +283,15 @@
 		);
 
 		filteredContacts = filteredContacts.filter((contact) => contact.id !== selectedContact?.id);
-		listContacts = listContacts.filter((contact) => contact.id !== selectedContact?.id);
+		notValidatedContacts = notValidatedContacts.filter(
+			(contact) => contact.id !== selectedContact?.id
+		);
 
 		deselectContact();
 	}
 
-	async function validateContact(id: number){
-		
-		if (id === -1){
+	async function validateContact(id: number) {
+		if (id === -1) {
 			console.error('Cannot validate contact, id unknown.');
 			return;
 		}
@@ -323,7 +310,7 @@
 			recommendation_pending: selectedContact?.recommendation_pending || false,
 			created_at: selectedContact?.created_at || new Date(),
 			last_update: new Date()
-		}
+		};
 
 		console.log('Data to send:', data);
 
@@ -352,14 +339,16 @@
 			);
 
 			filteredContacts = filteredContacts.filter((contact) => contact.id !== selectedContact?.id);
-			listContacts = listContacts.filter((contact) => contact.id !== selectedContact?.id);
+			notValidatedContacts = notValidatedContacts.filter(
+				(contact) => contact.id !== selectedContact?.id
+			);
 			deselectContact();
 		}
 	}
 </script>
 
-<main class="grid grid-cols-3 gap-4 ml-5 mr-5">
-	<div class="col-1 border-2 border-rose-500">
+<main class="grid grid-cols-5 ml-5 mr-5">
+	<div class="w-full col-span-2 border-2 border-rose-500">
 		{#if selectedContact}
 			<div>
 				<div class="flex items-center cursor-pointer" on:click={() => deselectContact()}>
@@ -375,8 +364,18 @@
 					<li>phone : {selectedContact.phone}</li>
 					<li>messenger : {selectedContact.messenger}</li>
 					<li>comments : {selectedContact.comments}</li>
-					<li>instruments : {selectedContact.instruments}</li>
-					<li>proficiency_level : {selectedContact.proficiency_level}</li>
+					<li>
+						<span>instruments :</span>
+						{#if selectedContact.instruments !== null && selectedContact.instruments !== undefined}
+							{#each selectedContact.instruments as instrument}
+								<option value={instrument}>
+									{instrument.name} - {instrument.pivot_proficiency_level}</option
+								>
+							{/each}
+						{:else}
+							No instrument found for this contact
+						{/if}
+					</li>
 				</ul>
 			</div>
 			<div class="flex items-center justify-center">
@@ -384,7 +383,7 @@
 					type="button"
 					class="bg-green-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300"
 					on:click={() => validateContact(selectedContact?.id || -1)}
-					>
+				>
 					<span>ADD CONTACT</span>
 				</button>
 				<button
@@ -400,9 +399,9 @@
 			<h2>No contact selected</h2>
 			To display more informations please select a contact.<br />
 
-			{#if listContacts}
+			{#if notValidatedContacts}
 				<br />
-				{#each listContacts as contact}
+				{#each notValidatedContacts as contact}
 					<div
 						class="border-b-2 border-gray-300 flex justify-between items-center"
 						on:click={() => selectContact(contact)}
@@ -416,7 +415,7 @@
 	</div>
 
 	{#if selectedContact && comparedContact}
-		<div class="border-2 border-pink-500 col-1 mx-auto">
+		<div class="w-full border-2 border-pink-500 col-span">
 			<table>
 				<thead>
 					<tr>
@@ -428,8 +427,8 @@
 				</thead>
 				<tbody>
 					{#if selectedContact && comparedContact}
-						{#each Object.entries(selectedContact) as [key, value]}
-							{#if key !== 'id' && key !== 'created_at' && key !== 'last_update' && key !== 'validated' && key !== 'recommendation_pending'}
+						{#each Object.entries(selectedContact) as [key]}
+							{#if key !== 'id' && key !== 'created_at' && key !== 'last_update' && key !== 'validated' && key !== 'recommendation_pending' && key !== 'instruments'}
 								<tr>
 									<td>{key}</td>
 									{#if selectedContact[key] === comparedContact[key]}
@@ -454,10 +453,34 @@
 								</tr>
 							{/if}
 						{/each}
+						<tr>
+							<td>instruments</td>
+							<td>
+								{#if instrumentsComp === true}
+									<Fa icon={faCheck} />
+								{:else}
+									<Fa icon={faXmark} />
+								{/if}
+							</td>
+							<td>
+								<input
+									type="checkbox"
+									checked={selectedData.instruments === selectedContact.instruments}
+									on:change={(event) => checkboxChange('instruments', selectedContact, event)}
+								/>
+							</td>
+							<td>
+								<input
+									type="checkbox"
+									checked={selectedData.instruments === comparedContact.instruments}
+									on:change={(event) => checkboxChange('instruments', comparedContact, event)}
+								/>
+							</td>
+						</tr>
 					{/if}
 				</tbody>
 			</table>
-			<br>
+			<br />
 
 			<div class="flex justify-center">
 				<button
@@ -468,17 +491,17 @@
 					<span>MERGE</span>
 				</button>
 			</div>
-		</div>	
+		</div>
 	{:else}
-		<div class="border-2 border-pink-500 col-1 w-1/2 mx-auto">
+		<div class="w-full border-2 border-pink-500 col-1 w-1/2 mx-auto">
 			<p>Select two contacts to compare and merge.</p>
 		</div>
 	{/if}
 
 	{#if selectedContact}
 		{#if comparedContact === null}
-			<div class="col-1 border-2 border-green-500">
-				<div class="border-2 border-pink-500">
+			<div class="w-full col-span-2 border-2 border-green-500">
+				<div class="border-2 border-yellow-500">
 					<h2>Recommended</h2>
 					The following contacts are similar to the selected contact:
 					{#if similartoSelected}
@@ -501,62 +524,42 @@
 							</div>
 						{/each}
 					{/if}
-				</div>
 
-				<div class="border-2 border-yellow-500">
 					<h2><b>All Contacts</b></h2>
-					<!--
-					{#if allContacts}
-						<input
-							type="text"
-							placeholder="Search contacts"
-							class="border border-gray-300 rounded-lg px-2 py-1"
-							bind:value={search}
-							on:input={() => searchContacts(search)}
-						/>
-
-						{#each filteredContacts.filter((contact) => contact.id !== selectedContact?.id) as contact, i (contact.id)}
-							{#if i >= (currentPage - 1) * 5 && i < currentPage * 5}
-								<div class="border-b-2 border-gray-300 flex justify-between items-center">
-									<div class="flex cursor-pointer" on:click={() => selectedCompared(contact)}>
-										{contact.firstName}
-										{contact.lastName} - {contact.email}
+					{#if dataHolder}
+						<Filterer
+							showData={false}
+							editable={false}
+							paginatorTop={false}
+							bind:data={dataHolder}
+							bind:meta
+							bind:options
+							bind:uniqueUrl
+							on:optionsUpdated={() => fetchData()}
+						>
+							<div class="border-2 border-blue-500">
+								{#each contacts as contact}
+									<div class="flex justify-between">
+										<div class="flex cursor-pointer" on:click={() => selectedCompared(contact)}>
+											{contact.firstName}
+											{contact.lastName} - {contact.email}
+										</div>
+										<button
+											type="button"
+											class="bg-blue-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 justify-self-end"
+											on:click={() => (window.location.href = `${contact.id}`)}
+										>
+											<Fa icon={faMagnifyingGlass} /> <span>Info</span>
+										</button>
 									</div>
-									<button
-										type="button"
-										class="bg-blue-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
-										on:click={() => (window.location.href = `${contact.id}`)}
-									>
-										<Fa icon={faMagnifyingGlass} /> <span>Info</span>
-									</button>
-								</div>
-								{#if currentPage !== 1}
-									<button
-										type="button"
-										class="bg-blue-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
-										on:click={() => (currentPage -= 1)}
-									>
-										Previous
-									</button>
-								{/if}
-								<button
-									type="button"
-									class="bg-blue-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
-									on:click={() => (currentPage += 1)}
-								>
-									Next
-								</button>
-							{/if}
-						{/each}
+								{/each}
+							</div>
+						</Filterer>
 					{/if}
-				-->
-				{#if dataHolder}
-					<Filterer showData={true} bind:data={dataHolder} bind:meta bind:options bind:uniqueUrl on:optionsUpdated={()=>fetchData()}></Filterer>
-				{/if}
 				</div>
 			</div>
 		{:else}
-			<div class="border-2 border-rose-500">
+			<div class="w-full col-span-2 border-2 border-rose-500">
 				<div class="flex items-center cursor-pointer" on:click={() => deselectCompared()}>
 					<Fa icon={faArrowLeft} />
 					<b><span>&#20; Back to comparison selector</span></b>
@@ -571,20 +574,21 @@
 					<li>phone : {comparedContact.phone}</li>
 					<li>messenger : {comparedContact.messenger}</li>
 					<li>comments : {comparedContact.comments}</li>
-					<li>proficiency_level : {comparedContact.proficiency_level}</li>
 					<li>
 						<span>instruments :</span>
-							{#if comparedContact.instruments !== null}
-								{#each comparedContact.instruments as instrument}
-									<option value={instrument}> - {instrument.name}</option>	
-								{/each}
-							{/if}
+						{#if comparedContact.instruments !== null}
+							{#each comparedContact.instruments as instrument}
+								<option value={instrument}>
+									{instrument.name} - {instrument.pivot_proficiency_level}</option
+								>
+							{/each}
+						{/if}
 					</li>
 				</ul>
 			</div>
 		{/if}
 	{:else}
-		<div class="flex border-2 border-green-500">
+		<div class="w-full col-span-2 flex border-2 border-green-500">
 			<h2>No contact selected</h2>
 		</div>
 	{/if}

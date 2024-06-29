@@ -131,7 +131,7 @@
 			return alert('Please select the rehearsals you will attend to (at least one required).');
 		}
 
-		let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; 
+		let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 		let isValid = emailPattern.test(newContact.email);
 
 		if (!isValid) {

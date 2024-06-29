@@ -70,18 +70,8 @@
 
 			dataHolder = {
 				data: contacts,
-				columns: [
-					'id',
-					'firstName',
-					'lastName',
-					'email',
-					'messenger',
-					'phone',
-					'comments'
-				],
-				notOrderedColumns: [
-					'instruments'
-				]
+				columns: ['id', 'firstName', 'lastName', 'email', 'messenger', 'phone', 'comments'],
+				notOrderedColumns: ['instruments']
 			};
 		});
 	}
@@ -104,6 +94,13 @@
 	</div>
 
 	{#if dataHolder}
-		<Filterer showData={true} bind:data={dataHolder} bind:meta bind:options bind:uniqueUrl on:optionsUpdated={()=>fetchData()}></Filterer>
+		<Filterer
+			showData={true}
+			bind:data={dataHolder}
+			bind:meta
+			bind:options
+			bind:uniqueUrl
+			on:optionsUpdated={() => fetchData()}
+		></Filterer>
 	{/if}
 </div>

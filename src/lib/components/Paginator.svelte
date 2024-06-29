@@ -19,7 +19,7 @@
 	};
 	export let changePage: (newPage: number) => void;
 
-    export let possibleLimits: number[] = [5, 10, 20, 50, 100, 1000, 5000];
+	export let possibleLimits: number[] = [5, 10, 20, 50, 100, 1000, 5000];
 
 	export let orientation: 'horizontal' | 'vertical' = 'horizontal';
 </script>
@@ -32,7 +32,7 @@
 	<span class="grid grid-cols-4 gap-1 {orientation === 'horizontal' ? 'mx-2' : ''}">
 		<button
 			type="button"
-			on:click={() => (changePage(meta.firstPage))}
+			on:click={() => changePage(meta.firstPage)}
 			class="border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
 			disabled={meta.currentPage === meta.firstPage}
 		>
@@ -43,19 +43,19 @@
 		</button>
 		<button
 			type="button"
-			on:click={() => (changePage(meta.currentPage - 1))}
+			on:click={() => changePage(meta.currentPage - 1)}
 			class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
 			disabled={meta.currentPage === meta.firstPage}>prev</button
 		>
 		<button
 			type="button"
-			on:click={() => (changePage(meta.currentPage + 1))}
+			on:click={() => changePage(meta.currentPage + 1)}
 			class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
 			disabled={meta.currentPage === meta.lastPage}>next</button
 		>
 		<button
 			type="button"
-			on:click={() => (changePage(meta.lastPage))}
+			on:click={() => changePage(meta.lastPage)}
 			class="border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
 			disabled={meta.currentPage === meta.lastPage}
 			><span
@@ -64,21 +64,21 @@
 			></span></button
 		>
 	</span>
-    <span class={orientation === 'horizontal' ? '' : ''}>
-        {#if options.limit}
-        <label for="limit">limit per page</label>
-		<select
-            id="limit"
-			class="border border-gray-300 rounded-md"
-			bind:value={options.limit}
-			on:change={() => (changePage(meta.firstPage))}
-		>
-            {#each possibleLimits as limit}
-                <option value={limit}>{limit}</option>
-            {/each}
-		</select>
-	{/if}
-    </span>
+	<span class={orientation === 'horizontal' ? '' : ''}>
+		{#if options.limit}
+			<label for="limit">limit per page</label>
+			<select
+				id="limit"
+				class="border border-gray-300 rounded-md"
+				bind:value={options.limit}
+				on:change={() => changePage(meta.firstPage)}
+			>
+				{#each possibleLimits as limit}
+					<option value={limit}>{limit}</option>
+				{/each}
+			</select>
+		{/if}
+	</span>
 	<span class={orientation === 'horizontal' ? 'mx-2' : ''}>
 		<nav>
 			{#if meta.lastPage}

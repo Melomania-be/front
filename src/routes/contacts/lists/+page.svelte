@@ -54,7 +54,7 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-            console.log(data);
+			console.log(data);
 
 			const tmpLists: List[] = data.data;
 

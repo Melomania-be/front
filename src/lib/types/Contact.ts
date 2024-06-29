@@ -2,7 +2,7 @@ import type { GenericDataType } from './GenericDataType';
 import type { Instrument } from './Instrument';
 import type { Participant } from './Participant';
 
-export interface Contact  {
+export interface Contact {
 	id: number | null;
 	firstName: string;
 	lastName: string;

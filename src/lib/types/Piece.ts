@@ -3,7 +3,7 @@ import type { Folder } from './Folder';
 import type { GenericDataType } from './GenericDataType';
 import type { TypeOfPiece } from './TypeOfPiece';
 
-export interface Piece  {
+export interface Piece {
 	arranger: String;
 	composer: Composer;
 	composerId: Number;

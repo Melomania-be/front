@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Contact } from "$lib/types/Contact";
-	import type { Instrument } from "$lib/types/Instrument";
+	import type { Contact } from '$lib/types/Contact';
+	import type { Instrument } from '$lib/types/Instrument';
 
 	export let contact: Contact;
 
@@ -20,6 +20,7 @@
 	}
 
 	async function deleteContact(contact: Contact) {
+		
 		console.log(contact);
 		let response = await fetch('/api/contacts/', {
 			method: 'DELETE',

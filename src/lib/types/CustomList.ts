@@ -1,8 +1,8 @@
-export interface CustomList  {
+export interface CustomList {
 	id: number | null;
 	name: string;
 	contacts: string;
-    mailTemplate: any;
+	mailTemplate: any;
 	createdAt: string;
 	updatedAt: string;
-};
+}
