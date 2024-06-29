@@ -1,5 +1,5 @@
 // entry.cjs
 async function loadApp() {
-  const { app } = await import('./build/bin/server.js')
+  const { app } = await import('./build/index.js')
 }
 loadApp()
