@@ -3,11 +3,9 @@ import { type RequestHandler } from '@sveltejs/kit';
 import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
-	const data = { name: 'test' };
+	const data = await request.json();
 
-	console.log(data);
-
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/type_of_pieces`, {
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/contact`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -16,7 +14,15 @@ export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 		body: JSON.stringify(data)
 	});
 
-	console.log(res);
-
 	return res;
 };
+
+export const GET: RequestHandler = async ({ cookies, fetch }) => {
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/contact/filterable`, {
+		headers: {
+			authorization: `${await getToken(cookies)}`
+		}
+	});
+
+	return res;
+}
