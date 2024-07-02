@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import AdvancedFilterer from './AdvancedFilterer.svelte';
+	import AdvancedFilterer from '$lib/components/AdvancedFilterer.svelte';
 	import type { Contact } from '$lib/types/Contact';
 	import type { TableData } from '$lib/types/TableData';
 

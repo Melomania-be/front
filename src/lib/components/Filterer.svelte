@@ -2,8 +2,8 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
-	import Paginator from './Paginator.svelte';
-	import Table from './Table.svelte';
+	import Paginator from '$lib/components/Paginator.svelte';
+	import Table from '$lib/components/Table.svelte';
 	export let showData: boolean = false;
 	export let editable: boolean = true;
 	export let paginatorTop: boolean = true;

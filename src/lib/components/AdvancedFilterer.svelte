@@ -4,7 +4,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import Paginator from '$lib/components/Paginator.svelte';
 	import Table from '$lib/components/Table.svelte';
-	import Condition from './Condition.svelte';
+	import Condition from '$lib/components/Condition.svelte';
 	export let showData: boolean = false;
 	export let editable: boolean = true;
 	export let paginatorTop: boolean = true;
