@@ -42,7 +42,7 @@
 	//
 
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
-	import Filterer from '$lib/components/Filterer.svelte';
+	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
@@ -527,7 +527,7 @@
 
 					<h2><b>All Contacts</b></h2>
 					{#if dataHolder}
-						<Filterer
+						<SimpleFilterer
 							showData={false}
 							editable={false}
 							paginatorTop={false}
@@ -554,7 +554,7 @@
 									</div>
 								{/each}
 							</div>
-						</Filterer>
+						</SimpleFilterer>
 					{/if}
 				</div>
 			</div>

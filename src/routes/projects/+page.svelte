@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import { onMount } from 'svelte';
-	import Filterer from '../../lib/components/Filterer.svelte';
+	import SimpleFilterer from '../../lib/components/SimpleFilterer.svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
@@ -184,7 +184,7 @@
 				<div
 					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
 				>
-					<Filterer
+					<SimpleFilterer
 						showData={false}
 						bind:data={group}
 						bind:meta
@@ -208,7 +208,7 @@
 								<br />
 							{/each}
 						</div>
-					</Filterer>
+					</SimpleFilterer>
 				</div>
 			{/if}
 		</div>
@@ -224,7 +224,7 @@
 			<div
 				class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
 			>
-				<Filterer
+				<SimpleFilterer
 					showData={false}
 					bind:data={groupCurrent}
 					bind:meta
@@ -248,7 +248,7 @@
 							<br />
 						{/each}
 					</div>
-				</Filterer>
+				</SimpleFilterer>
 			</div>
 		{:else}
 			<div
@@ -268,7 +268,7 @@
 		<div
 			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
 		>
-			<Filterer
+			<SimpleFilterer
 				showData={false}
 				bind:data={groupDone}
 				bind:meta
@@ -292,7 +292,7 @@
 						<br />
 					{/each}
 				</div>
-			</Filterer>
+			</SimpleFilterer>
 		</div>
 	{/if}
 </main>

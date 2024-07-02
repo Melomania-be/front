@@ -7,7 +7,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Contact } from '$lib/types/Contact';
 	import type { List } from '$lib/types/List';
-	import Filterer from '../Filterer.svelte';
+	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
 
 	export let mode: 'modify' | 'create';
 	export let url: string;
@@ -211,7 +211,7 @@
 				class="m-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 				on:click={addToList}>Add to List</button
 			>
-			<Filterer bind:data={dataHolder} bind:meta bind:options on:optionsUpdated={() => fetchData()}>
+			<SimpleFilterer bind:data={dataHolder} bind:meta bind:options on:optionsUpdated={() => fetchData()}>
 				<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
 					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 						<thead
@@ -297,7 +297,7 @@
 						</tbody>
 					</table>
 				</div>
-			</Filterer>
+			</SimpleFilterer>
 		{/if}
 	</div>
 </div>

@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
-	import Filterer from '$lib/components/Filterer.svelte';
+	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
@@ -94,13 +94,13 @@
 	</div>
 
 	{#if dataHolder}
-		<Filterer
+		<SimpleFilterer
 			showData={true}
 			bind:data={dataHolder}
 			bind:meta
 			bind:options
 			bind:uniqueUrl
 			on:optionsUpdated={() => fetchData()}
-		></Filterer>
+		></SimpleFilterer>
 	{/if}
 </div>
