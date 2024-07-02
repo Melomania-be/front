@@ -1,3 +1,5 @@
+import type { Instrument } from "./Instrument";
+
 export interface Recommended  {
 	id: number | null;
 	firstName: string;
@@ -5,7 +7,7 @@ export interface Recommended  {
 	email: string;
 	phone: string;
 	messenger: string;
-	comment: String;
+	instruments: Array<Instrument>,
 	createdAt: Date;
 	updatedAt: Date;
 }
