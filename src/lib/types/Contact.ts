@@ -1,6 +1,6 @@
-import type { GenericDataType } from './GenericDataType';
 import type { Instrument } from './Instrument';
 import type { Participant } from './Participant';
+import type { Project } from './Project';
 
 export interface Contact {
 	id: number | null;
@@ -12,7 +12,8 @@ export interface Contact {
 	comments: string;
 	validated: boolean;
 	instruments: Array<Instrument>;
-	participant: Array<Participant>;
+	participants: Array<Participant>;
+	projects: Array<Project>;
 	recommendation_pending: Boolean;
 	createdAt: Date;
 	updatedAt: Date;

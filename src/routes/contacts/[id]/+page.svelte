@@ -19,7 +19,7 @@
 	</div>
 
 	<div class="grid grid-cols-2 w-full">
-		{#each contact.participant as participant}
+		{#each contact.participants as participant}
 			<div
 				class="group text-sm *:break-words block mr-1 mt-1 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:max-h-full *:[&:not(:hover)]:truncate"
 			>

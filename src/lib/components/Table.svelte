@@ -6,11 +6,23 @@
 	export let editable: boolean;
 	export let data: TableData<DataType>;
 	export let options: {
-		filter: string;
+		filter: any;
 		limit: number;
 		page: number;
 		order: 'asc' | 'desc';
 		orderBy: string;
+	} | {
+		filters: {
+			type: string;
+			filtersDepth1: {
+				type: string;
+				filtersDepth2: { relation: string; column: string; operation: string; filter: string }[];
+			}[];
+		};
+		page: number;
+		limit: number;
+		orderBy: string;
+		order: string;
 	};
 	export let meta: {
 		total: number;
