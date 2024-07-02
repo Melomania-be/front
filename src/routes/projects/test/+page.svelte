@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import { onMount } from 'svelte';
-	import Filterer from '../../../lib/components/Filterer.svelte';
+	import SimpleFilterer from '../../../lib/components/SimpleFilterer.svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
@@ -87,7 +87,7 @@
 </script>
 
 {#if group}
-	<Filterer showData={false} bind:data={group} bind:meta bind:options bind:uniqueUrl={aaaaa}>
+	<SimpleFilterer showData={false} bind:data={group} bind:meta bind:options bind:uniqueUrl={aaaaa}>
 		{#each projects as project}
 			<div class="border-2 border-blue-500">
 				<h2>{project.name}</h2>
@@ -98,5 +98,5 @@
 				</ul>
 			</div>
 		{/each}
-	</Filterer>
+	</SimpleFilterer>
 {/if}
