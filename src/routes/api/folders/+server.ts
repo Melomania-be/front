@@ -28,11 +28,11 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 	return res;
 };
 
-export const PATCH: RequestHandler = async ({ cookies, request, fetch }) => {
+export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
 
 	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/folders`, {
-		method: 'PATCH',
+		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			authorization: `${await getToken(cookies)}`

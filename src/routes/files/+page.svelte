@@ -148,7 +148,7 @@
 		folder.files.push(fileDragged);
 
 		const request = await fetch(`/api/folders/`, {
-			method: 'PATCH',
+			method: 'POST',
 			body: JSON.stringify({ ...folder })
 		});
 
