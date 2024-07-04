@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ cookies, params, fetch }) => {
 		}
 	);
 
-	if (serverResponseProject.status !== 200) {
+	if (!serverResponseProject.ok) {
 		redirect(StatusCodesRedirection.TEMPORARY_REDIRECT, '/projects');
 	}
 
