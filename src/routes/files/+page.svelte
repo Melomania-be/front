@@ -281,7 +281,7 @@
 		if (!insideFolder) return;
 
 		const request = await fetch(`/api/folders/`, {
-			method: 'PATCH',
+			method: 'POST',
 			body: JSON.stringify({
 				...insideFolder,
 				files: insideFolder.files.filter((f) => f.id !== file.id)
