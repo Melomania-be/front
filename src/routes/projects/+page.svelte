@@ -6,11 +6,8 @@
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
 	import type { Project } from '$lib/types/Project';
+	import DateShow from '$lib/components/DateShow.svelte';
 
-	let aaaaa: string = '';
-	let projectsDone: Project[] = [];
-	let projectsToDo: Project[] = [];
-	let projects: Project[] = [];
 	let meta: any = {};
 	let options: any = {
 		filter: '',
@@ -21,19 +18,17 @@
 	};
 	let url: string = '/api/projects';
 	let urlFront: string = '/projects/';
-	let allProjects: boolean = true;
-	let currentProjects: boolean = false;
-	let passedProjects: boolean = false;
 
 	let group: TableData<Project>;
-	let groupDone: TableData<Project>;
-	let groupCurrent: TableData<Project>;
+
+	let shownProjectsArray: string = 'allProjects';
+	let shownProjects: Project[] = [];
+
+	let allProjects: Project[] = [];
+	let passedProjects: Project[] = [];
+	let currentProjects: Project[] = [];
 
 	$: if (browser) options && fetchData();
-	$: console.log(projects);
-	$: console.log(options.order);
-	$: console.log(meta);
-	$: console.log(options);
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -65,7 +60,7 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			projects = data.data.map((project: Project) => {
+			allProjects = data.data.map((project: Project) => {
 				project.concerts = project?.concerts?.map((concert: any) => {
 					concert.date = new Date(concert.date);
 					return concert;
@@ -74,138 +69,101 @@
 			});
 			meta = data.meta;
 
-			projectsDone = projects.filter((project: Project) =>
+			passedProjects = allProjects.filter((project: Project) =>
 				project.concerts.every((concert: any) => concert.date < new Date())
 			);
 
-			projectsToDo = projects.filter((project: Project) =>
+			currentProjects = allProjects.filter((project: Project) =>
 				project.concerts.some((concert: any) => concert.date >= new Date())
 			);
 
 			group = {
-				data: projects,
-				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
+				data: allProjects,
+				columns: ['name'],
 				notOrderedColumns: []
 			};
 
-			groupDone = {
-				data: projectsDone,
-				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
-				notOrderedColumns: []
-			};
+			shownProjects = allProjects;
 
-			groupCurrent = {
-				data: projectsToDo,
-				columns: ['name', 'registrationId', 'sectionGroupId', 'id'],
-				notOrderedColumns: []
-			};
-
-			console.log('All projects', projects);
-			console.log('Done projects', projectsDone);
-			console.log('Current projects', projectsToDo);
+			console.log('allProjects', allProjects);
+			console.log('passedProjects', passedProjects);
+			console.log('currentProjects', currentProjects);
 		});
 	}
 </script>
 
-<main>
-	<br />
-
-	<!--
-	<div class="mb-2  grid grid-cols-2">
-		<a href="/projects/create" class="bg-blue-700 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center" >Create a new project</a>
-		{#if !allProjects}
-		<button class="bg-red-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-		on:click={() => allProjects = true} >See all projects</button>
-		{:else}
-		{#if !currentProjects}
-		<button class="bg-red-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-		on:click={() => allProjects = false} >See passed projects</button>
-		{:else}
-		<button class="bg-red-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-		on:click={() => currentProjects = false} >See current projects</button>
-		{/if}
-		{/if}
+<div>
+	<div
+		class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700"
+	>
+		<ul class="flex flex-wrap">
+			<li class="me-2">
+				<button
+					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 {shownProjectsArray ===
+					'passedProjects'
+						? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500'
+						: ''}"
+					on:click={() => {
+						shownProjectsArray = 'passedProjects';
+						shownProjects = passedProjects;
+					}}>Passed projects</button
+				>
+			</li>
+			<li class="me-2">
+				<button
+					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 {shownProjectsArray ===
+					'currentProjects'
+						? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500'
+						: ''}"
+					aria-current="page"
+					on:click={() => {
+						shownProjectsArray = 'currentProjects';
+						shownProjects = currentProjects;
+					}}>Current projects</button
+				>
+			</li>
+			<li class="me-2">
+				<button
+					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 {shownProjectsArray ===
+					'allProjects'
+						? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500'
+						: ''}"
+					on:click={() => {
+						shownProjectsArray = 'allProjects';
+						shownProjects = allProjects;
+					}}>All projects</button
+				>
+			</li>
+			<li class="me-2">
+				<button
+					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+				>
+					<a href="/projects/create" class="border rounded-xl p-1">Create a new project</a>
+				</button>
+			</li>
+		</ul>
 	</div>
--->
-	<div class="mb-2 grid grid-cols-3">
-		<a
-			href="/projects/create"
-			class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
-		>
-			Create a new project
-		</a>
-		{#if !allProjects}
-			<button
-				class="bg-red-500 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-				on:click={() => {
-					allProjects = true;
-					currentProjects = false;
-					passedProjects = false;
-				}}
-			>
-				See all projects
-			</button>
-		{/if}
-		{#if !currentProjects}
-			<button
-				class="bg-red-500 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-				on:click={() => {
-					currentProjects = true;
-					allProjects = false;
-					passedProjects = false;
-				}}
-			>
-				See current projects
-			</button>
-		{/if}
-		{#if !passedProjects}
-			<button
-				class="bg-red-500 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-				on:click={() => {
-					passedProjects = true;
-					currentProjects = false;
-					allProjects = false;
-				}}
-			>
-				See passed projects
-			</button>
-		{/if}
-	</div>
-	<br />
-
-	{#if allProjects === true}
-		<div
-			class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
-		>
-			<h1>All projects</h1>
-		</div>
+	{#if group}
 		<div>
-			{#if group}
+			{#if shownProjectsArray}
 				<div
 					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
 				>
-					<SimpleFilterer
-						showData={false}
-						bind:data={group}
-						bind:meta
-						bind:options
-						bind:uniqueUrl={aaaaa}
-					>
+					<SimpleFilterer showData={false} bind:data={group} bind:meta bind:options>
 						<div class=" bg-white bordermx-auto justify-center col col-1">
-							{#each projects as project}
-								<button
+							{#each shownProjects as project}
+								<a
 									class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
-									on:click={() => (window.location.href = `/projects/${project.id}`)}
-									role="button"
+									href={`/projects/management/${project.id}`}
 								>
-									<h2>{project.name}</h2>
-									<ul>
+									<h2 class="text-sm">{project.name}</h2>
+									<ul class="text-sm">
 										{#each project.concerts as concert}
-											<li>{concert.date.toLocaleDateString()} - {concert.place}</li>
+											<DateShow date={concert.date} />
+											- {concert.place}
 										{/each}
 									</ul>
-								</button>
-								<br />
+								</a>
 							{/each}
 						</div>
 					</SimpleFilterer>
@@ -213,86 +171,4 @@
 			{/if}
 		</div>
 	{/if}
-
-	{#if currentProjects === true}
-		{#if groupCurrent}
-			<div
-				class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
-			>
-				<h1>Current projects</h1>
-			</div>
-			<div
-				class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
-			>
-				<SimpleFilterer
-					showData={false}
-					bind:data={groupCurrent}
-					bind:meta
-					bind:options
-					bind:uniqueUrl={aaaaa}
-				>
-					<div class=" bg-white bordermx-auto justify-center col col-1">
-						{#each projects as project}
-							<button
-								class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
-								on:click={() => (window.location.href = `/projects/${project.id}`)}
-								role="button"
-							>
-								<h2>{project.name}</h2>
-								<ul>
-									{#each project.concerts as concert}
-										<li>{concert.date.toLocaleDateString()} - {concert.place}</li>
-									{/each}
-								</ul>
-							</button>
-							<br />
-						{/each}
-					</div>
-				</SimpleFilterer>
-			</div>
-		{:else}
-			<div
-				class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
-			>
-				<h1>No current projects</h1>
-			</div>
-		{/if}
-	{/if}
-
-	{#if passedProjects === true}
-		<div
-			class="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 flex items-center justify-center"
-		>
-			<h1>Passed projects</h1>
-		</div>
-		<div
-			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
-		>
-			<SimpleFilterer
-				showData={false}
-				bind:data={groupDone}
-				bind:meta
-				bind:options
-				bind:uniqueUrl={aaaaa}
-			>
-				<div class=" bg-white bordermx-auto justify-center col col-1">
-					{#each projects as project}
-						<button
-							class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
-							on:click={() => (window.location.href = `/projects/${project.id}`)}
-							role="button"
-						>
-							<h2>{project.name}</h2>
-							<ul>
-								{#each project.concerts as concert}
-									<li>{concert.date.toLocaleDateString()} - {concert.place}</li>
-								{/each}
-							</ul>
-						</button>
-						<br />
-					{/each}
-				</div>
-			</SimpleFilterer>
-		</div>
-	{/if}
-</main>
+</div>
