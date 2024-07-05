@@ -53,7 +53,9 @@
                   <a href="/contacts/validation" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">To validate</a>
                </th>
                <td class="px-6 py-4">
-                   {data.numberValidationContact} to validate
+                  <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">{data.numberValidationContact}</span>
+                  to validate
+                  
                </td>
            </tr>
            <tr class="border-b border-gray-200 dark:border-gray-700">
@@ -61,7 +63,8 @@
                   <a href="/contacts/recommended" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Recommended</a>
                </th>
                <td class="px-6 py-4">
-                   {data.numberRecommendedContact} recommended
+                  <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">{data.numberRecommendedContact}</span>
+                  recommended
                </td>
            </tr>
        </tbody>
