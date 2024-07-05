@@ -9,5 +9,5 @@
 </script>
 
 <span>
-	{date.toLocaleDateString(undefined, options)}
+	{(new Date(date)).toLocaleDateString(undefined, options)}
 </span>

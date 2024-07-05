@@ -58,5 +58,4 @@
 	{project}
 	pieces={listPieces}
 	sectionGroups={listSectionGroups}
-	instruments={listInstruments}
 />

@@ -152,20 +152,18 @@
 					<SimpleFilterer showData={false} bind:data={group} bind:meta bind:options>
 						<div class=" bg-white bordermx-auto justify-center col col-1">
 							{#each shownProjects as project}
-								<h2 class="text-sm">{project.name}</h2>
-								<ul class="text-sm">
-									{#each project.concerts as concert}
-										<DateShow date={concert.date} />
-										- {concert.place}
-									{/each}
-								</ul>
 								<a
 									class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
-									href={`/projects/${project.id}`}
+									href={`/projects/management/${project.id}`}
 								>
-									{project.id}
+									<h2 class="text-sm">{project.name}</h2>
+									<ul class="text-sm">
+										{#each project.concerts as concert}
+											<DateShow date={concert.date} />
+											- {concert.place}
+										{/each}
+									</ul>
 								</a>
-								<br />
 							{/each}
 						</div>
 					</SimpleFilterer>

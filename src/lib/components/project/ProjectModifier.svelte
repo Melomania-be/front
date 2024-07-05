@@ -8,7 +8,6 @@
 	import DateShow from '../DateShow.svelte';
 
 	export let project: Project;
-	export let instruments: Array<Instrument>;
 	export let pieces: Array<Piece>;
 	export let sectionGroups: Array<SectionGroup>;
 	export let mode: 'modify' | 'create';
