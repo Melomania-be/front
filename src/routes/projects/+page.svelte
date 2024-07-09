@@ -135,7 +135,7 @@
 				<button
 					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
 				>
-					<a href="/projects/create" class="border rounded-xl p-1">Create a new project</a>
+					<a href="/projects/creation" class="border rounded-xl p-1">Create a new project</a>
 				</button>
 			</li>
 		</ul>

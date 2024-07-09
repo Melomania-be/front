@@ -58,32 +58,30 @@
 			<div class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800 w-full">
 				<ul class="divide-y divide-gray-200 dark:divide-gray-700">
 					{#each project.rehearsals as rehearsal}
-					<li class="py-3 sm:py-4">
-						<div class="flex items-center justify-between">
-							<div class="flex items-center space-x-1">
-								<h3 class="text-gray-900 dark:text-white">
-									{rehearsal.place}
-								</h3>
-								<div class="rounded-full bg-slate-100 p-1">
-									<DateShow date={rehearsal.date} />
+						<li class="py-3 sm:py-4">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center space-x-1">
+									<h3 class="text-gray-900 dark:text-white">
+										{rehearsal.place}
+									</h3>
+									<div class="rounded-full bg-slate-100 p-1">
+										<DateShow date={rehearsal.date} />
+									</div>
+								</div>
+								<div>
+									{#if rehearsal.comment}
+										{rehearsal.comment}
+									{/if}
 								</div>
 							</div>
-							<div>
-								{#if rehearsal.comment}
-									{rehearsal.comment}
-								{/if}
-							</div>
-						</div>
-					</li>
+						</li>
 					{/each}
 				</ul>
 
 				<div class="flex justify-end">
-					{#if project.rehearsals.length === 0}
-						<p class="text-sm">
-							<a href="/projects/management/{project.id}/rehearsals/add">Create a rehearsal</a>
-						</p>
-					{/if}
+					<p class="text-sm">
+						<a href="/projects/management/{project.id}/rehearsals/add">Create a rehearsal</a>
+					</p>
 				</div>
 			</div>
 		{/if}
@@ -112,11 +110,9 @@
 				</ul>
 
 				<div class="flex justify-end">
-					{#if project.concerts.length === 0}
-						<p class="text-sm">
-							<a href="/projects/management/{project.id}/concerts/add">Create a concert</a>
-						</p>
-					{/if}
+					<p class="text-sm">
+						<a href="/projects/management/{project.id}/concerts/add">Create a concert</a>
+					</p>
 				</div>
 			</div>
 		{/if}
