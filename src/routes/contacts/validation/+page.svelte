@@ -48,6 +48,8 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Contact } from '$lib/types/Contact';
 	import { updated } from '$app/stores';
+	import type { Project } from '$lib/types/Project';
+	import type { Callsheet } from '$lib/types/Callsheet';
 	let meta: any = {};
 	let options: any = {
 		filter: '',
@@ -342,9 +344,69 @@
 			notValidatedContacts = notValidatedContacts.filter(
 				(contact) => contact.id !== selectedContact?.id
 			);
+			sendCallsheetNotification();
 			deselectContact();
 		}
 	}
+
+	async function sendCallsheetNotification() {
+	
+	let contact = {
+			first_name: selectedContact?.firstName || '',
+			last_name: selectedContact?.lastName || '',
+			email: selectedContact?.email || '',
+	};
+
+	let project = {
+			id: 1, 
+			name: 'Test'
+		};
+
+	let callsheet =  {
+			id: 1,
+			version: '1.0',
+			project_id: 1
+		};
+
+    let to_contact: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone: string;
+      messenger: string;
+    }
+
+	to_contact = {
+			first_name: selectedContact?.firstName || '',
+			last_name: selectedContact?.lastName || '',
+			email: selectedContact?.email || '',
+			phone: selectedContact?.phone || '',
+			messenger: selectedContact?.messenger || ''
+	};
+
+	const data = {
+    contact: contact,
+    project: project,
+    callsheet: callsheet,
+    to_contact: to_contact,
+  	};
+
+	console.log('Data to send:', data);
+
+  	try {
+    	const resMail = await fetch('/api/mailing/sendCallsheetNotifications', {
+      	method: 'POST',
+     	headers: {
+        	'Content-Type': 'application/json',
+      	},
+      	body: JSON.stringify(data),
+    });
+	}
+	catch (error) {
+		console.error('Error sending email:', error);
+	}
+	
+}
 </script>
 
 <main class="grid grid-cols-5 ml-5 mr-5">
