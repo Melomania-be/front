@@ -70,6 +70,43 @@ async function sendConfirmationNotification() {
 
 async function sendRecommendationNotification() {
     console.log('Send Recommendation Notification');
+    let contact = {
+			first_name: 'Judith',
+			last_name: 'Lecoq',
+			email: 'lecoqjudith@gmail.com',
+	};
+
+    let project = {
+            id: 1, 
+            name: 'Test'
+        };
+
+    let registration =  {
+            id: 1,
+            version: '1.0',
+            project_id: 1
+        };
+
+    const data = {
+        contact: contact,
+        project: project,
+        registration: registration,
+    };
+
+    console.log(data);
+
+    try {
+        const resMail = await fetch('/api/mailing/sendRecommendationNotifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+    }
+    catch (error) {
+        console.error('Error sending email:', error);
+    }
 }
 </script>
 
