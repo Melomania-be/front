@@ -9,7 +9,8 @@ export const POST : RequestHandler = async ({ cookies, request, fetch }) => {
     const res = await fetch (`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/mailing/sendCallsheetNotification`,{
         method: 'POST',
         headers: {
-            authorization: `${await getToken(cookies)}`
+            authorization: `${await getToken(cookies)}`,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     });
