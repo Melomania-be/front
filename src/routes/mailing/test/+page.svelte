@@ -1,8 +1,9 @@
 <script lang="ts">
 
 async function sendCallsheetNotification() {
-	
+	console.log('Send Callsheet Notification');
 	let contact = {
+            id : 1,
 			first_name: 'Judith',
 			last_name: 'Lecoq',
 			email: 'lecoqjudith@gmail.com',
@@ -58,12 +59,52 @@ async function sendCallsheetNotification() {
 	
 }
 
-async function sendConfirmationNotification() {
-    console.log('Send Confirmation Notification');
+async function sendRegistrationNotification() {
+    console.log('Send Registration (confirmation) Notification');
     let contact = {
+            id : 1,
             first_name: 'Judith',
             last_name: 'Lecoq',
             email: 'lecoqjudith@gmail.com'
+    }
+
+    let project = {
+            id: 1, 
+            name: 'Test'
+    };
+
+    let callsheet =  {
+            id: 1,
+            version: '1.0',
+            project_id: 1
+    };
+
+    let to_contact = {
+            first_name: 'Prénom',
+            last_name: 'Nom',
+            email: 'contact@mail.com',
+            phone: '01 23 45 67 89',
+            messenger: 'messenger'
+        };
+
+    const data = {
+        contact: contact,
+        project: project,
+        callsheet: callsheet,
+        to_contact: to_contact,
+    };
+
+    try {
+        const resMail = await fetch('/api/mailing/sendRegistrationNotifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+    }
+    catch (error) {
+        console.error('Error sending email:', error);
     }
 
 }
@@ -92,8 +133,6 @@ async function sendRecommendationNotification() {
         project: project,
         registration: registration,
     };
-
-    console.log(data);
 
     try {
         const resMail = await fetch('/api/mailing/sendRecommendationNotifications', {
@@ -128,7 +167,7 @@ async function sendRecommendationNotification() {
         font-bold
         py-2
         px-4
-        rounded" on:click={sendConfirmationNotification}>Send Confirmation Notification</button>
+        rounded" on:click={sendRegistrationNotification}>Send Confirmation Notification</button>
 
     <button class="
         bg-red-500

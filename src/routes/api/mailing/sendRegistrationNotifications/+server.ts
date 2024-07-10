@@ -6,7 +6,7 @@ import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
 export const POST : RequestHandler = async ({ cookies, request, fetch }) => {
     const data = await request.json();
 
-    const res = await fetch (`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/mailing/sendRecommendationNotification`,{
+    const res = await fetch (`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/mailing/sendRegistrationNotification`,{
         method: 'POST',
         headers: {
             authorization: `${await getToken(cookies)}`,
