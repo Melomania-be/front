@@ -8,7 +8,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Composer } from '$lib/types/Composer';
 
-	let selectedComposer: Composer;
+	let selectedData: Composer;
 
     let composers: Composer[] = [];
 	let meta: any = {};
@@ -67,7 +67,7 @@
 				notOrderedColumns: []
 			};
 
-			selectedComposer = composers[0];
+			selectedData = composers[0];
 			
 		});
 	}
@@ -84,18 +84,18 @@
 
 	//api composer
 	async function addComposer() {
-		if (selectedComposer.birthDate === null || selectedComposer.deathDate === null) {
+		if (selectedData.birthDate === null || selectedData.deathDate === null) {
 			return alert('Please enter a date of birth and a date of death');
 		}
 
 		const data = {
-			id: selectedComposer.id ? selectedComposer.id : undefined,
-			long_name: selectedComposer.longName,
-			short_name: selectedComposer.shortName,
-			main_style: selectedComposer.mainStyle,
-			country: selectedComposer.country,
-			birth_date: (await new Date(selectedComposer.birthDate))?.getTime(),
-			death_date: (await new Date(selectedComposer.deathDate))?.getTime()
+			id: selectedData.id ? selectedData.id : undefined,
+			long_name: selectedData.longName,
+			short_name: selectedData.shortName,
+			main_style: selectedData.mainStyle,
+			country: selectedData.country,
+			birth_date: (await new Date(selectedData.birthDate))?.getTime(),
+			death_date: (await new Date(selectedData.deathDate))?.getTime()
 		};
 
 		const response = await fetch('/api/composers/', {
@@ -118,7 +118,7 @@
 
 		if (!validated) return;
 
-		const jsoned = JSON.stringify({ id: selectedComposer.id });
+		const jsoned = JSON.stringify({ id: selectedData.id });
 
 		const response = await fetch('/api/composers/', {
 			method: 'DELETE',
@@ -145,7 +145,7 @@
                 bind:uniqueUrl
                 on:optionsUpdated={() => fetchData()}
 				buttonLinkId={false}
-				bind:selectedComposer
+				bind:selectedData
             ></SimpleFilterer>
         {/if}
     </div>
@@ -153,7 +153,7 @@
 
 	<!--affichage du composer selectionné-->
     <div class="w-1/2">
-		{#if selectedComposer == null}
+		{#if selectedData == null}
         	<span>selectionner un composer</span>
 		{:else}
 			<!--affichage des composers-->
@@ -163,28 +163,28 @@
 					<span>Full Name</span>
 					<input
 						class="p-1"
-						bind:value={selectedComposer.longName}
+						bind:value={selectedData.longName}
 						placeholder="enter the full name"
 					/>
 					<span>Short name</span>
 					<input
 						class="p-1"
-						bind:value={selectedComposer.shortName}
+						bind:value={selectedData.shortName}
 						placeholder="enter the short name"
 					/>
 					<span>His main style</span>
 					<input
 						class="p-1"
-						bind:value={selectedComposer.mainStyle}
+						bind:value={selectedData.mainStyle}
 						placeholder="enter his main style"
 					/>
 					<span>Country</span>
-					<input class="p-1" bind:value={selectedComposer.country} placeholder="enter his country" />
+					<input class="p-1" bind:value={selectedData.country} placeholder="enter his country" />
 					<span>Date of birth</span>
 					<input
 						id="birthDate"
 						class="p-1"
-						bind:value={selectedComposer.birthDate}
+						bind:value={selectedData.birthDate}
 						placeholder="enter his date of birth"
 						type="date"
 					/>
@@ -192,14 +192,14 @@
 					<input
 						id="deathDate"
 						class="p-1"
-						bind:value={selectedComposer.deathDate}
+						bind:value={selectedData.deathDate}
 						placeholder="enter his date of death"
 						type="date"
 					/>
 				</div>
 
 				<div class="flex p-2">
-					{#if selectedComposer.id == null}
+					{#if selectedData.id == null}
 						<button class="p-1 border-2 border-green-500" on:click={addComposer}> add </button>
 					{:else}
 						<button class="p-1 border-2 border-orange-500" on:click={addComposer}> modify </button>

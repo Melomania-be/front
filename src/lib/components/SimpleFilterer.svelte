@@ -28,7 +28,7 @@
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
 	export let uniqueUrl: string = '';
 	export let buttonLinkId: boolean = true;
-	export let selectedComposer: GenericDataType;
+	export let selectedData: GenericDataType;
 
 	function changePage(newPage: number) {
 		options.page = newPage;
@@ -119,7 +119,7 @@
 		</div>
 		<slot />
 	{:else}
-		<Table {data} bind:options bind:meta bind:uniqueUrl bind:editable {changePage} buttonLinkId={buttonLinkId} bind:selectedComposer/>
+		<Table {data} bind:options bind:meta bind:uniqueUrl bind:editable {changePage} buttonLinkId={buttonLinkId} bind:selectedData/>
 	{/if}
 	<div class="my-2">
 		<Paginator
