@@ -18,6 +18,7 @@ import type { File } from './File';
 import type { CustomContact } from './CustomContact';
 import type { List } from './List';
 import type { CustomList } from './CustomList';
+import type { Participant } from './Participant';
 
 export type GenericDataType =
 	| Answer
@@ -39,4 +40,5 @@ export type GenericDataType =
 	| TypeOfPiece
 	| CustomContact
 	| List
-	| CustomList;
+	| CustomList
+	| Participant;

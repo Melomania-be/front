@@ -152,7 +152,7 @@
 								<div
 									class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
 								>
-									<a href={`/projects/management/${project.id}`}>
+									<a href={`/projects/${project.id}/management`}>
 										<h2 class="text-sm">{project.name}</h2>
 										<ul class="text-sm">
 											{#each project.concerts as concert}

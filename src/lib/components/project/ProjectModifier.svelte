@@ -37,7 +37,7 @@
 	}
 
 	function addRehearsalDate() {
-		project.rehearsals = [...project.rehearsals, { id: null, date: '', comment: '', place: '' }];
+		project.rehearsals = [...project.rehearsals, { id: null, date: '', comment: '', place: '', project_id: null}];
 	}
 
 	async function saveProject() {
@@ -68,6 +68,11 @@
 			},
 			body: JSON.stringify(projectToSend)
 		});
+
+		if (response.ok) {
+			const data = await response.json();
+			goto(`/projects/${data.id}/management`);
+		}
 	}
 
 	async function deleteProject() {
@@ -83,8 +88,6 @@
 			}
 		}
 	}
-
-	// registration (toutes les informations, création de champs particuliers à remplir à faire en DERNIER)
 
 	let contacts: (Contact & { selected: boolean })[] = [];
 	let meta: any = {};
@@ -408,7 +411,7 @@
 						{#if contacts}
 							{#each contacts as contact}
 								<div
-									class="flex items-center ps-4 border border-gray-200 rounded dark:border-gray-700"
+									class="flex items-center p-2 border border-gray-200 rounded dark:border-gray-700"
 								>
 									<input
 										bind:checked={contact.selected}

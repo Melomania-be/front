@@ -5,4 +5,5 @@ export interface Rehearsal {
 	date: string | Date;
 	comment: string | null;
 	place: string;
+	project_id: number | null;
 }

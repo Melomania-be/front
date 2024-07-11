@@ -21,4 +21,4 @@
 	let pieces: Array<Piece> = data.pieces;
 </script>
 
-<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} urlFront={`/projects/management/${project.id}/modify`}/>
+<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} urlFront={`/projects/${project.id}/management/modify`}/>

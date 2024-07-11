@@ -7,6 +7,6 @@ export interface Registration {
 	id: number;
 	project: Project | null;
 	contents: ContentRegistration[];
-	forms: Form[];
+	form: Form[];
 	//status: boolean
 }
