@@ -18,7 +18,7 @@
 		{ icon: faPersonDigging, text: 'users', href: '/users' },
 		{ icon: faPersonDigging, text: 'mailing', href: '/mailing' },
 		{ icon: faPersonDigging, text: 'files', href: '/files' },
-		{ icon: faPersonDigging, text: 'composer and piece', href: '/composer&piece' },
+		{ icon: faPersonDigging, text: 'composer and piece', href: '/library' },
 		{ icon: faPersonDigging, text: 'log out', href: '/api/sign_out' }
 	];
 </script>

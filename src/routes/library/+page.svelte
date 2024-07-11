@@ -78,6 +78,7 @@
 
 		if (response.ok) {
 			const listPieces: Array<Piece> = await response.json();
+			console.log(listPieces)
 			copyListPiece = structuredClone(listPieces);
 			copyCopyListPiece = structuredClone(listPieces);
 		}
@@ -547,3 +548,8 @@
 		{/if}
 	</div>
 </div>
+
+
+<a href="/library/composers" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">composers</a>
+<a href="/library/pieces" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">pieces</a>
+<a href="/library/type_of_pieces" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">type_of_pieces</a>

@@ -37,6 +37,8 @@
 	};
 	export let changePage: (newPage: number) => void;
 	export let uniqueUrl: string;
+	export let buttonLinkId: boolean = true;
+	export let selectedComposer: GenericDataType;
 
 	interface WithId {
 		id: number;
@@ -95,6 +97,7 @@
 		</thead>
 		<tbody>
 			{#each data.data as row}
+			{console.log(row)}
 				<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
 					{#each data.columns as column}
 						<td>{row[column]}</td>
@@ -105,15 +108,26 @@
 					<td>
 						{#if editable}
 							{#if hasId(row)}
-								<button
+								{#if buttonLinkId == true}
+									<button
+										on:click={() => {
+											const url = `${uniqueUrl}/${row.id}`;
+											goto(url);
+										}}
+										class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+									>
+										<span class="icon-[formkit--arrowright] hover:text-black"></span>
+									</button>
+								{:else}
+									<button
 									on:click={() => {
-										const url = `${uniqueUrl}/${row.id}`;
-										goto(url);
+										selectedComposer = row
 									}}
 									class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
-								>
-									<span class="icon-[formkit--arrowright] hover:text-black"></span>
-								</button>
+									>
+										<span class="icon-[formkit--arrowright] hover:text-black"></span>
+									</button>
+								{/if}
 							{/if}
 						{/if}
 					</td>
