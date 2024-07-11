@@ -6,7 +6,7 @@ import type { Section } from './Section';
 export interface Participant {
 	id: number;
 	accepted: boolean;
-	answer: Array<Answer>;
+	answers: Array<Answer>;
 	project: Project;
 	section: Section;
 	contact: Contact;

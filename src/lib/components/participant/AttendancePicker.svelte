@@ -7,6 +7,7 @@
 	export let participants: CustomParticipant[];
 	export let concertsOrRehearsals;
 	export let type: 'concert' | 'rehearsal';
+	export let disabled: boolean = false;
 
 	function triggerEvent(participant: CustomParticipant, concertOrRehehearsal: Rehearsal | Concert) {
 		switch (type) {
@@ -52,6 +53,7 @@
 						<input
 							type="checkbox"
 							on:change={() => triggerEvent(participant, concertOrRehearsal)}
+							disabled={disabled}
 						/>
 					</td>
 				{/each}

@@ -20,6 +20,25 @@ export const GET: RequestHandler = async ({ cookies, url, fetch, params }) => {
 		}
 	);
 
-	console.log(res);
 	return res;
 };
+
+export const POST: RequestHandler = async ({ request, cookies, params }) => {
+	const data = await request.json();
+
+	console.log('data', data);
+
+	const res = await fetch(
+		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${params.id}/management/participants`,
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				authorization: `${await getToken(cookies)}`
+			},
+			body: JSON.stringify(data)
+		}
+	);
+
+	return res;
+}
