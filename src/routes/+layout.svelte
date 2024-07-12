@@ -3,7 +3,8 @@
 	import { page } from '$app/stores';
 
 	import Fa from 'svelte-fa';
-	import { faPersonDigging } from '@fortawesome/free-solid-svg-icons';
+	import { faPersonDigging, faFolderTree } from '@fortawesome/free-solid-svg-icons';
+
 
 	export let data;
 
@@ -17,7 +18,7 @@
 		{ icon: faPersonDigging, text: 'contacts', href: '/contacts' },
 		{ icon: faPersonDigging, text: 'users', href: '/users' },
 		{ icon: faPersonDigging, text: 'mailing', href: '/mailing' },
-		{ icon: faPersonDigging, text: 'files', href: '/files' },
+		{ icon: faFolderTree, text: 'files', href: '/files' },
 		{ icon: faPersonDigging, text: 'composer and piece', href: '/library' },
 		{ icon: faPersonDigging, text: 'log out', href: '/api/sign_out' }
 	];

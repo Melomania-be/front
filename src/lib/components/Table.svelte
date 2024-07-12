@@ -97,7 +97,6 @@
 		</thead>
 		<tbody>
 			{#each data.data as row}
-			{console.log(row)}
 				<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
 					{#each data.columns as column}
 						<td>{row[column]}</td>
