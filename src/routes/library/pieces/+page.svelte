@@ -40,6 +40,22 @@
 
 	let dataHolder: TableData<Piece>;
 
+	let newPiece: Piece = {
+		arranger: null,
+		folderId: null,
+		folder: null,
+		composer: null,
+		composerId: null,
+		CreatedAt: new Date(),
+		id: 0,
+		name: null,
+		opus: null,
+		typeOfPiece: null,
+		typeOfPieceId: null,
+		updatedAt: null,
+		yearOfComposition: null
+	};
+
     onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		options = {
@@ -71,6 +87,8 @@
 			const data = await response.json();
 
 			piece = data
+			piece.unshift(newPiece)
+
 			console.log(piece)
 
             meta = data.meta;
@@ -147,6 +165,9 @@
 			type_of_piece_id: selectedData.typeOfPiece?.id,
 			year_of_composition: selectedData.yearOfComposition || ''
 		};
+		if(data.id == 0){
+			data.id = undefined;
+		}
 
 		const response = await fetch('/api/pieces', {
 			method: 'PUT',

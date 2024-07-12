@@ -29,6 +29,18 @@
 
 	let dataHolder: TableData<Composer>;
 
+	let newComposer: Composer = {
+		birthDate: null,
+		country: null,
+		createdAt: new Date(),
+		deathDate: null,
+		id: 0,
+		longName: null,
+		mainStyle: null,
+		shortName: null,
+		updatedAt: null
+	};
+
     onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		options = {
@@ -60,6 +72,7 @@
 			const data = await response.json();
 			
 			composers = data
+			composers.unshift(newComposer)
 
             meta = data.meta;
 
@@ -96,6 +109,9 @@
 			birth_date: (await new Date(selectedData.birthDate))?.getTime(),
 			death_date: (await new Date(selectedData.deathDate))?.getTime()
 		};
+		if(data.id == 0){
+			data.id = undefined;
+		}
 
 		const response = await fetch('/api/composers/', {
 			method: 'PUT',

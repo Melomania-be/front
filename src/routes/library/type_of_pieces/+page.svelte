@@ -28,6 +28,13 @@
 
 	let dataHolder: TableData<TypeOfPiece>;
 
+	let newTypeOfPiece: TypeOfPiece = {
+		createdAt: new Date(),
+		id: 0,
+		name: 'new',
+		updatedAt: null
+	};
+
     onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		options = {
@@ -59,6 +66,8 @@
 			const data = await response.json();
 
 			typeOfPiece = data
+			
+			typeOfPiece.unshift(newTypeOfPiece)
 
             meta = data.meta;
 
@@ -82,14 +91,21 @@
 
 	//api type of piece
 	async function addTypeOfPiece() {
-		const name = selectedData.name;
+		const data = {
+			id: selectedData.id ? selectedData.id : undefined,
+			name: selectedData.name
+		}		
+		if(data.id == 0){
+			data.id = undefined;
+		}
+
 		let response = await fetch('/api/type_of_pieces/', {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				name
+				data
 			})
 		});
 
