@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
+	import { updated } from '$app/stores';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
+	import DateShow from '$lib/components/DateShow.svelte';
 	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
-	import type { Participant } from '$lib/types/Participant';
+	import type { Callsheet } from '$lib/types/Callsheet.js';
 	import type { TableData } from '$lib/types/TableData';
 	import { onMount } from 'svelte';
 
 	export let data;
 
-	let participants: Participant[] = [];
+	let callsheets: Callsheet[] = [];
 	let meta: any = {};
 	let options: any = {
 		filter: '',
@@ -22,14 +24,14 @@
 	let urlFront: string;
 	let uniqueUrl: string;
 
-	let dataHolder: TableData<Participant>;
+	let dataHolder: TableData<Callsheet>;
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 
-		urlSvelteApi = `/api/projects/${data.id}/management/participants`;
-		urlFront = `/projects/${data.id}/management/participants`;
-		uniqueUrl = `/projects/${data.id}/management/participants`;
+		urlSvelteApi = `/api/projects/${data.id}/management/callsheets`;
+		urlFront = `/projects/${data.id}/management/callsheets`;
+		uniqueUrl = `/projects/${data.id}/management/callsheets`;
 		options = {
 			filter: urlParams.get('filter') || '',
 			limit: parseInt(urlParams.get('limit') || '5'),
@@ -58,12 +60,18 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			participants = data.data;
+			callsheets = data.data.map((callsheet: Callsheet) => {
+				return {
+					...callsheet,
+					updatedAt: new Date(callsheet.updatedAt),
+					createdAt: new Date(callsheet.createdAt)
+				};
+			});
 			meta = data.meta;
 
 			dataHolder = {
-				data: participants,
-				columns: ['id'],
+				data: callsheets,
+				columns: ['version', 'updatedAt'],
 				notOrderedColumns: []
 			};
 		});
@@ -71,22 +79,13 @@
 </script>
 
 <SimpleFilterer
+showData
 	bind:data={dataHolder}
 	bind:meta
 	bind:options
 	bind:uniqueUrl
 	on:optionsUpdated={fetchData}
 >
-	{#each participants as participant}
-		<a href="{uniqueUrl}/{participant.id}">
-			{participant.id}
-			{participant.contact.firstName}
-			{participant.contact.lastName}
-			{participant.contact.email}
-			{participant.contact.phone}
-			{participant.contact.messenger}
-		</a>
-	{/each}
 </SimpleFilterer>
 
 <button on:click={() => goto(`${urlFront}/creation`)}>Add a participant</button>

@@ -8,4 +8,6 @@ export interface Callsheet {
 	project_id: number;
 	contents: ContentCallsheet[];
 	project: Project;
+	updatedAt: Date;
+	createdAt: Date;
 }
