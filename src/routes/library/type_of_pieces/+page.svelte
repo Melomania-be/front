@@ -31,7 +31,7 @@
 	let newTypeOfPiece: TypeOfPiece = {
 		createdAt: new Date(),
 		id: 0,
-		name: 'new',
+		name: null,
 		updatedAt: null
 	};
 
