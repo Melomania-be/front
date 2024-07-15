@@ -84,10 +84,7 @@
 			};
 
 			shownProjects = allProjects;
-
-			console.log('allProjects', allProjects);
-			console.log('passedProjects', passedProjects);
-			console.log('currentProjects', currentProjects);
+			shownProjectsArray = 'allProjects';
 		});
 	}
 </script>
@@ -138,7 +135,7 @@
 				<button
 					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
 				>
-					<a href="/projects/create" class="border rounded-xl p-1">Create a new project</a>
+					<a href="/projects/creation" class="border rounded-xl p-1">Create a new project</a>
 				</button>
 			</li>
 		</ul>
@@ -147,23 +144,24 @@
 		<div>
 			{#if shownProjectsArray}
 				<div
-					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 ml-10 mr-10"
+					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mb-1"
 				>
 					<SimpleFilterer showData={false} bind:data={group} bind:meta bind:options>
-						<div class=" bg-white bordermx-auto justify-center col col-1">
+						<div class=" bg-white bordermx-auto justify-center w-full">
 							{#each shownProjects as project}
-								<a
-									class="w-full col-1 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
-									href={`/projects/management/${project.id}`}
+								<div
+									class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
 								>
-									<h2 class="text-sm">{project.name}</h2>
-									<ul class="text-sm">
-										{#each project.concerts as concert}
-											<DateShow date={concert.date} />
-											- {concert.place}
-										{/each}
-									</ul>
-								</a>
+									<a href={`/projects/${project.id}/management`}>
+										<h2 class="text-sm">{project.name}</h2>
+										<ul class="text-sm">
+											{#each project.concerts as concert}
+												<DateShow date={concert.date} />
+												- {concert.place}
+											{/each}
+										</ul>
+									</a>
+								</div>
 							{/each}
 						</div>
 					</SimpleFilterer>

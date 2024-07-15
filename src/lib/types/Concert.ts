@@ -1,7 +1,7 @@
 export interface Concert {
 	id: number | null;
-	date: string;
-	comment: string;
+	date: string | Date;
+	comment: string | null;
 	project_id: number | null;
 	place: string;
 }

@@ -8,6 +8,7 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		{
 			method: 'GET',
 			headers: {
+				'Content-Type': 'application/json',
 				authorization: `${await getToken(cookies)}`
 			}
 		}

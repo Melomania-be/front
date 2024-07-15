@@ -1,4 +1,6 @@
 <script lang="ts" generics="DataType extends GenericDataType">
+	import DateShow from './DateShow.svelte';
+
 	import { goto } from '$app/navigation';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
@@ -99,7 +101,13 @@
 			{#each data.data as row}
 				<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
 					{#each data.columns as column}
-						<td>{row[column]}</td>
+						{#if typeof row[column] === 'object' && row[column] instanceof Date}
+							<td>
+								<DateShow date={row[column]} />
+							</td>
+						{:else}
+							<td>{row[column]}</td>
+						{/if}
 					{/each}
 					{#each data.notOrderedColumns as column}
 						<td>{row[column]}</td>

@@ -21,7 +21,8 @@
 		rehearsals: [],
 		pieces: [],
 		sectionGroup: null,
-		concerts: []
+		concerts: [],
+		responsibles: []
 	};
 
 	onMount(async () => {
@@ -58,4 +59,5 @@
 	{project}
 	pieces={listPieces}
 	sectionGroups={listSectionGroups}
+	urlFront={`/projects/creation`}
 />

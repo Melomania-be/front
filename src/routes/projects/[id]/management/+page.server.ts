@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ cookies, params, fetch }) => {
 	const id = Number(params.id);
 
 	const serverResponseProject = await fetch(
-		'http://' + BACKEND_API_HOST + ':' + BACKEND_API_PORT + '/projects/management/' + id,
+		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${id}/management/`,
 		{
 			method: 'GET',
 			headers: {

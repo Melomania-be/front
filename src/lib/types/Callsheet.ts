@@ -1,11 +1,12 @@
 import type { ContentCallsheet } from './ContentCallsheet';
-import type { GenericDataType } from './GenericDataType';
 import type { Project } from './Project';
 
 export interface Callsheet {
-	id: number;
+	id: number | null;
 	version: string;
-	project_id: number;
+	projectId: number;
 	contents: ContentCallsheet[];
 	project: Project;
+	updatedAt: Date;
+	createdAt: Date;
 }
