@@ -1,3 +1,4 @@
+import type { Callsheet } from './Callsheet';
 import type { Concert } from './Concert';
 import type { Contact } from './Contact';
 import type { GenericDataType } from './GenericDataType';
@@ -15,4 +16,6 @@ export interface Project {
 	sectionGroup: SectionGroup | null;
 	concerts: Concert[];
 	responsibles: Contact[];
+	callsheets?: Callsheet[];
+	participants?: Contact[];
 }

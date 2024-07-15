@@ -1,9 +1,25 @@
 <script lang="ts">
-	export let project: any;
-	export let participantsNotSeenCallsheet: Array<any>;
-	export let participantsNotValidated: Array<any>;
+	import type { Project } from '$lib/types/Project';
+	import type { Participant } from '$lib/types/Participant';
+	import type { Callsheet } from '$lib/types/Callsheet';
+
+	export let project: Project;
+	export let participantsNotSeenCallsheet: Array<Participant>;
+	export let participantsNotValidated: Array<Participant>;
 
 	let mode: 'callsheets' | 'registration' = 'callsheets';
+
+	function maxUpdateDate(callsheets: Callsheet[]) {
+		let maxDate = new Date(0);
+		let index = 0;
+		for (let i = 0; i < callsheets.length; i++) {
+			if (new Date(callsheets[i].updatedAt) > maxDate) {
+				maxDate = new Date(callsheets[i].updatedAt);
+				index = i;
+			}
+		}
+		return callsheets[index];
+	}
 </script>
 
 <div
@@ -56,45 +72,55 @@
 		{#if mode === 'callsheets'}
 			<div class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800 w-full">
 				<ul class="divide-y divide-gray-200 dark:divide-gray-700">
-					{#each project.callsheets.reverse() as callsheets}
-						<li class="py-3 sm:py-4">
-							<div class="flex items-center justify-between">
-								<div class="flex items-center space-x-1">
-									<h3 class="text-sm font-medium text-gray-900 dark:text-white">
-										{callsheets.version}
-									</h3>
+					{#if project.callsheets}
+						{#each project.callsheets.reverse() as callsheets}
+							<li class="py-3 sm:py-4">
+								<div class="flex items-center justify-between">
+									<div class="flex items-center space-x-1">
+										<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+											{callsheets.version}
+										</h3>
+									</div>
 								</div>
-							</div>
-						</li>
-					{/each}
+							</li>
+						{/each}
+					{:else}
+						<li class="text-sm">No callsheet</li>
+					{/if}
 				</ul>
-				<div class="flex justify-end">
-					{#if project.callsheets.length === 0}
-						<p class="text-sm">
-							<a href="/projects/management/{project.id}/callsheets/add">Create a callsheet</a>
-						</p>
+				<div class="flex justify-center">
+					{#if project.callsheets && project.callsheets.length > 0}
+						<a
+							href="/projects/{project.id}/management/callsheets/{maxUpdateDate(project.callsheets)
+								.id}/creation"
+							class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+							>Create a new callsheet from the last one</a
+						>
 					{:else}
 						<a
-							href="/projects/management/{project.id}/callsheets/add"
+							href="/projects/{project.id}/management/callsheets/creation"
 							class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 							>Add a new callsheet</a
 						>
 					{/if}
 				</div>
-				<div class="flex mt-1">
-					<div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
-						<div
-							class="h-1 bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-							style="width: {((project.participants.length - participantsNotSeenCallsheet.length) /
-								project.participants.length) *
-								100}%;"
-						></div>
+				{#if project.participants}
+					<div class="flex mt-1">
+						<div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
+							<div
+								class="h-1 bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+								style="width: {((project.participants.length -
+									participantsNotSeenCallsheet.length) /
+									project.participants.length) *
+									100}%;"
+							></div>
+						</div>
 					</div>
-				</div>
-				<div>
-					{project.participants.length - participantsNotSeenCallsheet.length} / {project
-						.participants.length} participants have seen the last callsheet
-				</div>
+					<div>
+						{project.participants.length - participantsNotSeenCallsheet.length} / {project
+							.participants.length} participants have seen the last callsheet
+					</div>
+				{/if}
 				<div class="mt-2">
 					<h3>Participants who have not seen the last callsheet :</h3>
 					<ul>

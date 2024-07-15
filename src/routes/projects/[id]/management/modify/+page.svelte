@@ -3,22 +3,52 @@
 	import type { SectionGroup } from '$lib/types/SectionGroup';
 	import type { Piece } from '$lib/types/Piece';
 	import ProjectModifier from '$lib/components/project/ProjectModifier.svelte';
-	import type { Concert } from '$lib/types/Concert.js';
-	import type { Rehearsal } from '$lib/types/Rehearsal.js';
+	import { onMount } from 'svelte';
 
 	export let data;
 
-	let project: Project = {
-		...data.project[0],
-		concerts: data.project[0].concerts.map((concert: Concert) => {
-			return { ...concert, date: new Date(concert.date) };
-		}),
-		rehearsals: data.project[0].rehearsals.map((rehearsal: Rehearsal) => {
-			return { ...rehearsal, date: new Date(rehearsal.date) };
-		})
-	};
-	let sectionGroups: Array<SectionGroup> = data.sectionGroups;
-	let pieces: Array<Piece> = data.pieces;
+	let project: Project;
+	let sectionGroups: Array<SectionGroup>;
+	let pieces: Array<Piece>;
+
+	onMount(async () => {
+		const projectResponse = await fetch(`/api/projects/${data.id}`, {
+			method: 'GET'
+		});
+
+		if (projectResponse.ok) {
+			let tmp = await projectResponse.json();
+			project = tmp[0];
+		} else {
+			alert('server error')
+		}
+
+		const sectionGroupsResponse = await fetch(`/api/sectionGroups`, {
+			method: 'GET'
+		});
+
+		if (sectionGroupsResponse.ok) {
+			sectionGroups = await sectionGroupsResponse.json();
+		} else {
+			alert('server error')
+		}
+
+		const piecesResponse = await fetch(`/api/pieces`, {
+			method: 'GET'
+		});
+
+		if (piecesResponse.ok) {
+			pieces = await piecesResponse.json();
+		} else {
+			alert('server error')
+		}
+
+		console.log(project);
+		console.log(sectionGroups);
+		console.log(pieces);
+	});
 </script>
 
-<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} urlFront={`/projects/${project.id}/management/modify`}/>
+{#if project && sectionGroups && pieces}
+	<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} urlFront={`/projects/${data.id}/management/modify`}/>
+{/if}

@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import { updated } from '$app/stores';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
-	import DateShow from '$lib/components/DateShow.svelte';
 	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
 	import type { Callsheet } from '$lib/types/Callsheet.js';
 	import type { TableData } from '$lib/types/TableData';
@@ -17,8 +15,8 @@
 		filter: '',
 		limit: 10,
 		page: 1,
-		order: 'asc',
-		orderBy: 'id'
+		order: 'desc',
+		orderBy: 'updatedAt'
 	};
 	let urlSvelteApi: string;
 	let urlFront: string;
@@ -36,8 +34,8 @@
 			filter: urlParams.get('filter') || '',
 			limit: parseInt(urlParams.get('limit') || '5'),
 			page: parseInt(urlParams.get('page') || '1'),
-			order: urlParams.get('order') || 'asc',
-			orderBy: urlParams.get('orderBy') || 'id'
+			order: urlParams.get('order') || 'desc',
+			orderBy: urlParams.get('orderBy') || 'updatedAt'
 		};
 
 		fetchData();
@@ -76,16 +74,38 @@
 			};
 		});
 	}
+
+	function maxUpdateDate(callsheets: Callsheet[]) {
+		let maxDate = new Date(0);
+		let index = 0;
+		for (let i = 0; i < callsheets.length; i++) {
+			if (new Date(callsheets[i].updatedAt) > maxDate) {
+				maxDate = new Date(callsheets[i].updatedAt);
+				index = i;
+			}
+		}
+		return callsheets[index];
+	}
 </script>
 
 <SimpleFilterer
-showData
+	showData
 	bind:data={dataHolder}
 	bind:meta
 	bind:options
 	bind:uniqueUrl
 	on:optionsUpdated={fetchData}
->
-</SimpleFilterer>
+></SimpleFilterer>
 
-<button on:click={() => goto(`${urlFront}/creation`)}>Add a participant</button>
+<button
+	on:click={() => goto(`${urlFront}/creation`)}
+	class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+	>Add a callsheet</button
+>
+{#if callsheets.length > 0}
+	<a
+		href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
+		class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+		>Create a new callsheet from the last one</a
+	>
+{/if}

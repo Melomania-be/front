@@ -16,10 +16,11 @@
 
 		if (callsheetResponse.ok) {
 			callsheet = await callsheetResponse.json();
+			callsheet.id = null
 		} else {
 			console.error('Failed to fetch callsheet');
 		}
 	});
 </script>
 
-<CallsheetModifier {callsheet} mode='modify'/>
+<CallsheetModifier {callsheet} mode='create'/>
