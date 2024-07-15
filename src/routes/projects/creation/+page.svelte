@@ -17,7 +17,6 @@
 		id: null,
 		name: '',
 		sectionGroupId: null,
-		registrationId: null,
 		rehearsals: [],
 		pieces: [],
 		sectionGroup: null,

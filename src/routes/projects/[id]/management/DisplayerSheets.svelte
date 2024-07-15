@@ -77,9 +77,11 @@
 							<li class="py-3 sm:py-4">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center space-x-1">
-										<h3 class="text-sm font-medium text-gray-900 dark:text-white">
-											{callsheets.version}
-										</h3>
+										<a href="/projects/{project.id}/management/callsheets/{callsheets.id}">
+											<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+												{callsheets.version}
+											</h3>
+										</a>
 									</div>
 								</div>
 							</li>
@@ -126,7 +128,7 @@
 					<ul>
 						{#each participantsNotSeenCallsheet.slice(0, 3) as participant}
 							<li class="text-sm">
-								<a href="/projects/management/{project.id}/participants/{participant.id}">
+								<a href="/projects/{project.id}/management/participants/{participant.id}">
 									{participant.contact.firstName}
 									{participant.contact.lastName}
 									(Participant profile)
@@ -144,7 +146,7 @@
 				<ul class="divide-y divide-gray-200 dark:divide-gray-700">
 					<li class="flex items-center space-x-1">
 						<h3 class="font-medium text-gray-900 dark:text-white">Registration</h3>
-						<a href="/projects/management/{project.id}/registration" class="text-blue-700"
+						<a href="/projects/{project.id}/management/registration" class="text-blue-700"
 							>Modify registration form</a
 						>
 					</li>
@@ -156,7 +158,7 @@
 							{:else}
 								{#each participantsNotValidated.slice(0, 3) as participant}
 									<li class="text-sm">
-										<a href="/projects/management/{project.id}/participants/{participant.id}">
+										<a href="/projects/{project.id}/management/participants/{participant.id}">
 											{participant.contact.firstName}
 											{participant.contact.lastName}
 										</a>
