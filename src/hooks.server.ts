@@ -13,6 +13,7 @@ export const handle = async ({ resolve, event }) => {
 			throw redirect(307, '/login');
 		}
 	}
+	
 	if (
 		event.url.pathname.startsWith('/call_sheets') ||
 		event.url.pathname.startsWith('/login') ||

@@ -13,7 +13,6 @@
 						concerts: [],
 						pieces: [],
 						sectionGroupId: null,
-						registrationId: null,
 						rehearsals: [],
 						sectionGroup: null,
 						responsibles: [],

@@ -10,7 +10,6 @@ export interface Project {
 	id: number | null;
 	name: string;
 	sectionGroupId: number | null;
-	registrationId: number | null;
 	rehearsals: Rehearsal[];
 	pieces: Piece[];
 	sectionGroup: SectionGroup | null;
