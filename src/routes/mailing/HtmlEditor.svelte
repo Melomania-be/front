@@ -1,19 +1,26 @@
 <script lang="ts">
-	export let html = `here's some <strong>HTML!!!</strong>`;
-
+	export let content: string;
+	let editorContent: string = '';
 	let authorized = false;
 
-	let rawValue = html;
+	let rawValue = '';
 	let textArea: HTMLTextAreaElement;
 
-	let authorizedTags = ['strong', 'em', 'u', 'a', 'img', 'button', 'br', 'b', 'i', 'span'];
+	let authorizedTags = [
+	'strong', 'em', 'u', 'a', 'img', 'button', 'br', 'b', 'i', 'span', 
+	'!DOCTYPE', 'html', 'head', 'meta', 'title', 'style', 'body', 'div', 
+	'table', 'tr', 'td', 'h1', 'h3', 'p', 'v:background', 'v:fill', 'xml', 
+	'o:OfficeDocumentSettings', '!--[if', '!--[endif]--', '!--[if', '!--[endif]--', '!--[if', '![endif]--',
+	'o:AllowPNG', 'o:AllowPNG', 'o:PixelsPerInch', 'o:PixelsPerInch'
+];
 
 	let errorMessage = '';
 
 	$: {
+		rawValue = content;
 		if (checkRawValue(rawValue)) {
 			console.log(rawValue);
-			html = formatText(rawValue);
+			editorContent = formatText(rawValue);
 			errorMessage = '';
 		}
 	}
@@ -108,7 +115,7 @@
 		id="message"
 		rows="4"
 		class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-		placeholder="Write your thoughts here..."
+		placeholder="Write your html here..."
 		bind:value={rawValue}
 		bind:this={textArea}
 	></textarea>
