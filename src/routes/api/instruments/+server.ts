@@ -1,5 +1,5 @@
 import { getToken } from '$lib/server/authentification';
-import { error, json, type RequestHandler } from '@sveltejs/kit';
+import { type RequestHandler } from '@sveltejs/kit';
 import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
@@ -9,6 +9,21 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 			'Content-Type': 'application/json',
 			authorization: `${await getToken(cookies)}`
 		}
+	});
+
+	return res;
+};
+
+export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
+	const data = await request.json();
+
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/instrument`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(data)
 	});
 
 	return res;

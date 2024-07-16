@@ -129,11 +129,12 @@
 
 			participants.push(currentParticipant);
 
-			if (currentParticipant && registration && registration.project) currentParticipant.project = registration.project;
+			if (currentParticipant && registration && registration.project)
+				currentParticipant.project = registration.project;
 
 			if (mode === 'create') {
 				currentParticipant.answers = registration.form.map((form) => ({
-					formId: form.id,
+					formId: form.id!,
 					text: ''
 				}));
 
@@ -146,7 +147,7 @@
 		participants = [currentParticipant];
 	}
 
-	$: console.log(registration)
+	$: console.log(registration);
 </script>
 
 {#if currentParticipant}
@@ -245,11 +246,14 @@
 		{#if listContacts && listContacts.length > 0 && mode === 'create'}
 			<SimpleFilterer
 				bind:data={dataHolder}
-				showData={false}
-				editable={false}
 				on:optionsUpdated={fetchData}
-				bind:options
 				bind:meta
+				bind:options
+				showData={false}
+				buttonLinkId={false}
+				editable={false}
+				uniqueUrl=""
+				selectedData={null}
 			>
 				<div class="grid grid-cols-4">
 					{#each listContacts as contact}

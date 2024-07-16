@@ -25,7 +25,7 @@
 	};
 
 	onMount(async () => {
-		let responsePieces = await fetch('/api/pieces', {
+		let responsePieces = await fetch('/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id', {
 			method: 'GET'
 		});
 
