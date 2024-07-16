@@ -89,8 +89,6 @@
 			piece = data
 			piece.unshift(newPiece)
 
-			console.log(piece)
-
             meta = data.meta;
 
 			dataHolder = {
