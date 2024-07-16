@@ -11,8 +11,9 @@
 	'!DOCTYPE', 'html', 'head', 'meta', 'title', 'style', 'body', 'div', 
 	'table', 'tr', 'td', 'h1', 'h3', 'p', 'v:background', 'v:fill', 'xml', 
 	'o:OfficeDocumentSettings', '!--[if', '!--[endif]--', '!--[if', '!--[endif]--', '!--[if', '![endif]--',
-	'o:AllowPNG', 'o:AllowPNG', 'o:PixelsPerInch', 'o:PixelsPerInch'
-];
+	'o:AllowPNG', 'o:AllowPNG', 'o:PixelsPerInch', 'o:PixelsPerInch',
+	'h2', 'thead', 'th', 'tbody'
+	];
 
 	let errorMessage = '';
 
