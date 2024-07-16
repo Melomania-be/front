@@ -59,6 +59,8 @@
 				body: JSON.stringify(instrument)
 			});
 		}
+
+		window.location.reload();
 	}
 
 	async function deleteInstrument(instrument: Instrument) {
@@ -71,9 +73,65 @@
 
 		instrumentTmp = instruments[0] ?? null;
 		instruments.filter((i) => i !== instrument);
+
+		window.location.reload();
 	}
 
-	$: console.log(sectionsGroups);
+	async function saveSections() {
+		for (const section of sections) {
+			await fetch(`/api/sections`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(section)
+			});
+		}
+
+		window.location.reload();
+	}
+
+	async function saveSectionsGroups() {
+		for (const sectionGroup of sectionsGroups) {
+			await fetch(`/api/sectionGroups`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(sectionGroup)
+			});
+		}
+
+		window.location.reload();
+	}
+
+	async function deleteSection(section: Section) {
+		if (section.id) {
+			await fetch(`/api/sections/${section.id}`, {
+				method: 'DELETE'
+			});
+			sections = sections.filter((s) => s !== section);
+		}
+
+		sectionTmp = sections[0] ?? null;
+		sections.filter((s) => s !== section);
+
+		window.location.reload();
+	}
+
+	async function deleteSectionGroup(sectionGroup: SectionGroup) {
+		if (sectionGroup.id) {
+			await fetch(`/api/sectionGroups/${sectionGroup.id}`, {
+				method: 'DELETE'
+			});
+			sectionsGroups = sectionsGroups.filter((s) => s !== sectionGroup);
+		}
+
+		sectionsGroupTmp = sectionsGroups[0] ?? null;
+		sectionsGroups.filter((s) => s !== sectionGroup);
+
+		window.location.reload();
+	}
 </script>
 
 <div class="m-1 grid md:grid-cols-2">
@@ -84,7 +142,7 @@
 					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
 					on:click={() => {
 						sectionsGroups.push({
-							id: 0,
+							id: null,
 							updatedAt: new Date(),
 							name: 'New group',
 							sections: []
@@ -100,6 +158,9 @@
 								: ''}"
 							on:click={() => (sectionsGroupTmp = group)}
 							>{group.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
+						</button>
+						<button on:click={() => deleteSectionGroup(group)}>
+							<span class="icon-[formkit--trash]"></span>
 						</button>
 					{/each}
 				</div>
@@ -167,6 +228,12 @@
 					{/if}
 				</div>
 			</div>
+			<div class="lg:col-span-2">
+				<button
+					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+					on:click={() => saveSectionsGroups()}>Save</button
+				>
+			</div>
 		</div>
 	{/if}
 	{#if sections}
@@ -176,7 +243,7 @@
 					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
 					on:click={() => {
 						sections.push({
-							id: 0,
+							id: null,
 							name: 'New section',
 							size: 1,
 							instruments: []
@@ -193,6 +260,9 @@
 								: ''}"
 							on:click={() => (sectionTmp = section)}
 							>{section.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
+						</button>
+						<button on:click={() => deleteSection(section)}>
+							<span class="icon-[formkit--trash]"></span>
 						</button>
 					{/each}
 				</div>
@@ -235,6 +305,13 @@
 					{/if}
 				{/if}
 			</div>
+
+			<div class="lg:col-span-2">
+				<button
+					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+					on:click={() => saveSections()}>Save</button
+				>
+			</div>
 		</div>
 	{/if}
 	{#if instrumentTmp}
@@ -263,11 +340,9 @@
 								on:click={() => (instrumentTmp = instrument)}
 								>{instrument.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
 							</button>
-							<button
-								on:click={() => deleteInstrument(instrument)}>
+							<button on:click={() => deleteInstrument(instrument)}>
 								<span class="icon-[formkit--trash]"></span>
-								</button
-							>
+							</button>
 						</div>
 					{/each}
 				</div>
