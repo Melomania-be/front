@@ -140,6 +140,11 @@
 
 				if (browser) await fetchData();
 			}
+
+			if (registration.project && (!registration.project.sectionGroup || !registration.project.sectionGroup.sections  || registration.project.sectionGroup.sections.length === 0)) {
+				alert(`You must create a section group with sections before adding participants to the project. Redirecting...`);
+				goto(`/section-groups`);
+			}
 		}
 	});
 

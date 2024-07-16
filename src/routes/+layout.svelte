@@ -20,6 +20,7 @@
 		{ icon: faPersonDigging, text: 'mailing', href: '/mailing' },
 		{ icon: faFolderTree, text: 'files', href: '/files' },
 		{ icon: faPersonDigging, text: 'composer and piece', href: '/library' },
+		{ icon: faPersonDigging, text: 'sections and instruments', href: '/sectionGroups' },
 		{ icon: faPersonDigging, text: 'log out', href: '/api/sign_out' }
 	];
 </script>

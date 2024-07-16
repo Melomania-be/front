@@ -8,14 +8,14 @@
 </script>
 
 <div
-	class="w-full h-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+	class="w-full h-full bg-white border border-black shadow dark:bg-gray-800 dark:border-gray-700"
 >
 	<div class="sm:hidden">
 		<label for="tabs" class="sr-only">Select tab</label>
 		<select
 			bind:value={mode}
 			id="tabs"
-			class="bg-gray-50 border-0 border-b border-gray-200 text-gray-900 text-sm rounded-t-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+			class="rounded-t-lg bg-gray-50 border-0 border-b border-black text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 		>
 			<option value="rehearsals">rehearsals</option>
 			<option value="concerts">concerts</option>
@@ -53,7 +53,7 @@
 		</li>
 	</ul>
 
-	<div class="border-t border-gray-200 dark:border-gray-600 w-full">
+	<div class="border-t border-black dark:border-gray-600 w-full">
 		{#if mode === 'rehearsals'}
 			<div class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800 w-full">
 				<ul class="divide-y divide-gray-200 dark:divide-gray-700">
