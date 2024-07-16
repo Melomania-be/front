@@ -33,7 +33,7 @@
 			alert('server error')
 		}
 
-		const piecesResponse = await fetch(`/api/pieces`, {
+		const piecesResponse = await fetch(`/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id`, {
 			method: 'GET'
 		});
 
@@ -42,10 +42,6 @@
 		} else {
 			alert('server error')
 		}
-
-		console.log(project);
-		console.log(sectionGroups);
-		console.log(pieces);
 	});
 </script>
 

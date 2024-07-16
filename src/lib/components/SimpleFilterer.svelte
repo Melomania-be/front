@@ -28,7 +28,7 @@
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
 	export let uniqueUrl: string = '';
 	export let buttonLinkId: boolean = true;
-	export let selectedData: GenericDataType;
+	export let selectedData: GenericDataType | null = null;
 
 	function changePage(newPage: number) {
 		options.page = newPage;

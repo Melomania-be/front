@@ -33,7 +33,7 @@
 	</div>
 	<div class="flex flex-col md:flex-row">
 		<div
-			class="grid grid-cols-1 space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+			class="grid grid-cols-1 space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-black rounded-tl-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
 			<div class="text-sm">
 				Created at: <DateShow date={project.createdAt} />

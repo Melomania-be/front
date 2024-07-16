@@ -7,25 +7,32 @@
 
 	export let editable: boolean;
 	export let data: TableData<DataType>;
-	export let options: {
-		filter: any;
-		limit: number;
-		page: number;
-		order: 'asc' | 'desc';
-		orderBy: string;
-	} | {
-		filters: {
-			type: string;
-			filtersDepth1: {
-				type: string;
-				filtersDepth2: { relation: string; column: string; operation: string; filter: string }[];
-			}[];
-		};
-		page: number;
-		limit: number;
-		orderBy: string;
-		order: string;
-	};
+	export let options:
+		| {
+				filter: any;
+				limit: number;
+				page: number;
+				order: 'asc' | 'desc';
+				orderBy: string;
+		  }
+		| {
+				filters: {
+					type: string;
+					filtersDepth1: {
+						type: string;
+						filtersDepth2: {
+							relation: string;
+							column: string;
+							operation: string;
+							filter: string;
+						}[];
+					}[];
+				};
+				page: number;
+				limit: number;
+				orderBy: string;
+				order: string;
+		  };
 	export let meta: {
 		total: number;
 		perPage: number;
@@ -40,7 +47,7 @@
 	export let changePage: (newPage: number) => void;
 	export let uniqueUrl: string;
 	export let buttonLinkId: boolean = true;
-	export let selectedData: GenericDataType;
+	export let selectedData: GenericDataType | null;
 
 	interface WithId {
 		id: number;
@@ -125,12 +132,12 @@
 									>
 										<span class="icon-[formkit--arrowright] hover:text-black"></span>
 									</button>
-								{:else}
+								{:else if selectedData}
 									<button
-									on:click={() => {
-										selectedData = row
-									}}
-									class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+										on:click={() => {
+											selectedData = row;
+										}}
+										class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
 									>
 										<span class="icon-[formkit--arrowright] hover:text-black"></span>
 									</button>
