@@ -86,7 +86,7 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			piece = data
+			piece = data.data
 			piece.unshift(newPiece)
 
             meta = data.meta;
@@ -108,7 +108,7 @@
 		responseHandlerComposer.handle(responseComposer, async () => {
 			const data = await responseComposer.json();
 			
-			listComposers = data;
+			listComposers = data.data;
 		});
 
 		//récupération des Type Of Pieces
@@ -121,7 +121,7 @@
 		responseHandlerTypeOfPieces.handle(responseTypeOfPieces, async () => {
 			const data = await responseTypeOfPieces.json();
 			
-			listTypeOfPieces = data;
+			listTypeOfPieces = data.data;
 		});
 
 		//récupération des Folders

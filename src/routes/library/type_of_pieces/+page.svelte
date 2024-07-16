@@ -65,7 +65,7 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			typeOfPiece = data
+			typeOfPiece = data.data
 			
 			typeOfPiece.unshift(newTypeOfPiece)
 

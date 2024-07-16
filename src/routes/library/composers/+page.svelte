@@ -70,8 +70,8 @@
 
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
-			
-			composers = data
+
+			composers = data.data
 			composers.unshift(newComposer)
 
             meta = data.meta;
