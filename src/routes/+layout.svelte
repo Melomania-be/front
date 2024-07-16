@@ -13,7 +13,7 @@
 	const menu = [
 		{ icon: faPersonDigging, text: 'call-sheets', href: '/call_sheets' },
 		{ icon: faPersonDigging, text: 'registration', href: '/registration' },
-		{ icon: faPersonDigging, text: 'recommendation', href: '/recommendation' },
+		{ icon: faPersonDigging, text: 'recommendation', href: '/recommendation/1' },
 		{ icon: faPersonDigging, text: 'projects', href: '/projects' },
 		{ icon: faPersonDigging, text: 'contacts', href: '/contacts' },
 		{ icon: faPersonDigging, text: 'users', href: '/users' },

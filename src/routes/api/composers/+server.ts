@@ -26,6 +26,8 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 
 export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	const composer = await request.json();
+	console.log("je suis la")
+	console.log(composer)
 
 	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer/`, {
 		method: 'PUT',

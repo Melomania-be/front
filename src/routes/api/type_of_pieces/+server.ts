@@ -31,9 +31,8 @@ export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 			'Content-Type': 'application/json',
 			authorization: `${await getToken(cookies)}`
 		},
-		body: JSON.stringify(await data)
+		body: JSON.stringify(data)
 	});
-
 	return res;
 };
 

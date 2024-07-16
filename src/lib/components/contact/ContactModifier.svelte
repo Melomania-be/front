@@ -187,6 +187,13 @@
 								{addInstrument.family}
 							</th>
 							<th>
+								<select bind:value={addInstrument.pivot_proficiency_level}>
+									<option value="Amateur - low level">Amateur - low level</option>
+									<option value="Amateur - medium">Amateur - medium</option>
+									<option value="Amateur - high">Amateur - high</option>
+									<option value="Student">Student</option>
+									<option value="Professional">Professional</option>
+									<option value="High level professional">High level professional</option>
 								<input placeholder="level" bind:value={addInstrument.pivot_proficiency_level} />
 							</th>
 							<th>

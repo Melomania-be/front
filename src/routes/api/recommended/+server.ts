@@ -3,10 +3,10 @@ import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
 
 
-export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
-	const composer = await request.json();
+export const POST: RequestHandler = async ({ params, cookies, fetch, request }) => {
+	let composer = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/recommend_someone`, {
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/${params.id}/recommend_someone`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

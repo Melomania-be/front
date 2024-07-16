@@ -91,28 +91,28 @@
 
 	//api type of piece
 	async function addTypeOfPiece() {
-		const data = {
-			id: selectedData.id ? selectedData.id : undefined,
-			name: selectedData.name
-		}		
-		if(data.id == 0){
-			data.id = undefined;
-		}
+		if (selectedData.name){
+			const data = {
+				id: selectedData.id ? selectedData.id : undefined,
+				name: selectedData.name
+			}		
+			if(data.id == 0){
+				data.id = undefined;
+			}
 
-		let response = await fetch('/api/type_of_pieces/', {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				data
-			})
-		});
+			let response = await fetch('/api/type_of_pieces/', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			});
 
-		errorEvent(response);
+			errorEvent(response);
 
-		if (response.ok) {
-			window.location.reload();
+			if (response.ok) {
+				window.location.reload();
+			}
 		}
 	}
 
@@ -143,6 +143,7 @@
         {#if dataHolder}
             <SimpleFilterer
                 showData={true}
+				paginatorTop={false}
                 bind:data={dataHolder}
                 bind:meta
                 bind:options
@@ -156,34 +157,31 @@
 
 
 
-	<div class="justify-center w-1/2">
-		
+	<form class="justify-center w-1/2">
 		{#if selectedData == null}
 			<h1 class="text-4xl font-extrabold dark:text-white">Select a Type of Piece</h1>
 		{:else}
-		
 			<h1 class="text-4xl font-extrabold dark:text-white">Type of Piece</h1>
-
 			
-			<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+			<label for="Name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Name</label>
 			<div class="flex">
 				<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
 					<svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
 						<Fa icon={faMusic} />
 					</svg>
 				</span>
-				<input type="text" id="website-admin" bind:value={selectedData.name} class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Name of the Type of piece">
+				<input type="text" id="Name" bind:value={selectedData.name} class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="ex: Symphony" required />
 			</div>
+			<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Are nedeed to add or edit.</p>
+
 			<div class="flex p-2">
 				{#if selectedData.id == 0}
-					<button on:click={addTypeOfPiece} type="button" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Add</button>
+					<button on:click={addTypeOfPiece} type="submit" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Add</button>
 				{:else}
-					<button on:click={addTypeOfPiece} type="button" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">modify</button>
+					<button on:click={addTypeOfPiece} type="submit" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">Edit</button>
 					<button on:click={deleteTypeOfPiece} type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Delete</button>
 				{/if}
 			</div>
 		{/if}
-		
-
-	</div>
+	</form>
 </div>
