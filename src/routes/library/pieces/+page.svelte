@@ -86,10 +86,8 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			piece = data
+			piece = data.data
 			piece.unshift(newPiece)
-
-			console.log(piece)
 
             meta = data.meta;
 
@@ -97,10 +95,7 @@
 				data: piece,
 				columns: ['id', 'name'],
 				notOrderedColumns: []
-			};
-
-			selectedData = piece[0];
-			
+			};			
 		});
 
 		//récupération des composers
@@ -113,7 +108,7 @@
 		responseHandlerComposer.handle(responseComposer, async () => {
 			const data = await responseComposer.json();
 			
-			listComposers = data;
+			listComposers = data.data;
 		});
 
 		//récupération des Type Of Pieces
@@ -126,7 +121,7 @@
 		responseHandlerTypeOfPieces.handle(responseTypeOfPieces, async () => {
 			const data = await responseTypeOfPieces.json();
 			
-			listTypeOfPieces = data;
+			listTypeOfPieces = data.data;
 		});
 
 		//récupération des Folders
@@ -155,32 +150,34 @@
 
 	//api piece
 	async function addPiece() {
-		const data = {
-			id: selectedData.id ? selectedData.id : undefined,
-			arranger: selectedData.arranger,
-			composer_id: selectedData.composer?.id,
-			folder_id: selectedData.folder?.id || null,
-			name: selectedData.name,
-			opus: selectedData.opus,
-			type_of_piece_id: selectedData.typeOfPiece?.id,
-			year_of_composition: selectedData.yearOfComposition || ''
-		};
-		if(data.id == 0){
-			data.id = undefined;
-		}
+		if (selectedData.composer && selectedData.name &&selectedData.opus && selectedData.typeOfPiece && selectedData.yearOfComposition){
+			const data = {
+				id: selectedData.id ? selectedData.id : undefined,
+				arranger: selectedData.arranger,
+				composer_id: selectedData.composer?.id,
+				folder_id: selectedData.folder?.id || null,
+				name: selectedData.name,
+				opus: selectedData.opus,
+				type_of_piece_id: selectedData.typeOfPiece?.id,
+				year_of_composition: selectedData.yearOfComposition || ''
+			};
+			if(data.id == 0){
+				data.id = undefined;
+			}
 
-		const response = await fetch('/api/pieces', {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(data)
-		});
+			const response = await fetch('/api/pieces', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			});
 
-		errorEvent(response);
+			errorEvent(response);
 
-		if (response.ok) {
-			window.location.reload();
+			if (response.ok) {
+				window.location.reload();
+			}
 		}
 	}
 
@@ -230,6 +227,7 @@
         {#if dataHolder}
             <SimpleFilterer
                 showData={true}
+				paginatorTop={false}
                 bind:data={dataHolder}
                 bind:meta
                 bind:options
@@ -243,7 +241,7 @@
 
 
 	<!--affichage des pieces-->
-	<div class="justify-center w-1/2">
+	<form class="justify-center w-1/2">
 		{#if selectedData == null}
 			<h1 class="text-4xl font-extrabold dark:text-white">Select a Piece</h1>
 		{:else}
@@ -251,44 +249,44 @@
 
 			<div class="flex">
 				<div class="flex flex-col">
-					<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+					<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Piece name</label>
 					<div class="flex">
 						<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
 							<svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
 								<path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"/>
 							</svg>
 						</span>
-						<input bind:value={selectedData.name} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+						<input bind:value={selectedData.name} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Piece name" required />
 					</div>
 				</div>
 
 				<div class="flex flex-col">
-					<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Opus</label>
+					<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Opus number</label>
 					<div class="flex">
-						<input bind:value={selectedData.opus} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+						<input bind:value={selectedData.opus} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="ex: Op. 9 n°2" required />
 					</div>
 				</div>
 			</div>
 
 
-			<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Arranger</label>
+			<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Arranger name</label>
 			<div class="flex">
 				<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
 					<svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
 						<Fa icon={faPerson} />
 					</svg>
 				</span>
-				<input bind:value={selectedData.arranger} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+				<input bind:value={selectedData.arranger} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Arranger name">
 			</div>
 
-			<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Year of composition</label>
+			<label for="website-admin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Year of composition</label>
 			<div class="flex">
 				<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
 					<svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
 						<Fa icon={faCalendar} />
 					</svg>
 				</span>
-				<input bind:value={selectedData.yearOfComposition} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+				<input bind:value={selectedData.yearOfComposition} type="text" id="website-admin" class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
 			</div>
 
 			<div class="flex">
@@ -313,8 +311,8 @@
 
 
 				<div class="w-1/2">
-					<label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Type of piece</label>
-					<select bind:value={selectedData.typeOfPiece} id="Composer" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+					<label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Type of piece</label>
+					<select bind:value={selectedData.typeOfPiece} id="Composer" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
 						{#if selectedData.typeOfPiece !== null}
 							<optgroup label="Type of Piece">
 								<option value={selectedData.typeOfPiece}>{selectedData.typeOfPiece?.name}</option>
@@ -333,8 +331,8 @@
 			</div>
 
 			<form class="max-w-sm mx-auto">
-				<label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Composer</label>
-				<select bind:value={selectedData.composer} id="Composer" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+				<label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Composer</label>
+				<select bind:value={selectedData.composer} id="Composer" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
 					{#if selectedData.composer !== null}
 						<optgroup label="Composer of the Piece">
 							<option value={selectedData.composer}>{selectedData.composer.longName}</option>
@@ -350,14 +348,16 @@
 					</optgroup>
 				</select>
 			</form>
+			<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Are nedeed to add or edit.</p>
+
 			<div class="flex p-2">
 				{#if selectedData.id == 0}
-					<button on:click={addPiece} type="button" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Add</button>
+					<button on:click={addPiece} type="submit" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Add</button>
 				{:else}
-					<button on:click={addPiece} type="button" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">modify</button>
+					<button on:click={addPiece} type="submit" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">Edit</button>
 					<button on:click={deletePiece} type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Delete</button>
 				{/if}
 			</div>
 		{/if}
-	</div>
+	</form>
 </div>
