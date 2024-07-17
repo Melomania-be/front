@@ -6,7 +6,7 @@ import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
 export const POST: RequestHandler = async ({ params, cookies, fetch, request }) => {
 	let composer = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/${params.id}/recommend_someone`, {
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/recommend_someone`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
