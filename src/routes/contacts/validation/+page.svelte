@@ -347,7 +347,6 @@
 			deselectContact();
 		}
 	}
-
 </script>
 
 <main class="grid grid-cols-5 ml-5 mr-5">

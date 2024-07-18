@@ -31,7 +31,7 @@
 		{/each}
 	</select>
 	<input type="text" bind:value={filter.filter} class="border" />
-    <button on:click={deleteFilter}>
-        <span class="icon-[material-symbols-light--delete] hover:text-red-500"></span>
-    </button>
+	<button on:click={deleteFilter}>
+		<span class="icon-[material-symbols-light--delete] hover:text-red-500"></span>
+	</button>
 </div>

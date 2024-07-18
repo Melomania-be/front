@@ -1,7 +1,7 @@
 export interface MailTemplate {
 	id: number | null;
 	name: string;
-    content: string;
-    createdAt: string;
+	content: string | null;
+	createdAt: string;
 	updatedAt: string;
 }

@@ -20,7 +20,6 @@
 	}
 
 	async function deleteContact(contact: Contact) {
-		
 		console.log(contact);
 		let response = await fetch('/api/contacts/', {
 			method: 'DELETE',
