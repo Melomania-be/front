@@ -59,5 +59,22 @@ export const load: PageServerLoad = async ({ cookies, params, fetch }) => {
 
 	const sectionGroups = await serverResponseSectionGroups.json();
 
-	return {project, pieces, sectionGroups};
+	const serverResponseFolder = await fetch(
+		'http://' + BACKEND_API_HOST + ':' + BACKEND_API_PORT + '/folders',
+		{
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application',
+				authorization: `${await getToken(cookies)}`
+			}
+		}
+	);
+
+	if (!serverResponseFolder.ok) {
+		redirect(StatusCodesRedirection.TEMPORARY_REDIRECT, '/projects');
+	}
+
+	const folders = await serverResponseFolder.json();
+
+	return {project, pieces, sectionGroups, folders};
 };

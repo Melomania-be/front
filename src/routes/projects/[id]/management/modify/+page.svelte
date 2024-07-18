@@ -5,6 +5,7 @@
 	import ProjectModifier from '$lib/components/project/ProjectModifier.svelte';
 	import type { Concert } from '$lib/types/Concert.js';
 	import type { Rehearsal } from '$lib/types/Rehearsal.js';
+	import type { Folder } from '$lib/types/Folder.js';
 
 	export let data;
 
@@ -19,6 +20,7 @@
 	};
 	let sectionGroups: Array<SectionGroup> = data.sectionGroups;
 	let pieces: Array<Piece> = data.pieces;
+	let folders: Array<Folder> = data.folders;
 </script>
 
-<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} urlFront={`/projects/${project.id}/management/modify`}/>
+<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} {folders} urlFront={`/projects/${project.id}/management/modify`}/>

@@ -12,10 +12,12 @@
 	import { browser } from '$app/environment';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import type { Contact } from '$lib/types/Contact';
+	import type { Folder } from '$lib/types/Folder';
 
 	export let project: Project;
 	export let pieces: Array<Piece>;
 	export let sectionGroups: Array<SectionGroup>;
+	export let folders: Array<Folder>;
 	export let mode: 'modify' | 'create';
 	export let urlFront: string;
 
@@ -58,7 +60,8 @@
 				place: rehearsal.place,
 				comment: rehearsal.comment
 			})),
-			responsibles_ids: project.responsibles.map((responsible) => responsible.id)
+			responsibles_ids: project.responsibles.map((responsible) => responsible.id),
+			folder_id: project.folder ? project.folder.id : null
 		};
 
 		const response = await fetch('/api/projects', {
@@ -300,6 +303,18 @@
 					>
 				</div>
 			{/if}
+		</div>
+
+		<h4>Folder</h4>
+		<div class="m-1 border">
+			<select class="flex w-1/2" bind:value={project.folder}>
+				<option value={null}>None</option>
+				{#if folders}
+					{#each folders as folder}
+						<option value={folder}>{folder.name}</option>
+					{/each}
+				{/if}
+			</select>
 		</div>
 
 		<h4>Concerts</h4>
