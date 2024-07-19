@@ -1,22 +1,30 @@
 <script lang="ts">
 	var unsubscribe_email = '';
 
-	async function unsubscribe() {
-		console.log('Unsubscribe');
+	async function unsubscribe(unsubscribe_email: string) {
 		const data = {
 			email: unsubscribe_email
 		};
 
 		try {
-			const resMail = await fetch('/api/mailing/unsubscribe', {
+			const resMail = await fetch('/api/unsubscribe', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(data)
 			});
+
+			if (resMail.ok) {
+				alert('unsubscribed');
+			} else if (resMail.status === 404) {
+				alert('This email is not linked to any account');
+			} else {
+				alert('Error unsubscribing');
+			}
 		} catch (error) {
 			console.error('Error sending email:', error);
+			alert('Error unsubscribing');
 		}
 	}
 </script>
@@ -33,8 +41,9 @@
 				bind:value={unsubscribe_email}
 				required
 			/>
-			<button class=" bg-blue-500 hover:bg-blue-700 text-white rounded" on:click={unsubscribe}
-				>Unsubscribe</button
+			<button
+				class=" bg-blue-500 hover:bg-blue-700 text-white rounded"
+				on:click={() => unsubscribe(unsubscribe_email)}>Unsubscribe</button
 			>
 		</div>
 	</body>

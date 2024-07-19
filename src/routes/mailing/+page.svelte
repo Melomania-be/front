@@ -37,9 +37,9 @@
 		messenger: ''
 	};
 
-	let containsToContact : boolean | undefined = false;
-	let containsProject : boolean | undefined = false;
-	let containsCallsheet : boolean | undefined = false;
+	let containsToContact: boolean | undefined = false;
+	let containsProject: boolean | undefined = false;
+	let containsCallsheet: boolean | undefined = false;
 
 	let html = `here's some <strong>HTML!!!</strong>`;
 
@@ -217,16 +217,16 @@
 
 	async function fetchProjects() {
 		const response = await fetch(`/api/projects?page=1&limit=10000&filter=&orderBy=id&order=asc`, {
-		method: 'GET'
-	   	});
+			method: 'GET'
+		});
 
-	   	const responseHandler = new ResponseHandlerClient();
+		const responseHandler = new ResponseHandlerClient();
 
-	   	responseHandler.handle(response, async () => {
+		responseHandler.handle(response, async () => {
 			const data = await response.json();
-		   	allProjects = data.data;
-	   	});
-   	}
+			allProjects = data.data;
+		});
+	}
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -291,7 +291,7 @@
 		console.log('Project', linkedProject);
 
 		let dataToSend = {
-			template : selectedTemplate,
+			template: selectedTemplate,
 			listContacts: selectedList,
 			hasProject: containsProject,
 			hasCallsheet: containsCallsheet,
@@ -307,7 +307,7 @@
 			body: JSON.stringify(dataToSend)
 		});
 	}
-	
+
 	$: containsToContact = selectedTemplate?.content?.includes('${TO_CONTACT}');
 	$: containsProject = selectedTemplate?.content?.includes('${PROJECT}');
 	$: containsCallsheet = selectedTemplate?.content?.includes('${CALLSHEET}');
