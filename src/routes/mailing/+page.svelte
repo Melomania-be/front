@@ -26,7 +26,6 @@
 	let uniqueUrl: string = '/mailing';
 
 	let dataHolder: TableData<CustomList>;
-	let mailSubject: string = '';
 
 	let allProjects: Project[] = [];
 
@@ -37,6 +36,10 @@
 		phone: '',
 		messenger: ''
 	};
+
+	let containsToContact : boolean | undefined = false;
+	let containsProject : boolean | undefined = false;
+	let containsCallsheet : boolean | undefined = false;
 
 	let html = `here's some <strong>HTML!!!</strong>`;
 
@@ -56,7 +59,7 @@
 	let useTemplate = false;
 	let templates: MailTemplate[] = [];
 	let selectedTemplate: MailTemplate | null = null;
-
+	let linkedProject: Project | null = null;
 	/*
 	async function sendCallsheetNotification() {
 		console.log('Send Callsheet Notification');
@@ -207,12 +210,23 @@
 			order: urlParams.get('order') || 'asc',
 			orderBy: urlParams.get('orderBy') || 'id'
 		};
-
-		//let response = await fetch('/projects?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}s');
-		//allProjects = await response.json();
-
 		fetchData();
+
+		await fetchProjects();
 	});
+
+	async function fetchProjects() {
+		const response = await fetch(`/api/projects?page=1&limit=10000&filter=&orderBy=id&order=asc`, {
+		method: 'GET'
+	   	});
+
+	   	const responseHandler = new ResponseHandlerClient();
+
+	   	responseHandler.handle(response, async () => {
+			const data = await response.json();
+		   	allProjects = data.data;
+	   	});
+   	}
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -267,23 +281,33 @@
 			return;
 		}
 
-		if (mailSubject === '') {
-			alert('Please enter a subject');
+		if (!linkedProject && (containsProject || containsCallsheet)) {
+			alert('Please select a project');
 			return;
 		}
 
-		const response = await fetch('/api/mailing/sendTemplateToList', {
+		console.log('Send template to list', selectedTemplate, selectedList);
+		console.log('To contact', toContact);
+		console.log('Project', linkedProject);
+
+		let dataToSend = {
+			template : selectedTemplate,
+			listContacts: selectedList,
+			hasProject: containsProject,
+			hasCallsheet: containsCallsheet,
+			project: linkedProject,
+			toContact: toContact
+		};
+
+		const response = await fetch('/api/mailing/sendLaterTemplateToLists', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({ listId: selectedList.id, templateId: selectedTemplate.id })
+			body: JSON.stringify(dataToSend)
 		});
-
-		const data = await response.json();
-		console.log(data);
 	}
-
+	
 	$: containsToContact = selectedTemplate?.content?.includes('${TO_CONTACT}');
 	$: containsProject = selectedTemplate?.content?.includes('${PROJECT}');
 	$: containsCallsheet = selectedTemplate?.content?.includes('${CALLSHEET}');
@@ -329,19 +353,28 @@
 			</div>
 			{#if selectedTemplate}
 				{#if containsToContact}
-				<div class="m-2 p-2 border-2 border-gray-300">
-					Enter informations for the to contact to contact in case the template contains ${'{TO_CONTACT}'}:
-					<input type="text" bind:value={toContact.firstName} placeholder="To Contact First Name" />
-					<input type="text" bind:value={toContact.lastName} placeholder="To Contact Last Name" />
-					<input type="email" bind:value={toContact.email} placeholder="To Contact Email" />
-					<input type="tel" bind:value={toContact.phone} placeholder="To Contact Phone" />
-					<input type="text" bind:value={toContact.messenger} placeholder="To Contact Messenger" />
-				</div>
+					<div class="m-2 p-2 border-2 border-gray-300">
+						Enter informations for the to contact to contact in case the template contains ${'{TO_CONTACT}'}:
+						<input
+							type="text"
+							bind:value={toContact.firstName}
+							placeholder="To Contact First Name"
+						/>
+						<input type="text" bind:value={toContact.lastName} placeholder="To Contact Last Name" />
+						<input type="email" bind:value={toContact.email} placeholder="To Contact Email" />
+						<input type="tel" bind:value={toContact.phone} placeholder="To Contact Phone" />
+						<input
+							type="text"
+							bind:value={toContact.messenger}
+							placeholder="To Contact Messenger"
+						/>
+					</div>
 				{/if}
 				{#if containsProject || containsCallsheet}
 					<div class="m-2 p-2 border-2 border-gray-300">
-					Enter informations for the project in case the template contains ${'{PROJECT}'} or a ${'{CALLSHEET}'} of a project:
-						<select>
+						Enter informations for the project in case the template contains ${'{PROJECT}'} or a ${'{CALLSHEET}'}
+						of a project:
+						<select bind:value={linkedProject}>
 							{#each allProjects as project}
 								<option value={project}>{project.name}</option>
 							{/each}
