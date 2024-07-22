@@ -1,4 +1,6 @@
 import type { Concert } from './Concert';
+import type { Contact } from './Contact';
+import type { Folder } from './Folder';
 import type { GenericDataType } from './GenericDataType';
 import type { Piece } from './Piece';
 import type { Rehearsal } from './Rehearsal';
@@ -13,4 +15,6 @@ export interface Project {
 	pieces: Piece[];
 	sectionGroup: SectionGroup | null;
 	concerts: Concert[];
+	responsibles: Contact[];
+	folder?: Folder;
 }

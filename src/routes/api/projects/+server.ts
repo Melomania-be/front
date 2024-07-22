@@ -23,3 +23,20 @@ export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
 
 	return res;
 };
+
+export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
+	const data = await request.json();
+
+	console.log(data);
+
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(data)
+	});
+
+	return res;
+};
