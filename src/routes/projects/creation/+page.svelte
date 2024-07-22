@@ -5,10 +5,11 @@
 	import ProjectModifier from '$lib/components/project/ProjectModifier.svelte';
 	import type { Piece } from '$lib/types/Piece';
 	import type { SectionGroup } from '$lib/types/SectionGroup';
+	import type { Folder } from '$lib/types/Folder';
 
 	let listPieces: Array<Piece>;
 	let listSectionGroups: Array<SectionGroup>;
-	let listFolders: Array<any>;
+	let listFolders: Array<Folder>;
 
 	const project: Project = {
 		id: null,
@@ -22,14 +23,18 @@
 	};
 
 	onMount(async () => {
-		let responsePieces = await fetch('/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id', {
-			method: 'GET'
-		});
+		let responsePieces = await fetch(
+			'/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id',
+			{
+				method: 'GET'
+			}
+		);
 
 		const responseHandler = new ResponseHandlerClient();
 
 		responseHandler.handle(responsePieces, async () => {
-			listPieces = await responsePieces.json();
+			const tmp = await responsePieces.json();
+			listPieces = tmp.data
 		});
 
 		let responseSectionGroups = await fetch('/api/sectionGroups', {
@@ -47,14 +52,18 @@
 		responseHandler.handle(responseFolder, async () => {
 			listFolders = await responseFolder.json();
 		});
+
+		if (!listFolders) {
+			listFolders = [];
+		}
 	});
 </script>
 
 <ProjectModifier
 	mode="create"
 	{project}
-	pieces={listPieces}
-	sectionGroups={listSectionGroups}
-	folders={listFolders}
+	bind:pieces={listPieces}
+	bind:sectionGroups={listSectionGroups}
+	bind:folders={listFolders}
 	urlFront={`/projects/creation`}
 />

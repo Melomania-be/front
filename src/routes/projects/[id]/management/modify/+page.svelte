@@ -4,12 +4,14 @@
 	import type { Piece } from '$lib/types/Piece';
 	import ProjectModifier from '$lib/components/project/ProjectModifier.svelte';
 	import { onMount } from 'svelte';
+	import type { Folder } from '$lib/types/Folder.js';
 
 	export let data;
 
 	let project: Project;
 	let sectionGroups: Array<SectionGroup>;
 	let pieces: Array<Piece>;
+	let folders: Array<Folder>;
 
 	onMount(async () => {
 		const projectResponse = await fetch(`/api/projects/${data.id}`, {
@@ -38,7 +40,18 @@
 		});
 
 		if (piecesResponse.ok) {
-			pieces = await piecesResponse.json();
+			const tmp = await piecesResponse.json();
+			pieces = tmp.data
+		} else {
+			alert('server error')
+		}
+
+		const foldersResponse = await fetch(`/api/folders`, {
+			method: 'GET'
+		});
+
+		if (foldersResponse.ok) {
+			folders = await foldersResponse.json();
 		} else {
 			alert('server error')
 		}
@@ -46,5 +59,5 @@
 </script>
 
 {#if project && sectionGroups && pieces}
-	<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} urlFront={`/projects/${data.id}/management/modify`}/>
+	<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} {folders} urlFront={`/projects/${data.id}/management/modify`}/>
 {/if}
