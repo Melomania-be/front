@@ -34,7 +34,7 @@
 	</div>
 	<div class="flex flex-col md:flex-row">
 		<div
-			class="grid grid-cols-1 space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+			class="grid grid-cols-1 space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-black rounded-tl-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
 			<div class="text-sm">
 				Created at: <DateShow date={project.createdAt} />
@@ -50,30 +50,38 @@
 					>
 				{/each}
 			</div>
-			<a
-				href="/projects/{project.id}/management/modify"
-				class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-			>
-				Modify project infos
-			</a>
-			<a
-				href="/projects/{project.id}/management/participants"
-				class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-			>
-				Participants
-			</a>
-			<a
-				href="/projects/{project.id}/management/attendance"
-				class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-			>
-				See attendance
-			</a>
-			<a
-				href="/projects/{project.id}/management/mails"
-				class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-			>
-				Mail manager
-			</a>
+			<div class="grid grid-cols-2 gap-1">
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					Modify project infos
+				</a>
+				<a
+					href="/projects/{project.id}/management/participants"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					Participants
+				</a>
+				<a
+					href="/projects/{project.id}/management/attendance"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					See attendance
+				</a>
+				<a
+					href="/projects/{project.id}/management/mails"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					Mail manager
+				</a>
+				<a
+					href="/projects/{project.id}/management/callsheets"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					See all callsheets
+				</a>
+			</div>
 		</div>
 
 		<div class="m-1 w-full md:w-7/12">

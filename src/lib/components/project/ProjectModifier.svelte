@@ -177,6 +177,7 @@
 
 		<h4>Section Group</h4>
 		<div class="m-1 border">
+			<a href="/sectionGroups">Manage section groups</a>
 			{#if !allowModification}
 				{#if project.sectionGroup}
 					<p>{project.sectionGroup.name}</p>

@@ -8,6 +8,8 @@ export interface Recommended {
 	phone: string;
 	messenger: string;
 	instruments: Array<Instrument>;
+	comment: String;
+	project_id: Number;
 	createdAt: Date;
 	updatedAt: Date;
 }

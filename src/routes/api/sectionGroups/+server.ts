@@ -12,3 +12,18 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 
 	return res;
 };
+
+export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
+	const data = await request.json();
+
+	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/sectionGroups`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(data)
+	});
+
+	return res;
+};

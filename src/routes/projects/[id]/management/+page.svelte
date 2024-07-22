@@ -8,11 +8,6 @@
     let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
     let participantsNotValidated = data.participantsNotValidated;
     let participantsWithoutEmail = data.participantsWithoutEmail;
-
-    console.log('project', project);
-    console.log('participantsNotSeenCallsheet', participantsNotSeenCallsheet);
-    console.log('participantsNotValidated', participantsNotValidated);
-    console.log('participantsWithoutEmail', participantsWithoutEmail);
 </script>
 
 <div>
