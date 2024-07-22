@@ -7,7 +7,9 @@ export interface Recommended  {
 	email: string;
 	phone: string;
 	messenger: string;
-	instruments: Array<Instrument>,
+	instruments: Array<Instrument>;
+	comment: String;
+	project_id: Number;
 	createdAt: Date;
 	updatedAt: Date;
 }

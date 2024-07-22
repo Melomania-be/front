@@ -14,7 +14,6 @@
 		id: null,
 		name: '',
 		sectionGroupId: null,
-		registrationId: null,
 		rehearsals: [],
 		pieces: [],
 		sectionGroup: null,
@@ -23,7 +22,7 @@
 	};
 
 	onMount(async () => {
-		let responsePieces = await fetch('/api/pieces', {
+		let responsePieces = await fetch('/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id', {
 			method: 'GET'
 		});
 

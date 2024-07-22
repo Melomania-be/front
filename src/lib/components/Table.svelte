@@ -1,29 +1,38 @@
 <script lang="ts" generics="DataType extends GenericDataType">
+	import DateShow from './DateShow.svelte';
+
 	import { goto } from '$app/navigation';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
 
 	export let editable: boolean;
 	export let data: TableData<DataType>;
-	export let options: {
-		filter: any;
-		limit: number;
-		page: number;
-		order: 'asc' | 'desc';
-		orderBy: string;
-	} | {
-		filters: {
-			type: string;
-			filtersDepth1: {
-				type: string;
-				filtersDepth2: { relation: string; column: string; operation: string; filter: string }[];
-			}[];
-		};
-		page: number;
-		limit: number;
-		orderBy: string;
-		order: string;
-	};
+	export let options:
+		| {
+				filter: any;
+				limit: number;
+				page: number;
+				order: 'asc' | 'desc';
+				orderBy: string;
+		  }
+		| {
+				filters: {
+					type: string;
+					filtersDepth1: {
+						type: string;
+						filtersDepth2: {
+							relation: string;
+							column: string;
+							operation: string;
+							filter: string;
+						}[];
+					}[];
+				};
+				page: number;
+				limit: number;
+				orderBy: string;
+				order: string;
+		  };
 	export let meta: {
 		total: number;
 		perPage: number;
@@ -37,6 +46,8 @@
 	};
 	export let changePage: (newPage: number) => void;
 	export let uniqueUrl: string;
+	export let buttonLinkId: boolean = true;
+	export let selectedData: GenericDataType | null;
 
 	interface WithId {
 		id: number;
@@ -97,7 +108,13 @@
 			{#each data.data as row}
 				<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
 					{#each data.columns as column}
-						<td>{row[column]}</td>
+						{#if typeof row[column] === 'object' && row[column] instanceof Date}
+							<td>
+								<DateShow date={row[column]} />
+							</td>
+						{:else}
+							<td>{row[column]}</td>
+						{/if}
 					{/each}
 					{#each data.notOrderedColumns as column}
 						<td>{row[column]}</td>
@@ -105,15 +122,26 @@
 					<td>
 						{#if editable}
 							{#if hasId(row)}
-								<button
-									on:click={() => {
-										const url = `${uniqueUrl}/${row.id}`;
-										goto(url);
-									}}
-									class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
-								>
-									<span class="icon-[formkit--arrowright] hover:text-black"></span>
-								</button>
+								{#if buttonLinkId == true}
+									<button
+										on:click={() => {
+											const url = `${uniqueUrl}/${row.id}`;
+											goto(url);
+										}}
+										class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+									>
+										<span class="icon-[formkit--arrowright] hover:text-black"></span>
+									</button>
+								{:else if selectedData}
+									<button
+										on:click={() => {
+											selectedData = row;
+										}}
+										class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+									>
+										<span class="icon-[formkit--arrowright] hover:text-black"></span>
+									</button>
+								{/if}
 							{/if}
 						{/if}
 					</td>

@@ -1,3 +1,4 @@
+import type { Callsheet } from './Callsheet';
 import type { Concert } from './Concert';
 import type { Contact } from './Contact';
 import type { Folder } from './Folder';
@@ -10,11 +11,12 @@ export interface Project {
 	id: number | null;
 	name: string;
 	sectionGroupId: number | null;
-	registrationId: number | null;
 	rehearsals: Rehearsal[];
 	pieces: Piece[];
 	sectionGroup: SectionGroup | null;
 	concerts: Concert[];
 	responsibles: Contact[];
 	folder?: Folder;
+	callsheets?: Callsheet[];
+	participants?: Contact[];
 }

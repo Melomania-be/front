@@ -8,34 +8,38 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { CustomContact } from '$lib/types/CustomContact';
 	import type { Contact } from '$lib/types/Contact';
+	import Dashboard from './Dashboard.svelte';
 
-	let contacts: CustomContact[] = [];
-	let meta: any = {};
+
+	let metaContacts: any;
+	let metaList: any;
+	let metaValidationContact: any;
+	let metaRecommendedContact: any;
+
 	let options: any = {
 		filter: '',
-		limit: 10,
+		limit: 1,
 		page: 1,
 		order: 'asc',
 		orderBy: 'id'
 	};
-	let url: string = '/api/contacts';
-	let urlFront: string = '/contacts';
-	let uniqueUrl: string = '/contacts';
+	let urlContacts: string = '/api/contacts';
+	let urlListe: string = '/api/lists';
+	let urlValidationContact: string = '/api/contacts/validations';
+	let urlRecommendedContact: string = '/api/recommended'
+	
 
-	let dataHolder: TableData<CustomContact>;
+	let dashboardData = {
+    	numberContact: 0,
+    	numberListe: 0,
+    	numberValidationContact: 0,
+    	numberRecommendedContact: 0,
+	}
 
 	onMount(async () => {
-		const urlParams = new URLSearchParams(window.location.search);
-		options = {
-			filter: urlParams.get('filter') || '',
-			limit: parseInt(urlParams.get('limit') || '5'),
-			page: parseInt(urlParams.get('page') || '1'),
-			order: urlParams.get('order') || 'asc',
-			orderBy: urlParams.get('orderBy') || 'id'
-		};
-
 		fetchData();
 	});
+
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -43,64 +47,60 @@
 		optionInUrls += '&orderBy=' + options.orderBy;
 		optionInUrls += '&order=' + options.order;
 
-		if (browser) goto(`${urlFront}${optionInUrls}`);
-
-		const response = await fetch(`${url}${optionInUrls}`, {
+		const responseContacts = await fetch(`${urlContacts}${optionInUrls}`, {
 			method: 'GET'
 		});
 
-		const responseHandler = new ResponseHandlerClient();
-
-		responseHandler.handle(response, async () => {
-			const data = await response.json();
-
-			let tmpContacts: Contact[] = data.data;
-
-			contacts = tmpContacts.map((contact) => {
-				return {
-					...contact,
-					instruments: contact.instruments
-						.map((instrument) => {
-							return `${instrument.name} - ${instrument.pivot_proficiency_level} - ${instrument.family}`;
-						})
-						.join(', ')
-				};
-			});
-			meta = data.meta;
-
-			dataHolder = {
-				data: contacts,
-				columns: ['id', 'firstName', 'lastName', 'email', 'messenger', 'phone', 'comments'],
-				notOrderedColumns: ['instruments']
-			};
+		const responseListe = await fetch(`${urlListe}${optionInUrls}`, {
+			method: 'GET'
 		});
+
+		const responseValidationContact = await fetch(`${urlValidationContact}${optionInUrls}`, {
+			method: 'GET'
+		});
+
+		const responseRecommendedContact = await fetch(`${urlRecommendedContact}${optionInUrls}`, {
+			method: 'GET'
+		});
+		
+
+		if (responseContacts.ok){
+			const data = await responseContacts.json();
+
+			metaContacts = data.meta;
+
+			dashboardData.numberContact = metaContacts.total;
+		};
+
+		if (responseListe.ok){
+			const data = await responseListe.json();
+
+			metaList = data.meta;
+
+			dashboardData.numberListe = metaList.total;
+		};
+
+		if (responseValidationContact.ok){
+			const data = await responseValidationContact.json();
+
+			metaValidationContact = data.meta;
+
+			dashboardData.numberValidationContact = metaValidationContact.total;
+		};
+
+		if (responseRecommendedContact.ok){
+			const data = await responseRecommendedContact.json();
+
+			metaRecommendedContact = data.meta;
+
+			dashboardData.numberRecommendedContact = metaRecommendedContact.total;
+
+			console.log(metaRecommendedContact)
+		};
 	}
 </script>
 
-<div>
-	<div class="flex justify-center p-4">
-		<div class="flex p-2 border-2 border-rose-500">
-			<a href="/contacts/create">add new contact</a>
-		</div>
-		<div class="flex p-2 border-2 border-rose-500">
-			<a href="/contacts/lists">show the existants lists</a>
-		</div>
-		<div class="flex p-2 border-2 border-rose-500">
-			<a href="/contacts/lists/create">create new list</a>
-		</div>
-		<div class="flex p-2 border-2 border-rose-500">
-			<a href="/contacts/import">import</a>
-		</div>
-	</div>
 
-	{#if dataHolder}
-		<SimpleFilterer
-			showData={true}
-			bind:data={dataHolder}
-			bind:meta
-			bind:options
-			bind:uniqueUrl
-			on:optionsUpdated={() => fetchData()}
-		></SimpleFilterer>
-	{/if}
+<div>
+	<Dashboard data={dashboardData}></Dashboard>
 </div>

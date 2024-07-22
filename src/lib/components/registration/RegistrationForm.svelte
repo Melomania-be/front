@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Answer } from '$lib/types/Answer';
 	import type { Form } from '$lib/types/Form';
-	import { onMount } from 'svelte';
 
 	export let forms: Form[];
 	export let answer: Answer;
@@ -9,9 +8,7 @@
 
 	let form: Form;
 
-	onMount(() => {
-		form = forms.filter((form) => form.id === answer.formId)[0];
-	});
+	$: form = forms.filter((form) => form.id === answer.formId)[0];
 </script>
 
 {#if form}

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
 	import type { Participant } from '$lib/types/Participant';
