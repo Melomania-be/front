@@ -23,6 +23,8 @@
 
 	let allowModification = mode === 'modify' ? false : true;
 
+	$: console.log(pieces);
+
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
 		project.rehearsals = project.rehearsals.filter((rehearsal) => rehearsal !== delRehearsal);
 	}
@@ -39,7 +41,10 @@
 	}
 
 	function addRehearsalDate() {
-		project.rehearsals = [...project.rehearsals, { id: null, date: '', comment: '', place: '', project_id: null}];
+		project.rehearsals = [
+			...project.rehearsals,
+			{ id: null, date: '', comment: '', place: '', project_id: null }
+		];
 	}
 
 	async function saveProject() {
@@ -48,14 +53,14 @@
 			name: project.name,
 			section_group_id: project.sectionGroup ? project.sectionGroup.id : null,
 			concerts: project.concerts.map((concert) => ({
-				id: concert.id? concert.id : null,
+				id: concert.id ? concert.id : null,
 				date: new Date(concert.date).toISOString().split('T')[0],
 				place: concert.place,
 				comment: concert.comment
 			})),
 			pieces_ids: project.pieces.map((piece) => piece.id),
 			rehearsals: project.rehearsals.map((rehearsal) => ({
-				id: rehearsal.id? rehearsal.id : null,
+				id: rehearsal.id ? rehearsal.id : null,
 				date: new Date(rehearsal.date).toISOString().split('T')[0],
 				place: rehearsal.place,
 				comment: rehearsal.comment
@@ -223,25 +228,47 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each project.pieces as piece}
-							<tr>
-								<td>{piece.name}</td>
-								<td>{piece.composer.shortName}</td>
-								<td>{piece.arranger}</td>
-							</tr>
-						{/each}
+						{#if project.pieces}
+							{#each project.pieces as piece}
+								<tr>
+									<td>{piece.name}</td>
+									<td>{piece.composer.shortName}</td>
+									<td>{piece.arranger}</td>
+								</tr>
+							{/each}
+						{/if}
 					</tbody>
 				</table>
 			{:else}
-				<select class="flex w-1/2" bind:value={project.pieces} multiple>
-					<option value={null}>None</option>
-					{#if pieces}
-						{#each pieces as piece}
-							<option value={piece}>{piece.name}</option>
-						{/each}
-					{/if}
-				</select>
-				<p>Selected Pieces: {project.pieces.map((piece) => piece.name).join(', ')}</p>
+				<table>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Composer</th>
+							<th>Arranger</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#if project.pieces}
+							{#each project.pieces as piece}
+								<tr>
+									<td>{piece.name}</td>
+									<td>{piece.composer.shortName}</td>
+									<td>{piece.arranger}</td>
+								</tr>
+							{/each}
+						{/if}
+					</tbody>
+				</table>
+				{#if project.pieces}
+					<select class="flex w-1/2 border mt-1" bind:value={project.pieces} multiple>
+						{#if pieces && pieces.length > 0}
+							{#each pieces as piece}
+								<option value={piece}>{piece.name} {piece.composer.shortName}</option>
+							{/each}
+						{/if}
+					</select>
+				{/if}
 			{/if}
 		</div>
 
