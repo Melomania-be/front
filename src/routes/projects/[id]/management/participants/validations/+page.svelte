@@ -4,6 +4,8 @@
 	export let data;
 
 	onMount(async () => {
-        const responseParticipants = await fetch(`/api/projects/${data.id}/management/participants/validations`);
-    });
+		const responseParticipants = await fetch(
+			`/api/projects/${data.id}/management/participants/validations`
+		);
+	});
 </script>

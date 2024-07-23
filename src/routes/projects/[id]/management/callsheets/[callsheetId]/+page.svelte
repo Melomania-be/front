@@ -5,14 +5,17 @@
 	import CallsheetShow from '$lib/components/callsheet/CallsheetShow.svelte';
 	import CallsheetModifier from '$lib/components/callsheet/CallsheetModifier.svelte';
 
-    export let data: any;
+	export let data: any;
 
 	let callsheet: Callsheet;
 
 	onMount(async () => {
-		const callsheetResponse = await fetch(`/api/projects/${data.id}/management/callsheets/${data.callsheetId}`, {
-			method: 'GET'
-		});
+		const callsheetResponse = await fetch(
+			`/api/projects/${data.id}/management/callsheets/${data.callsheetId}`,
+			{
+				method: 'GET'
+			}
+		);
 
 		if (callsheetResponse.ok) {
 			callsheet = await callsheetResponse.json();
@@ -22,4 +25,4 @@
 	});
 </script>
 
-<CallsheetModifier {callsheet} mode='modify'/>
+<CallsheetModifier {callsheet} mode="modify" />

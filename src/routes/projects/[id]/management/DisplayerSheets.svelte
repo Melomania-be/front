@@ -22,9 +22,7 @@
 	}
 </script>
 
-<div
-	class="w-full bg-white border border-black shadow dark:bg-gray-800 dark:border-gray-700"
->
+<div class="w-full bg-white border border-black shadow dark:bg-gray-800 dark:border-gray-700">
 	<div class="sm:hidden">
 		<label for="tabs" class="sr-only">Select tab</label>
 		<select

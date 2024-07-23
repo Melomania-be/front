@@ -122,7 +122,16 @@
 		</div>
 		<slot />
 	{:else}
-		<Table {data} bind:options bind:meta bind:uniqueUrl bind:editable {changePage} buttonLinkId={buttonLinkId} bind:selectedData/>
+		<Table
+			{data}
+			bind:options
+			bind:meta
+			bind:uniqueUrl
+			bind:editable
+			{changePage}
+			{buttonLinkId}
+			bind:selectedData
+		/>
 	{/if}
 	<div class="my-2">
 		<Paginator

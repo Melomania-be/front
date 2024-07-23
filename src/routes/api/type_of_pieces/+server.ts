@@ -12,12 +12,13 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 	const res = await fetch(
 		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/type_of_pieces?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`,
 		{
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application',
-			authorization: `${await getToken(cookies)}`
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application',
+				authorization: `${await getToken(cookies)}`
+			}
 		}
-	});
+	);
 
 	return res;
 };

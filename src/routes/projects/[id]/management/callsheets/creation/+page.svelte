@@ -30,4 +30,4 @@
 	});
 </script>
 
-<CallsheetModifier {callsheet} mode='create'/>
+<CallsheetModifier {callsheet} mode="create" />

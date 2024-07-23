@@ -1,4 +1,4 @@
-import type { Participant } from "./Participant";
+import type { Participant } from './Participant';
 
 export interface Concert {
 	id: number | null;
