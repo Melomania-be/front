@@ -81,6 +81,12 @@
 				>
 					See all callsheets
 				</a>
+				<a
+					href="/projects/{project.id}/management/validation"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					New participant validation
+				</a>
 			</div>
 		</div>
 
@@ -93,7 +99,7 @@
 		<div class="m-1 w-full md:w-1/2">
 			<DisplayerSheets
 				bind:project
-				bind:participantsNotSeenCallsheet
+				bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
 				bind:participantsNotValidated
 			/>
 		</div>
