@@ -61,54 +61,6 @@
 	let selectedTemplate: MailTemplate | null = null;
 	let linkedProject: Project | null = null;
 	/*
-	async function sendCallsheetNotification() {
-		console.log('Send Callsheet Notification');
-		let contact = {
-			id: 1,
-			first_name: 'Judith',
-			last_name: 'Lecoq',
-			email: 'lecoqjudith@gmail.com',
-		};
-
-		let project = {
-			id: 1,
-			name: 'Test'
-		};
-
-		let callsheet = {
-			id: 1,
-			version: '1.0',
-			project_id: 1
-		};
-
-		let to_contact = {
-			first_name: 'Prénom',
-			last_name: 'Nom',
-			email: 'adresse@contact.com',
-			phone: '01 23 45 67 89',
-			messenger: 'messenger'
-		};
-
-		const data = {
-			contact: contact,
-			project: project,
-			callsheet: callsheet,
-			to_contact: to_contact,
-		};
-
-		try {
-			const resMail = await fetch('/api/mailing/sendCallsheetNotifications', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(data),
-			});
-		} catch (error) {
-			console.error('Error sending email:', error);
-		}
-	}
-
 	async function sendRegistrationNotification() {
 		console.log('Send Registration (confirmation) Notification');
 		let contact = {
@@ -157,43 +109,7 @@
 		}
 	}
 
-	async function sendRecommendationNotification() {
-		console.log('Send Recommendation Notification');
-		let contact = {
-			first_name: 'Judith',
-			last_name: 'Lecoq',
-			email: 'lecoqjudith@gmail.com',
-		};
-
-		let project = {
-			id: 1,
-			name: 'Test'
-		};
-
-		let registration = {
-			id: 1,
-			version: '1.0',
-			project_id: 1
-		};
-
-		const data = {
-			contact: contact,
-			project: project,
-			registration: registration,
-		};
-
-		try {
-			const resMail = await fetch('/api/mailing/sendRecommendationNotifications', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(data),
-			});
-		} catch (error) {
-			console.error('Error sending email:', error);
-		}
-	}
+	
 
 	*/
 
