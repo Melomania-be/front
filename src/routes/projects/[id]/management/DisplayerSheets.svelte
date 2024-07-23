@@ -4,7 +4,7 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 
 	export let project: Project;
-	export let participantsNotSeenCallsheet: Array<Participant>;
+	export let participantsSeenCallsheet: Array<Participant>;
 	export let participantsNotValidated: Array<Participant>;
 
 	let mode: 'callsheets' | 'registration' = 'callsheets';
@@ -109,22 +109,20 @@
 						<div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
 							<div
 								class="h-1 bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-								style="width: {((project.participants.length -
-									participantsNotSeenCallsheet.length) /
-									project.participants.length) *
+								style="width: {(participantsSeenCallsheet.length / project.participants.length) *
 									100}%;"
 							></div>
 						</div>
 					</div>
 					<div>
-						{project.participants.length - participantsNotSeenCallsheet.length} / {project
-							.participants.length} participants have seen the last callsheet
+						{participantsSeenCallsheet.length} / {project.participants.length} participants have seen
+						the last callsheet
 					</div>
 				{/if}
 				<div class="mt-2">
 					<h3>Participants who have not seen the last callsheet :</h3>
 					<ul>
-						{#each participantsNotSeenCallsheet.slice(0, 3) as participant}
+						{#each participantsSeenCallsheet.slice(0, 3) as participant}
 							<li class="text-sm">
 								<a href="/projects/{project.id}/management/participants/{participant.id}">
 									{participant.contact.firstName}
