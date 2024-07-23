@@ -6,7 +6,7 @@ export const GET: RequestHandler = async ({ cookies, params, fetch }) => {
 	const id = params.id;
 
 	const response = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${id}management/validation`,
+		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${id}/management/validation`,
 		{
 			method: 'GET',
 			headers: {
@@ -31,21 +31,6 @@ export const POST: RequestHandler = async ({ cookies, fetch, params, request }) 
 				authorization: `${await getToken(cookies)}`
 			},
 			body: JSON.stringify(data)
-		}
-	);
-
-	return res;
-};
-
-export const DELETE: RequestHandler = async ({ cookies, fetch, params }) => {
-	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${params.id}/management/validation`,
-		{
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			}
 		}
 	);
 

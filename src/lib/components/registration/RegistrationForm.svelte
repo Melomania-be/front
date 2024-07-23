@@ -8,7 +8,13 @@
 
 	let form: Form;
 
-	$: form = forms.filter((form) => form.id === answer.formId)[0];
+	$: {
+		if(forms.length > 0) {
+			form = forms.filter((form) => form.id === answer.formId)[0];
+		} else if (answer.form) {
+			form = answer.form;
+		}
+	}
 </script>
 
 {#if form}

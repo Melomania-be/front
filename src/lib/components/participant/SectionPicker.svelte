@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { CustomParticipant } from '$lib/types/CustomParticipant';
+	import type { Participant } from '$lib/types/Participant';
 	import type { Section } from '$lib/types/Section';
 
-	export let participant: CustomParticipant;
+	export let participant: Participant;
 	export let sections: Section[];
 	export let disabled: boolean = false;
 

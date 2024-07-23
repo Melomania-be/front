@@ -63,12 +63,24 @@
 	let dataHolder: TableData<Contact>;
 
 	onMount(async () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || '',
+			limit: parseInt(urlParams.get('limit') || '1'),
+			page: parseInt(urlParams.get('page') || '1'),
+			order: urlParams.get('order') || 'asc',
+			orderBy: urlParams.get('orderBy') || 'id'
+		};
+
 		try {
-			const resAll = await fetch('/api/contacts/validations', { method: 'GET' });
+			const resAll = await fetch(
+				`/api/contacts/validations?limit=100&page=1&filter=&orderBy=id&order=asc`,
+				{ method: 'GET' }
+			);
 			if (resAll.ok) {
 				const contactsAll = await resAll.json();
 				console.log('All Contacts:', contactsAll);
-				allContacts = contactsAll.map((contact: any) => ({
+				allContacts = contactsAll.data.map((contact: any) => ({
 					id: contact.id,
 					firstName: contact.firstName,
 					lastName: contact.lastName,
@@ -100,15 +112,6 @@
 		} catch (error) {
 			console.error('Error fetching every contacts:', error);
 		}
-
-		const urlParams = new URLSearchParams(window.location.search);
-		options = {
-			filter: urlParams.get('filter') || '',
-			limit: parseInt(urlParams.get('limit') || '1'),
-			page: parseInt(urlParams.get('page') || '1'),
-			order: urlParams.get('order') || 'asc',
-			orderBy: urlParams.get('orderBy') || 'id'
-		};
 
 		fetchData();
 	});

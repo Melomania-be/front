@@ -9,5 +9,9 @@
 </script>
 
 <span>
-	{(new Date(date)).toLocaleDateString(undefined, options)}
+	{#if date}
+		{(new Date(date)).toLocaleDateString(undefined, options)}
+	{:else}
+		-
+	{/if}
 </span>
