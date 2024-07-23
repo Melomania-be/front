@@ -19,16 +19,13 @@ export const DELETE: RequestHandler = async ({ cookies, params, fetch }) => {
 export const GET: RequestHandler = async ({ cookies, params, fetch }) => {
 	const id = params.id;
 
-	const response = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${id}`,
-		{
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			}
+	const response = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${id}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
 		}
-	);
+	});
 
 	return response;
 };

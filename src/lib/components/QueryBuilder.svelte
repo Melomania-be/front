@@ -40,9 +40,11 @@
 		options = options;
 	}
 
-    function deleteGroup(depth1: any) {
-        options.filters.filtersDepth1 = options.filters.filtersDepth1.filter((item: any) => item !== depth1);
-    }
+	function deleteGroup(depth1: any) {
+		options.filters.filtersDepth1 = options.filters.filtersDepth1.filter(
+			(item: any) => item !== depth1
+		);
+	}
 </script>
 
 {#if columns}
@@ -80,9 +82,9 @@
 						>
 					</div>
 				</div>
-                <button on:click={() => deleteGroup(depth1)}>
-                    <span class="icon-[material-symbols-light--delete] hover:text-red-500"></span>
-                </button>
+				<button on:click={() => deleteGroup(depth1)}>
+					<span class="icon-[material-symbols-light--delete] hover:text-red-500"></span>
+				</button>
 			</div>
 		{/each}
 		<div>

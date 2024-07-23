@@ -62,15 +62,22 @@
 			const jsonResponse = await response.json();
 
 			data = {
-				data : jsonResponse.data.data,
+				data: jsonResponse.data.data,
 				columns: ['id', 'firstName', 'lastName', 'email', 'messenger', 'phone', 'comments'],
 				notOrderedColumns: []
-			}
+			};
 			meta = jsonResponse.data.meta;
 			columns = jsonResponse.columns;
 		}
 	}
 </script>
 
-
-<AdvancedFilterer bind:columns bind:meta bind:data bind:options uniqueUrl={"/contacts"} on:optionsUpdated={() => fetchData()} showData/>
+<AdvancedFilterer
+	bind:columns
+	bind:meta
+	bind:data
+	bind:options
+	uniqueUrl={'/contacts'}
+	on:optionsUpdated={() => fetchData()}
+	showData
+/>

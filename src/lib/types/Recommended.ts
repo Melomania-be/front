@@ -1,6 +1,6 @@
-import type { Instrument } from "./Instrument";
+import type { Instrument } from './Instrument';
 
-export interface Recommended  {
+export interface Recommended {
 	id: number | null;
 	firstName: string;
 	lastName: string;

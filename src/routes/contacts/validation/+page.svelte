@@ -48,6 +48,8 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Contact } from '$lib/types/Contact';
 	import { updated } from '$app/stores';
+	import type { Project } from '$lib/types/Project';
+	import type { Callsheet } from '$lib/types/Callsheet';
 	let meta: any = {};
 	let options: any = {
 		filter: '',

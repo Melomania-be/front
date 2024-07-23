@@ -5,12 +5,17 @@
 	export let data;
 
 	let project = data.data[0];
-    let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
-    let participantsNotValidated = data.participantsNotValidated;
-    let participantsWithoutEmail = data.participantsWithoutEmail;
+	let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
+	let participantsNotValidated = data.participantsNotValidated;
+	let participantsWithoutEmail = data.participantsWithoutEmail;
 </script>
 
 <div>
-    <h1 class="text-2xl font-bold">{project.name}</h1>
-    <Dashboard {project} {participantsNotSeenCallsheet} {participantsNotValidated} {participantsWithoutEmail}/>
+	<h1 class="text-2xl font-bold">{project.name}</h1>
+	<Dashboard
+		{project}
+		{participantsNotSeenCallsheet}
+		{participantsNotValidated}
+		{participantsWithoutEmail}
+	/>
 </div>

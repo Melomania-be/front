@@ -10,24 +10,25 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 	const order = url.searchParams.get('order');
 
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`, 
+		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`,
 		{
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application',
-			authorization: `${await getToken(cookies)}`
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application',
+				authorization: `${await getToken(cookies)}`
+			}
 		}
-	});
-	console.log('je suis sortie du back cette merde')
-	console.log(res)
+	);
+	console.log('je suis sortie du back cette merde');
+	console.log(res);
 
 	return res;
 };
 
 export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	const composer = await request.json();
-	console.log("je suis la")
-	console.log(composer)
+	console.log('je suis la');
+	console.log(composer);
 
 	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer/`, {
 		method: 'PUT',
