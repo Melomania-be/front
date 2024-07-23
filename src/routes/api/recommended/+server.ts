@@ -2,7 +2,6 @@ import { getToken } from '$lib/server/authentification';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
 
-
 export const POST: RequestHandler = async ({ params, cookies, fetch, request }) => {
 	let composer = await request.json();
 

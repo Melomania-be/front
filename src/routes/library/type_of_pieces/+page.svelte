@@ -13,7 +13,7 @@
 
 	let selectedData: TypeOfPiece;
 
-    let typeOfPiece: TypeOfPiece[] = [];
+	let typeOfPiece: TypeOfPiece[] = [];
 	let meta: any = {};
 	let options: any = {
 		filter: '',
@@ -35,7 +35,7 @@
 		updatedAt: null
 	};
 
-    onMount(async () => {
+	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		options = {
 			filter: urlParams.get('filter') || '',
@@ -48,7 +48,7 @@
 		fetchData();
 	});
 
-    async function fetchData() {
+	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
 		optionInUrls += '&filter=' + options.filter;
 		optionInUrls += '&orderBy=' + options.orderBy;
@@ -65,17 +65,17 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			typeOfPiece = data.data
-			
-			typeOfPiece.unshift(newTypeOfPiece)
+			typeOfPiece = data.data;
 
-            meta = data.meta;
+			typeOfPiece.unshift(newTypeOfPiece);
+
+			meta = data.meta;
 
 			dataHolder = {
 				data: typeOfPiece,
 				columns: ['id', 'name'],
 				notOrderedColumns: []
-			};			
+			};
 		});
 	}
 
@@ -91,12 +91,12 @@
 
 	//api type of piece
 	async function addTypeOfPiece() {
-		if (selectedData.name){
+		if (selectedData.name) {
 			const data = {
 				id: selectedData.id ? selectedData.id : undefined,
 				name: selectedData.name
-			}		
-			if(data.id == 0){
+			};
+			if (data.id == 0) {
 				data.id = undefined;
 			}
 
@@ -135,51 +135,80 @@
 			window.location.reload();
 		}
 	}
-
 </script>
 
 <div class="flex">
-    <div class="w-1/2">
-        {#if dataHolder}
-            <SimpleFilterer
-                showData={true}
+	<div class="w-1/2">
+		{#if dataHolder}
+			<SimpleFilterer
+				showData={true}
 				paginatorTop={false}
-                bind:data={dataHolder}
-                bind:meta
-                bind:options
-                bind:uniqueUrl
-                on:optionsUpdated={() => fetchData()}
+				bind:data={dataHolder}
+				bind:meta
+				bind:options
+				bind:uniqueUrl
+				on:optionsUpdated={() => fetchData()}
 				buttonLinkId={false}
 				bind:selectedData
-            ></SimpleFilterer>
-        {/if}
-    </div>
-
-
+			></SimpleFilterer>
+		{/if}
+	</div>
 
 	<form class="justify-center w-1/2">
 		{#if selectedData == null}
 			<h1 class="text-4xl font-extrabold dark:text-white">Select a Type of Piece</h1>
 		{:else}
 			<h1 class="text-4xl font-extrabold dark:text-white">Type of Piece</h1>
-			
-			<label for="Name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Name</label>
+
+			<label for="Name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+				>*Name</label
+			>
 			<div class="flex">
-				<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
-					<svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+				<span
+					class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
+				>
+					<svg
+						class="w-4 h-4 text-gray-500 dark:text-gray-400"
+						aria-hidden="true"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="currentColor"
+						viewBox="0 0 20 20"
+					>
 						<Fa icon={faMusic} />
 					</svg>
 				</span>
-				<input type="text" id="Name" bind:value={selectedData.name} class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="ex: Symphony" required />
+				<input
+					type="text"
+					id="Name"
+					bind:value={selectedData.name}
+					class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+					placeholder="ex: Symphony"
+					required
+				/>
 			</div>
 			<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Are nedeed to add or edit.</p>
 
 			<div class="flex p-2">
 				{#if selectedData.id == 0}
-					<button on:click={addTypeOfPiece} type="submit" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Add</button>
+					<button
+						on:click={addTypeOfPiece}
+						type="submit"
+						class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+						>Add</button
+					>
 				{:else}
-					<button on:click={addTypeOfPiece} type="submit" class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">Edit</button>
-					<button on:click={deleteTypeOfPiece} type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Delete</button>
+					<button
+						on:click={addTypeOfPiece}
+						type="submit"
+						class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
+						>Edit</button
+					>
+					<button
+						on:click={deleteTypeOfPiece}
+						type="button"
+						class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+						>Delete</button
+					>
 				{/if}
 			</div>
 		{/if}

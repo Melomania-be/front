@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-    return { id: params.id, participantId: params.participantId}
+	return { id: params.id, participantId: params.participantId };
 };

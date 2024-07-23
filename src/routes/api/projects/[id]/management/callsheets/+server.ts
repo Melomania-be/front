@@ -1,6 +1,6 @@
-import { BACKEND_API_HOST, BACKEND_API_PORT } from "$env/static/private";
-import { getToken } from "$lib/server/authentification";
-import type { RequestHandler } from "@sveltejs/kit";
+import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { getToken } from '$lib/server/authentification';
+import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ cookies, url, fetch, params }) => {
 	const page = url.searchParams.get('page');
@@ -39,4 +39,4 @@ export const POST: RequestHandler = async ({ request, cookies, params }) => {
 	);
 
 	return res;
-}
+};

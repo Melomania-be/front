@@ -34,7 +34,7 @@
 
 		responseHandler.handle(responsePieces, async () => {
 			const tmp = await responsePieces.json();
-			listPieces = tmp.data
+			listPieces = tmp.data;
 		});
 
 		let responseSectionGroups = await fetch('/api/sectionGroups', {

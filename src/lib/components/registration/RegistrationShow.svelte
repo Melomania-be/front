@@ -24,7 +24,7 @@
 		validated_contact: false,
 		section_id: 0,
 		answers: registration.form
-			? registration.form.map((form) => ({ text: '', formId: form.id!}))
+			? registration.form.map((form) => ({ text: '', formId: form.id! }))
 			: []
 	};
 
@@ -32,9 +32,9 @@
 		...newContact,
 		answers: registration.form
 			? registration.form.map((form) => {
-				const answer = newContact.answers.find((answer) => answer.formId === form.id);
-				return answer || { text: '', formId: form.id! };
-			})
+					const answer = newContact.answers.find((answer) => answer.formId === form.id);
+					return answer || { text: '', formId: form.id! };
+				})
 			: []
 	};
 

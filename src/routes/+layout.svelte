@@ -5,7 +5,6 @@
 	import Fa from 'svelte-fa';
 	import { faPersonDigging, faFolderTree } from '@fortawesome/free-solid-svg-icons';
 
-
 	export let data;
 
 	$: currentPath = $page.url.pathname;

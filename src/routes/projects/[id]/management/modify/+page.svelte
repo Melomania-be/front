@@ -22,7 +22,7 @@
 			let tmp = await projectResponse.json();
 			project = tmp[0];
 		} else {
-			alert('server error')
+			alert('server error');
 		}
 
 		const sectionGroupsResponse = await fetch(`/api/sectionGroups`, {
@@ -32,18 +32,21 @@
 		if (sectionGroupsResponse.ok) {
 			sectionGroups = await sectionGroupsResponse.json();
 		} else {
-			alert('server error')
+			alert('server error');
 		}
 
-		const piecesResponse = await fetch(`/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id`, {
-			method: 'GET'
-		});
+		const piecesResponse = await fetch(
+			`/api/pieces?filter=&page=1&limit=10000&order=asc&orderBy=id`,
+			{
+				method: 'GET'
+			}
+		);
 
 		if (piecesResponse.ok) {
 			const tmp = await piecesResponse.json();
-			pieces = tmp.data
+			pieces = tmp.data;
 		} else {
-			alert('server error')
+			alert('server error');
 		}
 
 		const foldersResponse = await fetch(`/api/folders`, {
@@ -53,11 +56,18 @@
 		if (foldersResponse.ok) {
 			folders = await foldersResponse.json();
 		} else {
-			alert('server error')
+			alert('server error');
 		}
 	});
 </script>
 
 {#if project && sectionGroups && pieces}
-	<ProjectModifier mode="modify" {project} {sectionGroups} {pieces} {folders} urlFront={`/projects/${data.id}/management/modify`}/>
+	<ProjectModifier
+		mode="modify"
+		{project}
+		{sectionGroups}
+		{pieces}
+		{folders}
+		urlFront={`/projects/${data.id}/management/modify`}
+	/>
 {/if}

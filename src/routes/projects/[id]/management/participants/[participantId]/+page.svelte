@@ -26,4 +26,4 @@
 	});
 </script>
 
-<ParticipantModifier mode="modify" id={data.id} bind:currentParticipant={participant} urlFront={urlFront}/>
+<ParticipantModifier mode="modify" id={data.id} bind:currentParticipant={participant} {urlFront} />

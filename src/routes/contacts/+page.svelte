@@ -10,7 +10,6 @@
 	import type { Contact } from '$lib/types/Contact';
 	import Dashboard from './Dashboard.svelte';
 
-
 	let metaContacts: any;
 	let metaList: any;
 	let metaValidationContact: any;
@@ -26,20 +25,18 @@
 	let urlContacts: string = '/api/contacts';
 	let urlListe: string = '/api/lists';
 	let urlValidationContact: string = '/api/contacts/validations';
-	let urlRecommendedContact: string = '/api/recommended'
-	
+	let urlRecommendedContact: string = '/api/recommended';
 
 	let dashboardData = {
-    	numberContact: 0,
-    	numberListe: 0,
-    	numberValidationContact: 0,
-    	numberRecommendedContact: 0,
-	}
+		numberContact: 0,
+		numberListe: 0,
+		numberValidationContact: 0,
+		numberRecommendedContact: 0
+	};
 
 	onMount(async () => {
 		fetchData();
 	});
-
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -62,44 +59,42 @@
 		const responseRecommendedContact = await fetch(`${urlRecommendedContact}${optionInUrls}`, {
 			method: 'GET'
 		});
-		
 
-		if (responseContacts.ok){
+		if (responseContacts.ok) {
 			const data = await responseContacts.json();
 
 			metaContacts = data.meta;
 
 			dashboardData.numberContact = metaContacts.total;
-		};
+		}
 
-		if (responseListe.ok){
+		if (responseListe.ok) {
 			const data = await responseListe.json();
 
 			metaList = data.meta;
 
 			dashboardData.numberListe = metaList.total;
-		};
+		}
 
-		if (responseValidationContact.ok){
+		if (responseValidationContact.ok) {
 			const data = await responseValidationContact.json();
 
 			metaValidationContact = data.meta;
 
 			dashboardData.numberValidationContact = metaValidationContact.total;
-		};
+		}
 
-		if (responseRecommendedContact.ok){
+		if (responseRecommendedContact.ok) {
 			const data = await responseRecommendedContact.json();
 
 			metaRecommendedContact = data.meta;
 
 			dashboardData.numberRecommendedContact = metaRecommendedContact.total;
 
-			console.log(metaRecommendedContact)
-		};
+			console.log(metaRecommendedContact);
+		}
 	}
 </script>
-
 
 <div>
 	<Dashboard data={dashboardData}></Dashboard>

@@ -34,5 +34,5 @@
 </script>
 
 {#if registration}
-	<RegistrationShow bind:registration projectId={projectId} />
+	<RegistrationShow bind:registration {projectId} />
 {/if}
