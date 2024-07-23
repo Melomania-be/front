@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
+	import DateShow from '$lib/components/DateShow.svelte';
 	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
 	import type { Participant } from '$lib/types/Participant';
 	import type { TableData } from '$lib/types/TableData';
@@ -18,18 +19,16 @@
 		order: 'asc',
 		orderBy: 'id'
 	};
-	let urlSvelteApi: string;
-	let urlFront: string;
-	let uniqueUrl: string;
+
+	let urlSvelteApi = `/api/projects/${data.id}/management/participants`;
+	let urlFront = `/projects/${data.id}/management/participants`;
+	let uniqueUrl = `/projects/${data.id}/management/participants`;
 
 	let dataHolder: TableData<Participant>;
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 
-		urlSvelteApi = `/api/projects/${data.id}/management/participants`;
-		urlFront = `/projects/${data.id}/management/participants`;
-		uniqueUrl = `/projects/${data.id}/management/participants`;
 		options = {
 			filter: urlParams.get('filter') || '',
 			limit: parseInt(urlParams.get('limit') || '5'),
@@ -63,7 +62,7 @@
 
 			dataHolder = {
 				data: participants,
-				columns: ['id'],
+				columns: ['id', 'updatedAt', 'lastActivity'],
 				notOrderedColumns: []
 			};
 		});
@@ -77,16 +76,37 @@
 	bind:uniqueUrl
 	on:optionsUpdated={fetchData}
 >
-	{#each participants as participant}
-		<a href="{uniqueUrl}/{participant.id}">
-			{participant.id}
-			{participant.contact.firstName}
-			{participant.contact.lastName}
-			{participant.contact.email}
-			{participant.contact.phone}
-			{participant.contact.messenger}
-		</a>
-	{/each}
+	<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+		<thead class="text-xs text-gray-700 uppercase dark:text-gray-400">
+			<tr>
+				<th>First name</th>
+				<th>Last name</th>
+				<th>Email</th>
+				<th>Phone</th>
+				<th>Messenger</th>
+				<th>Section</th>
+				<th>Last activity</th>
+				<th>Updated at</th>
+			</tr>
+		</thead>
+		<tbody>
+			{#each participants as participant}
+				<tr
+					on:click={() => goto(uniqueUrl + `/${participant.id}`)}
+					class="cursor-pointer hover:border border-black"
+				>
+					<td>{participant.contact.firstName}</td>
+					<td>{participant.contact.lastName}</td>
+					<td>{participant.contact.email}</td>
+					<td>{participant.contact.phone}</td>
+					<td>{participant.contact.messenger}</td>
+					<td>{participant.section.name}</td>
+					<td><DateShow bind:date={participant.lastActivity}/></td>
+					<td><DateShow bind:date={participant.updatedAt}/></td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
 </SimpleFilterer>
 
 <button on:click={() => goto(`${urlFront}/creation`)}>Add a participant</button>

@@ -2,14 +2,27 @@
 	import DateShow from '$lib/components/DateShow.svelte';
 	import type { Concert } from '$lib/types/Concert';
 	import type { CustomParticipant } from '$lib/types/CustomParticipant';
+	import type { Participant } from '$lib/types/Participant';
 	import type { Rehearsal } from '$lib/types/Rehearsal';
 
-	export let participants: CustomParticipant[];
+	export let participants: Participant[];
 	export let concertsOrRehearsals;
 	export let type: 'concert' | 'rehearsal';
 	export let disabled: boolean = false;
 
-	function triggerEvent(participant: CustomParticipant, concertOrRehehearsal: Rehearsal | Concert) {
+	$: console.log(concertsOrRehearsals);
+	$: console.log(participants);
+
+	function triggerEvent(
+		participant: CustomParticipant | Participant,
+		concertOrRehehearsal: Rehearsal | Concert
+	) {
+		if (!participant.rehearsals) {
+			participant.rehearsals = [];
+		}
+		if (!participant.concerts) {
+			participant.concerts = [];
+		}
 		switch (type) {
 			case 'rehearsal':
 				if (participant.rehearsals.includes(concertOrRehehearsal)) {
@@ -27,6 +40,11 @@
 				break;
 		}
 	}
+
+	$: participants.forEach((participant) => {
+		participant.rehearsals = participant.rehearsals ?? [];
+		participant.concerts = participant.concerts ?? [];
+	});
 </script>
 
 <table
@@ -56,11 +74,14 @@
 				<td>{participant.contact ? participant.contact.firstName : ''}</td>
 				{#each concertsOrRehearsals as concertOrRehearsal}
 					<td class="px-6 py-3 even:bg-gray-100 even:dark:bg-gray-800">
-						<input
-							type="checkbox"
-							on:change={() => triggerEvent(participant, concertOrRehearsal)}
-							{disabled}
-						/>
+						{#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
+							<input
+								type="checkbox"
+								checked={participant.concerts?.includes(concertOrRehearsal) || participant.rehearsals?.includes(concertOrRehearsal)}
+								on:change={() => triggerEvent(participant, concertOrRehearsal)}
+								{disabled}
+							/>
+						{/if}
 					</td>
 				{/each}
 			</tr>

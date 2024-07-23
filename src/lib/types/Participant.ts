@@ -1,6 +1,8 @@
 import type { Answer } from './Answer';
+import type { Concert } from './Concert';
 import type { Contact } from './Contact';
 import type { Project } from './Project';
+import type { Rehearsal } from './Rehearsal';
 import type { Section } from './Section';
 
 export interface Participant {
@@ -16,4 +18,6 @@ export interface Participant {
 	sectionId: number;
 	updatedAt: Date;
 	createdAt: Date;
+	concerts?: Array<Concert>;
+	rehearsals?: Array<Rehearsal>;
 }

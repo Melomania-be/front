@@ -13,6 +13,7 @@
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import type { Contact } from '$lib/types/Contact';
 	import type { Folder } from '$lib/types/Folder';
+	import { StatusCodesClientError } from '$lib/common/statusCodes';
 
 	export let project: Project;
 	export let pieces: Array<Piece>;
@@ -80,6 +81,11 @@
 		if (response.ok) {
 			const data = await response.json();
 			goto(`/projects/${data.id}/management`);
+		} else {
+			if (response.status === StatusCodesClientError.UNPROCESSABLE_ENTITY) {
+				let error = await response.json();
+				alert(error);
+			}
 		}
 	}
 

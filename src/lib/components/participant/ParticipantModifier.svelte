@@ -11,10 +11,11 @@
 	import type { CustomParticipant } from '$lib/types/CustomParticipant';
 	import type { Registration } from '$lib/types/Registration';
 	import SectionPicker from './SectionPicker.svelte';
+	import type { Participant } from '$lib/types/Participant';
 
 	export let mode: 'create' | 'modify';
 	export let id: string;
-	export let currentParticipant: CustomParticipant;
+	export let currentParticipant: Participant;
 	export let urlFront: string;
 
 	let allowModification: boolean = mode === 'create' ? true : false;
@@ -38,7 +39,7 @@
 	let dataHolder: TableData<Contact>;
 	let listContacts: Contact[] = [];
 
-	let participants: CustomParticipant[] = [];
+	let participants: Participant[] = [];
 
 	let registration: Registration;
 
@@ -141,6 +142,42 @@
 				if (browser) await fetchData();
 			}
 
+			if (currentParticipant.concerts) {
+				currentParticipant.concerts = currentParticipant.concerts.map((concert) => {
+					if (!currentParticipant.concerts) currentParticipant.concerts = [];
+					
+					if (registration.project) {
+						const foundConcert = registration.project.concerts.filter(
+							(projectConcert) => projectConcert.id === concert.id
+						);
+
+						if (foundConcert.length > 0) {
+							return foundConcert[0];
+						}
+					}
+
+					return null
+				}).filter((concert) => concert !== null);
+			}
+
+			if (currentParticipant.rehearsals) {
+				currentParticipant.rehearsals = currentParticipant.rehearsals.map((rehearsal) => {
+					if (!currentParticipant.rehearsals) currentParticipant.rehearsals = [];
+					
+					if (registration.project) {
+						const foundRehearsal = registration.project.rehearsals.filter(
+							(projectRehearsal) => projectRehearsal.id === rehearsal.id
+						);
+
+						if (foundRehearsal.length > 0) {
+							return foundRehearsal[0];
+						}
+					}
+
+					return null
+				}).filter((rehearsal) => rehearsal !== null);
+			}
+
 			if (
 				registration.project &&
 				(!registration.project.sectionGroup ||
@@ -158,8 +195,6 @@
 	$: {
 		participants = [currentParticipant];
 	}
-
-	$: console.log(registration);
 </script>
 
 {#if currentParticipant}
@@ -202,7 +237,7 @@
 						{/if}
 					</div>
 					<div class="m-1">
-						{#if registration.project.concerts}
+						{#if registration.project.concerts && registration.project.concerts.length > 0}
 							<h2 class="uppercase">Attendance to Concerts</h2>
 							<AttendancePicker
 								bind:participants
@@ -213,7 +248,7 @@
 						{/if}
 					</div>
 					<div class="m-1">
-						{#if registration.project.rehearsals}
+						{#if registration.project.rehearsals && registration.project.rehearsals.length > 0}
 							<h2 class="uppercase">Attendance to Rehearsals</h2>
 							<AttendancePicker
 								bind:participants
