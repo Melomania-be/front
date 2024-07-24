@@ -10,7 +10,7 @@
 
 <span>
 	{#if date}
-		{(new Date(date)).toLocaleDateString(undefined, options)}
+		{new Date(date).toLocaleDateString(undefined, options)}
 	{:else}
 		-
 	{/if}

@@ -30,4 +30,4 @@ export const DELETE: RequestHandler = async ({ cookies, fetch, params }) => {
 	);
 
 	return res;
-}
+};

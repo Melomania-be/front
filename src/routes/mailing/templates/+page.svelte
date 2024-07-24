@@ -157,19 +157,23 @@
 		>
 		<p class="m-2">Template visualizer</p>
 		<div>
-			<select bind:value={selectedTemplate}>
-				{#each templates as template}
-					<option value={template}>{template.name}</option>
-				{/each}
-			</select>
-			<button
-				class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-				on:click={deleteTemplate}>Delete</button
-			>
-			<button
-				class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-				on:click={() => (editing = true)}>Edit</button
-			>
+			{#if templates && templates.length > 0}
+				<select bind:value={selectedTemplate}>
+					{#each templates as template}
+						<option value={template}>{template.name}</option>
+					{/each}
+				</select>
+				<button
+					class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+					on:click={deleteTemplate}>Delete</button
+				>
+				<button
+					class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+					on:click={() => (editing = true)}>Edit</button
+				>
+			{:else}
+				<p>No templates found</p>
+			{/if}
 		</div>
 		<div class="grid grid-cols-2">
 			{#if selectedTemplate}
