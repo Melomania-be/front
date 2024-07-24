@@ -26,6 +26,7 @@
 		order: 'asc',
 		orderBy: 'id'
 	};
+
 	let listComposers: Composer[] = [];
 	let listTypeOfPieces: TypeOfPiece[] = [];
 	let folderList: Array<Folder> = [];
@@ -57,6 +58,7 @@
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
+
 		options = {
 			filter: urlParams.get('filter') || '',
 			limit: parseInt(urlParams.get('limit') || '1000000000'),
@@ -74,6 +76,8 @@
 		optionInUrls += '&orderBy=' + options.orderBy;
 		optionInUrls += '&order=' + options.order;
 
+		let baseOptionInUrls = `?page=1&limit=1000000&filter=&orderBy=id&order=asc`;
+
 		if (browser) goto(`${urlFront}${optionInUrls}`);
 
 		const response = await fetch(`${url}${optionInUrls}`, {
@@ -86,7 +90,6 @@
 			const data = await response.json();
 
 			piece = data.data;
-			piece.unshift(newPiece);
 
 			meta = data.meta;
 
@@ -98,7 +101,7 @@
 		});
 
 		//récupération des composers
-		const responseComposer = await fetch(`${urlComposerS}${optionInUrls}`, {
+		const responseComposer = await fetch(`${urlComposerS}${baseOptionInUrls}`, {
 			method: 'GET'
 		});
 
@@ -111,7 +114,7 @@
 		});
 
 		//récupération des Type Of Pieces
-		const responseTypeOfPieces = await fetch(`${urlTypeOfPieces}${optionInUrls}`, {
+		const responseTypeOfPieces = await fetch(`${urlTypeOfPieces}${baseOptionInUrls}`, {
 			method: 'GET'
 		});
 
@@ -226,6 +229,11 @@
 
 <div class="flex">
 	<div class="w-1/2">
+		<div class="w-full">
+			<button on:click={() => selectedData = newPiece} class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200">
+				Add new piece
+			</button>
+		</div>
 		{#if dataHolder}
 			<SimpleFilterer
 				showData={true}
@@ -236,6 +244,7 @@
 				bind:uniqueUrl
 				on:optionsUpdated={() => fetchData()}
 				buttonLinkId={false}
+				editable={true}
 				bind:selectedData
 			></SimpleFilterer>
 		{/if}

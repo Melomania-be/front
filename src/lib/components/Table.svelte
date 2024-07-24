@@ -132,7 +132,7 @@
 									>
 										<span class="icon-[formkit--arrowright] hover:text-black"></span>
 									</button>
-								{:else if selectedData}
+								{:else}
 									<button
 										on:click={() => {
 											selectedData = row;

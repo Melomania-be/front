@@ -187,8 +187,8 @@
 		</div>
 
 		<div class="flex flex-col w-1/2 border-2 border-rose-500">
-			<h2>Inscription</h2>
-			<h3>General informations</h3>
+			<h2>Registration</h2>
+			<h3>Contact info</h3>
 			<div class="flex flex-col p-2">
 				<span>First name:</span>
 				<input class="p-1" bind:value={newContact.first_name} placeholder="First name" required />
@@ -207,7 +207,7 @@
 
 				{#if registration.project?.sectionGroup?.sections}
 					<h3>Section</h3>
-					<p>Select the section you belong to :</p>
+					<p>Select your section :</p>
 					<select bind:value={newContact.section_id}>
 						{#each registration.project.sectionGroup.sections as section}
 							<option value={section.id}>{section.name}</option>
@@ -215,7 +215,7 @@
 					</select>
 				{/if}
 
-				<h3>Inscription to rehearsals</h3>
+				<h3>Rehearsal attendance</h3>
 				{#if registration && registration.project?.rehearsals}
 					<table>
 						<thead>

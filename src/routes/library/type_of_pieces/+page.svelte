@@ -149,6 +149,7 @@
 				bind:uniqueUrl
 				on:optionsUpdated={() => fetchData()}
 				buttonLinkId={false}
+				editable={true}
 				bind:selectedData
 			></SimpleFilterer>
 		{/if}

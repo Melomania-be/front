@@ -56,10 +56,12 @@
 						<li class="py-3 sm:py-4">
 							<div class="flex items-center justify-between">
 								<div class="flex items-center space-x-1">
-									<h3 class="text-sm font-medium text-gray-900 dark:text-white">{piece.name}</h3>
-									<span class="text-xs text-gray-500 dark:text-gray-400"
-										>{piece.composer.shortName}</span
-									>
+									<a href="/library/pieces?filter={piece.name}">
+										<h3 class="text-sm font-medium text-gray-900 dark:text-white">{piece.name}</h3>
+										<span class="text-xs text-gray-500 dark:text-gray-400"
+											>{piece.composer.shortName}</span
+										>
+									</a>
 								</div>
 							</div>
 						</li>
