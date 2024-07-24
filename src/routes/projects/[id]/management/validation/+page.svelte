@@ -60,7 +60,7 @@
 		{#if participants && participants.length > 0}
 			<div>
 				<h1 class="text-2xl">
-					You need to validate the inscription of {participants.length} person(s) :
+					You need to validate the registration of {participants.length} person(s) :
 				</h1>
 				<table>
 					<thead>

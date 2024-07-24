@@ -80,7 +80,7 @@
 
 				<div class="flex justify-end">
 					<p class="text-sm">
-						<a href="/projects/{project.id}/management/rehearsals/add">Create a rehearsal</a>
+						<a href="/projects/{project.id}/management/modify">Create a rehearsal</a>
 					</p>
 				</div>
 			</div>
@@ -111,7 +111,7 @@
 
 				<div class="flex justify-end">
 					<p class="text-sm">
-						<a href="/projects/{project.id}/management/concerts/add">Create a concert</a>
+						<a href="/projects/{project.id}/management/modify">Create a concert</a>
 					</p>
 				</div>
 			</div>
