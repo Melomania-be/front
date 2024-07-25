@@ -7,7 +7,6 @@
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
 	import type { Composer } from '$lib/types/Composer';
-	import DateShow from '$lib/components/DateShow.svelte';
 
 	import Fa from 'svelte-fa';
 	import { faGlobe, faTextSlash } from '@fortawesome/free-solid-svg-icons';
