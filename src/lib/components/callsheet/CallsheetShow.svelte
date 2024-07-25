@@ -73,8 +73,7 @@
 										</th>
 										<td class="px-6 py-4">
 											{#if piece.folder !== null && piece.folder !== undefined && piece.folder.files.length > 0}
-														<!-- Accordéon-->
-														<Accordion bind:folder={piece.folder}></Accordion>
+												<Accordion bind:folder={piece.folder}></Accordion>
 											{:else}
 												<span class="italic text-red-500">x</span>
 											{/if}

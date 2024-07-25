@@ -40,11 +40,16 @@
 	}
 </script>
 
-<div id="accordion-flush" data-accordion="collapse" data-active-classes="bg-white dark:bg-gray-900 text-gray-900 dark:text-white" data-inactive-classes="text-gray-500 dark:text-gray-400">
+<div
+	id="accordion-flush"
+	data-accordion="collapse"
+	data-active-classes="bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+	data-inactive-classes="text-gray-500 dark:text-gray-400"
+>
 	<div class="header">
 		<button
 			type="button"
-			class="flex items-center justify-between w-full font-medium rtl:text-right"
+			class="flex items-center justify-between w-full py-5 font-medium rtl:text-right text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400 gap-3"
 			data-accordion-target="#accordion-color-body-1"
 			aria-expanded="true"
 			aria-controls="accordion-color-body-1"
@@ -71,17 +76,26 @@
 	</div>
 
 	{#if open}
-		<div class="details w-1/2 bg-blend-color" transition:slide>
+		<div class="details w-full" transition:slide>
 			{#each folder.files as file}
 				{#if file !== undefined}
-					<div>
+					<div
+						class="py-5 border-b border-gray-200 dark:border-gray-700 flex cursor-pointer"
+						role="button"
+						tabindex="0"
+						aria-pressed="false"
+						on:click={() => downloadFile(file)}
+						on:keydown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								downloadFile(file);
+							}
+						}}
+					>
+						<span class="size-6 icon-[line-md--download-outline]"></span>
+						<p class="mb-2 text-gray-500 dark:text-gray-400 *:[&:not(:hover)]:truncate">
 							{file.name}
-							<button
-							on:click={() => downloadFile(file)}
-							class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-							>
-								Download
-							</button>
+						</p>
 					</div>
 				{/if}
 			{/each}
