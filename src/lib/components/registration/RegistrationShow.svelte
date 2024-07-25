@@ -131,20 +131,18 @@
 			</div>
 
 			{#if registration.contents && registration.contents.length > 0}
-				<div class="mb-8 ml-20">
-					{#each registration.contents as content}
-						<div class="mb-8 ml-20">
-							<h2
-								class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5"
-							>
-								{content.title}
-							</h2>
-							<div class="w-full flex">
-								<p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
-							</div>
+				{#each registration.contents as content}
+					<div class="mb-8 ml-20">
+						<h2
+							class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5"
+						>
+							{content.title}
+						</h2>
+						<div class="w-full flex ml-5">
+							<p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
 						</div>
-					{/each}
-				</div>
+					</div>
+				{/each}
 			{/if}
 
 			<div class="mb-8 ml-20">
@@ -270,7 +268,7 @@
 		</div>
 
 		<div
-			class="m-20 pt-5 relative w-1/2 max-w-xxl bg-white border border-blue-900 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+			class="m-20 pt-5 relative max-w-xxl bg-white border border-blue-900 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
 			<div class="mb-8 ml-14">
 				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
@@ -400,10 +398,11 @@
 				{/if}
 
 				<div class="mt-10 w-full">
-					<button 
-					class="text-white bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2
+					<button
+						class="text-white bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2
 					ml-10"
-					on:click={handleSubmit}>
+						on:click={handleSubmit}
+					>
 						Submit
 					</button>
 				</div>
