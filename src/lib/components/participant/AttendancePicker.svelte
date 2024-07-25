@@ -77,7 +77,8 @@
 						{#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
 							<input
 								type="checkbox"
-								checked={participant.concerts?.includes(concertOrRehearsal) || participant.rehearsals?.includes(concertOrRehearsal)}
+								checked={participant.concerts?.includes(concertOrRehearsal) ||
+									participant.rehearsals?.includes(concertOrRehearsal)}
 								on:change={() => triggerEvent(participant, concertOrRehearsal)}
 								{disabled}
 							/>
