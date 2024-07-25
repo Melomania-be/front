@@ -177,7 +177,7 @@
 	<div class="p-5">
 		<div class="w-full mb-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white">
 			<input
-				class="ml-0.5"
+				class="ml-1 mt-1 w-full"
 				bind:value={project.name}
 				placeholder="Project name"
 				disabled={!allowModification}
@@ -186,20 +186,27 @@
 
 		<h3 class="w-full text-center m-1 bg-slate-200">Project informations</h3>
 
-		<h4>Section Group</h4>
+		<h4 class="text-lg">Section Group</h4>
 		<div class="m-1 border">
-			<a href="/sectionGroups">Manage section groups</a>
+			{#if allowModification}
+				<a href="/sectionGroups"
+					><button class="border border-blue-700 p-1 hover:bg-slate-200 rounded-full">
+						Manage section groups
+					</button></a
+				>
+			{/if}
+
 			{#if !allowModification}
 				{#if project.sectionGroup}
 					<p>{project.sectionGroup.name}</p>
-					<p>
+					<div class="border">
 						Composed of :
 						{#if project.sectionGroup.sections}
 							{#each project.sectionGroup.sections as section}
-								{section.name}
+								<div class="m-1 text-nowrap">{section.name} - {section.size}</div>
 							{/each}
 						{/if}
-					</p>
+					</div>
 				{:else}
 					<p>No section group</p>
 				{/if}
@@ -222,67 +229,64 @@
 			{/if}
 		</div>
 
-		<h4>Pieces</h4>
+		<h4 class="text-lg">Pieces</h4>
 		<div class="m-1 border">
-			{#if !allowModification}
-				<table>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Composer</th>
-							<th>Arranger</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#if project.pieces}
-							{#each project.pieces as piece}
-								<tr>
-									<td>{piece.name}</td>
-									<td>{piece.composer.shortName}</td>
-									<td>{piece.arranger}</td>
-								</tr>
-							{/each}
-						{/if}
-					</tbody>
-				</table>
-			{:else}
-				<table>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Composer</th>
-							<th>Arranger</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#if project.pieces}
-							{#each project.pieces as piece}
-								<tr>
-									<td>{piece.name}</td>
-									<td>{piece.composer.shortName}</td>
-									<td>{piece.arranger}</td>
-								</tr>
-							{/each}
-						{/if}
-					</tbody>
-				</table>
-				{#if project.pieces}
-					<select class="flex w-1/2 border mt-1" bind:value={project.pieces} multiple>
-						{#if pieces && pieces.length > 0}
-							{#each pieces as piece}
-								<option value={piece}>{piece.name} {piece.composer.shortName}</option>
-							{/each}
-						{/if}
-					</select>
-				{/if}
+			<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+				<thead
+					class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
+				>
+					<tr>
+						<th>Name</th>
+						<th>Composer</th>
+						<th>Arranger</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#if project.pieces}
+						{#each project.pieces as piece}
+							<tr
+								class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700"
+							>
+								<td>{piece.name}</td>
+								<td>{piece.composer.shortName}</td>
+								<td>{piece.arranger}</td>
+							</tr>
+						{/each}
+					{/if}
+				</tbody>
+			</table>
+			{#if allowModification && project.pieces}
+				<select class="flex w-1/2 border mt-1" bind:value={project.pieces} multiple>
+					{#if pieces && pieces.length > 0}
+						{#each pieces as piece}
+							<option value={piece}>{piece.name} {piece.composer.shortName}</option>
+						{/each}
+					{/if}
+				</select>
 			{/if}
 		</div>
 
-		<h4>Rehearsals</h4>
+		<h4 class="text-lg">Folder</h4>
+		<div class="m-1">
+			<select class="flex w-1/2" bind:value={project.folder}>
+				<option value={null}>None</option>
+				{#if folders}
+					{#each folders as folder}
+						<option value={folder}>{folder.name}</option>
+					{/each}
+				{/if}
+			</select>
+		</div>
+
+		<h4 class="text-lg">Rehearsals</h4>
 		<div class="m-1 border">
 			{#if !allowModification}
-				<table>
-					<thead>
+				<table
+					class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed"
+				>
+					<thead
+						class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
+					>
 						<tr>
 							<th>Date</th>
 							<th>Place</th>
@@ -290,7 +294,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#if project.rehearsals}
+						{#if project.rehearsals && project.rehearsals.length}
 							{#each project.rehearsals as rehearsal}
 								<tr>
 									<td><DateShow date={rehearsal.date} /></td>
@@ -298,6 +302,8 @@
 									<td>{rehearsal.comment}</td>
 								</tr>
 							{/each}
+						{:else}
+							<tr><td colspan="3" class="text-center">No rehearsal</td></tr>
 						{/if}
 					</tbody>
 				</table>
@@ -339,23 +345,15 @@
 			{/if}
 		</div>
 
-		<h4>Folder</h4>
-		<div class="m-1 border">
-			<select class="flex w-1/2" bind:value={project.folder}>
-				<option value={null}>None</option>
-				{#if folders}
-					{#each folders as folder}
-						<option value={folder}>{folder.name}</option>
-					{/each}
-				{/if}
-			</select>
-		</div>
-
-		<h4>Concerts</h4>
+		<h4 class="text-lg">Concerts</h4>
 		<div class="m-1 border">
 			{#if !allowModification}
-				<table>
-					<thead>
+				<table
+					class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed"
+				>
+					<thead
+						class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
+					>
 						<tr>
 							<th>Date</th>
 							<th>Place</th>
@@ -363,7 +361,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#if project.concerts}
+						{#if project.concerts && project.concerts.length}
 							{#each project.concerts as concert}
 								<tr>
 									<td><DateShow date={concert.date} /></td>
@@ -371,6 +369,8 @@
 									<td>{concert.comment}</td>
 								</tr>
 							{/each}
+						{:else}
+							<tr><td colspan="3" class="text-center">No rehearsal</td></tr>
 						{/if}
 					</tbody>
 				</table>
@@ -415,10 +415,12 @@
 		<h3 class="w-full text-center m-1 bg-slate-200">Responsibles for this project</h3>
 		<div class="m-1">
 			{#if !allowModification}
-				{#if project.responsibles}
+				{#if project.responsibles && project.responsibles.length}
 					{#each project.responsibles as responsible}
 						<p>{responsible.firstName} {responsible.lastName}</p>
 					{/each}
+				{:else}
+					<p class="text-center">No responsibles</p>
 				{/if}
 			{:else if project.responsibles}
 				{#each project.responsibles as responsible}
