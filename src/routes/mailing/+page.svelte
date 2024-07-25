@@ -181,9 +181,7 @@
 	<div class="space-y-4">
 		<button
 			class="m-2 p-2 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-			on:click={() => {
-				window.location.href = '/mailing/templates';
-			}}>Template Manager</button
+			on:click={() => goto('/mailing/templates')}>Template Manager</button
 		>
 
 		{#if useTemplate === true}

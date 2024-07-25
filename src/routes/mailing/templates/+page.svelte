@@ -2,6 +2,7 @@
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 	import { onMount } from 'svelte';
 	import HtmlEditor from '../HtmlEditor.svelte';
+	import { goto } from '$app/navigation';
 
 	let selectedTemplate: MailTemplate = {
 		id: null,
@@ -89,9 +90,9 @@
 <div class="m-2">
 	<button
 		class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-		on:click={() => {
-			window.location.href = '/mailing';
-		}}>Mailing</button
+		on:click={() => 
+			goto('/mailing')
+		}>Mailing</button
 	>
 	<br />
 	<br />
