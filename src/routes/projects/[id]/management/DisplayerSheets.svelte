@@ -147,24 +147,6 @@
 							>Modify registration form</a
 						>
 					</li>
-					<li>
-						<h3>Validate registrations :</h3>
-						<ul>
-							{#if participantsNotValidated.length === 0}
-								<li class="text-sm">No registration to validate</li>
-							{:else}
-								{#each participantsNotValidated.slice(0, 3) as participant}
-									<li class="text-sm">
-										<a href="/projects/{project.id}/management/participants/{participant.id}">
-											{participant.contact.firstName}
-											{participant.contact.lastName}
-										</a>
-									</li>
-								{/each}
-								<li>...</li>
-							{/if}
-						</ul>
-					</li>
 				</ul>
 			</div>
 		{/if}

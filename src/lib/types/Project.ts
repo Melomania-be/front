@@ -4,6 +4,7 @@ import type { Contact } from './Contact';
 import type { Folder } from './Folder';
 import type { GenericDataType } from './GenericDataType';
 import type { Piece } from './Piece';
+import type { Registration } from './Registration';
 import type { Rehearsal } from './Rehearsal';
 import type { SectionGroup } from './SectionGroup';
 
@@ -19,4 +20,5 @@ export interface Project {
 	folder?: Folder;
 	callsheets?: Callsheet[];
 	participants?: Contact[];
+	registration?: Registration;
 }

@@ -86,6 +86,14 @@
 					/>
 				</div>
 
+				{#if callsheet.id}
+					<div>
+						<a class="text-blue-600" href="/call_sheets/{callsheet.projectId}/-1"
+							><h2 class="text-lg">Link to callsheet</h2></a
+						>
+					</div>
+				{/if}
+
 				<div>
 					<h2 class="text-lg">Contents :</h2>
 					{#if allowModification}

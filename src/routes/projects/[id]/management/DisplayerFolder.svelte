@@ -6,9 +6,7 @@
 	let mode: 'folder' | 'concerts' = 'folder';
 </script>
 
-<div
-	class="w-full h-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
->
+<div class="w-full bg-white border border-black shadow dark:bg-gray-800 dark:border-gray-700">
 	<div class="sm:hidden">
 		<label for="tabs" class="sr-only">Select tab</label>
 		<select
@@ -42,15 +40,21 @@
 			<h3 class="text-sm font-medium text-gray-600 dark:text-white">
 				Folder : {project.folder.name}
 			</h3>
-			<ul class="divide-y divide-gray-200 dark:divide-gray-700 border text-gray-600">
-				{#each project.folder.files as file}
-					<li class="py-3 sm:py-4">
-						<div class="flex items-end justify-between text-gray-600">
-							{file.name}
-						</div>
-					</li>
-				{/each}
-			</ul>
+			{#if project.folder.files.length === 0}
+				<p class="text-gray-600 dark:text-gray-400">No files in this folder</p>
+			{:else}
+				<ul class="divide-y divide-gray-200 dark:divide-gray-700 border text-gray-600">
+					{#each project.folder.files as file}
+						<li class="py-3 sm:py-4">
+							<div class="flex items-end justify-between text-gray-600">
+								{file.name}
+							</div>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		{:else}
+			<p class="text-gray-600 dark:text-gray-400">No folder</p>
 		{/if}
 	</div>
 </div>
