@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let date: any;
+	export let date: string | Date;
 	export let withTime: boolean = false;
 
 	let usableDate = new Date(date);

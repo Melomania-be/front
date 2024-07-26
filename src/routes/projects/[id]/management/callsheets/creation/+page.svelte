@@ -21,7 +21,7 @@
 		callsheet = {
 			contents: [],
 			id: 0,
-			project: project[0],
+			project: project,
 			version: '',
 			projectId: data.id,
 			createdAt: new Date(),

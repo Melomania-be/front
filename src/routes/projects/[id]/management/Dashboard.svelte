@@ -34,7 +34,7 @@
 	</div>
 	<div class="flex flex-col md:flex-row">
 		<div
-			class="grid grid-cols-1 space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-black rounded-tl-lg shadow dark:bg-gray-800 dark:border-gray-700"
+			class="flex-col space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-black rounded-tl-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
 			<div class="text-sm">
 				Created at: <DateShow date={project.createdAt} />
@@ -44,11 +44,15 @@
 			</div>
 			<div class="text-sm">
 				Responsibles:
-				{#each project.responsibles as responsible}
-					<a href="/contacts/{responsible.id}" class="rounded-full bg-slate-100 p-1"
-						>{responsible.firstName} {responsible.lastName}</a
-					>
-				{/each}
+				{#if project.responsibles && project.responsibles.length === 0}
+					No responsibles
+				{:else}
+					{#each project.responsibles as responsible}
+						<a href="/contacts/{responsible.id}" class="rounded-full bg-slate-100 p-1"
+							>{responsible.firstName} {responsible.lastName}</a
+						>
+					{/each}
+				{/if}
 			</div>
 			<div class="grid grid-cols-2 gap-1">
 				<a
