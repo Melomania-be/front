@@ -1,173 +1,174 @@
 <script lang="ts">
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import type { File } from '$lib/types/File';
+	import Accordion from '$lib/components/Accordion.svelte';
+	import DateShow from '../DateShow.svelte';
 
 	export let callsheet: Callsheet;
 
-	async function downloadFile(file: File) {
-		const response = await fetch(`/api/files/${file.id}`, {
-			method: 'GET'
-		});
+	function hour(date: Date, use24HourFormat: boolean = true) {
+		let hours = date.getHours();
+		let minutes = date.getMinutes();
+		let time24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-		if (response.status >= 400 && response.status < 500) {
-			const jsonResponse = await response.json();
-			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-			alert(error);
-		}
-
-		if (response.status >= 500) {
-			alert('Server error');
-		}
-
-		if (response.status === 200) {
-			const blob = await response.blob();
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-
-			a.href = window.URL.createObjectURL(
-				new Blob([blob], {
-					type: file.type
-				})
-			);
-			a.download = file.name;
-			document.body.appendChild(a);
-			a.click();
-			window.URL.revokeObjectURL(url);
-
-			document.body.removeChild(a);
-		}
+		return time24;
 	}
 </script>
 
-<div class="flex flex-col m-1 border-2 border-rose-500">
-	<h1>CALL SHEET</h1>
+<div
+	class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+>
 	{#if callsheet}
-		<p><b>Version :</b> {callsheet.version}</p>
-		<p><b>Project Name :</b> {callsheet.project.name || 'No project name?'}</p>
+		<div class="p-5">
+			<div
+				class="mb-5 font-bold tracking-tight text-gray-900 border-b-gray-200 shadow dark:text-white origin-center w-full flex justify-center"
+			>
+				<h1 class="text-3xl font-bold mb-2">
+					CALLSHEET (V. {callsheet.version}) - {callsheet.project.name}
+				</h1>
+			</div>
 
-		<div>
-			<p><b>Contents</b></p>
-			{#if callsheet.contents.length === 0}
-				<p>No content found</p>
-			{:else}
+			{#if callsheet.contents && callsheet.contents.length > 0}
 				{#each callsheet.contents as content}
-					<div>
-						<p class="uppercase">{content.title}</p>
-						<p>{@html content.text}</p>
+					<div class="mb-8 ml-20">
+						<h2
+							class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5"
+						>
+							{content.title}
+						</h2>
+						<div class="w-full flex">
+							<p class="text-gray-800 dark:text-gray-400">{content.text}</p>
+						</div>
 					</div>
 				{/each}
 			{/if}
-		</div>
 
-		<p><b>Rehearsals</b></p>
-		{#if callsheet.project?.rehearsals}
-			<table>
-				<thead>
-					<tr>
-						<th>Date</th>
-						<th>Place</th>
-						<th>Comment</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if callsheet.project.rehearsals.length === 0}
-						<tr>
-							<td colspan="3">No rehearsal found</td>
-						</tr>
-					{:else}
-						{#each callsheet.project.rehearsals as rehearsal}
+			<div class="mb-2 ml-20">
+				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
+					Program and scores
+				</h2>
+				<div class="w-full flex">
+					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<thead
+							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+						>
 							<tr>
-								<td>{rehearsal.date}</td>
-								<td>{rehearsal.place}</td>
-								<td>{rehearsal.comment}</td>
+								<th scope="col" class="px-6 py-3"> Composer </th>
+								<th scope="col" class="px-6 py-3"> Name </th>
+								<th scope="col" class="px-6 py-3"> Files (Partitions) </th>
 							</tr>
-						{/each}
-					{/if}
-				</tbody>
-			</table>
-		{:else}
-			<p>No rehearsal information available</p>
-		{/if}
-
-		<p><b>Pieces</b></p>
-		{#if callsheet.project?.pieces}
-			<table>
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Opus</th>
-						<th>Composer</th>
-						<th>Arranger</th>
-						<th>Files</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if callsheet.project.pieces.length === 0}
-						<tr>
-							<td colspan="4">No piece found</td>
-						</tr>
-					{:else}
-						{#each callsheet.project.pieces as piece}
-							<tr>
-								<td>{piece.name}</td>
-								<td>{piece.opus}</td>
-								<td>{piece.composer.shortName}</td>
-								<td>{piece.arranger ? piece.arranger : 'None'}</td>
-								{#if piece.folder && piece.folder.files.length > 0}
-									<table>
-										{#each piece.folder.files as file}
-											<tr>
-												<td>{file.name}</td>
-												<td
-													><button
-														on:click={() => downloadFile(file)}
-														class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-														>Download</button
-													>
-												</td>
-											</tr>
-										{/each}
-									</table>
-								{/if}
-							</tr>
-						{/each}
-					{/if}
-				</tbody>
-			</table>
-		{:else}
-			<p>No pieces found</p>
-		{/if}
-
-		<p><b>Section Informations</b></p>
-		{#if callsheet.project?.sectionGroup}
-			<div>
-				<div class="text-red-500">
-					<b>Section Group Name:</b>
-					{callsheet.project.sectionGroup.name}
+						</thead>
+						<tbody>
+							{#if callsheet.project?.pieces}
+								{#each callsheet.project.pieces as piece}
+									<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+										<td class="px-6 py-4">
+											{piece.composer.shortName}
+										</td>
+										<th
+											scope="row"
+											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+										>
+											{piece.name}
+										</th>
+										<td class="px-6 py-4">
+											{#if piece.folder !== null && piece.folder !== undefined && piece.folder.files.length > 0}
+												<Accordion bind:folder={piece.folder}></Accordion>
+											{:else}
+												<span class="italic text-red-500">x</span>
+											{/if}
+										</td>
+									</tr>
+								{/each}
+							{/if}
+						</tbody>
+					</table>
 				</div>
-				{#if !callsheet.project.sectionGroup.sections || callsheet.project.sectionGroup.sections.length === 0}
-					<p>No section found</p>
-				{:else}
-					{#each callsheet.project.sectionGroup.sections as section}
-						<div>
-							<p><b>Section Name:</b> {section.name}</p>
-							<p><b>Size:</b> {section.size}</p>
-							<p><b>Instruments:</b></p>
-							<ul>
-								{#if !section.instruments || section.instruments.length === 0}
-									<li>No instrument found</li>
-								{:else}
-									{#each section.instruments as instrument}
-										<li>{instrument.name}</li>
-									{/each}
-								{/if}
-							</ul>
-						</div>
-					{/each}
-				{/if}
 			</div>
-		{:else}
-			<p>No section found</p>
-		{/if}
+			<div class="pt-10 mb-2 ml-20">
+				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
+					Planning and addresses
+				</h2>
+				<div class="w-full flex">
+					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<thead
+							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+						>
+							<tr>
+								<th scope="col" class="px-6 py-3">Date</th>
+								<th scope="col" class="px-6 py-3">Time</th>
+								<th scope="col" class="px-6 py-3">Place</th>
+								<th scope="col" class="px-6 py-3">Comment</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
+							{#if callsheet.project?.rehearsals && callsheet.project.rehearsals.length > 0}
+								{#each callsheet.project.rehearsals as rehearsal}
+									<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+										<th
+											scope="row"
+											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+											><DateShow date={rehearsal.date}></DateShow></th
+										>
+										<td class="px-6 py-4">{hour(new Date(rehearsal.date))}</td>
+										<td class="px-6 py-4">{rehearsal.place}</td>
+										<td class="px-6 py-4">{rehearsal.comment}</td>
+									</tr>
+								{/each}
+							{:else}
+								<tr>
+									<td class="px-6 py-4" colspan="3">No rehearsal found</td>
+								</tr>
+							{/if}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="pt-10 mb-2 ml-20">
+				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline">
+					Contact Information
+				</h2>
+				<div class="w-full flex mt-2 mb-5">
+					<p class="text-base text-gray-800 dark:text-gray-400">
+						Below are the project managers. Please don't hesitate to call or email one of us for
+						questions or remarks.
+					</p>
+				</div>
+				<div class="flex flex-col-5">
+					{#if callsheet.project?.responsibles && callsheet.project.responsibles.length > 0}
+						{#each callsheet.project.responsibles as responsible}
+							<div
+								class="flex-col-1 block max-w-sm p-6 bg-white border border-blue-900 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 ml-5"
+							>
+								<h5 class="mb-2 text-xl tracking-tight text-gray-900 dark:text-white">
+									{responsible.firstName}
+									{responsible.lastName}
+								</h5>
+								<p class="font-normal text-gray-700 dark:text-gray-400">
+									{#if responsible.email}
+										<span class="text-gray-900">Email :</span> {responsible.email} <br />
+									{/if}
+									{#if responsible.phone !== '' && responsible.phone !== null && responsible.phone !== undefined && responsible.phone !== '/'}
+										<span class="text-gray-900">Phone :</span> {responsible.phone} <br />
+									{/if}
+									{#if responsible.messenger !== '' && responsible.messenger !== null && responsible.messenger !== undefined && responsible.messenger !== '/'}
+										<span class="text-gray-900">Messenger :</span> {responsible.messenger} <br />
+									{/if}
+								</p>
+							</div>
+						{/each}
+					{:else}
+						<p>No responsible found</p>
+					{/if}
+				</div>
+			</div>
+		</div>
+	{:else}
+		<div class="p-5">
+			<p>
+				We encountered a problem retrieving the call sheet, please reload the page or try again
+				later.
+			</p>
+		</div>
 	{/if}
 </div>

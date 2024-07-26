@@ -143,39 +143,43 @@
 			}
 
 			if (currentParticipant.concerts) {
-				currentParticipant.concerts = currentParticipant.concerts.map((concert) => {
-					if (!currentParticipant.concerts) currentParticipant.concerts = [];
-					
-					if (registration.project) {
-						const foundConcert = registration.project.concerts.filter(
-							(projectConcert) => projectConcert.id === concert.id
-						);
+				currentParticipant.concerts = currentParticipant.concerts
+					.map((concert) => {
+						if (!currentParticipant.concerts) currentParticipant.concerts = [];
 
-						if (foundConcert.length > 0) {
-							return foundConcert[0];
+						if (registration.project) {
+							const foundConcert = registration.project.concerts.filter(
+								(projectConcert) => projectConcert.id === concert.id
+							);
+
+							if (foundConcert.length > 0) {
+								return foundConcert[0];
+							}
 						}
-					}
 
-					return null
-				}).filter((concert) => concert !== null);
+						return null;
+					})
+					.filter((concert) => concert !== null);
 			}
 
 			if (currentParticipant.rehearsals) {
-				currentParticipant.rehearsals = currentParticipant.rehearsals.map((rehearsal) => {
-					if (!currentParticipant.rehearsals) currentParticipant.rehearsals = [];
-					
-					if (registration.project) {
-						const foundRehearsal = registration.project.rehearsals.filter(
-							(projectRehearsal) => projectRehearsal.id === rehearsal.id
-						);
+				currentParticipant.rehearsals = currentParticipant.rehearsals
+					.map((rehearsal) => {
+						if (!currentParticipant.rehearsals) currentParticipant.rehearsals = [];
 
-						if (foundRehearsal.length > 0) {
-							return foundRehearsal[0];
+						if (registration.project) {
+							const foundRehearsal = registration.project.rehearsals.filter(
+								(projectRehearsal) => projectRehearsal.id === rehearsal.id
+							);
+
+							if (foundRehearsal.length > 0) {
+								return foundRehearsal[0];
+							}
 						}
-					}
 
-					return null
-				}).filter((rehearsal) => rehearsal !== null);
+						return null;
+					})
+					.filter((rehearsal) => rehearsal !== null);
 			}
 
 			if (
