@@ -21,8 +21,6 @@
 		if (callsheetResponse.status === 200) {
 			callsheet = await callsheetResponse.json();
 			console.log('eeuughghfghg', callsheet);
-			console.log('project', callsheet?.project.name);
-			console.log('anything about sections???? PLEASE???', callsheet?.project.sectionGroup);
 		} else {
 			console.error('Failed to fetch callsheet');
 		}
