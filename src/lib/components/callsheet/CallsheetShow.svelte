@@ -5,14 +5,6 @@
 	import DateShow from '../DateShow.svelte';
 
 	export let callsheet: Callsheet;
-
-	function hour(date: Date, use24HourFormat: boolean = true) {
-		let hours = date.getHours();
-		let minutes = date.getMinutes();
-		let time24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-		return time24;
-	}
 </script>
 
 <div
@@ -96,7 +88,6 @@
 						>
 							<tr>
 								<th scope="col" class="px-6 py-3">Date</th>
-								<th scope="col" class="px-6 py-3">Time</th>
 								<th scope="col" class="px-6 py-3">Place</th>
 								<th scope="col" class="px-6 py-3">Comment</th>
 							</tr>
@@ -108,9 +99,8 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={rehearsal.date}></DateShow></th
+											><DateShow date={rehearsal.date} withTime></DateShow></th
 										>
-										<td class="px-6 py-4">{hour(new Date(rehearsal.date))}</td>
 										<td class="px-6 py-4">{rehearsal.place}</td>
 										<td class="px-6 py-4">{rehearsal.comment}</td>
 									</tr>

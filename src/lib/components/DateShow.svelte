@@ -4,11 +4,16 @@
 
 	let usableDate = new Date(date);
 
-	const options : Intl.DateTimeFormatOptions = {
+	const dateOptions : Intl.DateTimeFormatOptions = {
 		weekday: 'long',
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric',	
+	};
+
+	const timeOption: Intl.DateTimeFormatOptions = {
+		hour: '2-digit',
+		minute: '2-digit'
 	};
 
 	$: usableDate = new Date(date);
@@ -16,7 +21,7 @@
 
 <span>
 	{#if date}
-		{withTime ? usableDate.toLocaleTimeString() + " - " + usableDate.toLocaleDateString(undefined, options) : usableDate.toLocaleDateString(undefined, options)}
+		{withTime ? usableDate.toLocaleTimeString(undefined, timeOption) + " - " + usableDate.toLocaleDateString(undefined, dateOptions) : usableDate.toLocaleDateString(undefined, dateOptions)}
 	{:else}
 		-
 	{/if}
