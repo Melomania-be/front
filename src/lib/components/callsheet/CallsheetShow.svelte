@@ -1,10 +1,11 @@
 <script lang="ts">
 	import type { Callsheet } from '$lib/types/Callsheet';
-	import type { File } from '$lib/types/File';
 	import Accordion from '$lib/components/Accordion.svelte';
 	import DateShow from '../DateShow.svelte';
 
 	export let callsheet: Callsheet;
+
+	console.log(callsheet);
 </script>
 
 <div
@@ -79,7 +80,44 @@
 			</div>
 			<div class="pt-10 mb-2 ml-20">
 				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-					Planning and addresses
+					Concert(s)
+				</h2>
+				<div class="w-full flex">
+					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<thead
+							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+						>
+							<tr>
+								<th scope="col" class="px-6 py-3">Date</th>
+								<th scope="col" class="px-6 py-3">Place</th>
+								<th scope="col" class="px-6 py-3">Comment</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
+							{#if callsheet.project?.concerts && callsheet.project.concerts.length > 0}
+								{#each callsheet.project.concerts as concert}
+									<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+										<th
+											scope="row"
+											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+											><DateShow date={concert.date} withTime></DateShow></th
+										>
+										<td class="px-6 py-4">{concert.place}</td>
+										<td class="px-6 py-4">{concert.comment ?? "No additionnal information"}</td>
+									</tr>
+								{/each}
+							{:else}
+								<tr>
+									<td class="px-6 py-4" colspan="3">No concert found</td>
+								</tr>
+							{/if}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="pt-10 mb-2 ml-20">
+				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
+					Rehearsal(s)
 				</h2>
 				<div class="w-full flex">
 					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -102,7 +140,7 @@
 											><DateShow date={rehearsal.date} withTime></DateShow></th
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
-										<td class="px-6 py-4">{rehearsal.comment}</td>
+										<td class="px-6 py-4">{rehearsal.comment ?? "No additionnal information"}</td>
 									</tr>
 								{/each}
 							{:else}
@@ -148,7 +186,7 @@
 							</div>
 						{/each}
 					{:else}
-						<p>No responsible found</p>
+						<p>No responsibles are set for this project.</p>
 					{/if}
 				</div>
 			</div>

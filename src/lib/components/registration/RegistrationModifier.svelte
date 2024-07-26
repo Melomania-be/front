@@ -77,6 +77,13 @@
 
 			<div class="m-1">
 				<h1 class="text-2xl font-bold">Registration</h1>
+				{#if registration.id}
+					<div>
+						<a class="text-blue-600" href="/registration/{projectId}"
+							><h2 class="text-lg">Link to registration sheet</h2></a
+						>
+					</div>
+				{/if}
 				{#if allowModification}
 					<button
 						class="bg-rose-500 text-white p-2 rounded m-1"
