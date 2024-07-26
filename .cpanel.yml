@@ -1,5 +1,0 @@
----
-deployment:
-  tasks:
-    - rm -rf /home/ciro3903/apps/frontend/*
-    - /bin/cp . /home/ciro3903/apps/frontend -r
