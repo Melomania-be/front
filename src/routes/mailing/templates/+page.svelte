@@ -90,9 +90,7 @@
 <div class="m-2">
 	<button
 		class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-		on:click={() => 
-			goto('/mailing')
-		}>Mailing</button
+		on:click={() => goto('/mailing')}>Mailing</button
 	>
 	<br />
 	<br />

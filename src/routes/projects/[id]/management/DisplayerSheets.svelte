@@ -109,16 +109,15 @@
 						<div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
 							<div
 								class="h-1 bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-								style="width: {((project.participants.length -
-									participantsSeenCallsheet.length) /
+								style="width: {((project.participants.length - participantsSeenCallsheet.length) /
 									project.participants.length) *
 									100}%;"
 							></div>
 						</div>
 					</div>
 					<div>
-						{project.participants.length - participantsSeenCallsheet.length} / {project
-							.participants.length} participants have seen the last callsheet
+						{project.participants.length - participantsSeenCallsheet.length} / {project.participants
+							.length} participants have seen the last callsheet
 					</div>
 				{/if}
 				<div class="mt-2">
