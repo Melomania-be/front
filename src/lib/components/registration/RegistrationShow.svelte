@@ -108,13 +108,6 @@
 			window.location.reload();
 		}
 	}
-
-	function hour(date: Date) {
-		let hours = date.getHours();
-		let minutes = date.getMinutes();
-		let time24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-		return time24;
-	}
 </script>
 
 <div
@@ -160,7 +153,6 @@
 						>
 							<tr>
 								<th class="px-6 py-3">Date</th>
-								<th class="px-6 py-3">Hour</th>
 								<th class="px-6 py-3">Place</th>
 								<th class="px-6 py-3">Comment</th>
 							</tr>
@@ -172,9 +164,8 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={concert.date}></DateShow></th
+											><DateShow date={concert.date} withTime></DateShow></th
 										>
-										<td class="px-6 py-4">{hour(new Date(concert.date))}</td>
 										<td class="px-6 py-4">{concert.place}</td>
 										<td class="px-6 py-4">{concert.comment}</td>
 									</tr>
@@ -198,7 +189,6 @@
 						>
 							<tr>
 								<th class="px-6 py-3">Date</th>
-								<th class="px-6 py-3">Hour</th>
 								<th class="px-6 py-3">Place</th>
 								<th class="px-6 py-3">Comment</th>
 							</tr>
@@ -210,9 +200,8 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={rehearsal.date}></DateShow></th
+											><DateShow date={rehearsal.date} withTime></DateShow></th
 										>
-										<td class="px-6 py-4">{hour(new Date(rehearsal.date))}</td>
 										<td class="px-6 py-4">{rehearsal.place}</td>
 										<td class="px-6 py-4">{rehearsal.comment}</td>
 									</tr>
@@ -351,7 +340,6 @@
 							<tr>
 								<th class="px-6 py-3">Select</th>
 								<th class="px-6 py-3">Date</th>
-								<th class="px-6 py-3">Hour</th>
 								<th class="px-6 py-3">Place</th>
 							</tr>
 						</thead>
@@ -369,9 +357,8 @@
 										</td>
 										<td
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={rehearsal.date}></DateShow></td
+											><DateShow date={rehearsal.date} withTime></DateShow></td
 										>
-										<td class="px-6 py-4">{hour(new Date(rehearsal.date))}</td>
 										<td class="px-6 py-4">{rehearsal.place}</td>
 									</tr>
 								{/each}

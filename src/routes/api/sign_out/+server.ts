@@ -18,5 +18,5 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 		removeToken(cookies);
 	});
 
-	return redirect(StatusCodesRedirection.FOUND, '/login');
+	return redirect(StatusCodesRedirection.TEMPORARY_REDIRECT, '/login');
 };

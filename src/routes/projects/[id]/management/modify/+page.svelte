@@ -5,6 +5,7 @@
 	import ProjectModifier from '$lib/components/project/ProjectModifier.svelte';
 	import { onMount } from 'svelte';
 	import type { Folder } from '$lib/types/Folder.js';
+	import type { Rehearsal } from '$lib/types/Rehearsal.js';
 
 	export let data;
 
@@ -20,7 +21,15 @@
 
 		if (projectResponse.ok) {
 			let tmp = await projectResponse.json();
-			project = tmp[0];
+			project = {
+				...tmp,
+				rehearsals: tmp.rehearsals.map((r: Rehearsal) => {
+					return { ...r, date: new Date(r.date) };
+				}),
+				concerts: tmp.concerts.map((c: Rehearsal) => {
+					return { ...c, date: new Date(c.date) };
+				})
+			};
 		} else {
 			alert('server error');
 		}

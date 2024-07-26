@@ -14,6 +14,8 @@
 	import type { Contact } from '$lib/types/Contact';
 	import type { Folder } from '$lib/types/Folder';
 	import { StatusCodesClientError } from '$lib/common/statusCodes';
+	import DatePicker from '../DatePicker.svelte';
+	import TimePicker from '../TimePicker.svelte';
 
 	export let project: Project;
 	export let pieces: Array<Piece>;
@@ -37,14 +39,14 @@
 	function addConcertDate() {
 		project.concerts = [
 			...project.concerts,
-			{ id: null, date: '', place: '', comment: '', project_id: null }
+			{ id: null, date: new Date(), place: '', comment: '', project_id: null }
 		];
 	}
 
 	function addRehearsalDate() {
 		project.rehearsals = [
 			...project.rehearsals,
-			{ id: null, date: '', comment: '', place: '', project_id: null }
+			{ id: null, date: new Date(), comment: '', place: '', project_id: null }
 		];
 	}
 
@@ -55,14 +57,14 @@
 			section_group_id: project.sectionGroup ? project.sectionGroup.id : null,
 			concerts: project.concerts.map((concert) => ({
 				id: concert.id ? concert.id : null,
-				date: new Date(concert.date).toISOString().split('T')[0],
+				date: new Date(concert.date).toISOString(),
 				place: concert.place,
 				comment: concert.comment
 			})),
 			pieces_ids: project.pieces.map((piece) => piece.id),
 			rehearsals: project.rehearsals.map((rehearsal) => ({
 				id: rehearsal.id ? rehearsal.id : null,
-				date: new Date(rehearsal.date).toISOString().split('T')[0],
+				date: new Date(rehearsal.date).toISOString(),
 				place: rehearsal.place,
 				comment: rehearsal.comment
 			})),
@@ -297,7 +299,7 @@
 						{#if project.rehearsals && project.rehearsals.length}
 							{#each project.rehearsals as rehearsal}
 								<tr>
-									<td><DateShow date={rehearsal.date} /></td>
+									<td><DateShow date={rehearsal.date} withTime/></td>
 									<td>{rehearsal.place}</td>
 									<td>{rehearsal.comment}</td>
 								</tr>
@@ -312,12 +314,8 @@
 					{#if project.rehearsals}
 						{#each project.rehearsals as rehearsal}
 							<div class="rehearsal-entry">
-								<input
-									class="p-1"
-									bind:value={rehearsal.date}
-									placeholder="enter a rehearsal date"
-									type="date"
-								/>
+								<DatePicker bind:date={rehearsal.date} />
+								<TimePicker bind:date={rehearsal.date} />
 								<input
 									class="p-1"
 									bind:value={rehearsal.place}
@@ -364,7 +362,7 @@
 						{#if project.concerts && project.concerts.length}
 							{#each project.concerts as concert}
 								<tr>
-									<td><DateShow date={concert.date} /></td>
+									<td><DateShow date={concert.date} withTime/></td>
 									<td>{concert.place}</td>
 									<td>{concert.comment}</td>
 								</tr>
@@ -377,14 +375,10 @@
 			{:else}
 				<div>
 					{#if project.concerts}
-						{#each project.concerts as concert, index}
+						{#each project.concerts as concert}
 							<div class="concert-entry">
-								<input
-									class="p-1"
-									bind:value={concert.date}
-									placeholder="enter a concert date"
-									type="date"
-								/>
+								<DatePicker bind:date={concert.date}/>
+								<TimePicker bind:date={concert.date} />
 								<input
 									class="p-1"
 									bind:value={concert.place}
