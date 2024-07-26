@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import type { File } from '$lib/types/File';
+	import DateShow from '../DateShow.svelte';
 
 	export let callsheet: Callsheet;
 
@@ -77,7 +78,7 @@
 					{:else}
 						{#each callsheet.project.rehearsals as rehearsal}
 							<tr>
-								<td>{rehearsal.date}</td>
+								<td><DateShow date={rehearsal.date} withTime/></td>
 								<td>{rehearsal.place}</td>
 								<td>{rehearsal.comment}</td>
 							</tr>
