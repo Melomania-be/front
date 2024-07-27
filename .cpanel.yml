@@ -1,0 +1,10 @@
+---
+deployment:
+      tasks:
+        - export DEPLOYPATH=/home/ciro3903/app
+        - /usr/sbin/cloudlinux-selector stop --json --interpreter nodejs --user ciro3903 --app-root app/front
+        - /bin/rm -r $DEPLOYPATH/front
+        - /bin/cp -r /home/ciro3903/repositories/front $DEPLOYPATH
+        - /usr/sbin/cloudlinux-selector install-modules --json --interpreter nodejs --user ciro3903 --app-root app/front
+        - /usr/sbin/cloudlinux-selector start --json --interpreter nodejs --user ciro3903 --app-root app/front
+        - /usr/sbin/cloudlinux-selector run-script --json --interpreter nodejs --user ciro3903 --app-root app/front --script-name build
