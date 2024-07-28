@@ -44,7 +44,7 @@
 					<tr>
 						{#each concerts as concert}
 							<th class=" border-x border-black">
-								<DateShow date={concert.date} withTime/>
+								<DateShow date={concert.date} withTime />
 							</th>
 						{/each}
 					</tr>
@@ -85,7 +85,7 @@
 					<tr>
 						{#each rehearsals as rehearsal}
 							<th class=" border-x border-black">
-								<DateShow date={rehearsal.date} withTime/>
+								<DateShow date={rehearsal.date} withTime />
 							</th>
 						{/each}
 					</tr>

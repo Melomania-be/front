@@ -136,10 +136,9 @@
 		rawValue += '<a href=""></a>';
 	}
 
-	function onInput(event : any) {
-  		content = event.target.value;
+	function onInput(event: any) {
+		content = event.target.value;
 	}
-
 </script>
 
 <div>

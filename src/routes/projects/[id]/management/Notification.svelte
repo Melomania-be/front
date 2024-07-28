@@ -83,7 +83,8 @@
 			<div class="m-1 p-1 border rounded lg:max-w-lg">
 				<h3 class="uppercase">No registration</h3>
 				<p>
-					Please add a registration to the project. With this you will allow people to register to this project if they have the link.
+					Please add a registration to the project. With this you will allow people to register to
+					this project if they have the link.
 					<a href="/projects/{project.id}/management/registration">(Add registration)</a>
 				</p>
 			</div>

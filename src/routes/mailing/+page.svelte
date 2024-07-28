@@ -12,6 +12,7 @@
 	import type { Project } from '$lib/types/Project';
 
 	let selectedList: CustomList | null = null as CustomList | null;
+	let folders: string[] = [];
 	let lists: CustomList[] = [];
 	let meta: any = {};
 	let options: any = {
@@ -77,6 +78,12 @@
 		fetchData();
 
 		await fetchProjects();
+
+		const resFolders = await fetch('/api/folders');
+		const dataFolders = await resFolders.json();
+		folders = dataFolders;
+
+		console.log(folders);
 	});
 
 	async function fetchProjects() {
@@ -237,7 +244,6 @@
 				{/if}
 				<div class="m-2">
 					<h1>{selectedTemplate.name}</h1>
-					<HtmlEditor content={selectedTemplate.content || ''} />
 				</div>
 				<div class="m-2 border border-gray-500 rounded">
 					{@html selectedTemplate.content}

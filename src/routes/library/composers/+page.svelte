@@ -153,7 +153,10 @@
 <div class="flex">
 	<div class="w-1/2">
 		<div class="w-full">
-			<button on:click={() => selectedData = newComposer} class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200">
+			<button
+				on:click={() => (selectedData = newComposer)}
+				class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200"
+			>
 				Add new composer
 			</button>
 		</div>

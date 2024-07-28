@@ -299,7 +299,7 @@
 						{#if project.rehearsals && project.rehearsals.length}
 							{#each project.rehearsals as rehearsal}
 								<tr>
-									<td><DateShow date={rehearsal.date} withTime/></td>
+									<td><DateShow date={rehearsal.date} withTime /></td>
 									<td>{rehearsal.place}</td>
 									<td>{rehearsal.comment}</td>
 								</tr>
@@ -362,7 +362,7 @@
 						{#if project.concerts && project.concerts.length}
 							{#each project.concerts as concert}
 								<tr>
-									<td><DateShow date={concert.date} withTime/></td>
+									<td><DateShow date={concert.date} withTime /></td>
 									<td>{concert.place}</td>
 									<td>{concert.comment}</td>
 								</tr>
@@ -377,7 +377,7 @@
 					{#if project.concerts}
 						{#each project.concerts as concert}
 							<div class="concert-entry">
-								<DatePicker bind:date={concert.date}/>
+								<DatePicker bind:date={concert.date} />
 								<TimePicker bind:date={concert.date} />
 								<input
 									class="p-1"
