@@ -1,7 +1,7 @@
 <script lang="ts">
 	export let content: string;
 	let editorContent: string = '';
-	let authorized = false;
+	let authorized = true;
 
 	let rawValue = '';
 	let textArea: HTMLTextAreaElement;
@@ -57,7 +57,6 @@
 		if (checkRawValue(rawValue)) {
 			console.log(rawValue);
 			editorContent = formatText(rawValue);
-			errorMessage = '';
 		}
 	}
 
@@ -136,6 +135,11 @@
 	function addA() {
 		rawValue += '<a href=""></a>';
 	}
+
+	function onInput(event : any) {
+  		content = event.target.value;
+	}
+
 </script>
 
 <div>
@@ -154,6 +158,7 @@
 		placeholder="Write your html here..."
 		bind:value={rawValue}
 		bind:this={textArea}
+		on:input={onInput}
 	></textarea>
 	{#if errorMessage}
 		<p class="text-red-500">{errorMessage}</p>
