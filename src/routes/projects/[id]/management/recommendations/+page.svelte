@@ -16,6 +16,7 @@
 	import type { Instrument } from '$lib/types/Instrument';
 	import type { Contact } from '$lib/types/Contact';
 	import ContactModifier from '$lib/components/contact/ContactModifier.svelte';
+	import AdvancedFilterer from '$lib/components/AdvancedFilterer.svelte';
 
     let recommended: Recommended[] = []
     let selectedData: Recommended = {
@@ -44,11 +45,43 @@
 	let urlFront: string = '/projects/' + $page.params.id + '/management/recommendations';
 	let uniqueUrl: string = '/projects/' + $page.params.id + '/management/recommendations';
 
-	let dataHolder: TableData<Recommended>;
 
+	let dataHolderRecommended: TableData<Recommended>;
+	let dataHolderContact: TableData<Contact>;
+	let metaContact: any = {};
+	let columns: any;
+
+	let optionsContacts: {
+		filters: {
+			type: string;
+			filtersDepth1: {
+				type: string;
+				filtersDepth2: { relation: string; column: string; operation: string; filter: string }[];
+			}[];
+		};
+		page: number;
+		limit: number;
+		orderBy: string;
+		order: string;
+	} = {
+		filters: {
+			type: 'and',
+			filtersDepth1: [
+				{
+					type: 'and',
+					filtersDepth2: []
+				}
+			]
+		},
+		page: 1,
+		limit: 10,
+		orderBy: 'id',
+		order: 'asc'
+	};
+	
 	let contacts: Contact[] = []
 
-	const contact: Contact = {
+	let contact: Contact = {
 		id: null,
 		firstName: structuredClone(selectedData.firstName),
 		lastName: structuredClone(selectedData.lastName),
@@ -92,6 +125,24 @@
 		fetchData();
 	});
 
+	const filter = {
+		relation: '',
+		column: '',
+		operation: '',
+		filter: ''
+	};
+
+	function addCondition(filterFilter: string, filterColum: string) {
+		let tmpFilter = structuredClone(filter);
+		tmpFilter.relation = 'self';
+		tmpFilter.column = filterColum;
+		tmpFilter.operation = '=';
+		tmpFilter.filter = filterFilter;
+
+		optionsContacts.filters.filtersDepth1[0].filtersDepth2.push(tmpFilter);
+		optionsContacts = optionsContacts;
+	}
+
     async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
 		optionInUrls += '&filter=' + options.filter;
@@ -113,7 +164,7 @@
 
             meta = data.meta;
 
-			dataHolder = {
+			dataHolderRecommended = {
 				data: recommended,
 				columns: ['id', 'firstName', 'lastName'],
 				notOrderedColumns: []
@@ -121,25 +172,53 @@
 		});
 
 
-		const responseContacts = await fetch(`${url}${optionInUrls}`, {
-			method: 'GET'
+		if (selectedData.firstName != ''){
+			addCondition(selectedData.firstName, 'first_name')
+		}
+		if (selectedData.lastName != ''){
+			addCondition(selectedData.lastName, 'last_name')
+		}
+		if (selectedData.email != ''){
+			addCondition(selectedData.email, 'email')
+		}
+		if (selectedData.messenger != ''){
+			addCondition(selectedData.messenger, 'messenger')
+		}
+		if (selectedData.phone != ''){
+			addCondition(selectedData.phone, 'phone')
+		}
+		console.log(optionsContacts)
+
+		let responseContacts = await fetch('/test/api', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(optionsContacts)
 		});
 
-		const responseHandlerContacts = new ResponseHandlerClient();
+		if (responseContacts.status >= 400 && responseContacts.status < 500) {
+			const jsonResponse = await response.json();
+			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+			alert(error);
+		}
 
-		responseHandlerContacts.handle(responseContacts, async () => {
-			const data = await responseContacts.json();
+		if (responseContacts.ok) {
+			const jsonResponse = await responseContacts.json();
 
-			contacts = data.data
-
-            meta = data.meta;
-
-			dataHolder = {
-				data: recommended,
-				columns: ['id', 'firstName', 'lastName'],
+			dataHolderContact = {
+				data: jsonResponse.data.data,
+				columns: ['id', 'firstName', 'lastName', 'email', 'messenger', 'phone', 'comments'],
 				notOrderedColumns: []
 			};
-		});
+			metaContact = jsonResponse.data.meta;
+			columns = jsonResponse.columns;
+
+			console.log(optionsContacts)
+			console.log(dataHolderContact)
+		}
+
+		
 
 	}
 
@@ -174,11 +253,11 @@
 		<CloseButton on:click={() => (hidden5 = true)} class="mb-4  dark:text-black" />
 	</div>
 
-	{#if dataHolder}
+	{#if dataHolderRecommended}
 		<SimpleFilterer
 			showData={true}
 			paginatorTop={false}
-			bind:data={dataHolder}
+			bind:data={dataHolderRecommended}
 			bind:meta
 			bind:options
 			bind:uniqueUrl
@@ -202,7 +281,7 @@
 						<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-e-0 border-gray-300 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
 							<Fa icon={faCircleUser} />
 						</span>
-						<input type="text" id="firstName" class="rounded-none rounded-e-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" bind:value={selectedData.firstName} placeholder="Bonnie" required />
+						<input type="text" id="firstName" class="rounded-none rounded-e-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" bind:value={contact.firstName} placeholder="Bonnie" required />
 					</div>
 				</div>
 			
@@ -287,6 +366,18 @@
 		</form>
 	</div>
 	<div class="flex w-1/2">
-		<ContactModifier mode="modify" {contact} {instruments} />
+		<div>
+			<ContactModifier mode="modify" {contact} {instruments} />
+		</div>
+		<div>
+			<AdvancedFilterer
+			bind:columns
+			bind:metaContact
+			bind:dataHolderContact
+			bind:optionsContacts
+			on:optionsUpdated={() => fetchData()}
+			showData
+			/>
+		</div>
 	</div>
 </div>
