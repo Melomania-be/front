@@ -132,36 +132,67 @@
 
 		window.location.reload();
 	}
+
+	function laxInclude(instrument: Instrument, section: Section) {
+		if (!section.instruments) return false;
+		return section.instruments?.filter((i) => i.id === instrument.id).length > 0;
+	}
+
+	$: console.log(sectionTmp, instruments);
 </script>
 
+<div class="m-1 border border-red-500">
+	Warning : Alaways save after finishing your modifications on a group, section or instrument, otherwise your changes may be lost. 
+</div>
 <div class="m-1 grid md:grid-cols-2">
 	{#if sectionsGroups}
 		<div class="bg-gray-200 m-2 p-2 border border-gray-500 rounded-lg grid lg:grid-cols-2">
 			<div class="m-1">
-				<button
-					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-					on:click={() => {
-						sectionsGroups.push({
-							id: null,
-							updatedAt: new Date(),
-							name: 'New group',
-							sections: []
-						});
-						sectionsGroupTmp = sectionsGroups[sectionsGroups.length - 1];
-					}}>Add group</button
-				>
+				<div>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						on:click={() => {
+							sectionsGroups.push({
+								id: null,
+								updatedAt: new Date(),
+								name: 'New group',
+								sections: []
+							});
+							sectionsGroupTmp = sectionsGroups[sectionsGroups.length - 1];
+						}}>Add group</button
+					>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						on:click={() => saveSectionsGroups()}>Save</button
+					>
+				</div>
 				<div class="m-0.5 border border-gray-400 rounded">
 					{#each sectionsGroups as group}
-						<button
-							class="m-0.5 flex justify-center items-center rounded {sectionsGroupTmp === group
-								? 'bg-slate-300'
-								: ''}"
-							on:click={() => (sectionsGroupTmp = group)}
-							>{group.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
-						</button>
-						<button on:click={() => deleteSectionGroup(group)}>
-							<span class="icon-[formkit--trash]"></span>
-						</button>
+						<div class="flex p-1">
+							<button
+								class="m-0.5 flex justify-center items-center rounded {sectionsGroupTmp === group
+									? 'bg-slate-300'
+									: ''}"
+								on:click={() => (sectionsGroupTmp = group)}
+								>{group.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
+							</button>
+							<button
+								on:click={() => {
+									sectionsGroups.push({
+										id: null,
+										updatedAt: new Date(),
+										name: group.name + ' copy',
+										sections: group.sections
+									});
+									sectionsGroupTmp = sectionsGroups[sectionsGroups.length - 1];
+								}}
+							>
+								<span class="icon-[heroicons-outline--duplicate]"></span>
+							</button>
+							<button on:click={() => deleteSectionGroup(group)}>
+								<span class="icon-[formkit--trash]"></span>
+							</button>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -191,14 +222,15 @@
 											<td>{section.instruments.map((i) => i.name).join(', ')}</td>
 											<td>
 												<button
-													class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
 													on:click={() => {
 														sectionsGroupTmp.sections = sectionsGroupTmp.sections.filter(
 															(s) => s !== section
 														);
 														sectionsGroupTmp = sectionsGroupTmp;
-													}}>Remove</button
+													}}
 												>
+													<span class="icon-[formkit--trash]"></span>
+												</button>
 											</td>
 										</tr>
 									{/each}
@@ -228,42 +260,57 @@
 					{/if}
 				</div>
 			</div>
-			<div class="lg:col-span-2">
-				<button
-					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-					on:click={() => saveSectionsGroups()}>Save</button
-				>
-			</div>
 		</div>
 	{/if}
 	{#if sections}
 		<div class="bg-gray-200 m-2 p-2 border border-gray-500 rounded-lg grid lg:grid-cols-2">
 			<div class="m-1">
-				<button
-					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-					on:click={() => {
-						sections.push({
-							id: null,
-							name: 'New section',
-							size: 1,
-							instruments: []
-						});
-						sectionTmp = sections[sections.length - 1];
-					}}>Add section</button
-				>
+				<div>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						on:click={() => {
+							sections.push({
+								id: null,
+								name: 'New section',
+								size: 1,
+								instruments: []
+							});
+							sectionTmp = sections[sections.length - 1];
+						}}>Add section</button
+					>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						on:click={() => saveSections()}>Save</button
+					>
+				</div>
 
 				<div class="m-0.5 border border-gray-400 rounded">
 					{#each sections as section}
-						<button
-							class="m-0.5 flex justify-center items-center rounded {sectionTmp === section
-								? 'bg-slate-300'
-								: ''}"
-							on:click={() => (sectionTmp = section)}
-							>{section.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
-						</button>
-						<button on:click={() => deleteSection(section)}>
-							<span class="icon-[formkit--trash]"></span>
-						</button>
+						<div class="flex p-1">
+							<button
+								class="m-0.5 flex justify-center items-center rounded {sectionTmp === section
+									? 'bg-slate-300'
+									: ''}"
+								on:click={() => (sectionTmp = section)}
+								>{section.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
+							</button>
+							<button
+								on:click={() => {
+									sections.push({
+										id: null,
+										name: section.name + ' copy',
+										size: section.size,
+										instruments: section.instruments
+									});
+									sectionTmp = sections[sections.length - 1];
+								}}
+							>
+								<span class="icon-[heroicons-outline--duplicate]"></span>
+							</button>
+							<button on:click={() => deleteSection(section)}>
+								<span class="icon-[formkit--trash]"></span>
+							</button>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -277,19 +324,19 @@
 						<h3>Size :</h3>
 						<input type="number" bind:value={sectionTmp.size} />
 					</div>
-					{#if instruments && instruments.length > 0}
+					{#if instruments && instruments.length > 0 && sectionTmp}
 						<ul
 							class="m-1 p-1 bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-600 divide-y divide-gray-200 dark:divide-gray-600"
 						>
 							{#each instruments as instrument}
 								<span>
 									<Checkbox
-										checked={sectionTmp.instruments.includes(instrument)}
+										checked={laxInclude(instrument, sectionTmp)}
 										on:change={() => {
 											if (sectionTmp) {
-												if (sectionTmp.instruments.includes(instrument)) {
+												if (laxInclude(instrument, sectionTmp)) {
 													sectionTmp.instruments = sectionTmp.instruments.filter(
-														(i) => i !== instrument
+														(i) => i.id !== instrument.id
 													);
 												} else {
 													sectionTmp.instruments.push(instrument);
@@ -305,31 +352,30 @@
 					{/if}
 				{/if}
 			</div>
-
-			<div class="lg:col-span-2">
-				<button
-					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-					on:click={() => saveSections()}>Save</button
-				>
-			</div>
 		</div>
 	{/if}
 	{#if instrumentTmp}
 		<div class="bg-gray-200 m-2 p-2 border border-gray-500 rounded-lg grid lg:grid-cols-2">
 			<div class="m-1">
-				<button
-					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-					on:click={() => {
-						instruments.push({
-							id: null,
-							name: 'New instrument',
-							family: 'Family',
-							updatedAt: new Date(),
-							createdAt: new Date()
-						});
-						instrumentTmp = instruments[instruments.length - 1];
-					}}>Add instrument</button
-				>
+				<div>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						on:click={() => {
+							instruments.push({
+								id: null,
+								name: 'New instrument',
+								family: 'Family',
+								updatedAt: new Date(),
+								createdAt: new Date()
+							});
+							instrumentTmp = instruments[instruments.length - 1];
+						}}>Add instrument</button
+					>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						on:click={() => saveInstruments()}>Save</button
+					>
+				</div>
 				<div class="m-0.5 border border-gray-400 rounded">
 					{#each instruments as instrument}
 						<div class="flex p-1">
@@ -339,6 +385,20 @@
 									: ''}"
 								on:click={() => (instrumentTmp = instrument)}
 								>{instrument.name} <span class="icon-[formkit--arrowright] hover:text-black"></span>
+							</button>
+							<button
+								on:click={() => {
+									instruments.push({
+										id: null,
+										name: instrument.name + ' copy',
+										family: instrument.family,
+										updatedAt: new Date(),
+										createdAt: new Date()
+									});
+									instrumentTmp = instruments[instruments.length - 1];
+								}}
+							>
+								<span class="icon-[heroicons-outline--duplicate]"></span>
 							</button>
 							<button on:click={() => deleteInstrument(instrument)}>
 								<span class="icon-[formkit--trash]"></span>
@@ -358,12 +418,6 @@
 						<input class="ml-1" bind:value={instrumentTmp.family} />
 					</div>
 				{/if}
-			</div>
-			<div class="lg:col-span-2">
-				<button
-					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-					on:click={() => saveInstruments()}>Save</button
-				>
 			</div>
 		</div>
 	{/if}
