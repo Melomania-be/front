@@ -173,7 +173,7 @@
 			<br />
 			<p>
 				You are not required to use each one of these to fill your template, but if you do use one
-				you <span class="font-bold">MUST</span> use the correct syntax (and spaces are important) : &#36;&#123;EXAMPLE&#125;
+				you <span class="font-bold">MUST</span> use the correct syntax (no spaces !) : &#36;&#123;EXAMPLE&#125;
 			</p>
 		</div>
 		{#if newOne === false}
