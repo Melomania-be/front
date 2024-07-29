@@ -67,9 +67,9 @@
 		}
 
 		let dataUnique = {
-			listContacts : selectedList,
-			subject : uniqueSubject,
-			content : html
+			listContacts: selectedList,
+			subject: uniqueSubject,
+			content: html
 		};
 
 		console.log(dataUnique);
@@ -81,7 +81,7 @@
 			},
 			body: JSON.stringify(dataUnique)
 		});
-		
+
 		alert('Email sent');
 	}
 
@@ -289,8 +289,8 @@
 				<h2 class="text-xl font-bold mb-4">Write your email</h2>
 				<div>
 					<p>
-						To add an image select a folder and click on the name of the image you want to add.
-						You can now paste the appropriate line in the html below.
+						To add an image select a folder and click on the name of the image you want to add. You
+						can now paste the appropriate line in the html below.
 						<br />
 						The image cannot appear in the preview but will be sent in the mail.
 					</p>
