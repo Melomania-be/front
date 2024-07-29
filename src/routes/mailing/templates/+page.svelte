@@ -3,24 +3,31 @@
 	import { onMount } from 'svelte';
 	import HtmlEditor from '../HtmlEditor.svelte';
 	import { goto } from '$app/navigation';
+	import type { Folder } from '$lib/types/Folder';
 
 	let selectedTemplate: MailTemplate;
-
+	let folders : Array<Folder> = [];
+	let selectedFolder : Folder;
 	let templates: MailTemplate[] = [];
-	let editing = false;
 	let newOne = false;
-
+	let OutputSrc = '';
 	let newTemplateToSave = {
 		name: '',
-		content: ''
+		content: '',
+		images: [],
 	};
+
+	function addImages(file: { path: any; }) {
+		OutputSrc = `<img file=${file.path}/>`;
+	}
 
 	async function newTemplate() {
 		console.log('New Template');
 		newOne = true;
 		newTemplateToSave = {
 			name: '',
-			content: ''
+			content: '',
+			images: []
 		};
 	}
 
@@ -67,8 +74,6 @@
 			templates[index] = data;
 			selectedTemplate = data;
 		}
-		editing = false;
-
 		alert('Template saved');
 	}
 
@@ -95,7 +100,15 @@
 		const data = await res.json();
 		templates = data;
 		selectedTemplate = data[0];
+		const resFolder = await fetch('/api/folders');
+		const dataFolder = await resFolder.json();
+		folders = dataFolder;
 	});
+
+
+	function embedImage(arg0: any): string {
+		throw new Error('Function not implemented.');
+	}
 </script>
 
 <div
@@ -166,15 +179,18 @@
 		{#if newOne === false}
 			<div class="pt-5">
 				{#if templates && templates.length > 0}
-					<select bind:value={selectedTemplate}>
-						{#each templates as template}
-							<option value={template}>{template.name}</option>
-						{/each}
-					</select>
-					<button
-						class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-						on:click={deleteTemplate}>Delete This Template</button
-					>
+				<p> Please select the template you want to edit : <select bind:value={selectedTemplate}>
+					{#each templates as template}
+						<option value={template}>{template.name}</option>
+					{/each}
+				</select>  or   <button
+					class="text-blue-900 cursor-pointer"
+					on:click={newTemplate}
+				>
+				create a new one.</button
+				> </p>
+				
+					
 				{:else}
 					<p>
 						No templates found you can add one : <button
@@ -201,7 +217,48 @@
 						>
 							Save
 						</button>
+						<button
+						class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+						on:click={deleteTemplate}>Delete This Template</button
+						>
 					</div>
+					<div>
+						<p>To add an image select a folder and click on the name of the image you want to add. You can now paste the appropriate line in the html below.
+							<br>
+							The image cannot appear in the preview but will be sent in the mail.
+						</p>
+						<br>
+						{#if folders && folders.length > 0}
+						<p>Select your folder : <select bind:value={selectedFolder}>
+							{#each folders as folder}
+								<option value={folder}>{folder.name}</option>
+							{/each}
+						</select></p>
+						{:else}
+							<p>No folders found</p>
+						{/if}
+					</div>
+					{#if selectedFolder && selectedFolder.files && selectedFolder.files.length > 0}
+						<div>
+							<p>Images in the folder : </p>
+							{#each selectedFolder.files as file}
+								{#if file.type === 'image'}
+								<button
+									class="text-blue-900 cursor-pointer"
+									on:click={() => {
+										addImages(file);
+										const imageEmbedCode = OutputSrc;
+										navigator.clipboard.writeText(imageEmbedCode);
+										alert('Image link copied to clipboard');
+									}}
+								>
+									{file.name}
+								</button>
+								<br>
+								{/if}
+							{/each}
+						</div>
+					{/if}
 					<div class="mb-4">
 						<input
 							type="text"
@@ -243,6 +300,43 @@
 						Cancel
 					</button>
 				</div>
+				<div>
+					<p>To add an image select a folder and click on the name of the image you want to add. You can now paste the appropriate line in the html below.
+						<br>
+						The image cannot appear in the preview but will be sent in the mail.
+					</p>
+					<br>
+					{#if folders && folders.length > 0}
+					<p>Select your folder : <select bind:value={selectedFolder}>
+						{#each folders as folder}
+							<option value={folder}>{folder.name}</option>
+						{/each}
+					</select></p>
+					{:else}
+						<p>No folders found</p>
+					{/if}
+				</div>
+				{#if selectedFolder && selectedFolder.files && selectedFolder.files.length > 0}
+					<div>
+						<p>Images in the folder : </p>
+						{#each selectedFolder.files as file}
+							{#if file.type === 'image'}
+							<button
+								class="text-blue-900 cursor-pointer"
+								on:click={() => {
+									addImages(file);
+									const imageEmbedCode = OutputSrc;
+									navigator.clipboard.writeText(imageEmbedCode);
+									alert('Image link copied to clipboard');
+								}}
+							>
+								{file.name}
+							</button>
+							<br>
+							{/if}
+						{/each}
+					</div>
+				{/if}
 				<div class="mb-4">
 					<input
 						type="text"
