@@ -16,7 +16,7 @@
 	import type { Instrument } from '$lib/types/Instrument';
 	import type { Contact } from '$lib/types/Contact';
 	import ContactModifier from '$lib/components/contact/ContactModifier.svelte';
-	import AdvancedFilterer from '$lib/components/AdvancedFilterer.svelte';
+	import DateShow from '$lib/components/DateShow.svelte';
 
     let recommended: Recommended[] = []
     let selectedData: Recommended = {
@@ -68,7 +68,7 @@
 			type: 'and',
 			filtersDepth1: [
 				{
-					type: 'and',
+					type: 'or',
 					filtersDepth2: []
 				}
 			]
@@ -239,6 +239,15 @@
 		easing: sineIn
   	};
 
+
+	interface WithId {
+		id: number;
+	}
+
+	function hasId<T>(item: T): item is T & WithId {
+		return (item as WithId).id !== undefined;
+	}
+
 </script>
 
 
@@ -281,7 +290,7 @@
 						<span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-e-0 border-gray-300 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
 							<Fa icon={faCircleUser} />
 						</span>
-						<input type="text" id="firstName" class="rounded-none rounded-e-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" bind:value={contact.firstName} placeholder="Bonnie" required />
+						<input type="text" id="firstName" class="rounded-none rounded-e-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" bind:value={selectedData.firstName} placeholder="Bonnie" required />
 					</div>
 				</div>
 			
@@ -327,7 +336,7 @@
 
 			
 			<div>
-				<div class="w-full mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+				<div class="w-[16mv] mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
 					<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
 						<label for="comment" class="sr-only">Your comment</label>
 						<textarea bind:value={selectedData.comment} id="comment" rows="4" class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400" placeholder="Write a comment..."></textarea>
@@ -365,19 +374,62 @@
 			</div>
 		</form>
 	</div>
-	<div class="flex w-1/2">
+	<div class="flex flex-col w-1/2">
 		<div>
 			<ContactModifier mode="modify" {contact} {instruments} />
 		</div>
+
 		<div>
-			<AdvancedFilterer
-			bind:columns
-			bind:metaContact
-			bind:dataHolderContact
-			bind:optionsContacts
-			on:optionsUpdated={() => fetchData()}
-			showData
-			/>
+			{#if dataHolderContact}
+				<div class="grid grid-cols-1 w-full mt-2">
+					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+							<tr>
+								{#each dataHolderContact.columns as column}
+									<th>
+										{column}
+									</th>
+								{/each}
+								{#if dataHolderContact.data.length > 0}
+									{#if hasId(dataHolderContact.data[0])}
+										<th> Actions </th>
+									{/if}
+								{/if}
+							</tr>
+						</thead>
+						<tbody>
+							{#each dataHolderContact.data as row}
+								<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+									{#each dataHolderContact.columns as column}
+										{#if typeof row[column] === 'object' && row[column] instanceof Date}
+											<td>
+												<DateShow date={row[column]} />
+											</td>
+										{:else}
+											<td>{row[column]}</td>
+										{/if}
+									{/each}
+									{#each dataHolderContact.notOrderedColumns as column}
+										<td>{row[column]}</td>
+									{/each}
+									<td>
+										{#if hasId(row)}
+											<button
+												on:click={() => {
+													contact = row;
+												}}
+												class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+											>
+												<span class="icon-[formkit--arrowright] hover:text-black"></span>
+											</button>
+										{/if}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
