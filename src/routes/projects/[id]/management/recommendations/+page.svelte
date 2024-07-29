@@ -248,6 +248,50 @@
 		return (item as WithId).id !== undefined;
 	}
 
+
+	async function addContactFromRecommended() {
+		const subContact = {
+			first_name: selectedData.firstName,
+			last_name: selectedData.lastName,
+			email: selectedData.email,
+			phone: selectedData.phone,
+			messenger: selectedData.messenger,
+			comments: selectedData.comment,
+			instruments: selectedData.instruments,
+			recommendation_pending: true,
+			validated: false,
+		};
+
+		let response = await fetch('/api/contacts/', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(subContact)
+		});
+
+		const requestHandler = new ResponseHandlerClient();
+
+		requestHandler.handle(response, async () => {
+			goto(`/contacts/${(await response.json()).id}`);
+		});
+	}
+
+	async function deleteRecommended() {
+		let responseDelete = await fetch(`/api/recommended/${selectedData.id}`, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+
+		const requestHandlerDelete = new ResponseHandlerClient();
+
+		requestHandlerDelete.handle(responseDelete, () => {
+			window.location.reload();
+		});		
+	}
+
 </script>
 
 
@@ -373,6 +417,9 @@
 				</table>
 			</div>
 		</form>
+		<button on:click={addContactFromRecommended} type="button" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Create a new contact from the recommendation</button>
+		<button on:click={deleteRecommended} type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Delete the recommendation</button>
+
 	</div>
 	<div class="flex flex-col w-1/2">
 		<div>
