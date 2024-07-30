@@ -275,6 +275,9 @@
 		requestHandler.handle(response, async () => {
 			//pour quand le mailing fonctionnera
 			//sendRecommendedNotifications((await response.json()).id)
+
+			//delet automatique de la recommendation lors de la creation d'un nouveau contact
+			//deleteRecommended()
 			goto(`/contacts/${(await response.json()).id}`);
 		});
 	}
