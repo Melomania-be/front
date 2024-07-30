@@ -4,8 +4,8 @@
 	export let disabled;
 	export let form: Form;
 
-	let selectProcess: string[];
-	let selectOptions: string[];
+	let selectProcess: string[] = [];
+	let selectOptions: string[] = [];
 
 	$: if (
 		(form.type === 'select' || form.type === 'multiple') &&
@@ -30,7 +30,7 @@
 		bind:value={form.text}
 		{disabled}
 	/>
-{:else if form.type === 'select' && selectProcess.length > 1}
+{:else if form.type === 'select'}
 	<input
 		class="border border-gray-100 flex-1"
 		type="text"
@@ -40,7 +40,7 @@
 		{disabled}
 	/>
 	<div>
-		{#each selectOptions as option}
+		{#each selectOptions ?? [] as option}
 			<div class="flex">
 				<input
 					class="border border-gray-100 flex-1"
@@ -72,6 +72,7 @@
 				selectChange();
 				form = form;
 			}}
+			{disabled}
 		>
 			<span class="icon-[tabler--plus]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
 		</button>
@@ -86,7 +87,7 @@
 		{disabled}
 	/>
 	<div>
-		{#each selectOptions as option}
+		{#each selectOptions ?? [] as option}
 			<div class="flex">
 				<input
 					class="border border-gray-100 flex-1"
@@ -118,6 +119,7 @@
 				selectChange();
 				form = form;
 			}}
+			{disabled}
 		>
 			<span class="icon-[tabler--plus]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
 		</button>

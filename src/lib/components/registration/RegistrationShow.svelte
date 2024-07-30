@@ -85,10 +85,12 @@
 			answers: newContact.answers.map((answer) => {
 				return {
 					form_id: answer.formId,
-					text: answer.text
+					text: answer.text ?? ""
 				};
 			})
 		};
+
+		console.log('Data to send:', data);
 
 		const response = await fetch(`/api/registrations/${projectId}`, {
 			method: 'PUT',
