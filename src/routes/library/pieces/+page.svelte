@@ -444,7 +444,7 @@
 					</optgroup>
 				</select>
 			</form>
-			<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Are nedeed to add or edit.</p>
+			<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Required to add or edit.</p>
 
 			<div class="flex p-2">
 				{#if selectedData.id == 0}
