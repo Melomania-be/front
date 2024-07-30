@@ -273,6 +273,8 @@
 		const requestHandler = new ResponseHandlerClient();
 
 		requestHandler.handle(response, async () => {
+			//pour quand le mailing fonctionnera
+			//sendRecommendedNotifications((await response.json()).id)
 			goto(`/contacts/${(await response.json()).id}`);
 		});
 	}
@@ -290,6 +292,37 @@
 		requestHandlerDelete.handle(responseDelete, () => {
 			window.location.reload();
 		});		
+	}
+
+
+	async function sendRecommendedNotifications(id: number) {
+		const data = {
+    		projectId: selectedData.project_id,
+    		contactId: id
+		}
+
+		const resMail = await fetch('/api/mailing/sendRecommendedNotifications', {
+            method: 'POST',
+            headers: {
+            	'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+	}
+
+	async function sendParticipationValidationNotification(id: number) {
+		const data = {
+    		projectId: selectedData.project_id,
+    		contactId: id
+		}
+
+		const resMail = await fetch('/api/mailing/sendParticipationValidationNotification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
 	}
 
 </script>
@@ -425,6 +458,11 @@
 		<div>
 			<ContactModifier mode="modify" {contact} {instruments} />
 		</div>
+
+		{#if contact.id != null}
+			<button on:click={() => sendParticipationValidationNotification(contact.id)} type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Send a email of participation for the project</button>
+		{/if}
+
 
 		<div>
 			{#if dataHolderContact}

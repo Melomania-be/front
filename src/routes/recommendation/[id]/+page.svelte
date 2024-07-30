@@ -89,10 +89,11 @@
 			messager: recommended.messenger,
 			instruments: recommended.instruments,
 			comment: recommended.comment,
-			project_id: $page.params.id,
+			project_id: Number($page.params.id),
 			createdAt: (await new Date(recommended.createdAt))?.getTime(),
 			updatedAt: (await new Date(recommended.updatedAt))?.getTime()
 		};
+		console.log(data)
 
 		console.log(data);
 
