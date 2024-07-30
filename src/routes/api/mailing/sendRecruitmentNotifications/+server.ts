@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
 
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/mailing/sendRecommendationNotification`,
+		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/mailing/sendRecruitmentNotification`,
 		{
 			method: 'POST',
 			headers: {
