@@ -19,6 +19,7 @@ import type { CustomContact } from './CustomContact';
 import type { List } from './List';
 import type { CustomList } from './CustomList';
 import type { Participant } from './Participant';
+import type { Recommended } from './Recommended';
 
 export type GenericDataType =
 	| Answer
@@ -41,4 +42,5 @@ export type GenericDataType =
 	| CustomContact
 	| List
 	| CustomList
-	| Participant;
+	| Participant
+	| Recommended;

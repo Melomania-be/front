@@ -89,10 +89,11 @@
 			messager: recommended.messenger,
 			instruments: recommended.instruments,
 			comment: recommended.comment,
-			project_id: $page.params.id,
+			project_id: Number($page.params.id),
 			createdAt: (await new Date(recommended.createdAt))?.getTime(),
 			updatedAt: (await new Date(recommended.updatedAt))?.getTime()
 		};
+		console.log(data)
 
 		console.log(data);
 
@@ -309,7 +310,7 @@
 		</table>
 	</div>
 
-	<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Are nedeed to add or edit.</p>
+	<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Required to add or edit.</p>
 
 	<div class="flex justify-center">
 		<button
