@@ -272,7 +272,6 @@
 							<button
 								class="w-full flex items-center justify-center p-2 my-2 text-s font-semibold text-gray-700 bg-white border border-bottom-black-300 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
 								on:click={() => (selectedList = list)}
-								role="button"
 							>
 								<h1>{list.name}</h1>
 							</button>
