@@ -103,7 +103,7 @@
 											><DateShow date={concert.date} withTime></DateShow></th
 										>
 										<td class="px-6 py-4">{concert.place}</td>
-										<td class="px-6 py-4">{concert.comment ?? "No additionnal information"}</td>
+										<td class="px-6 py-4">{concert.comment ?? 'No additionnal information'}</td>
 									</tr>
 								{/each}
 							{:else}
@@ -140,7 +140,7 @@
 											><DateShow date={rehearsal.date} withTime></DateShow></th
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
-										<td class="px-6 py-4">{rehearsal.comment ?? "No additionnal information"}</td>
+										<td class="px-6 py-4">{rehearsal.comment ?? 'No additionnal information'}</td>
 									</tr>
 								{/each}
 							{:else}

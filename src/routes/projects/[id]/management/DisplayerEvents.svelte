@@ -65,7 +65,7 @@
 										{rehearsal.place}
 									</h3>
 									<div class="rounded-full bg-slate-100 p-1">
-										<DateShow date={rehearsal.date} withTime/>
+										<DateShow date={rehearsal.date} withTime />
 									</div>
 								</div>
 								<div>
@@ -96,7 +96,7 @@
 										{concert.place}
 									</h3>
 									<div class="rounded-full bg-slate-100 p-1">
-										<DateShow date={concert.date} withTime/>
+										<DateShow date={concert.date} withTime />
 									</div>
 								</div>
 								<div>
