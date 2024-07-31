@@ -18,6 +18,7 @@
 		updatedAt: null,
 		pivot_proficiency_level: ''
 	};
+
 	let recommended: Recommended = {
 		id: null,
 		firstName: '',
@@ -74,7 +75,6 @@
 						text: 'The profil has been Recommended.',
 						icon: 'success'
 					});
-					window.location.reload();
 				}
 			});
 		}
@@ -94,8 +94,6 @@
 			updatedAt: (await new Date(recommended.updatedAt))?.getTime()
 		};
 		console.log(data)
-
-		console.log(data);
 
 		const response = await fetch('/api/recommended/', {
 			method: 'POST',
