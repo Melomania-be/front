@@ -28,7 +28,7 @@
         messenger: '',
 		instruments: [],
         comment: '',
-        project_id: 0,
+        project_id: null,
         createdAt: null,
         updatedAt: null,
     };
@@ -97,6 +97,7 @@
 		updatedAt: new Date()
 	};
 	let instruments: Array<Instrument>;
+	
 
     
     
@@ -273,7 +274,7 @@
 
 		requestHandler.handle(response, async () => {
 			//pour quand le mailing fonctionnera
-			sendRecommendedNotifications((await response.json()).id)
+			//sendRecommendedNotifications((await response.json()).id)
 
 			//delet automatique de la recommendation lors de la creation d'un nouveau contact
 			//deleteRecommended()
@@ -299,10 +300,9 @@
 
 	async function sendRecommendedNotifications(id: number) {
 		const data = {
-    		projectId: Number($page.params.id),
-    		recommendedId: id
+    		projectId: selectedData.project_id,
+    		contactId: id
 		}
-		console.log(data)
 
 		const resMail = await fetch('/api/mailing/sendRecommendedNotifications', {
             method: 'POST',
@@ -311,43 +311,21 @@
             },
             body: JSON.stringify(data)
         });
-		if (resMail.ok) {
-				alert('Mail successfully sent');
-			} else if (resMail.status === 400) {
-				const errorData = await resMail.json();
-				alert(`Error: ${errorData.message}`);
-			} else if (resMail.status === 500) {
-				alert('Internal server error, please try again later');
-			} else {
-				alert('Unknown error occurred, please try again');
-			}
 	}
 
 	async function sendParticipationValidationNotification(id: number) {
-		console.log('send participaiton validation notification')
 		const data = {
-    		projectId: Number($page.params.id),
+    		projectId: selectedData.project_id,
     		contactId: id
 		}
 
-		console.log('data sent to mail for participation validation blablablabla', data)
-		const resMail = await fetch('/api/mailing/sendParticipationValidationNotifications', {
+		const resMail = await fetch('/api/mailing/sendParticipationValidationNotification', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
         });
-		if (resMail.ok) {
-				alert('Mail successfully sent');
-			} else if (resMail.status === 400) {
-				const errorData = await resMail.json();
-				alert(`Error: ${errorData.message}`);
-			} else if (resMail.status === 500) {
-				alert('Internal server error, please try again later');
-			} else {
-				alert('Unknown error occurred, please try again');
-			}
 	}
 
 </script>
