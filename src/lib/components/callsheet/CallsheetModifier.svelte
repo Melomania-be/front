@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { Callsheet } from '$lib/types/Callsheet';
+	import { onMount } from 'svelte';
 	import CallsheetShow from './CallsheetShow.svelte';
 
 	export let callsheet: Callsheet;
@@ -33,11 +34,22 @@
 		});
 
 		if (response.ok) {
+			alert('Callsheet saved');
 			goto(`/projects/${callsheet.projectId}/management/callsheets`);
 		}
 	}
 
+	onMount(async () => {
+		const res = await fetch(`/api/folders`);
+		
+
+	});
+
 	async function deleteCallsheet() {
+		let confirmDelete = confirm('Are you sure you want to delete this callsheet ?');
+			if (!confirmDelete) {
+				return;
+			}
 		const response = await fetch(
 			`/api/projects/${callsheet.projectId}/management/callsheets/${callsheet.id}`,
 			{
@@ -94,7 +106,7 @@
 					</div>
 				{/if}
 
-				<div>
+				<div class="mb-5">
 					<h2 class="text-lg">Contents :</h2>
 					{#if allowModification}
 						<button
@@ -153,21 +165,21 @@
 							{/each}
 						{/if}
 					</div>
-				</div>
+				</div> 
 				{#if allowModification}
-					<div>
+					<div class="flex justify-end">
 						<button
 							on:click={saveCallsheet}
-							class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+							class="mr-5 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
 						>
-							Save
+							Save callsheet
 						</button>
 						{#if mode == 'modify'}
 							<button
 								on:click={deleteCallsheet}
 								class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
 							>
-								Delete
+									Delete callsheet
 							</button>
 						{/if}
 					</div>

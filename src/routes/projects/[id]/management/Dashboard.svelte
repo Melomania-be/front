@@ -26,9 +26,9 @@
 				Updated at: <DateShow date={project.updatedAt} />
 			</div>
 			<div class="text-sm">
-				Responsibles:
+				Project managers:
 				{#if project.responsibles && project.responsibles.length === 0}
-					No responsibles
+					No project manager
 				{:else}
 					{#each project.responsibles as responsible}
 						<a href="/contacts/{responsible.id}" class="rounded-full bg-slate-100 p-1"

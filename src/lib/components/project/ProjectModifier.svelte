@@ -406,7 +406,7 @@
 			{/if}
 		</div>
 
-		<h3 class="w-full text-center m-1 bg-slate-200">Responsibles for this project</h3>
+		<h3 class="w-full text-center m-1 bg-slate-200">Project managers for this project</h3>
 		<div class="m-1">
 			{#if !allowModification}
 				{#if project.responsibles && project.responsibles.length}
@@ -414,7 +414,7 @@
 						<p>{responsible.firstName} {responsible.lastName}</p>
 					{/each}
 				{:else}
-					<p class="text-center">No responsibles</p>
+					<p class="text-center">No project manager</p>
 				{/if}
 			{:else if project.responsibles}
 				{#each project.responsibles as responsible}
@@ -441,7 +441,7 @@
 								return contact.selected;
 							})
 						];
-					}}>Add responsibles</button
+					}}>Add project manager</button
 				>
 
 				<SimpleFilterer
