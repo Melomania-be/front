@@ -1,3 +1,6 @@
+This repo contains the front application using the SveltKit.
+To learn more about this project go to the [wiki](https://github.com/Melomania-be/front/wiki).
+
 # create-svelte
 
 Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
