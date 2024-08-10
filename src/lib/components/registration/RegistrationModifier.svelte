@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { Registration } from '$lib/types/Registration';
+	import RegistrationFormModifier from './RegistrationFormModifier.svelte';
 	import RegistrationShow from './RegistrationShow.svelte';
 
 	export let registration: Registration;
@@ -8,8 +9,6 @@
 	export let mode: 'modify' | 'create';
 
 	let allowModification = mode === 'modify' ? false : true;
-	let formTypes = ['text'];
-	let formType = 'text';
 
 	async function saveregistration() {
 		const tmpRegistration = {
@@ -141,84 +140,8 @@
 						{/each}
 					{/if}
 				</div>
-				<h1 class="text-2xl font-bold">Form</h1>
-				<div>
-					{#if allowModification}
-						<select
-							class="border border-gray-100"
-							bind:value={formType}
-							disabled={!allowModification}
-						>
-							{#each formTypes as types}
-								<option value={types}>{types}</option>
-							{/each}
-						</select>
 
-						<button
-							class="bg-rose-500 text-white p-2 rounded m-1"
-							on:click={() => {
-								registration.form.push({
-									text: '',
-									type: 'text',
-									registration_id: 0,
-									id:
-										registration.form.length > 0
-											? Math.max(...registration.form.map((f) => f.id ?? 0)) + 1
-											: 1
-								});
-								registration = registration;
-							}}
-						>
-							Add a form
-						</button>
-					{/if}
-				</div>
-
-				<div></div>
-				{#if registration.form}
-					{#each registration.form as form}
-						<div class="grid grid-cols-1 gap-1">
-							<div
-								class="flex items
-                            -center justify-center"
-							>
-								<input
-									class="border border-gray-100 flex-1"
-									type="text"
-									placeholder="Form"
-									bind:value={form.text}
-									on:change={() => {
-										registration = registration;
-									}}
-									disabled={!allowModification}
-								/>
-								{#if allowModification}
-									<button
-										class="m-1 flex items-center justify-center"
-										on:click={() => {
-											registration.form = registration.form.filter((f) => f.text !== form.text);
-											registration = registration;
-										}}
-									>
-										<span
-											class="icon-[tabler--trash]"
-											style="width: 1.2rem; height: 1.2rem; color: black;"
-										></span>
-									</button>
-								{/if}
-							</div>
-							<select
-								class="border border-gray-100"
-								bind:value={form.type}
-								disabled={!allowModification}
-							>
-								{#each formTypes as types}
-									<option value={types}>{types}</option>
-								{/each}
-							</select>
-						</div>
-					{/each}
-				{/if}
+				<RegistrationFormModifier disabled={!allowModification} bind:registration />
 
 				{#if allowModification}
 					<div>

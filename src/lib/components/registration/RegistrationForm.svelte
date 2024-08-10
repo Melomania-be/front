@@ -17,17 +17,66 @@
 	}
 </script>
 
-{#if form}
-	{#if form.type === 'text'}
-		<div>
-			<label for="form-{form.id}">{form.text}</label>
-			<input
-				id="form-{form.id}"
-				type="text"
-				bind:value={answer.text}
-				class="border rounded"
-				{disabled}
-			/>
-		</div>
+<div class="border my-1 p-1">
+	{#if form && answer}
+		{#if form.type === 'text'}
+			<div>
+				<label for="form-{form.id}">{form.text}</label>
+				<input
+					id="form-{form.id}"
+					type="text"
+					bind:value={answer.text}
+					class="border rounded"
+					{disabled}
+				/>
+			</div>
+		{:else if form.type === 'checkbox'}
+			<div>
+				<input
+					id="form-{form.id}"
+					type="checkbox"
+					checked={answer.text === 'true' ? true : false}
+					on:change={() => {
+						answer.text = answer.text === 'true' ? 'false' : 'true';
+					}}
+					{disabled}
+				/>
+				<label for="form-{form.id}">{form.text}</label>
+			</div>
+		{:else if form.type === 'select' && form.text.split(':').length > 1}
+			<div>
+				<label for="form-{form.id}">{form.text.split(':')[0]}</label>
+				<select id="form-{form.id}" bind:value={answer.text} class="border rounded" {disabled}>
+					{#each form.text.split(':')[1].split(';') as option}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			</div>
+		{:else if form.type === 'multiple' && form.text.split(':').length > 1}
+			<div>
+				<label for="form-{form.id}">{form.text.split(':')[0]}</label>
+				{#each form.text.split(':')[1].split(';') as option}
+					<div>
+						<input
+							id="form-{form.id}"
+							type="checkbox"
+							checked={answer.text.split(';').includes(option)}
+							on:change={() => {
+								if (answer.text.split(';').includes(option)) {
+									answer.text = answer.text
+										.split(';')
+										.filter((o) => o !== option)
+										.join(';');
+								} else {
+									answer.text = answer.text + ';' + option;
+								}
+							}}
+							{disabled}
+						/>
+						<label for="form-{form.id}">{option}</label>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	{/if}
-{/if}
+</div>

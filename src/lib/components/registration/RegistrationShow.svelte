@@ -82,8 +82,15 @@
 			rehearsals: Array.from(selectedRehearsals),
 			project_id: registration.project?.id,
 			section_id: newContact.section_id,
-			answers: newContact.answers
+			answers: newContact.answers.map((answer) => {
+				return {
+					form_id: answer.formId,
+					text: answer.text ?? ""
+				};
+			})
 		};
+
+		console.log('Data to send:', data);
 
 		const response = await fetch(`/api/registrations/${projectId}`, {
 			method: 'PUT',
@@ -105,6 +112,7 @@
 		}
 
 		if (response.ok) {
+			alert('Registration successful! You will receive news shortly if your registration is accepted.');
 			window.location.reload();
 		}
 	}

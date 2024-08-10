@@ -96,7 +96,7 @@
 				<ul>
 					{#each participantsNotValidated.slice(0, 3) as participant}
 						<li class="text-sm">
-							<a href="/projects/{project.id}/management/participants/{participant.id}">
+							<a href="/projects/{project.id}/management/validation">
 								{participant.contact.firstName}
 								{participant.contact.lastName}
 							</a>
