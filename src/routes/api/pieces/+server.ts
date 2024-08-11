@@ -1,6 +1,6 @@
 import { getToken } from '$lib/server/authentification';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 	const page = url.searchParams.get('page');
@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 	const order = url.searchParams.get('order');
 
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/piece?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`,
+		`${API_URL}/piece?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`,
 		{
 			method: 'GET',
 			headers: {
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	const piece = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/piece/`, {
+	const res = await fetch(`${API_URL}/piece/`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 export const DELETE: RequestHandler = async ({ cookies, fetch, request }) => {
 	const { id } = await request.json();
 
-	await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/piece/${id}`, {
+	await fetch(`${API_URL}/piece/${id}`, {
 		method: 'DELETE',
 		headers: {
 			authorization: `${await getToken(cookies)}`

@@ -1,10 +1,10 @@
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const DELETE: RequestHandler = async ({ cookies, fetch, params }) => {
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/sectionGroups/${params.id}`,
+		`${API_URL}/sectionGroups/${params.id}`,
 		{
 			method: 'DELETE',
 			headers: {

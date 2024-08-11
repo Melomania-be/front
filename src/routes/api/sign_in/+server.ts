@@ -1,11 +1,11 @@
 import { removeToken, setToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 	const { email, password } = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/sign_in`, {
+	const res = await fetch(`${API_URL}/sign_in`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'

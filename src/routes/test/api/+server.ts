@@ -1,11 +1,11 @@
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/contact`, {
+	const res = await fetch(`${API_URL}/contact`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 };
 
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/contact/filterable`, {
+	const res = await fetch(`${API_URL}/contact/filterable`, {
 		headers: {
 			authorization: `${await getToken(cookies)}`
 		}

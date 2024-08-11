@@ -1,10 +1,10 @@
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/registration/${params.id}`,
+		`${API_URL}/registration/${params.id}`,
 		{
 			method: 'GET',
 			headers: {
@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	const data = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/registration/submit`, {
+	const res = await fetch(`${API_URL}/registration/submit`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',

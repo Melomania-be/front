@@ -1,6 +1,6 @@
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
 	const page = url.searchParams.get('page');
@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
 	const order = url.searchParams.get('order');
 
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}
+		`${API_URL}/projects?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}
 	`,
 		{
 			method: 'GET',
@@ -29,7 +29,7 @@ export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
 
 	console.log(data);
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects`, {
+	const res = await fetch(`${API_URL}/projects`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

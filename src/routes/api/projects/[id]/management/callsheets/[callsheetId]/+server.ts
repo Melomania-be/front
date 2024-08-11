@@ -1,10 +1,10 @@
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 import { getToken } from '$lib/server/authentification';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${params.id}/management/call_sheets/${params.callsheetId}`,
+		`${API_URL}/projects/${params.id}/management/call_sheets/${params.callsheetId}`,
 		{
 			method: 'GET',
 			headers: {
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
 
 export const DELETE: RequestHandler = async ({ cookies, fetch, params }) => {
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/projects/${params.id}/management/call_sheets/${params.callsheetId}`,
+		`${API_URL}/projects/${params.id}/management/call_sheets/${params.callsheetId}`,
 		{
 			method: 'DELETE',
 			headers: {

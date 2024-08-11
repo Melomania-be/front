@@ -1,9 +1,9 @@
 import { getToken } from '$lib/server/authentification';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/lists/${params.id}`, {
+	const res = await fetch(`${API_URL}/lists/${params.id}`, {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application',
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
 	return res;
 };
 export const DELETE: RequestHandler = async ({ cookies, fetch, params }) => {
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/lists/${params.id}`, {
+	const res = await fetch(`${API_URL}/lists/${params.id}`, {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',

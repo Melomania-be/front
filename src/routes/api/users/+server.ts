@@ -1,9 +1,9 @@
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, request, fetch }) => {
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/users`, {
+	const res = await fetch(`${API_URL}/users`, {
 		method: 'GET',
 		headers: {
 			authorization: `${await getToken(cookies)}`
@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ cookies, request, fetch }) => {
 export const PUT: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/users/`, {
+	const res = await fetch(`${API_URL}/users/`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ export const PUT: RequestHandler = async ({ cookies, request, fetch }) => {
 export const DELETE: RequestHandler = async ({ cookies, request, fetch }) => {
 	const { id } = await request.json();
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/users/${id}`, {
+	const res = await fetch(`${API_URL}/users/${id}`, {
 		method: 'DELETE',
 		headers: {
 			authorization: `${await getToken(cookies)}`

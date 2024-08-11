@@ -1,4 +1,4 @@
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 import { getToken } from '$lib/server/authentification';
 import ResponseHandlerServer from '$lib/server/ResponseHandlerServer';
 
@@ -11,7 +11,7 @@ export async function load({ cookies }) {
 		};
 	}
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/verify`, {
+	const res = await fetch(`${API_URL}/verify`, {
 		method: 'GET',
 		headers: {
 			authorization: `${await getToken(cookies)}`

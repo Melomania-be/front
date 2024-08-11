@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { getToken } from '$lib/server/authentification';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { API_URL } from '$env/static/private';
 import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 import { redirect } from '@sveltejs/kit';
 import { StatusCodesRedirection } from '$lib/common/statusCodes';

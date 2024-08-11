@@ -1,6 +1,6 @@
 import { getToken } from '$lib/server/authentification';
-import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { BACKEND_API_HOST, BACKEND_API_PORT } from '$env/static/private';
+import { type RequestHandler } from '@sveltejs/kit';
+import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 	const page = url.searchParams.get('page');
@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 	const order = url.searchParams.get('order');
 
 	const res = await fetch(
-		`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`,
+		`${API_URL}/composer?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}`,
 		{
 			method: 'GET',
 			headers: {
@@ -30,7 +30,7 @@ export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	console.log('je suis la');
 	console.log(composer);
 
-	const res = await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer/`, {
+	const res = await fetch(`${API_URL}/composer/`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 export const DELETE: RequestHandler = async ({ cookies, fetch, request }) => {
 	const { id } = await request.json();
 
-	await fetch(`http://${BACKEND_API_HOST}:${BACKEND_API_PORT}/composer/${id}`, {
+	await fetch(`${API_URL}/composer/${id}`, {
 		method: 'DELETE',
 		headers: {
 			authorization: `${await getToken(cookies)}`
