@@ -144,7 +144,7 @@
 					<li class="flex items-center space-x-1">
 						<h3 class="font-medium text-gray-900 dark:text-white">Registration</h3>
 						<a href="/projects/{project.id}/management/registration" class="text-blue-700"
-							>Modify registration form</a
+							>Edit registration form</a
 						>
 					</li>
 				</ul>

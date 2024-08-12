@@ -104,10 +104,6 @@
 		const dataFolder = await resFolder.json();
 		folders = dataFolder;
 	});
-
-	function embedImage(arg0: any): string {
-		throw new Error('Function not implemented.');
-	}
 </script>
 
 <div
