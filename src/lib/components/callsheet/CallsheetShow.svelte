@@ -142,11 +142,11 @@
 
 			{#if callsheet.contents && callsheet.contents.length > 0}
 				{#each callsheet.contents as content}
-					<div class="pt-10 mb-8 ml-20 ">
+					<div class="pt-10 mb-8 ml-20">
 						<h2
 							class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5"
 						>
-							{content.title}
+							{@html content.title}
 						</h2>
 						<div class="w-full flex">
 							<p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
@@ -154,7 +154,7 @@
 					</div>
 				{/each}
 			{/if}
-			
+
 			<div class="pt-10 mb-2 ml-20">
 				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline">
 					Contact Information

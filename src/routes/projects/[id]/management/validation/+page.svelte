@@ -36,6 +36,18 @@
 	}
 
 	async function validateParticipant() {
+		const responseEmail = await fetch(`/api/mailing/sendParticipationValidationNotifications`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ projectId: data.id, contactId: currentParticipant!.contact.id })
+		});
+
+		if (!responseEmail.ok) {
+			console.error('Failed to send email');
+		}
+		
 		const response = await fetch(`/api/projects/${data.id}/management/validation`, {
 			method: 'POST',
 			headers: {
@@ -165,7 +177,7 @@
 								validateParticipant();
 							}}
 						>
-							Validate
+							Validate and send confirmation email
 						</button>
 						<button
 							class="bg-red-700 text-white rounded p-1 m-1"

@@ -74,6 +74,20 @@
 	async function updateParticipant() {
 		const data = { ...currentParticipant, accepted: true };
 
+		if (!currentParticipant.id) {
+			const mailingResponse = await fetch(`/api/mailing/sendParticipationValidationNotifications`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ projectId: id, contactId: currentParticipant.contact.id })
+			});
+
+			if (!mailingResponse.ok) {
+				console.error('Failed to send email');
+			}
+		}
+
 		const response = await fetch(`/api/projects/${id}/management/participants`, {
 			method: 'POST',
 			headers: {

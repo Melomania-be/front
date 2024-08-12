@@ -3,7 +3,7 @@
 	let usableTime: string;
 
 	$: if (date) {
-		usableTime = date.toISOString().split('T')[1].slice(0, 5);
+		usableTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
 	}
 
 	async function changeHandler(event: any) {

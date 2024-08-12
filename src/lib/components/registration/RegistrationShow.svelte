@@ -41,13 +41,25 @@
 
 	let selectedRehearsals: Set<number> = new Set();
 
-	function handleSelection(id: number | null) {
+	function handleSelectionRehearsal(id: number | null) {
 		if (!id) return;
 
 		if (selectedRehearsals.has(id)) {
 			selectedRehearsals.delete(id);
 		} else {
 			selectedRehearsals.add(id);
+		}
+	}
+
+	let selectedConcerts: Set<number> = new Set();
+
+	function handleSelectionConcert(id: number | null) {
+		if (!id) return;
+
+		if (selectedConcerts.has(id)) {
+			selectedConcerts.delete(id);
+		} else {
+			selectedConcerts.add(id);
 		}
 	}
 
@@ -62,6 +74,10 @@
 
 		if (selectedRehearsals.size === 0) {
 			return alert('Please select the rehearsals you will attend to (at least one required).');
+		}
+
+		if (selectedConcerts.size === 0) {
+			return alert('Please select the concerts you will attend to (at least one required).');
 		}
 
 		let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -80,12 +96,13 @@
 			messenger: newContact.messenger,
 			validated_contact: false,
 			rehearsals: Array.from(selectedRehearsals),
+			concerts: Array.from(selectedConcerts),
 			project_id: registration.project?.id,
 			section_id: newContact.section_id,
 			answers: newContact.answers.map((answer) => {
 				return {
 					form_id: answer.formId,
-					text: answer.text ?? ""
+					text: answer.text ?? ''
 				};
 			})
 		};
@@ -112,7 +129,9 @@
 		}
 
 		if (response.ok) {
-			alert('Registration successful! You will receive news shortly if your registration is accepted.');
+			alert(
+				'Registration successful! You will receive news shortly if your registration is accepted.'
+			);
 			window.location.reload();
 		}
 	}
@@ -131,28 +150,13 @@
 				</h1>
 			</div>
 
-			{#if registration.contents && registration.contents.length > 0}
-				{#each registration.contents as content}
-					<div class="mb-8 ml-20">
-						<h2
-							class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5"
-						>
-							{content.title}
-						</h2>
-						<div class="w-full flex ml-5">
-							<p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
-						</div>
-					</div>
-				{/each}
-			{/if}
-
 			<div class="mb-8 ml-20">
 				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
 					Project Informations
 				</h2>
 				<div class="mb-3 ml-5">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-						Concert
+						Concerts
 					</h3>
 
 					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -261,6 +265,20 @@
 						</table>
 					</div>
 				</div>
+				{#if registration.contents && registration.contents.length > 0}
+					{#each registration.contents as content}
+						<div class="mb-8 ml-5">
+							<h2
+								class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5"
+							>
+								{@html content.title}
+							</h2>
+							<div class="w-full flex ml-5">
+								<p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
+							</div>
+						</div>
+					{/each}
+				{/if}
 			</div>
 		</div>
 
@@ -339,6 +357,48 @@
 
 				<div class="ml-6">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2">
+						Concert attendance
+					</h3>
+					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<thead
+							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+						>
+							<tr>
+								<th class="px-6 py-3">Select</th>
+								<th class="px-6 py-3">Date</th>
+								<th class="px-6 py-3">Place</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
+							{#if registration.project?.concerts}
+								{#each registration.project.concerts as concert}
+									<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+										<td>
+											<input
+												type="checkbox"
+												id={`rehearsal-${concert.id}`}
+												value={concert.id}
+												on:change={() => handleSelectionConcert(concert.id)}
+											/>
+										</td>
+										<td
+											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+											><DateShow date={concert.date} withTime></DateShow></td
+										>
+										<td class="px-6 py-4">{concert.place}</td>
+									</tr>
+								{/each}
+							{:else}
+								<tr>
+									<td class="px-6 py-4" colspan="3">No concert found</td>
+								</tr>
+							{/if}
+						</tbody>
+					</table>
+				</div>
+
+				<div class="ml-6">
+					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2">
 						Rehearsal attendance
 					</h3>
 					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -360,7 +420,7 @@
 												type="checkbox"
 												id={`rehearsal-${rehearsal.id}`}
 												value={rehearsal.id}
-												on:change={() => handleSelection(rehearsal.id)}
+												on:change={() => handleSelectionRehearsal(rehearsal.id)}
 											/>
 										</td>
 										<td

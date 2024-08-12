@@ -216,19 +216,6 @@
 			console.log(optionsContacts)
 			console.log(dataHolderContact)
 		}
-
-		
-
-	}
-
-	async function errorEvent(response: Response) {
-		if (response.status >= 400 && response.status < 500) {
-			const jsonResponse = await response.json();
-			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-			alert(error);
-		} else if (response.status >= 500) {
-			alert('Server error');
-		}
 	}
 
 	let hidden5 = false;

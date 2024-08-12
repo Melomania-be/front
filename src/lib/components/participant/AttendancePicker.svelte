@@ -10,9 +10,6 @@
 	export let type: 'concert' | 'rehearsal';
 	export let disabled: boolean = false;
 
-	$: console.log(concertsOrRehearsals);
-	$: console.log(participants);
-
 	function triggerEvent(
 		participant: CustomParticipant | Participant,
 		concertOrRehehearsal: Rehearsal | Concert
@@ -25,14 +22,14 @@
 		}
 		switch (type) {
 			case 'rehearsal':
-				if (participant.rehearsals.includes(concertOrRehehearsal)) {
+				if (laxInclude(participant, concertOrRehehearsal)) {
 					participant.rehearsals.splice(participant.rehearsals.indexOf(concertOrRehehearsal), 1);
 				} else {
 					participant.rehearsals.push(concertOrRehehearsal);
 				}
 				break;
 			case 'concert':
-				if (participant.concerts.includes(concertOrRehehearsal)) {
+				if (laxInclude(participant, concertOrRehehearsal)) {
 					participant.concerts.splice(participant.concerts.indexOf(concertOrRehehearsal), 1);
 				} else {
 					participant.concerts.push(concertOrRehehearsal);
@@ -45,6 +42,10 @@
 		participant.rehearsals = participant.rehearsals ?? [];
 		participant.concerts = participant.concerts ?? [];
 	});
+
+	function laxInclude(participant: CustomParticipant | Participant, concert: Concert | Rehearsal) {
+		return participant.rehearsals!.includes(concert) || participant.concerts!.includes(concert);
+	}
 </script>
 
 <table
@@ -77,8 +78,7 @@
 						{#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
 							<input
 								type="checkbox"
-								checked={participant.concerts?.includes(concertOrRehearsal) ||
-									participant.rehearsals?.includes(concertOrRehearsal)}
+								checked={laxInclude(participant, concertOrRehearsal)}
 								on:change={() => triggerEvent(participant, concertOrRehearsal)}
 								{disabled}
 							/>

@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ cookies, params, fetch }) => {
 	const id = Number(params.id);
 
 	const serverResponseContact = await fetch(
-		'http://' + BACKEND_API_HOST + ':' + BACKEND_API_PORT + '/contact/' + id,
+		API_URL + '/contact/' + id,
 		{
 			method: 'GET',
 			headers: {
@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ cookies, params, fetch }) => {
 	const contact = await serverResponseContact.json();
 
 	const serverResponseInstruments = await fetch(
-		'http://' + BACKEND_API_HOST + ':' + BACKEND_API_PORT + '/instrument',
+		API_URL + '/instrument',
 		{
 			method: 'GET',
 			headers: {
