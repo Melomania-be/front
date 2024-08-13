@@ -277,7 +277,7 @@
 						{/if}
 					</div>
 					<div class="m-1">
-						{#if registration.project.sectionGroup?.sections && (mode === 'create' || currentParticipant.section)}
+						{#if registration.project.sectionGroup?.sections && currentParticipant}
 							<SectionPicker
 								bind:participant={currentParticipant}
 								bind:sections={registration.project.sectionGroup.sections}
