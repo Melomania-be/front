@@ -255,7 +255,7 @@
 						{/if}
 					</div>
 					<div class="m-1">
-						{#if registration.project.concerts && registration.project.concerts.length > 0}
+						{#if registration.project.concerts && registration.project.concerts.length > 0 && participants.length > 0}
 							<h2 class="uppercase">Attendance to Concerts</h2>
 							<AttendancePicker
 								bind:participants
@@ -266,7 +266,7 @@
 						{/if}
 					</div>
 					<div class="m-1">
-						{#if registration.project.rehearsals && registration.project.rehearsals.length > 0}
+						{#if registration.project.rehearsals && registration.project.rehearsals.length > 0 && participants.length > 0}
 							<h2 class="uppercase">Attendance to Rehearsals</h2>
 							<AttendancePicker
 								bind:participants

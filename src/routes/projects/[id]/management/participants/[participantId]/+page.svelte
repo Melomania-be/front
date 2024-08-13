@@ -26,4 +26,11 @@
 	});
 </script>
 
-<ParticipantModifier mode="modify" id={data.id} bind:currentParticipant={participant} {urlFront} />
+{#if participant}
+	<ParticipantModifier
+		mode="modify"
+		id={data.id}
+		bind:currentParticipant={participant}
+		{urlFront}
+	/>
+{/if}
