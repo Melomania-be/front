@@ -15,7 +15,7 @@
 
 	export let mode: 'create' | 'modify';
 	export let id: string;
-	export let currentParticipant: Participant;
+	export let currentParticipant: Participant | CustomParticipant;
 	export let urlFront: string;
 
 	let allowModification: boolean = mode === 'create' ? true : false;
@@ -39,7 +39,7 @@
 	let dataHolder: TableData<Contact>;
 	let listContacts: Contact[] = [];
 
-	let participants: Participant[] = [];
+	let participants: (Participant | CustomParticipant)[] = [];
 
 	let registration: Registration;
 
@@ -80,7 +80,7 @@
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ projectId: id, contactId: currentParticipant.contact.id })
+				body: JSON.stringify({ projectId: id, contactId: currentParticipant.contact!.id })
 			});
 
 			if (!mailingResponse.ok) {
@@ -211,7 +211,7 @@
 	});
 
 	$: {
-		participants = [currentParticipant];
+		if (currentParticipant) participants = [currentParticipant];
 	}
 </script>
 

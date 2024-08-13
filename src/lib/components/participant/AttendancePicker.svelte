@@ -5,7 +5,7 @@
 	import type { Participant } from '$lib/types/Participant';
 	import type { Rehearsal } from '$lib/types/Rehearsal';
 
-	export let participants: Participant[];
+	export let participants: (Participant | CustomParticipant)[];
 	export let concertsOrRehearsals;
 	export let type: 'concert' | 'rehearsal';
 	export let disabled: boolean = false;
