@@ -3,13 +3,17 @@
 	import type { Participant } from '$lib/types/Participant';
 	import type { Section } from '$lib/types/Section';
 
-	export let participant: (Participant | CustomParticipant);
+	export let participant: Participant | CustomParticipant;
 	export let sections: Section[];
 	export let disabled: boolean = false;
 
-	if (participant.section && sections.length > 0) {
-		participant.section = sections.filter((section) => section.id === participant.section!.id)[0];
+	$: {
+		if (participant.section && sections.length > 0) {
+			participant.section = sections.filter((section) => section.id === participant.section!.id)[0];
+		}
 	}
+
+	$: console.log(participant);
 </script>
 
 {#if sections.length > 0}
