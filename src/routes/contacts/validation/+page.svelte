@@ -221,7 +221,8 @@
 		}
 
 		let mergedContact = {
-			id: comparedContact?.id || -1,
+			contactId1: selectedContact?.id,
+			contactId2: comparedContact?.id,
 			first_name: data.firstName,
 			last_name: data.lastName,
 			email: data.email,
@@ -238,8 +239,8 @@
 		};
 
 		try {
-			const res = await fetch(`/api/contacts/`, {
-				method: 'PUT',
+			const res = await fetch(`/api/contacts/validations`, {
+				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
@@ -249,11 +250,7 @@
 			if (res.ok) {
 				console.log('Contact updated');
 				alert('Contact successfully updated');
-				filteredContacts = filteredContacts.filter((contact) => contact.id !== comparedContact?.id);
-				notValidatedContacts = notValidatedContacts.filter(
-					(contact) => contact.id !== comparedContact?.id
-				);
-				deselectContact();
+				window.location.reload();
 			} else {
 				const responseText = await res.text();
 				console.error('Failed to update contact, status:', res.status, 'Response:', responseText);
@@ -352,14 +349,14 @@
 	}
 </script>
 
-<main class="grid grid-cols-5 ml-5 mr-5">
-	<div class="w-full col-span-2 border-2 border-rose-500">
+<main class="flex ml-5 mr-5">
+	<div class="w-full border-2 border-rose-500">
 		{#if selectedContact}
 			<div>
-				<div class="flex items-center cursor-pointer" on:click={() => deselectContact()}>
+				<button class="flex items-center cursor-pointer" on:click={() => deselectContact()}>
 					<Fa icon={faArrowLeft} />
 					<b><span>&#20; Back to pending validations</span></b>
-				</div>
+				</button>
 				Selected contact:
 				<br />
 				<ul>
@@ -407,20 +404,20 @@
 			{#if notValidatedContacts}
 				<br />
 				{#each notValidatedContacts as contact}
-					<div
+					<button
 						class="border-b-2 border-gray-300 flex justify-between items-center"
 						on:click={() => selectContact(contact)}
 					>
 						{contact.firstName}
 						{contact.lastName} - {contact.email}
-					</div>
+					</button>
 				{/each}
 			{/if}
 		{/if}
 	</div>
 
 	{#if selectedContact && comparedContact}
-		<div class="w-full border-2 border-pink-500 col-span">
+		<div class="w-full border-2 border-pink-500">
 			<table>
 				<thead>
 					<tr>
@@ -505,20 +502,20 @@
 
 	{#if selectedContact}
 		{#if comparedContact === null}
-			<div class="w-full col-span-2 border-2 border-green-500">
+			<div class="w-full border-2 border-green-500">
 				<div class="border-2 border-yellow-500">
 					<h2>Recommended</h2>
 					The following contacts are similar to the selected contact:
 					{#if similartoSelected}
 						{#each similartoSelected as contact}
 							<div class="border-b-2 border-gray-300 flex justify-between items-center">
-								<div
+								<button
 									class="flex border-2 border-rose-500 cursor-pointer"
 									on:click={() => selectedCompared(contact)}
 								>
 									{contact.firstName}
 									{contact.lastName} - {contact.email}
-								</div>
+								</button>
 								<button
 									type="button"
 									class="bg-blue-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
@@ -545,10 +542,10 @@
 							<div class="border-2 border-blue-500">
 								{#each contacts as contact}
 									<div class="flex justify-between">
-										<div class="flex cursor-pointer" on:click={() => selectedCompared(contact)}>
+										<button class="flex cursor-pointer" on:click={() => selectedCompared(contact)}>
 											{contact.firstName}
 											{contact.lastName} - {contact.email}
-										</div>
+										</button>
 										<button
 											type="button"
 											class="bg-blue-500 text-sm px-2 py-1 mr-2 rounded-lg text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 justify-self-end"
@@ -564,11 +561,11 @@
 				</div>
 			</div>
 		{:else}
-			<div class="w-full col-span-2 border-2 border-rose-500">
-				<div class="flex items-center cursor-pointer" on:click={() => deselectCompared()}>
+			<div class="w-full border-2 border-rose-500">
+				<button class="flex items-center cursor-pointer" on:click={() => deselectCompared()}>
 					<Fa icon={faArrowLeft} />
 					<b><span>&#20; Back to comparison selector</span></b>
-				</div>
+				</button>
 				Selected contact:
 				<br />
 				{comparedContact.firstName}
@@ -593,7 +590,7 @@
 			</div>
 		{/if}
 	{:else}
-		<div class="w-full col-span-2 flex border-2 border-green-500">
+		<div class="w-full flex border-2 border-green-500">
 			<h2>No contact selected</h2>
 		</div>
 	{/if}

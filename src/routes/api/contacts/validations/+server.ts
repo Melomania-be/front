@@ -21,3 +21,20 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 
 	return res;
 };
+
+export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
+	const data = await request.json();
+
+	console.log(data);
+
+	const res = await fetch(`${API_URL}/contact/validation/merge`, {
+		method: 'POST',
+		headers: {
+			authorization: `${await getToken(cookies)}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+
+	return res;
+};
