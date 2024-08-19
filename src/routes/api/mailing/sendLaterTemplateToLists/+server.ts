@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
 
 	const res = await fetch(
-		`${API_URL}/mailing/sendLaterTemplateToList`,
+		`${API_URL}/mailing/sendTemplateToList`,
 		{
 			method: 'POST',
 			headers: {

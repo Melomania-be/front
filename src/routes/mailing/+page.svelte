@@ -200,7 +200,7 @@
 			toContact: toContact
 		};
 
-		const response = await fetch('/api/mailing/sendLaterTemplateToLists', {
+		const response = await fetch('/api/mailing/sendTemplateToLists', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
