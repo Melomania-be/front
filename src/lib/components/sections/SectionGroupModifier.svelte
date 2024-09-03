@@ -142,7 +142,7 @@
 </script>
 
 <div class="m-1 border border-red-500">
-	Warning : Alaways save after finishing your modifications on a group, section or instrument, otherwise your changes may be lost. 
+	Warning : Always save after finishing your modifications on a group, section or instrument, otherwise your changes may be lost. 
 </div>
 <div class="m-1 grid md:grid-cols-2">
 	{#if sectionsGroups}

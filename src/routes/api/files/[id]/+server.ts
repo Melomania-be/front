@@ -26,3 +26,22 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 
 	return res;
 };
+
+export const PUT: RequestHandler = async ({ params, cookies, request, fetch }) => {
+    const { name } = await request.json();
+
+    if (!name) {
+        return new Response(JSON.stringify({ message: 'New name is required' }), { status: 400 });
+    }
+
+    const res = await fetch(`${API_URL}/files/${params.id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            authorization: `${await getToken(cookies)}`
+        },
+        body: JSON.stringify({ name })
+    });
+
+    return res;
+}

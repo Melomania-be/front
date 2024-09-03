@@ -225,6 +225,34 @@
 		}
 	}
 
+	async function renameFile(file: File) {
+		const newName = prompt('Enter the new name of the file');
+
+		if (!newName) return;
+
+		const request = await fetch(`/api/files/${file.id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ name: newName })
+		});
+
+		if (request.status >= 400 && request.status < 500) {
+			const jsonResponse = await request.json();
+			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+			alert(error);
+		}
+
+		if (request.status >= 500) {
+			alert('Server error');
+		}
+
+		if (request.status === 200) {
+			window.location.reload();
+		}
+	}
+
 	async function deleteFile(file: File) {
 		const validated = confirm('Are you sure you want to delete this file ?');
 
@@ -355,6 +383,13 @@
 									title="Download file"
 								>
 									<span class="icon-[line-md--download-outline]"></span>
+								</button>
+								<button
+									class="p-1 w-6 h-6 rounded-full ml-2 border border-gray-300"
+									on:click={() => renameFile(file)}
+									title="Rename file"
+								>
+									<span class="icon-[line-md--edit]"></span>
 								</button>
 								<button
 									class="float-right place-content-center w-6 h-6 rounded-full ml-2"
