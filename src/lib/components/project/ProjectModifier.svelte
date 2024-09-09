@@ -86,7 +86,7 @@
 		} else {
 			if (response.status === StatusCodesClientError.UNPROCESSABLE_ENTITY) {
 				let error = await response.json();
-				alert(error);
+				alert(error.message || JSON.stringify(error));
 			}
 		}
 	}
