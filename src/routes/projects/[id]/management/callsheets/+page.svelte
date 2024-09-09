@@ -13,7 +13,7 @@
 	let meta: any = {};
 	let options: any = {
 		filter: '',
-		limit: 10,
+		limit: 250,
 		page: 1,
 		order: 'desc',
 		orderBy: 'updatedAt'
@@ -30,13 +30,13 @@
 		urlSvelteApi = `/api/projects/${data.id}/management/callsheets`;
 		urlFront = `/projects/${data.id}/management/callsheets`;
 		uniqueUrl = `/projects/${data.id}/management/callsheets`;
-		options = {
-			filter: urlParams.get('filter') || '',
-			limit: parseInt(urlParams.get('limit') || '5'),
-			page: parseInt(urlParams.get('page') || '1'),
-			order: urlParams.get('order') || 'desc',
-			orderBy: urlParams.get('orderBy') || 'updatedAt'
-		};
+        options = {
+            filter: urlParams.get('filter') || options.filter,
+            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+            page: parseInt(urlParams.get('page') || options.page.toString()),
+            order: urlParams.get('order') || options.order,
+            orderBy: urlParams.get('orderBy') || options.orderBy
+        };
 
 		fetchData();
 	});

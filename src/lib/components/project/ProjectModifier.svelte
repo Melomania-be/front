@@ -109,7 +109,7 @@
 	let meta: any = {};
 	let options: any = {
 		filter: '',
-		limit: 10,
+		limit: 250,
 		page: 1,
 		order: 'asc',
 		orderBy: 'id'

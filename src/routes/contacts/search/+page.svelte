@@ -30,7 +30,7 @@
 			]
 		},
 		page: 1,
-		limit: 10,
+		limit: 250,
 		orderBy: 'id',
 		order: 'asc'
 	};

@@ -17,7 +17,7 @@
 
 	let options: any = {
 		filter: '',
-		limit: 1,
+		limit: 250,
 		page: 1,
 		order: 'asc',
 		orderBy: 'id'
