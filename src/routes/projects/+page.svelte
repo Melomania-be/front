@@ -28,8 +28,6 @@
 	let passedProjects: Project[] = [];
 	let currentProjects: Project[] = [];
 
-	$: if (browser) options && fetchData();
-
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
         options = {
@@ -146,7 +144,13 @@
 				<div
 					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mb-1"
 				>
-					<SimpleFilterer showData={false} bind:data={group} bind:meta bind:options>
+					<SimpleFilterer 
+						showData={false} 
+						bind:data={group} 
+						bind:meta 
+						bind:options
+						on:optionsUpdated={() => fetchData()}
+					>
 						<div class=" bg-white bordermx-auto justify-center w-full">
 							{#each shownProjects as project}
 								<div
