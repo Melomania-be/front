@@ -311,7 +311,7 @@
 		{#if listContacts && listContacts.length > 0 && mode === 'create'}
 			<SimpleFilterer
 				bind:data={dataHolder}
-				on:optionsUpdated={fetchData}
+				on:optionsUpdated={() => fetchData()}
 				bind:meta
 				bind:options
 				showData={false}

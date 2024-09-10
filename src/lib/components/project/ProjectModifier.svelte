@@ -154,7 +154,7 @@
 		});
 	}
 
-	$: if (browser) options && allowModification && fetchData();
+	$: if (browser) allowModification && fetchData();
 </script>
 
 <div
@@ -448,7 +448,7 @@
 					bind:data={dataHolder}
 					showData={false}
 					editable={false}
-					on:optionsUpdated={fetchData}
+					on:optionsUpdated={() => fetchData()}
 					bind:options
 					bind:meta
 				>
