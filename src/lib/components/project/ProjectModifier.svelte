@@ -261,7 +261,9 @@
 				<select class="flex w-1/2 border mt-1" bind:value={project.pieces} multiple>
 					{#if pieces && pieces.length > 0}
 						{#each pieces as piece}
-							<option value={piece}>{piece.name} {piece.composer.shortName}</option>
+							<option value={piece}>
+								{piece.name} - {piece.composer.shortName}
+							</option>
 						{/each}
 					{/if}
 				</select>
