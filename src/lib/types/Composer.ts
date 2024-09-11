@@ -1,10 +1,10 @@
 import type { GenericDataType } from './GenericDataType';
 
 export interface Composer {
-	birthDate: string;
+	birthDate: Date;
 	country: String;
 	createdAt: Date;
-	deathDate: string;
+	deathDate: Date;
 	id: Number;
 	longName: String;
 	mainStyle: String;

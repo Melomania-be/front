@@ -10,6 +10,7 @@
 
 	import Fa from 'svelte-fa';
 	import { faGlobe, faTextSlash } from '@fortawesome/free-solid-svg-icons';
+	import DatePicker from '$lib/components/DatePicker.svelte';
 
 	let selectedData: Composer;
 
@@ -29,15 +30,15 @@
 	let dataHolder: TableData<Composer>;
 
 	let newComposer: Composer = {
-		birthDate: null,
+		birthDate: new Date(),
 		country: null,
 		createdAt: new Date(),
-		deathDate: null,
+		deathDate: new Date(),
 		id: 0,
 		longName: null,
 		mainStyle: null,
 		shortName: null,
-		updatedAt: null
+		updatedAt: new Date()
 	};
 
     onMount(async () => {
@@ -303,13 +304,7 @@
 						>*Date of birth</label
 					>
 					<div class="flex">
-						<input
-							bind:value={selectedData.birthDate}
-							type="date"
-							id="dateOfBirth"
-							class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-							required
-						/>
+						<DatePicker bind:date={selectedData.birthDate} />
 					</div>
 				</div>
 
@@ -320,13 +315,7 @@
 						>*Date of death</label
 					>
 					<div class="flex">
-						<input
-							bind:value={selectedData.deathDate}
-							type="date"
-							id="dateOfDeath"
-							class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-							required
-						/>
+						<DatePicker bind:date={selectedData.deathDate} />
 					</div>
 				</div>
 			</div>

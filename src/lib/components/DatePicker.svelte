@@ -3,6 +3,9 @@
 	let usableDate: string;
 
 	$: if (date) {
+		if (typeof date === 'string') {
+			date = new Date(date);
+		}
 		usableDate = date.toISOString().split('T')[0];
 	}
 
