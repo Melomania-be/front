@@ -64,6 +64,20 @@
 	let contacts: Contact[] = [];
 	let dataHolder: TableData<Contact>;
 
+	// Initialize selectedData with pre-checked fields
+	$: if (selectedContact && comparedContact) {
+        Object.entries(selectedContact).forEach(([key, value]) => {
+            if (key !== 'id' && key !== 'created_at' && key !== 'last_update' && key !== 'validated' && key !== 'recommendation_pending' && key !== 'instruments') {
+                if (selectedContact[key] === comparedContact[key]) {
+                    selectedData[key] = value;
+                }
+            }
+        });
+        if (instrumentsComp) {
+            selectedData['instruments'] = selectedContact.instruments;
+        }
+    }
+
     onMount(async () => {
         const urlParams = new URLSearchParams(window.location.search);
         options = {
@@ -194,7 +208,7 @@
 		comparedContact = null;
 	}
 
-	function checkboxChange(field: string, contact: Contacts | null, event: Event) {
+	function radioChange(field: string, contact: Contacts | null, event: Event) {
 		if (contact === null) return;
 		const checked = (event.target as HTMLInputElement).checked;
 		if (checked) {
@@ -214,15 +228,15 @@
 			'comments',
 			'instruments'
 		];
+		
 		const missingFields = requiredFields.filter((field) => !data.hasOwnProperty(field));
 		if (missingFields.length > 0) {
-			`Missing required fields: ${missingFields.join(', ')}`;
-			return;
+			return alert(`Missing required fields: ${missingFields.join(', ')}`);
 		}
 
 		let mergedContact = {
-			contactId1: selectedContact?.id,
-			contactId2: comparedContact?.id,
+			contactId1: comparedContact?.id,
+			contactId2: selectedContact?.id,
 			first_name: data.firstName,
 			last_name: data.lastName,
 			email: data.email,
@@ -440,16 +454,17 @@
 									{/if}
 									<td>
 										<input
-											type="checkbox"
-											checked={selectedData[key] === selectedContact[key]}
-											on:change={(event) => checkboxChange(key, selectedContact, event)}
+											type="radio"
+											name={key}
+											checked={selectedContact[key] === comparedContact[key]}
+											on:change={(event) => radioChange(key, selectedContact, event)}
 										/>
 									</td>
 									<td>
 										<input
-											type="checkbox"
-											checked={selectedData[key] === comparedContact[key]}
-											on:change={(event) => checkboxChange(key, comparedContact, event)}
+											type="radio"
+											name={key}
+											on:change={(event) => radioChange(key, comparedContact, event)}
 										/>
 									</td>
 								</tr>
@@ -466,16 +481,17 @@
 							</td>
 							<td>
 								<input
-									type="checkbox"
-									checked={selectedData.instruments === selectedContact.instruments}
-									on:change={(event) => checkboxChange('instruments', selectedContact, event)}
+									type="radio"
+									name="instruments"
+									checked={instrumentsComp}
+									on:change={(event) => radioChange('instruments', selectedContact, event)}
 								/>
 							</td>
 							<td>
 								<input
-									type="checkbox"
-									checked={selectedData.instruments === comparedContact.instruments}
-									on:change={(event) => checkboxChange('instruments', comparedContact, event)}
+									type="radio"
+									name="instruments"
+									on:change={(event) => radioChange('instruments', comparedContact, event)}
 								/>
 							</td>
 						</tr>
