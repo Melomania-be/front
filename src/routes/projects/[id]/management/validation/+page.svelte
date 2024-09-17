@@ -104,7 +104,7 @@
 		{/if}
 		{#if currentParticipant}
 			<div class="relative border m-1 rounded">
-				<div class={currentParticipant.contact.validated ? '' : 'opacity-10'}>
+				<div class={currentParticipant.contact.validated ? '' : 'opacity-10 pointer-events-none'}>
 					<h1 class="text-2xl w-full text-center">Participant request :</h1>
 					<div>
 						<h2 class="text-2xl">Contact :</h2>
@@ -191,7 +191,7 @@
 				</div>
 
 				{#if !currentParticipant.contact.validated}
-					<div class="absolute top-0">
+					<div class="absolute top-0 pointer-events-auto">
 						<h1 class="text-2xl">You need to validate this persons first !</h1>
 						<a href="/contacts/validation" class="text-blue-700">Contact validation page</a>
 					</div>

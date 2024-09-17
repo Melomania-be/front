@@ -1,17 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { MailTemplate } from '$lib/types/MailTemplate';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import HtmlEditor from '../../HtmlEditor.svelte';
 
 	let selectedTemplate: MailTemplate;
-
 	let templates: Array<MailTemplate> = [];
 
 	onMount(async () => {
 		const res = await fetch('/api/templates/default');
 		templates = await res.json();
-		console.log(templates);
 	});
 
 	const saveTemplate = async () => {
@@ -39,6 +37,56 @@
 			alert('An error occurred');
 		}
 	};
+
+	async function updateIframeContent() {
+		await tick() // Wait for Preview to load
+
+		const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
+		if (iframe && iframe.contentWindow) {
+			const doc = iframe.contentDocument || iframe.contentWindow?.document;
+			if (doc) {
+				doc.open();
+				// Wrap the user content in a full HTML document
+				doc.write(`
+					<!DOCTYPE html>
+					<html lang="en">
+					<head>
+						<meta charset="UTF-8">
+						<meta name="viewport" content="width=device-width, initial-scale=1.0">
+						<style>
+							/* Reset styles to prevent conflicts with user styles */
+							body {
+								margin: 0;
+								padding: 0;
+								font-family: Arial, sans-serif;
+							}
+						</style>
+					</head>
+					<body>
+						${selectedTemplate.content}
+					</body>
+					</html>
+				`);
+				doc.close();
+			}
+
+			const contentHeight = doc.body.scrollHeight
+			console.log(contentHeight)
+			iframe.style.height = contentHeight + "px"
+		}
+		else {
+			console.log("iframe not loaded")
+		}
+	}
+
+    $: if (selectedTemplate) {
+        updateIframeContent()
+    }
+
+    function handleEditorInput(event: CustomEvent<string>) {
+        selectedTemplate.content = event.detail;
+        updateIframeContent();
+    }
 </script>
 
 <div
@@ -102,7 +150,8 @@
 		</p>
 	</div>
 	<div class="ml-10 mt-10">
-		Select the template : <select bind:value={selectedTemplate}>
+		Select the template : 
+		<select bind:value={selectedTemplate} on:change={updateIframeContent}>
 			{#each templates as template}
 				<option value={template}>{template.name}</option>
 			{/each}
@@ -110,7 +159,7 @@
 	</div>
 
 	{#if selectedTemplate}
-		<div class="m-10 pt-5 grid grid-cols-2 gap-10">
+		<div class="m-10 pt-5 grid-container">
 			<div
 				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 			>
@@ -125,16 +174,29 @@
 				<div class="mb-4 text-lg font-bold tracking-tight dark:text-white">
 					Name : {selectedTemplate.name}
 				</div>
-				<HtmlEditor bind:content={selectedTemplate.content} />
+				<HtmlEditor bind:content={selectedTemplate.content} on:input={handleEditorInput} />
 			</div>
 			<div
-				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700 flex flex-col h-full"
 			>
 				<h2 class="text-xl font-bold mb-4">Preview</h2>
-				<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-					{@html selectedTemplate.content}
-				</div>
+				<iframe title="preview" id="preview-iframe" class="w-full h-full border-0" />
 			</div>
 		</div>
 	{/if}
 </div>
+
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    @media (max-width: 1050px) {
+        .grid-container {
+            grid-template-columns: 1fr;
+			margin: 0.5rem;
+        }
+    }
+</style>

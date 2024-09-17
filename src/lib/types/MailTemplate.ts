@@ -1,5 +1,5 @@
 export interface MailTemplate {
-	id: number | null;
+	id: number;
 	name: string;
 	content: string;
 	createdAt: string;

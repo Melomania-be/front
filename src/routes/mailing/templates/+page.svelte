@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { MailTemplate } from '$lib/types/MailTemplate';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import HtmlEditor from '../HtmlEditor.svelte';
 	import { goto } from '$app/navigation';
 	import type { Folder } from '$lib/types/Folder';
@@ -30,6 +30,10 @@
 			images: []
 		};
 	}
+
+    function editTemplate() {
+        return newOne ? newTemplateToSave : selectedTemplate;
+    }
 
 	async function saveTemplate() {
 		console.log('Save Template');
@@ -95,6 +99,45 @@
 		alert('Template deleted');
 	}
 
+	async function updateIframeContent() {
+		if (typeof window !== 'undefined') {
+			await tick() // Wait for iframe to first load
+
+			const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
+			if (iframe && iframe.contentWindow) {
+				const doc = iframe.contentDocument || iframe.contentWindow?.document;
+				if (doc) {
+					doc.open();
+					// Wrap the user content in a full HTML document
+					doc.write(`
+						<!DOCTYPE html>
+						<html lang="en">
+						<head>
+							<meta charset="UTF-8">
+							<meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								/* Reset styles to prevent conflicts with user styles */
+								body {
+									margin: 0;
+									padding: 0;
+									font-family: Arial, sans-serif;
+								}
+							</style>
+						</head>
+						<body>
+							${editTemplate().content}
+						</body>
+						</html>
+					`);
+					doc.close();
+				}
+
+				const contentHeight = doc.body.scrollHeight + 50
+				iframe.style.height = contentHeight + "px"
+			}
+		}
+	}
+
 	onMount(async () => {
 		const res = await fetch('/api/templates');
 		const data = await res.json();
@@ -104,6 +147,19 @@
 		const dataFolder = await resFolder.json();
 		folders = dataFolder;
 	});
+
+	$: if (selectedTemplate || newTemplateToSave || newOne) {
+		updateIframeContent()
+	}
+
+    function handleEditorInput(event: CustomEvent<string>) {
+		if (newOne) {
+			newTemplateToSave.content = event.detail;
+		} else {
+        	selectedTemplate.content = event.detail;
+		}
+        updateIframeContent();
+    }
 </script>
 
 <div
@@ -181,7 +237,8 @@
 			<div class="pt-5">
 				{#if templates && templates.length > 0}
 					<p>
-						Please select the template you want to edit : <select bind:value={selectedTemplate}>
+						Please select the template you want to edit : 
+						<select bind:value={selectedTemplate} on:change={updateIframeContent}>
 							{#each templates as template}
 								<option value={template}>{template.name}</option>
 							{/each}
@@ -205,7 +262,7 @@
 		{/if}
 
 		{#if selectedTemplate && newOne === false}
-			<div class="m-10 pt-5 grid grid-cols-2 gap-10">
+			<div class="m-10 pt-5 grid grid-cols-2 gap-10 grid-container">
 				<div
 					class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 				>
@@ -271,21 +328,19 @@
 							class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 						/>
 					</div>
-					<HtmlEditor bind:content={selectedTemplate.content} />
+					<HtmlEditor bind:content={selectedTemplate.content} on:input={handleEditorInput} />
 				</div>
 				<div
 					class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 				>
 					<h2 class="text-xl font-bold mb-4">Preview</h2>
-					<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-						{@html selectedTemplate.content}
-					</div>
+					<iframe title="preview" id="preview-iframe" class="w-full h-64 border-0" />
 				</div>
 			</div>
 		{/if}
 	</div>
 	{#if newOne === true}
-		<div class="m-10 pt-5 grid grid-cols-2 gap-10">
+		<div class="m-10 pt-5 grid grid-cols-2 gap-10 grid-container">
 			<div
 				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 			>
@@ -353,16 +408,29 @@
 						class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 					/>
 				</div>
-				<HtmlEditor bind:content={newTemplateToSave.content} />
+				<HtmlEditor bind:content={newTemplateToSave.content} on:input={handleEditorInput} />
 			</div>
 			<div
-				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700 flex flex-col h-full"
 			>
 				<h2 class="text-xl font-bold mb-4">Preview</h2>
-				<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-					{@html newTemplateToSave.content}
-				</div>
+				<iframe title="preview" id="preview-iframe" class="w-full h-full border-0" />
 			</div>
 		</div>
 	{/if}
 </div>
+
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    @media (max-width: 1050px) {
+        .grid-container {
+            grid-template-columns: 1fr;
+			margin: 0.5rem;
+        }
+    }
+</style>
