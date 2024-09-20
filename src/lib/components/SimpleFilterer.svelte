@@ -1,5 +1,5 @@
 <script lang="ts" generics="DataType extends GenericDataType">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
 	import Paginator from '$lib/components/Paginator.svelte';
@@ -40,11 +40,25 @@
 	function dispatchOptionsUpdated() {
 		dispatch('optionsUpdated');
 	}
+
+	let isMobile: boolean = window.innerWidth < 768;
+
+	const handleResize = () => {
+		isMobile = window.innerWidth < 768;
+	}
+
+	onMount(() => {
+		window.addEventListener('resize', handleResize);
+
+		return () => {
+			window.removeEventListener('resize', handleResize);
+		}
+	})
 </script>
 
 <div class="grid grid-cols-1 place-items-center p-2">
-	<div class="grid grid-cols-2 w-full mt-2">
-		<div class="relative {!paginatorTop ? 'col-span-2' : ''}">
+	<div class={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} w-full mt-2`}>
+		<div class="relative {!paginatorTop ? 'col-span-2' : ''} {isMobile ? 'mb-2' : ''}">
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<svg
 					class="w-4 h-4 text-gray-500 dark:text-gray-400"
@@ -82,7 +96,7 @@
 			>
 		</div>
 		{#if paginatorTop}
-			<Paginator bind:meta bind:options {changePage} />
+			<Paginator bind:meta bind:options {changePage} orientation={isMobile ? 'vertical' : 'horizontal'}/>
 		{/if}
 	</div>
 	{#if !showData}

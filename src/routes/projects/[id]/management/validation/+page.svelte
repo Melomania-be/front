@@ -155,12 +155,14 @@
 								{/if}
 							</div>
 							<div>
+								<h3 class="text-xl">Rehearsals</h3>
 								<AttendancePicker
 									concertsOrRehearsals={currentParticipant.rehearsals}
 									type="rehearsal"
 									participants={[currentParticipant]}
 									disabled
 								/>
+								<h3 class="text-xl">Concerts</h3>
 								<AttendancePicker
 									concertsOrRehearsals={currentParticipant.concerts}
 									type="concert"
