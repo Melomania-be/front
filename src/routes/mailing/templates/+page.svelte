@@ -14,7 +14,8 @@
 	let newTemplateToSave = {
 		name: '',
 		content: '',
-		images: []
+		images: [],
+		is_default: false
 	};
 
 	function addImages(file: { path: any }) {
@@ -27,7 +28,8 @@
 		newTemplateToSave = {
 			name: '',
 			content: '',
-			images: []
+			images: [],
+			is_default: false
 		};
 	}
 
@@ -328,6 +330,12 @@
 							class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 						/>
 					</div>
+					<div class="mb-4">
+						<label>
+							<input type="checkbox" bind:checked={newTemplateToSave.is_default} />
+							Set as default template
+						</label>
+					</div>
 					<HtmlEditor bind:content={selectedTemplate.content} on:input={handleEditorInput} />
 				</div>
 				<div
@@ -408,6 +416,12 @@
 						class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 					/>
 				</div>
+				<div class="mb-4">
+                    <label>
+                        <input type="checkbox" bind:checked={newTemplateToSave.is_default} />
+                        Set as default template
+                    </label>
+                </div>
 				<HtmlEditor bind:content={newTemplateToSave.content} on:input={handleEditorInput} />
 			</div>
 			<div
