@@ -8,4 +8,5 @@ export interface Rehearsal {
 	place: string;
 	project_id: number | null;
 	participants?: Participant[];
+	pivot_comment?: string;
 }

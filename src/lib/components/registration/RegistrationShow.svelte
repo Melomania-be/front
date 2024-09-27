@@ -16,6 +16,8 @@
 		validated_contact: boolean;
 		section_id: number;
 		answers: Answer[];
+		rehearsals: { id: number; comment: string }[];
+		concerts: { id: number; comment: string }[];
 	} = {
 		first_name: '',
 		last_name: '',
@@ -26,7 +28,9 @@
 		section_id: 0,
 		answers: registration.form
 			? registration.form.map((form) => ({ text: '', formId: form.id! }))
-			: []
+			: [],
+		rehearsals: [],
+		concerts: []
 	};
 
 	$: newContact = {
@@ -39,29 +43,42 @@
 			: []
 	};
 
-	let selectedRehearsals: Set<number> = new Set();
+	function toggleSelection(array: any[], id: number, comment: string) {
+        const item = array.find((item) => item.id === id);
+        if (item) {
+            return array.filter((item) => item.id !== id);
+        } else {
+            return [...array, { id, comment }];
+        }
+    }
 
-	function handleSelectionRehearsal(id: number | null) {
-		if (!id) return;
+    function updateComment(array: any[], id: number, comment: string) {
+        return array.map((item) => (item.id === id ? { ...item, comment } : item));
+    }
 
-		if (selectedRehearsals.has(id)) {
-			selectedRehearsals.delete(id);
-		} else {
-			selectedRehearsals.add(id);
-		}
-	}
+    function handleCheckboxChange(event: Event, id: number, type: 'concert' | 'rehearsal') {
+        const inputElement = event.target as HTMLInputElement;
+        const commentElement = document.getElementById(`comment-${type}-${id}`) as HTMLInputElement;
+        const comment = commentElement ? commentElement.value : '';
+        if (type === 'concert') {
+            newContact.concerts = toggleSelection(newContact.concerts, id, inputElement.checked ? comment : '');
+        } else {
+            newContact.rehearsals = toggleSelection(newContact.rehearsals, id, inputElement.checked ? comment : '');
+        }
+    }
 
-	let selectedConcerts: Set<number> = new Set();
-
-	function handleSelectionConcert(id: number | null) {
-		if (!id) return;
-
-		if (selectedConcerts.has(id)) {
-			selectedConcerts.delete(id);
-		} else {
-			selectedConcerts.add(id);
-		}
-	}
+    function handleTextInput(event: Event, id: number, type: 'concert' | 'rehearsal') {
+        const inputElement = event.target as HTMLInputElement;
+        if (type === 'concert') {
+            if (newContact.concerts.some((concert) => concert.id === id)) {
+                newContact.concerts = updateComment(newContact.concerts, id, inputElement.value);
+            }
+        } else {
+            if (newContact.rehearsals.some((rehearsal) => rehearsal.id === id)) {
+                newContact.rehearsals = updateComment(newContact.rehearsals, id, inputElement.value);
+            }
+        }
+    }
 
 	async function handleSubmit() {
 		if (newContact.first_name === '' || newContact.last_name === '' || newContact.email === '') {
@@ -72,13 +89,13 @@
 			return alert('Please select the section you want to belong to.');
 		}
 
-		if (selectedRehearsals.size === 0) {
-			return alert('Please select the rehearsals you will attend to (at least one required).');
-		}
+        if (newContact.rehearsals.length === 0) {
+            return alert('Please select the rehearsals you will attend to (at least one required).');
+        }
 
-		if (selectedConcerts.size === 0) {
-			return alert('Please select the concerts you will attend to (at least one required).');
-		}
+        if (newContact.concerts.length === 0) {
+            return alert('Please select the concerts you will attend to (at least one required).');
+        }
 
 		let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 		let isValid = emailPattern.test(newContact.email);
@@ -95,8 +112,8 @@
 			phone: newContact.phone,
 			messenger: newContact.messenger,
 			validated_contact: false,
-			rehearsals: Array.from(selectedRehearsals),
-			concerts: Array.from(selectedConcerts),
+            rehearsals: newContact.rehearsals,
+            concerts: newContact.concerts,
 			project_id: registration.project?.id,
 			section_id: newContact.section_id,
 			answers: newContact.answers.map((answer) => {
@@ -150,7 +167,7 @@
 				</h1>
 			</div>
 
-			<div class="mb-8 ml-20">
+			<div class="mb-8">
 				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
 					Project Informations
 				</h2>
@@ -159,7 +176,7 @@
 						Concerts
 					</h3>
 
-					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 						<thead
 							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
 						>
@@ -195,7 +212,7 @@
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
 						Rehearsals
 					</h3>
-					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 						<thead
 							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
 						>
@@ -232,7 +249,7 @@
 						Program and scores
 					</h3>
 					<div class="w-full flex">
-						<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+						<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 							<thead
 								class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
 							>
@@ -283,9 +300,9 @@
 		</div>
 
 		<div
-			class="m-20 pt-5 relative max-w-xxl bg-white border border-blue-900 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+			class="m-5 pt-5 relative max-w-xxl bg-white border border-blue-900 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
-			<div class="mb-8 ml-14">
+			<div class="mb-8 ml-4">
 				<h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
 					Registration
 				</h2>
@@ -355,11 +372,11 @@
 					{/if}
 				</div>
 
-				<div class="ml-6">
+				<div class="ml-6 mr-4">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2">
 						Concert attendance
 					</h3>
-					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 						<thead
 							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
 						>
@@ -367,6 +384,7 @@
 								<th class="px-6 py-3">Select</th>
 								<th class="px-6 py-3">Date</th>
 								<th class="px-6 py-3">Place</th>
+								<th class="px-6 py-3">Comment</th>
 							</tr>
 						</thead>
 						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
@@ -378,7 +396,7 @@
 												type="checkbox"
 												id={`rehearsal-${concert.id}`}
 												value={concert.id}
-												on:change={() => handleSelectionConcert(concert.id)}
+												on:change={(e) => handleCheckboxChange(e, concert.id, 'concert')}
 											/>
 										</td>
 										<td
@@ -386,6 +404,15 @@
 											><DateShow date={concert.date} withTime></DateShow></td
 										>
 										<td class="px-6 py-4">{concert.place}</td>
+										<td class="px-6 py-4">
+											<input
+												id={`comment-concert-${concert.id}`}
+												class="border-solid border-2 border-gray-500 p-1"
+												type="text"
+												placeholder="Comment"
+												on:input={(e) => handleTextInput(e, concert.id, 'concert')}
+											/>
+										</td>
 									</tr>
 								{/each}
 							{:else}
@@ -397,11 +424,11 @@
 					</table>
 				</div>
 
-				<div class="ml-6">
+				<div class="ml-6 mr-4">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2">
 						Rehearsal attendance
 					</h3>
-					<table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 						<thead
 							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
 						>
@@ -409,6 +436,7 @@
 								<th class="px-6 py-3">Select</th>
 								<th class="px-6 py-3">Date</th>
 								<th class="px-6 py-3">Place</th>
+								<th class="px-6 py-3">Comment</th>
 							</tr>
 						</thead>
 						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
@@ -420,7 +448,7 @@
 												type="checkbox"
 												id={`rehearsal-${rehearsal.id}`}
 												value={rehearsal.id}
-												on:change={() => handleSelectionRehearsal(rehearsal.id)}
+												on:change={(e) => handleCheckboxChange(e, rehearsal.id, 'rehearsal')}
 											/>
 										</td>
 										<td
@@ -428,6 +456,15 @@
 											><DateShow date={rehearsal.date} withTime></DateShow></td
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
+										<td class="px-6 py-4">
+											<input
+												id={`comment-rehearsal-${rehearsal.id}`}
+												class="border-solid border-2 border-gray-500 p-1"
+												type="text"
+												placeholder="Comment"
+												on:input={(e) => handleTextInput(e, rehearsal.id, 'rehearsal')}
+											/>
+										</td>
 									</tr>
 								{/each}
 							{:else}

@@ -20,4 +20,5 @@ export interface Participant {
 	createdAt: Date;
 	concerts?: Array<Concert>;
 	rehearsals?: Array<Rehearsal>;
+	pivot_comment?: string;
 }
