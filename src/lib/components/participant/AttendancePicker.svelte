@@ -50,55 +50,51 @@
 	}
 </script>
 
-<table
-	class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border border-collapse"
->
-	<thead class="text-xs text-gray-700 dark:text-gray-400 border border-b-2">
-		<tr>
-			<th class="px-2 py-0">Participant</th>
-			{#each concertsOrRehearsals as concertOrRehearsal}
-				<th class="px-2 py-1 even:bg-gray-100 even:dark:bg-gray-800 uppercase"
-					colspan="2">{concertOrRehearsal.place}</th
-				>
-			{/each}
-		</tr>
-		<tr>
-			<th></th>
-			{#each concertsOrRehearsals as concertOrRehearsal}
-				<th class="px-6 pb-1 even:bg-gray-100 even:dark:bg-gray-800"
-					colspan="2"><DateShow date={concertOrRehearsal.date} /></th
-				>
-			{/each}
-		</tr>
-	</thead>
-	<tbody>
-		{#each participants as participant}
-			<tr class="even:border even:border-t-2">
-				<td class="px-2 w-0">{participant.contact ? participant.contact.firstName : ''}</td>
-				{#each concertsOrRehearsals as concertOrRehearsal}
-					<td class="px-3 py-2 w-0 even:bg-gray-100 even:dark:bg-gray-800">
-						{#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
-							<input
-								type="checkbox"
-								checked={laxInclude(participant, concertOrRehearsal)}
-								on:change={() => triggerEvent(participant, concertOrRehearsal)}
-								{disabled}
-							/>
-						{/if}
-					</td>
-					<td class="px-3 py-1 even:bg-gray-100 even:dark:bg-gray-800">
-						{#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
-							{#if concertOrRehearsal.participants}
-								{#if participantData = concertOrRehearsal.participants.find(p => p.id === participant.id)}
-									{participantData ? participantData.pivot_comment : ''}
-								{/if}
-							{:else}
-								{concertOrRehearsal.pivot_comment ?? ''}
-							{/if}
-						{/if}
-					</td>
-				{/each}
-			</tr>
-		{/each}
-	</tbody>
-</table>
+<div class="overflow-x-auto">
+    <table class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400 border border-collapse">
+        <thead class="text-xs text-gray-700 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">
+            <tr>
+                <th class="px-4 py-2">Participant</th>
+                {#each concertsOrRehearsals as concertOrRehearsal}
+                    <th class="px-4 py-2 border-l uppercase" colspan="2">{concertOrRehearsal.place}</th>
+                {/each}
+            </tr>
+            <tr>
+                <th></th>
+                {#each concertsOrRehearsals as concertOrRehearsal}
+                    <th class="px-4 py-2 border-l min-w-[220px]" colspan="2"><DateShow date={concertOrRehearsal.date} /></th>
+                {/each}
+            </tr>
+        </thead>
+        <tbody>
+            {#each participants as participant}
+                <tr class="even:bg-gray-100 dark:even:bg-gray-800">
+                    <td class="px-4 py-2 border">{participant.contact ? participant.contact.firstName : ''}</td>
+                    {#each concertsOrRehearsals as concertOrRehearsal}
+                        <td class="px-4 py-2 border w-12">
+                            {#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
+                                <input
+                                    type="checkbox"
+                                    checked={laxInclude(participant, concertOrRehearsal)}
+                                    on:change={() => triggerEvent(participant, concertOrRehearsal)}
+                                    {disabled}
+                                />
+                            {/if}
+                        </td>
+                        <td class="px-4 py-2 border">
+                            {#if (participant.rehearsals && type === 'rehearsal') || (participant.concerts && type === 'concert')}
+                                {#if concertOrRehearsal.participants}
+                                    {#if participantData = concertOrRehearsal.participants.find(p => p.id === participant.id)}
+                                        {participantData ? participantData.pivot_comment : ''}
+                                    {/if}
+                                {:else}
+                                    {concertOrRehearsal.pivot_comment ?? ''}
+                                {/if}
+                            {/if}
+                        </td>
+                    {/each}
+                </tr>
+            {/each}
+        </tbody>
+    </table>
+</div>
