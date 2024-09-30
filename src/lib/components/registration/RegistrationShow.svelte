@@ -372,7 +372,7 @@
 					{/if}
 				</div>
 
-				<div class="ml-6 mr-4">
+				<div class="ml-6 mr-4 overflow-x-auto">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2">
 						Concert attendance
 					</h3>
@@ -384,7 +384,8 @@
 								<th class="px-6 py-3">Select</th>
 								<th class="px-6 py-3">Date</th>
 								<th class="px-6 py-3">Place</th>
-								<th class="px-6 py-3">Comment</th>
+								<th class="px-6 py-3">Additional informations</th>
+								<th class="px-6 py-3">Add a comment</th>
 							</tr>
 						</thead>
 						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
@@ -404,6 +405,7 @@
 											><DateShow date={concert.date} withTime></DateShow></td
 										>
 										<td class="px-6 py-4">{concert.place}</td>
+										<td class="px-6 py-4">{concert.comment}</td>
 										<td class="px-6 py-4">
 											<input
 												id={`comment-concert-${concert.id}`}
@@ -424,7 +426,7 @@
 					</table>
 				</div>
 
-				<div class="ml-6 mr-4">
+				<div class="ml-6 mr-4 overflow-x-auto">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2">
 						Rehearsal attendance
 					</h3>
@@ -436,7 +438,8 @@
 								<th class="px-6 py-3">Select</th>
 								<th class="px-6 py-3">Date</th>
 								<th class="px-6 py-3">Place</th>
-								<th class="px-6 py-3">Comment</th>
+								<th class="px-6 py-3">Additional informations</th>
+								<th class="px-6 py-3">Add a comment</th>
 							</tr>
 						</thead>
 						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
@@ -456,6 +459,7 @@
 											><DateShow date={rehearsal.date} withTime></DateShow></td
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
+										<td class="px-6 py-4">{rehearsal.comment}</td>
 										<td class="px-6 py-4">
 											<input
 												id={`comment-rehearsal-${rehearsal.id}`}
