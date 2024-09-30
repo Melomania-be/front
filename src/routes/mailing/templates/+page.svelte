@@ -332,7 +332,7 @@
 					</div>
 					<div class="mb-4">
 						<label>
-							<input type="checkbox" bind:checked={newTemplateToSave.is_default} />
+							<input type="checkbox" bind:checked={selectedTemplate.is_default} />
 							Set as default template
 						</label>
 					</div>
