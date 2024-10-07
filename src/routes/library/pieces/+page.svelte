@@ -95,7 +95,7 @@
 			dataHolder = {
 				data: piece,
 				columns: ['id', 'name'],
-				notOrderedColumns: []
+				notOrderedColumns: ['composer.longName']
 			};
 		});
 
@@ -467,36 +467,19 @@
             </form>
         {/if}
 
-        {#if dataHolder}
-            <SimpleFilterer
-                bind:data={dataHolder}
-                bind:meta
-                bind:options
-                bind:uniqueUrl
-                on:optionsUpdated={() => fetchData()}
-            >
-                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-gray-700 uppercase dark:text-gray-400">
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Composer</th> <!-- Adding the composer column here -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each piece as piece}
-                            <tr
-                                on:click={() => goto(uniqueUrl + `/${piece.id}`)}
-                                class="cursor-pointer hover:border border-black"
-                            >
-                                <td>{piece.id}</td>
-                                <td>{piece.name}</td>
-                                <td>{piece.composer.longName}</td> <!-- Displaying the composer name here -->
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            </SimpleFilterer>
-        {/if}
+		{#if dataHolder}
+			<SimpleFilterer
+				showData={true}
+				paginatorTop={false}
+				bind:data={dataHolder}
+				bind:meta
+				bind:options
+				bind:uniqueUrl
+				on:optionsUpdated={() => fetchData()}
+				buttonLinkId={false}
+				editable={true}
+				bind:selectedData
+			></SimpleFilterer>
+		{/if}
     </div>
 </div>

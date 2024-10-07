@@ -57,6 +57,10 @@
 	function hasId<T>(item: T): item is T & WithId {
 		return (item as WithId).id !== undefined;
 	}
+
+	function getNestedValue(obj: any, path: string) {
+		return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+	}
 </script>
 
 <div class="grid grid-cols-1 w-full mt-2">
@@ -107,18 +111,18 @@
 		<tbody>
 			{#each data.data as row}
 				<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-					{#each data.columns as column}
-						{#if typeof row[column] === 'object' && row[column] instanceof Date}
-							<td>
-								<DateShow date={row[column]} />
-							</td>
-						{:else}
-							<td>{row[column]}</td>
-						{/if}
-					{/each}
-					{#each data.notOrderedColumns as column}
-						<td>{row[column]}</td>
-					{/each}
+                    {#each data.columns as column}
+                        {#if typeof getNestedValue(row, column) === 'object' && getNestedValue(row, column) instanceof Date}
+                            <td>
+                                <DateShow startTime={getNestedValue(row, column)} />
+                            </td>
+                        {:else}
+                            <td>{getNestedValue(row, column)}</td>
+                        {/if}
+                    {/each}
+                    {#each data.notOrderedColumns as column}
+                        <td>{getNestedValue(row, column)}</td>
+                    {/each}
 					<td>
 						{#if editable}
 							{#if hasId(row)}
