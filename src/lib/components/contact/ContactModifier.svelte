@@ -231,13 +231,13 @@
 
 				<div>
 					last updated at : {#if contact.updatedAt}
-						<DateShow bind:date={contact.updatedAt} />
+						<DateShow bind:startTime={contact.updatedAt} />
 					{/if}
 				</div>
 
 				<div>
 					created at : {#if contact.createdAt}
-						<DateShow bind:date={contact.createdAt} />
+						<DateShow bind:startTime={contact.createdAt} />
 					{/if}
 				</div>
 			</div>

@@ -28,7 +28,7 @@
 				</h6>
 				<p class="text-gray-700 dark:text-gray-300">In section : {participant.section.name}</p>
 				<p class="text-gray-700 dark:text-gray-300">
-					Last activity seen : <DateShow bind:date={participant.lastActivity} />
+					Last activity seen : <DateShow bind:startTime={participant.lastActivity} />
 				</p>
 			</div>
 		{/each}

@@ -101,8 +101,8 @@
 					<td>{participant.contact.phone}</td>
 					<td>{participant.contact.messenger}</td>
 					<td>{participant.section.name}</td>
-					<td><DateShow bind:date={participant.lastActivity} /></td>
-					<td><DateShow bind:date={participant.updatedAt} /></td>
+					<td><DateShow bind:startTime={participant.lastActivity} /></td>
+					<td><DateShow bind:startTime={participant.updatedAt} /></td>
 				</tr>
 			{/each}
 		</tbody>

@@ -111,17 +111,17 @@
 		<tbody>
 			{#each data.data as row}
 				<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                    {#each data.columns as column}
-                        {#if typeof getNestedValue(row, column) === 'object' && getNestedValue(row, column) instanceof Date}
-                            <td>
-                                <DateShow startTime={getNestedValue(row, column)} />
-                            </td>
-                        {:else}
-                            <td>{getNestedValue(row, column)}</td>
-                        {/if}
-                    {/each}
+					{#each data.columns as column}
+						{#if typeof getNestedValue(row, String(column)) === 'object' && getNestedValue(row, String(column)) instanceof Date}
+							<td>
+								<DateShow startTime={getNestedValue(row, String(column))} />
+							</td>
+						{:else}
+							<td>{getNestedValue(row, String(column))}</td>
+						{/if}
+					{/each}
                     {#each data.notOrderedColumns as column}
-                        <td>{getNestedValue(row, column)}</td>
+						<td>{getNestedValue(row, String(column))}</td>
                     {/each}
 					<td>
 						{#if editable}

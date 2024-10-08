@@ -86,7 +86,7 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={rehearsal.date} withTime></DateShow></th
+											><DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal></DateShow></th
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
 										<td class="px-6 py-4">{rehearsal.comment ?? 'No additionnal information'}</td>
@@ -124,7 +124,7 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={concert.date} withTime></DateShow></th
+											><DateShow startTime={concert.startDate} endTime={concert.endDate} withTime></DateShow></th
 										>
 										<td class="px-6 py-4">{concert.place}</td>
 										<td class="px-6 py-4">{concert.comment ?? 'No additionnal information'}</td>

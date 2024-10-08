@@ -193,7 +193,7 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={concert.date} withTime></DateShow></th
+											><DateShow startTime={concert.startDate} endTime={concert.endDate} withTime></DateShow></th
 										>
 										<td class="px-6 py-4">{concert.place}</td>
 										<td class="px-6 py-4">{concert.comment}</td>
@@ -229,7 +229,7 @@
 										<th
 											scope="row"
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={rehearsal.date} withTime></DateShow></th
+											><DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal></DateShow></th
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
 										<td class="px-6 py-4">{rehearsal.comment}</td>
@@ -397,12 +397,12 @@
 												type="checkbox"
 												id={`rehearsal-${concert.id}`}
 												value={concert.id}
-												on:change={(e) => handleCheckboxChange(e, concert.id, 'concert')}
+												on:change={(e) => handleCheckboxChange(e, concert.id ?? 0, 'concert')}
 											/>
 										</td>
 										<td
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={concert.date} withTime></DateShow></td
+											><DateShow startTime={concert.startDate} endTime={concert.endDate} withTime></DateShow></td
 										>
 										<td class="px-6 py-4">{concert.place}</td>
 										<td class="px-6 py-4">{concert.comment}</td>
@@ -412,7 +412,7 @@
 												class="border-solid border-2 border-gray-500 p-1"
 												type="text"
 												placeholder="Comment"
-												on:input={(e) => handleTextInput(e, concert.id, 'concert')}
+												on:input={(e) => handleTextInput(e, concert.id ?? 0, 'concert')}
 											/>
 										</td>
 									</tr>
@@ -451,12 +451,12 @@
 												type="checkbox"
 												id={`rehearsal-${rehearsal.id}`}
 												value={rehearsal.id}
-												on:change={(e) => handleCheckboxChange(e, rehearsal.id, 'rehearsal')}
+												on:change={(e) => handleCheckboxChange(e, rehearsal.id ?? 0, 'rehearsal')}
 											/>
 										</td>
 										<td
 											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow date={rehearsal.date} withTime></DateShow></td
+											><DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal></DateShow></td
 										>
 										<td class="px-6 py-4">{rehearsal.place}</td>
 										<td class="px-6 py-4">{rehearsal.comment}</td>
@@ -466,7 +466,7 @@
 												class="border-solid border-2 border-gray-500 p-1"
 												type="text"
 												placeholder="Comment"
-												on:input={(e) => handleTextInput(e, rehearsal.id, 'rehearsal')}
+												on:input={(e) => handleTextInput(e, rehearsal.id ?? 0, 'rehearsal')}
 											/>
 										</td>
 									</tr>

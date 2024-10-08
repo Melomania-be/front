@@ -28,6 +28,8 @@
 
 	$: console.log(pieces);
 
+	$: console.log(project.rehearsals);
+
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
 		project.rehearsals = project.rehearsals.filter((rehearsal) => rehearsal !== delRehearsal);
 	}
@@ -39,14 +41,14 @@
 	function addConcertDate() {
 		project.concerts = [
 			...project.concerts,
-			{ id: null, date: new Date(), place: '', comment: '', project_id: null }
+			{ id: null, startDate: new Date(), endDate: new Date(), place: '', comment: '', project_id: null }
 		];
 	}
 
 	function addRehearsalDate() {
 		project.rehearsals = [
 			...project.rehearsals,
-			{ id: null, date: new Date(), comment: '', place: '', project_id: null }
+			{ id: null, startDate: new Date(), endDate: new Date(), comment: '', place: '', project_id: null }
 		];
 	}
 
@@ -57,14 +59,16 @@
 			section_group_id: project.sectionGroup ? project.sectionGroup.id : null,
 			concerts: project.concerts.map((concert) => ({
 				id: concert.id ? concert.id : null,
-				date: new Date(concert.date).toISOString(),
+				start_date: new Date(concert.startDate).toISOString(),
+				end_date: concert.endDate ? new Date(concert.endDate).toISOString() : null,
 				place: concert.place,
 				comment: concert.comment
 			})),
 			pieces_ids: project.pieces.map((piece) => piece.id),
 			rehearsals: project.rehearsals.map((rehearsal) => ({
 				id: rehearsal.id ? rehearsal.id : null,
-				date: new Date(rehearsal.date).toISOString(),
+				start_date: new Date(rehearsal.startDate).toISOString(),
+				end_date: rehearsal.endDate ? new Date(rehearsal.endDate).toISOString() : null,
 				place: rehearsal.place,
 				comment: rehearsal.comment
 			})),
@@ -301,7 +305,7 @@
 						{#if project.rehearsals && project.rehearsals.length}
 							{#each project.rehearsals as rehearsal}
 								<tr>
-									<td><DateShow date={rehearsal.date} withTime /></td>
+									<td><DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal/></td>
 									<td>{rehearsal.place}</td>
 									<td>{rehearsal.comment}</td>
 								</tr>
@@ -312,48 +316,68 @@
 					</tbody>
 				</table>
 			{:else}
-				<div>
-					{#if project.rehearsals}
-						{#each project.rehearsals as rehearsal}
-							<div class="rehearsal-entry">
-								<DatePicker bind:date={rehearsal.date} />
-								<TimePicker bind:date={rehearsal.date} />
-								<input
-									class="p-1"
-									bind:value={rehearsal.place}
-									placeholder="enter a rehearsal place"
-									type="text"
-								/>
-								<input
-									class="p-1"
-									bind:value={rehearsal.comment}
-									placeholder="enter a comment if needed"
-									type="text"
-								/>
-								<button
-									class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
-									on:click={() => removeRehearsalDate(rehearsal)}>Remove</button
-								>
-							</div>
-						{/each}
-					{/if}
-					<button
-						class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
-						on:click={addRehearsalDate}>Add Rehearsal Date</button
-					>
+				<div class="overflow-x-auto">
+					<table class="table-auto max-w-min min-w-max">
+						<thead>
+							<tr>
+								<th class="px-3 py-1">Start Date</th>
+								<th class="px-3 py-1">End Date</th>
+								<th class="px-3 py-1">Place</th>
+								<th class="px-3 py-1">Comment</th>
+								<th class="px-3 py-1">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each project.rehearsals as rehearsal}
+								<tr class="rehearsal-entry">
+									<td class="px-3 py-1">
+										<DatePicker bind:date={rehearsal.startDate} />
+										<TimePicker bind:date={rehearsal.startDate} />
+									</td>
+									<td class="px-3 py-1">
+										<DatePicker bind:date={rehearsal.endDate} />
+										<TimePicker bind:date={rehearsal.endDate} />
+									</td>
+									<td class="px-3 py-1">
+										<input
+											class="p-1 w-full border-solid border-2 border-gray-200"
+											bind:value={rehearsal.place}
+											placeholder="enter a rehearsal place"
+											type="text"
+										/>
+									</td>
+									<td class="px-3 py-1">
+										<textarea
+											class="p-1 w-full"
+											bind:value={rehearsal.comment}
+											placeholder="enter a comment if needed"
+											rows="2"
+											cols="50"
+										></textarea>
+									</td>
+									<td class="px-3 py-1">
+										<button
+											class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
+											on:click={() => removeRehearsalDate(rehearsal)}>Remove
+										</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
 				</div>
+				<button
+					class="bg-blue-700 text-sm px-2 py-1 m-2 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center mt-2"
+					on:click={addRehearsalDate}>Add Rehearsal Date
+				</button>
 			{/if}
 		</div>
 
 		<h4 class="text-lg">Concerts</h4>
 		<div class="m-1 border">
 			{#if !allowModification}
-				<table
-					class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed"
-				>
-					<thead
-						class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
-					>
+				<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed">
+					<thead class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
 						<tr>
 							<th>Date</th>
 							<th>Place</th>
@@ -364,47 +388,71 @@
 						{#if project.concerts && project.concerts.length}
 							{#each project.concerts as concert}
 								<tr>
-									<td><DateShow date={concert.date} withTime /></td>
+									<td><DateShow startTime={concert.startDate} endTime={concert.endDate} withTime /></td>
 									<td>{concert.place}</td>
 									<td>{concert.comment}</td>
 								</tr>
 							{/each}
 						{:else}
-							<tr><td colspan="3" class="text-center">No rehearsal</td></tr>
+							<tr><td colspan="3" class="text-center">No concert</td></tr>
 						{/if}
 					</tbody>
 				</table>
 			{:else}
-				<div>
-					{#if project.concerts}
-						{#each project.concerts as concert}
-							<div class="concert-entry">
-								<DatePicker bind:date={concert.date} />
-								<TimePicker bind:date={concert.date} />
-								<input
-									class="p-1"
-									bind:value={concert.place}
-									placeholder="enter a concert place"
-									type="text"
-								/>
-								<input
-									class="p-1"
-									bind:value={concert.comment}
-									placeholder="enter a comment if needed"
-									type="text"
-								/>
-								<button
-									class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
-									on:click={() => removeConcertDate(concert)}>Remove</button
-								>
-							</div>
-						{/each}
-					{/if}
-					<button
-						class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
-						on:click={addConcertDate}>Add Concert Date</button
-					>
+				<div class="overflow-x-auto">
+					<table class="table-auto max-w-min min-w-max">
+						<thead>
+							<tr>
+								<th class="px-3 py-1">Start Date</th>
+								<th class="px-3 py-1">End Date</th>
+								<th class="px-3 py-1">Place</th>
+								<th class="px-3 py-1">Comment</th>
+								<th class="px-3 py-1">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each project.concerts as concert}
+								<tr class="concert-entry">
+									<td class="px-3 py-1">
+										<DatePicker bind:date={concert.startDate} />
+										<TimePicker bind:date={concert.startDate} />
+									</td>
+									<td class="px-3 py-1">
+										<DatePicker bind:date={concert.endDate} />
+										<TimePicker bind:date={concert.endDate} />
+									</td>
+									<td class="px-3 py-1">
+										<input
+											class="p-1 w-full border-solid border-2 border-gray-200"
+											bind:value={concert.place}
+											placeholder="enter a concert place"
+											type="text"
+										/>
+									</td>
+									<td class="px-3 py-1">
+										<textarea
+											class="p-1 w-full"
+											bind:value={concert.comment}
+											placeholder="enter a comment if needed"
+											rows="2"
+											cols="50"
+										></textarea>
+									</td>
+									<td class="px-3 py-1">
+										<button
+											class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
+											on:click={() => removeConcertDate(concert)}>Remove
+										</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
 				</div>
+				<button
+					class="bg-blue-700 text-sm px-2 py-1 m-2 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center mt-2"
+					on:click={addConcertDate}>Add Concert Date
+				</button>
 			{/if}
 		</div>
 
@@ -500,3 +548,24 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.table-auto {
+	  border-collapse: collapse;
+	  width: 100%;
+	}
+	.table-auto th, .table-auto td {
+	  border: 1px solid #ddd;
+	  padding: 8px;
+	}
+	.table-auto th {
+	  background-color: #f2f2f2;
+	  text-align: left;
+	}
+	.table-auto tr:nth-child(even) {
+	  background-color: #f9f9f9;
+	}
+	.table-auto tr:hover {
+	  background-color: #ddd;
+	}
+  </style>

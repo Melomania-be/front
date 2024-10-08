@@ -47,7 +47,7 @@
                         <tr class="bg-gray-100">
                             {#each concerts as concert}
                                 <th colspan="2" class="border border-gray-400 p-2">
-                                    <DateShow date={concert.date} withTime />
+                                    <DateShow startTime={concert.startDate} endTime={concert.endDate} withTime />
                                 </th>
                             {/each}
                         </tr>
@@ -63,7 +63,7 @@
                                         {laxInclude(participant, concert) ? 'present' : 'absent'}
                                     </td>
                                     <td class="border border-gray-400 p-2">
-                                        {#if participantData = concert.participants.find(p => p.id === participant.id)}
+                                        {#if participantData = concert.participants?.find(p => p.id === participant.id)}
                                             {participantData ? participantData.pivot_comment : ''}
                                         {/if}
                                     </td>
@@ -91,7 +91,7 @@
                         <tr class="bg-gray-100">
                             {#each rehearsals as rehearsal}
                                 <th colspan="2" class="border border-gray-400 p-2">
-                                    <DateShow date={rehearsal.date} withTime />
+                                    <DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal/>
                                 </th>
                             {/each}
                         </tr>
@@ -107,7 +107,7 @@
                                         {laxInclude(participant, rehearsal) ? 'present' : 'absent'}
                                     </td>
                                     <td class="border border-gray-400 p-2">
-                                        {#if participantData = rehearsal.participants.find(p => p.id === participant.id)}
+                                        {#if participantData = rehearsal.participants?.find(p => p.id === participant.id)}
                                             {participantData ? participantData.pivot_comment : ''}
                                         {/if}
                                     </td>

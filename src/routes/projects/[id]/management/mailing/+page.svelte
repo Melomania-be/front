@@ -247,12 +247,12 @@
 				<ul>
 					<li>
 						Last recruitment email sent : {#if lastRecruitmentNotificationSent !== '' && lastRecruitmentNotificationSent !== null && lastRecruitmentNotificationSent !== undefined}<DateShow
-								date={lastRecruitmentNotificationSent.toString()}
+								startTime={lastRecruitmentNotificationSent.toString()}
 							/>{:else}Never{/if}
 					</li>
 					<li>
 						Last callsheet notification sent : {#if lastCallsheetNotificationSent !== '' && lastCallsheetNotificationSent !== null && lastCallsheetNotificationSent !== undefined}<DateShow
-								date={lastCallsheetNotificationSent.toString()}
+								startTime={lastCallsheetNotificationSent.toString()}
 							/>{:else}Never{/if}
 					</li>
 				</ul>

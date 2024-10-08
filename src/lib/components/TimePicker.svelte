@@ -1,7 +1,7 @@
 <script lang="ts">
-    export let date: Date;
-    let hours: number;
-    let minutes: number;
+    export let date: Date | null;
+    let hours: number = 0;
+    let minutes: number = 0;
 
     function roundToNearestFive(num: number): number {
         return Math.round(num / 5) * 5;
@@ -17,8 +17,10 @@
     const minutesOptions = Array.from({ length: 12 }, (_, i) => i * 5);
 
     function updateTime() {
-        date.setHours(hours);
-        date.setMinutes(minutes);
+        if (date) {
+            date.setHours(hours);
+            date.setMinutes(minutes);
+        }
     }
 </script>
 

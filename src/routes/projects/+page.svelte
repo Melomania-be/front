@@ -60,7 +60,7 @@
 
 			allProjects = data.data.map((project: Project) => {
 				project.concerts = project?.concerts?.map((concert: any) => {
-					concert.date = new Date(concert.date);
+					concert.startDate = new Date(concert.startDate);
 					return concert;
 				});
 				return project;
@@ -68,11 +68,11 @@
 			meta = data.meta;
 
 			passedProjects = allProjects.filter((project: Project) =>
-				project.concerts.every((concert: any) => concert.date < new Date())
+				project.concerts.every((concert: any) => concert.startDate < new Date())
 			);
 
 			currentProjects = allProjects.filter((project: Project) =>
-				project.concerts.some((concert: any) => concert.date >= new Date())
+				project.concerts.some((concert: any) => concert.startDate >= new Date())
 			);
 
 			group = {
@@ -160,7 +160,7 @@
 										<h2 class="text-sm">{project.name}</h2>
 										<ul class="text-sm">
 											{#each project.concerts as concert}
-												<DateShow date={concert.date} />
+												<DateShow startTime={concert.startDate} endTime={concert.endDate} />
 												- {concert.place}
 											{/each}
 										</ul>

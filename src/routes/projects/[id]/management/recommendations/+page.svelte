@@ -29,8 +29,8 @@
 		instruments: [],
         comment: '',
         project_id: 0,
-        createdAt: null,
-        updatedAt: null,
+		createdAt: new Date(),
+        updatedAt: new Date(),
     };
 
 	let meta: any = {};
@@ -502,7 +502,7 @@
 									{#each dataHolderContact.columns as column}
 										{#if typeof row[column] === 'object' && row[column] instanceof Date}
 											<td>
-												<DateShow date={row[column]} />
+												<DateShow startTime={row[column]} />
 											</td>
 										{:else}
 											<td>{row[column]}</td>

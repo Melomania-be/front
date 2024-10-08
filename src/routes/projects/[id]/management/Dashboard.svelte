@@ -20,10 +20,10 @@
 			class="flex-col space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-black rounded-tl-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
 			<div class="text-sm">
-				Created at: <DateShow date={project.createdAt} />
+				Created at: <DateShow startTime={project.createdAt} />
 			</div>
 			<div class="text-sm">
-				Updated at: <DateShow date={project.updatedAt} />
+				Updated at: <DateShow startTime={project.updatedAt} />
 			</div>
 			<div class="text-sm">
 				Project managers:

@@ -14,7 +14,7 @@
 
 	function triggerEvent(
 		participant: CustomParticipant | Participant,
-		concertOrRehehearsal: Rehearsal | Concert
+		concertOrRehearsal: Rehearsal | Concert
 	) {
 		if (!participant.rehearsals) {
 			participant.rehearsals = [];
@@ -24,17 +24,17 @@
 		}
 		switch (type) {
 			case 'rehearsal':
-				if (laxInclude(participant, concertOrRehehearsal)) {
-					participant.rehearsals.splice(participant.rehearsals.indexOf(concertOrRehehearsal), 1);
+				if (laxInclude(participant, concertOrRehearsal)) {
+					participant.rehearsals.splice(participant.rehearsals.indexOf(concertOrRehearsal as Rehearsal), 1);
 				} else {
-					participant.rehearsals.push(concertOrRehehearsal);
+                    participant.rehearsals.push(concertOrRehearsal as Rehearsal);
 				}
 				break;
 			case 'concert':
-				if (laxInclude(participant, concertOrRehehearsal)) {
-					participant.concerts.splice(participant.concerts.indexOf(concertOrRehehearsal), 1);
+				if (laxInclude(participant, concertOrRehearsal)) {
+					participant.concerts.splice(participant.concerts.indexOf(concertOrRehearsal as Concert), 1);
 				} else {
-					participant.concerts.push(concertOrRehehearsal);
+					participant.concerts.push(concertOrRehearsal as Concert);
 				}
 				break;
 		}
@@ -45,9 +45,9 @@
 		participant.concerts = participant.concerts ?? [];
 	});
 
-	function laxInclude(participant: CustomParticipant | Participant, concert: Concert | Rehearsal) {
-		return participant.rehearsals!.includes(concert) || participant.concerts!.includes(concert);
-	}
+    function laxInclude(participant: CustomParticipant | Participant, concertOrRehearsal: Concert | Rehearsal) {
+        return participant.rehearsals!.includes(concertOrRehearsal as Rehearsal) || participant.concerts!.includes(concertOrRehearsal as Concert);
+    }
 </script>
 
 <div class="overflow-x-auto">
@@ -62,7 +62,11 @@
             <tr>
                 <th></th>
                 {#each concertsOrRehearsals as concertOrRehearsal}
-                    <th class="px-4 py-2 border-l min-w-[220px]" colspan="2"><DateShow date={concertOrRehearsal.date} /></th>
+                    {#if type === 'rehearsal'}
+                        <th class="px-4 py-2 border-l min-w-[220px]" colspan="2"><DateShow startTime={concertOrRehearsal.startDate} endTime={concertOrRehearsal.endDate} isRehearsal/></th>
+                    {:else}
+                        <th class="px-4 py-2 border-l min-w-[220px]" colspan="2"><DateShow startTime={concertOrRehearsal.startDate} endTime={concertOrRehearsal.endDate}/></th>
+                    {/if}                    
                 {/each}
             </tr>
         </thead>
