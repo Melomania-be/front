@@ -13,6 +13,7 @@ export interface Participant {
 	section: Section;
 	contact: Contact;
 	lastActivity: Date;
+	isSectionLeader: boolean;
 	contactId: number;
 	projectId: number;
 	sectionId: number;

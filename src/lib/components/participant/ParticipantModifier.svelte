@@ -72,7 +72,8 @@
 	}
 
 	async function updateParticipant() {
-		const data = { ...currentParticipant, accepted: true };
+		const data = { ...currentParticipant, is_section_leader: currentParticipant.isSectionLeader, accepted: true };
+		console.log(data.is_section_leader)
 
 		if (!currentParticipant.id) {
 			const mailingResponse = await fetch(`/api/mailing/sendParticipationValidationNotifications`, {

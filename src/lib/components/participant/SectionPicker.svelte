@@ -22,4 +22,6 @@
 			<option value={section}>{section.name}</option>
 		{/each}
 	</select>
+
+	Section leader : <input type="checkbox" bind:checked={participant.isSectionLeader} {disabled}>
 {/if}

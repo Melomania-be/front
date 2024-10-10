@@ -9,6 +9,7 @@ export interface CustomParticipant {
 	id: number | null;
 	answers: Array<Answer>;
 	project: Project;
+	isSectionLeader: boolean;
 	rehearsals: Array<Rehearsal>;
 	concerts: Array<Concert>;
 	section: Section | null;

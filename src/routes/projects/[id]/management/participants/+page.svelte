@@ -100,7 +100,12 @@
 					<td>{participant.contact.email}</td>
 					<td>{participant.contact.phone}</td>
 					<td>{participant.contact.messenger}</td>
-					<td>{participant.section.name}</td>
+					<td>
+						{participant.section.name}
+						{#if participant.isSectionLeader}
+							<span class="text-sm font-bold text-blue-500">(Leader)</span>
+						{/if}
+					</td>
 					<td><DateShow bind:startTime={participant.lastActivity} /></td>
 					<td><DateShow bind:startTime={participant.updatedAt} /></td>
 				</tr>

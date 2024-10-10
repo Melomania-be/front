@@ -40,6 +40,7 @@
                     <thead>
                         <tr class="bg-gray-200">
                             <th rowspan="2" class="crossed border border-gray-400 p-2"></th>
+                            <th rowspan="2" class="border border-gray-400 p-2">Section</th>
                             {#each concerts as concert}
                                 <th colspan="2" class="border border-gray-400 p-2">{concert.place}</th>
                             {/each}
@@ -57,7 +58,11 @@
                             <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border border-gray-400">
                                 <td class="border border-gray-400 p-2 w-48">
                                     {participant.contact.firstName} {participant.contact.lastName}
+                                    {#if participant.isSectionLeader}
+                                      <span class="text-sm font-bold text-blue-500">(Leader)</span>
+                                    {/if}
                                 </td>
+                                <td class="border border-gray-400 p-2 w-32">{participant.section.name}</td>
                                 {#each concerts as concert}
                                     <td class="{laxInclude(participant, concert) ? 'bg-green-200' : 'bg-red-200'} border border-gray-400 p-2 fixed-width">
                                         {laxInclude(participant, concert) ? 'present' : 'absent'}
@@ -84,6 +89,7 @@
                     <thead>
                         <tr class="bg-gray-200">
                             <th rowspan="2" class="crossed border border-gray-400 p-2"></th>
+                            <th rowspan="2" class="border border-gray-400 p-2">Section</th>
                             {#each rehearsals as rehearsal}
                                 <th colspan="2" class="border border-gray-400 p-2">{rehearsal.place}</th>
                             {/each}
@@ -101,7 +107,11 @@
                             <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border border-gray-400">
                                 <td class="border border-gray-400 p-2 w-48">
                                     {participant.contact.firstName} {participant.contact.lastName}
+                                    {#if participant.isSectionLeader}
+                                      <span class="text-sm font-bold text-blue-500">(Leader)</span>
+                                    {/if}
                                 </td>
+                                <td class="border border-gray-400 p-2 w-32">{participant.section.name}</td>
                                 {#each rehearsals as rehearsal}
                                     <td class="{laxInclude(participant, rehearsal) ? 'bg-green-200' : 'bg-red-200'} border border-gray-400 p-2 fixed-width">
                                         {laxInclude(participant, rehearsal) ? 'present' : 'absent'}
