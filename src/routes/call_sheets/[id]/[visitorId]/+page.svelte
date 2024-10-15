@@ -27,4 +27,8 @@
 	});
 </script>
 
-<CallsheetShow bind:callsheet />
+{#if callsheet}
+    <CallsheetShow {callsheet} />
+{:else}
+    <p>Loading...</p>
+{/if}

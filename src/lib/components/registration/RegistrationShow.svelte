@@ -152,6 +152,11 @@
 			window.location.reload();
 		}
 	}
+
+    const combinedEvents = [
+        ...(registration.project?.concerts || []).map(event => ({ ...event, type: 'concert' })),
+        ...(registration.project?.rehearsals || []).map(event => ({ ...event, type: 'rehearsal' }))
+    ].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 </script>
 
 <div
@@ -172,77 +177,43 @@
 					Project Informations
 				</h2>
 				<div class="mb-3 ml-5">
-					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-						Concerts
-					</h3>
+                    <h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
+                        Events
+                    </h3>
 
-					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-						<thead
-							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
-						>
-							<tr>
-								<th class="px-6 py-3">Date</th>
-								<th class="px-6 py-3">Place</th>
-								<th class="px-6 py-3">Comment</th>
-							</tr>
-						</thead>
-						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-							{#if registration.project?.concerts && registration.project.concerts.length > 0}
-								{#each registration.project.concerts as concert}
-									<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-										<th
-											scope="row"
-											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow startTime={concert.startDate} endTime={concert.endDate} withTime></DateShow></th
-										>
-										<td class="px-6 py-4">{concert.place}</td>
-										<td class="px-6 py-4">{concert.comment}</td>
-									</tr>
-								{/each}
-							{:else}
-								<tr>
-									<td class="px-6 py-4" colspan="3">No concert found</td>
-								</tr>
-							{/if}
-						</tbody>
-					</table>
-				</div>
-
-				<div class="mb-3 ml-5">
-					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-						Rehearsals
-					</h3>
-					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-						<thead
-							class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
-						>
-							<tr>
-								<th class="px-6 py-3">Date</th>
-								<th class="px-6 py-3">Place</th>
-								<th class="px-6 py-3">Comment</th>
-							</tr>
-						</thead>
-						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-							{#if registration.project?.rehearsals}
-								{#each registration.project.rehearsals as rehearsal}
-									<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-										<th
-											scope="row"
-											class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-											><DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal></DateShow></th
-										>
-										<td class="px-6 py-4">{rehearsal.place}</td>
-										<td class="px-6 py-4">{rehearsal.comment}</td>
-									</tr>
-								{/each}
-							{:else}
-								<tr>
-									<td class="px-6 py-4" colspan="3">No rehearsal found</td>
-								</tr>
-							{/if}
-						</tbody>
-					</table>
-				</div>
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead
+                            class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+                        >
+                            <tr>
+                                <th class="px-6 py-3">Date</th>
+                                <th class="px-6 py-3">Place</th>
+                                <th class="px-6 py-3">Type</th>
+                                <th class="px-6 py-3">Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
+                            {#if combinedEvents.length > 0}
+                                {#each combinedEvents as event}
+                                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                        <th
+                                            scope="row"
+                                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                                            ><DateShow startTime={event.startDate} endTime={event.endDate} withTime isRehearsal={event.type === 'rehearsal'}></DateShow></th
+                                        >
+                                        <td class="px-6 py-4">{event.place}</td>
+                                        <td class="px-6 py-4">{event.type}</td>
+                                        <td class="px-6 py-4">{event.comment}</td>
+                                    </tr>
+                                {/each}
+                            {:else}
+                                <tr>
+                                    <td class="px-6 py-4" colspan="4">No events found</td>
+                                </tr>
+                            {/if}
+                        </tbody>
+                    </table>
+                </div>
 
 				<div class="mb-3 ml-5">
 					<h3 class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
