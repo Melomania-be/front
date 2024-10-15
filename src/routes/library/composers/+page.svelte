@@ -150,7 +150,7 @@
 
 		if (!validated) return;
 
-		const response = await fetch(`/api/composer/${selectedData.id}`, {
+		const response = await fetch(`/api/composers/${selectedData.id}`, {
 			method: 'DELETE',
 		});
 
