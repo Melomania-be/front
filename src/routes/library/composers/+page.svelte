@@ -7,6 +7,7 @@
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
 	import type { Composer } from '$lib/types/Composer';
+	import type { Piece } from '$lib/types/Piece';
 
 	import Fa from 'svelte-fa';
 	import { faGlobe, faTextSlash } from '@fortawesome/free-solid-svg-icons';
@@ -74,10 +75,21 @@
 			composers = data.data;
 			meta = data.meta;
 
+			for (let composer of composers) {
+				const piecesResponse = await fetch(`${url}/${composer.id}/pieces`, {
+					method: 'GET'
+				});
+				const piecesData = await piecesResponse.json();
+				const pieceNames = piecesData.slice(0, 5).map((piece: Piece) => piece.name);
+				composer.pieces = pieceNames;
+			}
+
+			console.log(composers);
+
 			dataHolder = {
 				data: composers,
 				columns: ['id', 'longName'],
-				notOrderedColumns: []
+				notOrderedColumns: ['pieces']
 			};
 		});
 	}
@@ -138,11 +150,8 @@
 
 		if (!validated) return;
 
-		const jsoned = JSON.stringify({ id: selectedData.id });
-
-		const response = await fetch('/api/composers/', {
+		const response = await fetch(`/api/composer/${selectedData.id}`, {
 			method: 'DELETE',
-			body: jsoned
 		});
 
 		errorEvent(response);

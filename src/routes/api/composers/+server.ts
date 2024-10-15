@@ -40,15 +40,3 @@ export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	});
 	return res;
 };
-
-export const DELETE: RequestHandler = async ({ cookies, fetch, request }) => {
-	const { id } = await request.json();
-
-	await fetch(`${API_URL}/composer/${id}`, {
-		method: 'DELETE',
-		headers: {
-			authorization: `${await getToken(cookies)}`
-		}
-	});
-	return new Response();
-};

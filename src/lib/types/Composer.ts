@@ -1,4 +1,5 @@
 import type { GenericDataType } from './GenericDataType';
+import type { Piece } from './Piece';
 
 export interface Composer {
 	birthDate: Date;
@@ -10,4 +11,5 @@ export interface Composer {
 	mainStyle: String;
 	shortName: String;
 	updatedAt: Date;
+	pieces: Array<Piece>;
 }
