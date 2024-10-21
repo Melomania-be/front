@@ -1,39 +1,15 @@
 <script lang="ts">
-    export let date: Date | null;
-    let hours: number = 0;
-    let minutes: number = 0;
+	export let date: Date;
+	let usableTime: string;
 
-    function roundToNearestFive(num: number): number {
-        return Math.round(num / 5) * 5;
-    }
+	$: if (date) {
+		usableTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+	}
 
-    $: if (date) {
-        hours = date.getHours();
-        minutes = roundToNearestFive(date.getMinutes());
-        date.setMinutes(minutes); // Ensure the date object is updated the first time
-    }
-
-    const hoursOptions = Array.from({ length: 24 }, (_, i) => i);
-    const minutesOptions = Array.from({ length: 12 }, (_, i) => i * 5);
-
-    function updateTime() {
-        if (date) {
-            date.setHours(hours);
-            date.setMinutes(minutes);
-        }
-    }
+	async function changeHandler(event: any) {
+		date.setHours(Number(event.target.value.split(':')[0]));
+		date.setMinutes(Number(event.target.value.split(':')[1]));
+	}
 </script>
 
-<div>
-    <select bind:value={hours} on:change={updateTime}>
-        {#each hoursOptions as hour}
-            <option value={hour}>{hour.toString().padStart(2, '0')}</option>
-        {/each}
-    </select>
-    :
-    <select bind:value={minutes} on:change={updateTime}>
-        {#each minutesOptions as minute}
-            <option value={minute}>{minute.toString().padStart(2, '0')}</option>
-        {/each}
-    </select>
-</div>
+<input type="time" value={usableTime} on:change={changeHandler} />
