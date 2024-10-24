@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Sortable from 'sortablejs';
+
 	import type { Project } from '$lib/types/Project';
 	import type { SectionGroup } from '$lib/types/SectionGroup';
 	import type { Piece } from '$lib/types/Piece';
@@ -17,6 +19,8 @@
 	import DatePicker from '../DatePicker.svelte';
 	import TimePicker from '../TimePicker.svelte';
 
+	import { onMount, afterUpdate } from 'svelte';
+
 	export let project: Project;
 	export let pieces: Array<Piece>;
 	export let sectionGroups: Array<SectionGroup>;
@@ -26,9 +30,79 @@
 
 	let allowModification = mode === 'modify' ? false : true;
 
-	$: console.log(pieces);
+    let initialSelectedPieces = [...project.pieces];
+    let initialAllPieces = pieces ? pieces.filter(piece => !project.pieces.some(p => p.id === piece.id)): [];
 
-	$: console.log(project.rehearsals);
+    let selectedPieces: Piece[] = [...initialSelectedPieces];
+    let allPieces: Piece[] = [...initialAllPieces];
+    let allPiecesContainer: HTMLElement;
+    let selectedPiecesContainer: HTMLElement;
+
+	let allPiecesSortable: any;
+    let selectedPiecesSortable: any;
+
+    function initializeSortable() {
+        allPiecesSortable = Sortable.create(allPiecesContainer, {
+            group: {
+                name: 'pieces',
+                put: true,
+                pull: true
+            },
+            animation: 200,
+            sort: false,
+            onAdd: (evt: any) => {
+                const item = selectedPieces[evt.oldIndex as number];
+                allPieces.splice(evt.newIndex as number, 0, item);
+                console.log('allPieces: ', allPieces);
+            },
+            onRemove: (evt: any) => {
+                allPieces.splice(evt.oldIndex as number, 1);
+                console.log('allPieces: ', allPieces);
+            }
+        });
+
+        selectedPiecesSortable = Sortable.create(selectedPiecesContainer, {
+            group: {
+                name: 'pieces',
+                put: true,
+                pull: true
+            },
+            animation: 200,
+            onAdd: (evt: any) => {
+                const item = allPieces[evt.oldIndex as number];
+                selectedPieces.splice(evt.newIndex as number, 0, item);
+                console.log('selectedPieces: ', selectedPieces);
+            },
+            onRemove: (evt: any) => {
+                selectedPieces.splice(evt.oldIndex as number, 1);
+                console.log('selectedPieces: ', selectedPieces);
+            },
+            onUpdate: (evt: any) => {
+                const item = selectedPieces[evt.oldIndex as number];
+                selectedPieces.splice(evt.oldIndex as number, 1);
+                selectedPieces.splice(evt.newIndex as number, 0, item);
+                console.log('selectedPieces: ', selectedPieces);
+            }
+        });
+    }
+
+    function toggleSortable() {
+        if (allPiecesSortable) {
+            allPiecesSortable.option('disabled', !allowModification);
+        }
+        if (selectedPiecesSortable) {
+            selectedPiecesSortable.option('disabled', !allowModification);
+        }
+    }
+
+    onMount(() => {
+        initializeSortable();
+        toggleSortable();
+    });
+
+    afterUpdate(() => {
+        toggleSortable();
+    });
 
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
 		project.rehearsals = project.rehearsals.filter((rehearsal) => rehearsal !== delRehearsal);
@@ -64,7 +138,10 @@
 				place: concert.place,
 				comment: concert.comment
 			})),
-			pieces_ids: project.pieces.map((piece) => piece.id),
+			pieces: selectedPieces.map((piece) => ({
+				id: piece.id,
+				pivot_order: selectedPieces.indexOf(piece)
+			})),
 			rehearsals: project.rehearsals.map((rehearsal) => ({
 				id: rehearsal.id ? rehearsal.id : null,
 				start_date: new Date(rehearsal.startDate).toISOString(),
@@ -236,42 +313,32 @@
 		</div>
 
 		<h4 class="text-lg">Pieces</h4>
-		<div class="m-1 border">
-			<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-				<thead
-					class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
-				>
-					<tr>
-						<th>Name</th>
-						<th>Composer</th>
-						<th>Arranger</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if project.pieces}
-						{#each project.pieces as piece}
-							<tr
-								class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700"
-							>
-								<td>{piece.name}</td>
-								<td>{piece.composer.shortName}</td>
-								<td>{piece.arranger}</td>
-							</tr>
-						{/each}
-					{/if}
-				</tbody>
-			</table>
-			{#if allowModification && project.pieces}
-				<select class="flex w-1/2 border mt-1" bind:value={project.pieces} multiple>
-					{#if pieces && pieces.length > 0}
-						{#each pieces as piece}
-							<option value={piece}>
+		<div class="container">
+			<div>
+				<h4 class="text-lg sticky top-0 bg-white">Available pieces</h4>
+				{#if allPieces.length === 0}
+					<p>No pieces available</p>
+				{:else}
+					<section bind:this={allPiecesContainer} class="list p-1 min-w-[450px] min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
+						{#each allPieces as piece}
+							<div class="item">
 								{piece.name} - {piece.composer.shortName}
-							</option>
+							</div>
 						{/each}
-					{/if}
-				</select>
-			{/if}
+					</section>
+				{/if}
+			</div>
+		
+			<div>
+				<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
+				<section bind:this={selectedPiecesContainer} class="list p-1 min-w-[450px] min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
+					{#each project.pieces as piece}
+						<div class="item">
+							{piece.name} - {piece.composer.shortName}
+						</div>
+					{/each}
+				</section>
+			</div>
 		</div>
 
 		<h4 class="text-lg">Folder</h4>
@@ -568,4 +635,16 @@
 	.table-auto tr:hover {
 	  background-color: #ddd;
 	}
-  </style>
+
+	.container {
+        display: flex;
+        gap: 16px;
+    }
+
+    .item {
+        padding: 4px;
+        border: 1px solid gray;
+        margin-bottom: 4px;
+        background-color: white;
+    }
+</style>

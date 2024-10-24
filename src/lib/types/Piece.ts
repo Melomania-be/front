@@ -4,6 +4,7 @@ import type { GenericDataType } from './GenericDataType';
 import type { TypeOfPiece } from './TypeOfPiece';
 
 export interface Piece {
+	pivot_order?: Number;
 	arranger: String;
 	composer: Composer;
 	composerId: Number;

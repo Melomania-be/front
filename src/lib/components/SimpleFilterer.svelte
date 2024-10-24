@@ -4,6 +4,8 @@
 	import type { TableData } from '$lib/types/TableData';
 	import Paginator from '$lib/components/Paginator.svelte';
 	import Table from '$lib/components/Table.svelte';
+	import { browser } from '$app/environment';
+
 	export let showData: boolean = false;
 	export let editable: boolean = true;
 	export let paginatorTop: boolean = true;
@@ -41,17 +43,24 @@
 		dispatch('optionsUpdated');
 	}
 
-	let isMobile: boolean = window.innerWidth < 768;
+	let isMobile: boolean = false;
 
 	const handleResize = () => {
-		isMobile = window.innerWidth < 768;
+		if (browser) {
+			isMobile = window.innerWidth < 768;
+		}
 	}
 
 	onMount(() => {
+		if (browser) {
+			window.addEventListener('resize', handleResize);
+		}
 		window.addEventListener('resize', handleResize);
 
 		return () => {
-			window.removeEventListener('resize', handleResize);
+			if (browser) {
+				window.removeEventListener('resize', handleResize);
+			}
 		}
 	})
 </script>

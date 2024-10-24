@@ -5,5 +5,6 @@ export interface Section {
 	id: number | null;
 	name: string;
 	size: number;
+	pivot_order?: number;
 	instruments: Instrument[];
 }

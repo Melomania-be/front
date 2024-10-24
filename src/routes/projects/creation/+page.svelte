@@ -10,6 +10,7 @@
 	let listPieces: Array<Piece>;
 	let listSectionGroups: Array<SectionGroup>;
 	let listFolders: Array<Folder>;
+	let loading: boolean = true;
 
 	const project: Project = {
 		id: null,
@@ -56,14 +57,20 @@
 		if (!listFolders) {
 			listFolders = [];
 		}
+
+		loading = false;
 	});
 </script>
 
-<ProjectModifier
-	mode="create"
-	{project}
-	bind:pieces={listPieces}
-	bind:sectionGroups={listSectionGroups}
-	bind:folders={listFolders}
-	urlFront={`/projects/creation`}
-/>
+{#if loading}
+    <p>Loading...</p>
+{:else}
+    <ProjectModifier
+        mode="create"
+        {project}
+        bind:pieces={listPieces}
+        bind:sectionGroups={listSectionGroups}
+        bind:folders={listFolders}
+        urlFront={`/projects/creation`}
+    />
+{/if}

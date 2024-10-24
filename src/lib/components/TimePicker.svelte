@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let date: Date;
+	export let date: Date | null;
 	let usableTime: string;
 
 	$: if (date) {
@@ -7,8 +7,10 @@
 	}
 
 	async function changeHandler(event: any) {
-		date.setHours(Number(event.target.value.split(':')[0]));
-		date.setMinutes(Number(event.target.value.split(':')[1]));
+        if (date) {
+            date.setHours(Number(event.target.value.split(':')[0]));
+            date.setMinutes(Number(event.target.value.split(':')[1]));
+        }
 	}
 </script>
 

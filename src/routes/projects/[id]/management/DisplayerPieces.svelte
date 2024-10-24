@@ -2,6 +2,8 @@
 	export let project: any;
 
 	let mode: 'pieces' | 'files' = 'pieces';
+
+	console.log(project.pieces);
 </script>
 
 <div class="w-full bg-white border border-black shadow dark:bg-gray-800 dark:border-gray-700">

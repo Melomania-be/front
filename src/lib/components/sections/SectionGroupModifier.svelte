@@ -5,6 +5,7 @@
 	import type { SectionGroup } from '$lib/types/SectionGroup';
 	import { Checkbox } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
+	import Sortable from 'sortablejs';
 
 	let sectionsGroups: SectionGroup[];
 	let sections: Section[];
@@ -13,6 +14,9 @@
 	let sectionsGroupTmp: SectionGroup;
 	let sectionTmp: Section;
 	let instrumentTmp: Instrument;
+	let sectionsGroupTmpContainer: HTMLElement;
+
+	$: console.log(sectionsGroups)
 
 	onMount(async () => {
 		const responseSectionsGroups = await fetch(`/api/sectionGroups`, {
@@ -21,6 +25,7 @@
 
 		if (responseSectionsGroups.ok) {
 			sectionsGroups = await responseSectionsGroups.json();
+			console.log(sectionsGroups);
 			sectionsGroupTmp = sectionsGroups[0] ?? null;
 		} else {
 			alert('server error');
@@ -47,7 +52,27 @@
 		} else {
 			alert('server error');
 		}
+
+		initializeSortable();
 	});
+
+    function initializeSortable() {
+        Sortable.create(sectionsGroupTmpContainer, {
+            group: 'sections',
+            animation: 200,
+            onEnd: (evt: any) => {
+                const [movedItem] = sectionsGroupTmp.sections.splice(evt.oldIndex, 1);
+                sectionsGroupTmp.sections.splice(evt.newIndex, 0, movedItem);
+
+                // Update pivot_order
+                sectionsGroupTmp.sections.forEach((section, index) => {
+                    section.pivot_order = index + 1;
+                });
+
+                console.log('sectionsGroupTmp.sections:', sectionsGroupTmp.sections);
+            }
+        });
+    }
 
 	async function saveInstruments() {
 		for (const instrument of instruments) {
@@ -194,6 +219,21 @@
 							</button>
 						</div>
 					{/each}
+				</div>
+
+				<div>
+					{#if sectionsGroupTmp}
+						<div>
+							<h3 class="font-bold mb-2">Sections order :</h3>
+							<section bind:this={sectionsGroupTmpContainer} class="list p-1 min-w-[200px] max-h-[300px] border border-black overflow-y-auto">
+								{#each sectionsGroupTmp.sections as section}
+									<div class="item p-0.5 mb-0.5 border border-gray-300 rounded bg-white cursor-grab">
+										{section.name} - {section.size}
+									</div>
+								{/each}
+							</section>
+						</div>
+					{/if}
 				</div>
 			</div>
 			<div>
@@ -422,3 +462,9 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+    .item:active {
+        cursor: grabbing;
+    }
+</style>
