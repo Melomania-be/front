@@ -54,12 +54,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each participants as participant}
+                        {#each participants as participant, index}
+                            {#if index === 0 || participant.section.name !== participants[index - 1].section.name}
+                                <!-- Section header row -->
+                                <tr class="bg-gray-300 text-gray-800 font-bold">
+                                    <td colspan="{2 + (concerts.length * 2)}" class="p-2 text-left">
+                                        Section: {participant.section.name}
+                                    </td>
+                                </tr>
+                            {/if}
+                            <!-- Participant row -->
                             <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border">
                                 <td class="border p-1 whitespace-nowrap text-xs">
                                     {participant.contact.firstName} {participant.contact.lastName}
                                     {#if participant.isSectionLeader}
-                                      <span class="text-xs font-semibold text-blue-500">(Leader)</span>
+                                        <span class="text-xs font-semibold text-blue-500">(Leader)</span>
                                     {/if}
                                 </td>
                                 <td class="border p-1 text-xs">{participant.section.name}</td>
@@ -103,12 +112,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each participants as participant}
+                        {#each participants as participant, index}
+                            {#if index === 0 || participant.section.name !== participants[index - 1].section.name}
+                                <!-- Section header row -->
+                                <tr class="bg-gray-300 text-gray-800 font-bold">
+                                    <td colspan="{2 + (rehearsals.length * 2)}" class="p-2 text-left">
+                                        Section: {participant.section.name}
+                                    </td>
+                                </tr>
+                            {/if}
+                            <!-- Participant row -->
                             <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border">
                                 <td class="border p-1 whitespace-nowrap text-xs">
                                     {participant.contact.firstName} {participant.contact.lastName}
                                     {#if participant.isSectionLeader}
-                                      <span class="text-xs font-semibold text-blue-500">(Leader)</span>
+                                        <span class="text-xs font-semibold text-blue-500">(Leader)</span>
                                     {/if}
                                 </td>
                                 <td class="border p-1 text-xs">{participant.section.name}</td>
