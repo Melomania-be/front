@@ -81,31 +81,12 @@
 	}
 </script>
 
-<div class="grid grid-cols-2 m-1">
-	<div class="col-span-1 mr-2">
-		<h1 class="text-2xl font-bold text-center w-full">Users</h1>
-		<div>
-			{#each listUsers as user}
-				<div class="flex justify-between border border-collapse rounded-md">
-					<div>
-						<p>Email : {user.email}</p>
-						<p>Created : {user.createdAt}</p>
-						<p>Last activity : {user.token.lastUsedAt}</p>
-					</div>
-					<div>
-						<button
-							class="bg-red-500 text-white px-4 py-2 rounded"
-							on:click={() => deleteUser(user)}>Delete</button
-						>
-					</div>
-				</div>
-			{/each}
-		</div>
-	</div>
-	<div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 m-1">
+	<!-- Add User Section -->
+	<div class="flex flex-col border p-4 rounded-lg shadow-sm">
 		<h1 class="text-2xl font-bold text-center w-full">Add User</h1>
 		<form>
-			<div class="flex flex-col">
+			<div class="flex flex-col mb-4">
 				<label for="email">Email</label>
 				<input
 					type="email"
@@ -114,7 +95,7 @@
 					required
 				/>
 			</div>
-			<div class="flex flex-col">
+			<div class="flex flex-col mb-4">
 				<label for="password">Password</label>
 				<input
 					type="password"
@@ -123,7 +104,7 @@
 					required
 				/>
 			</div>
-			<div class="flex flex-col">
+			<div class="flex flex-col mb-4">
 				<label for="password_confirmation">Password Confirmation</label>
 				<input
 					type="password"
@@ -140,5 +121,26 @@
 				>
 			</div>
 		</form>
+	</div>
+
+	<!-- User List Section -->
+	<div class="flex flex-col border p-4 rounded-lg shadow-sm">
+		<h1 class="text-2xl font-bold text-center w-full">Users</h1>
+		<div>
+			{#each listUsers as user}
+				<div class="flex justify-between border border-collapse rounded-md mb-2 p-2">
+					<div>
+						<p>Email : {user.email}</p>
+						<p>Created : {user.createdAt}</p>
+						<p>Last activity : {user.token.lastUsedAt}</p>
+					</div>
+					<div>
+						<button
+							class="bg-red-500 text-white px-4 py-2 rounded"
+							on:click={() => deleteUser(user)}>Delete</button>
+					</div>
+				</div>
+			{/each}
+		</div>
 	</div>
 </div>

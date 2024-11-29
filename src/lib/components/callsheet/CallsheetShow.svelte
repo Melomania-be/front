@@ -31,8 +31,8 @@
                 <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
                     Program and scores
                 </h2>
-                <div class="w-full flex">
-                    <table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <div class="w-full flex overflow-x-auto">
+                    <table class="min-w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead
                             class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
                         >
@@ -74,8 +74,8 @@
                 <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
                     Events
                 </h2>
-                <div class="w-full flex">
-                    <table class="w-2/3 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <div class="w-full flex overflow-x-auto">
+                    <table class="min-w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead
                             class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
                         >

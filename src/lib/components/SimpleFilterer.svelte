@@ -52,6 +52,7 @@
 	}
 
 	onMount(() => {
+		handleResize();
 		if (browser) {
 			window.addEventListener('resize', handleResize);
 		}

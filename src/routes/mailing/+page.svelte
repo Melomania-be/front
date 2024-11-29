@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import HtmlEditor from './HtmlEditor.svelte';
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 	import type { CustomList } from '$lib/types/CustomList';
@@ -45,7 +45,14 @@
 	let containsProject: boolean | undefined = false;
 	let containsCallsheet: boolean | undefined = false;
 
-	let html = ``;
+	let unique_html: MailTemplate = {
+		id: 0,
+		name: '',
+		content: '',
+		is_default: false,
+		createdAt: '',
+		updatedAt: '',
+	};
 	let uniqueSubject = '';
 
 	function addImages(file: { path: any }) {
@@ -53,7 +60,7 @@
 	}
 
 	async function sendMail() {
-		console.log(selectedList, uniqueSubject, html);
+		console.log(selectedList, uniqueSubject, unique_html);
 		if (!selectedList) {
 			alert('Please select a list');
 			return;
@@ -69,7 +76,7 @@
 		let dataUnique = {
 			listContacts: selectedList,
 			subject: uniqueSubject,
-			content: html
+			content: unique_html?.content
 		};
 
 		console.log(dataUnique);
@@ -170,6 +177,7 @@
 	}
 
 	async function sendTemplateToList() {
+		console.log(selectedTemplate);
 		if (!selectedList) {
 			alert('Please select a list');
 			return;
@@ -211,9 +219,63 @@
 		alert('Email sent');
 	}
 
+	function editTemplate() {
+        return useTemplate ? selectedTemplate : unique_html;
+    }
+
+	async function updateIframeContent() {
+		if (typeof window !== 'undefined') {
+			await tick() // Wait for iframe to first load
+
+			const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
+			if (iframe && iframe.contentWindow) {
+				const doc = iframe.contentDocument || iframe.contentWindow?.document;
+				if (doc) {
+					doc.open();
+					// Wrap the user content in a full HTML document
+					doc.write(`
+						<!DOCTYPE html>
+						<html lang="en">
+						<head>
+							<meta charset="UTF-8">
+							<meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								/* Reset styles to prevent conflicts with user styles */
+								body {
+									margin: 0;
+									padding: 0;
+									font-family: Arial, sans-serif;
+								}
+							</style>
+						</head>
+						<body>
+							${editTemplate().content}
+						</body>
+						</html>
+					`);
+					doc.close();
+				}
+
+				const contentHeight = doc.body.scrollHeight + 50
+				iframe.style.height = contentHeight + "px"
+			}
+		}
+	}
+
 	$: containsToContact = selectedTemplate?.content?.includes('${TO_CONTACT}');
 	$: containsProject = selectedTemplate?.content?.includes('${PROJECT}');
 	$: containsCallsheet = selectedTemplate?.content?.includes('${CALLSHEET}');
+
+	$: if (useTemplate || selectedTemplate) {
+		updateIframeContent();
+	}
+
+	function handleEditorInput(event: CustomEvent<string>) {
+		if (!useTemplate) {
+			unique_html.content = event.detail;
+		}
+        updateIframeContent();
+    }
 </script>
 
 <div
@@ -283,27 +345,29 @@
 	</div>
 
 	{#if useTemplate === false}
-		<h2 class="mt-10 text-2xl font-bold mb-2 p-3 text-center underline">Unique mail</h2>
+		<h2 class="mt-10 text-2xl font-bold mb-2 p-3 text-center underline">Unique Mail</h2>
 		<button
-			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 			on:click={() => (useTemplate = true)}>Use a template</button
 		>
-		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10">
+		
+		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10 grid-container">
 			<div
 				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 			>
 				<h2 class="text-xl font-bold mb-4">Write your email</h2>
 				<div>
 					<p>
-						To add an image select a folder and click on the name of the image you want to add. You
-						can now paste the appropriate line in the html below.
+						To add an image, select a folder and click on the name of the image you want to add. You
+						can now paste the appropriate line in the HTML below.
 						<br />
 						The image cannot appear in the preview but will be sent in the mail.
 					</p>
 					<br />
 					{#if folders && folders.length > 0}
 						<p>
-							Select your folder : <select bind:value={selectedFolder}>
+							Select your folder: 
+							<select bind:value={selectedFolder}>
 								{#each folders as folder}
 									<option value={folder}>{folder.name}</option>
 								{/each}
@@ -315,7 +379,7 @@
 				</div>
 				{#if selectedFolder && selectedFolder.files && selectedFolder.files.length > 0}
 					<div>
-						<p>Images in the folder :</p>
+						<p>Images in the folder:</p>
 						{#each selectedFolder.files as file}
 							{#if file.type === 'image'}
 								<button
@@ -340,9 +404,9 @@
 					placeholder="Email Subject"
 					class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 				/>
-				<HtmlEditor bind:content={html} />
+				<HtmlEditor bind:content={unique_html.content} on:input={handleEditorInput} />
 				<button
-					class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+					class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
 					on:click={sendMail}>Send</button
 				>
 			</div>
@@ -351,7 +415,7 @@
 			>
 				<h2 class="text-xl font-bold mb-4">Preview</h2>
 				<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-					{@html html}
+					<iframe title="preview" id="preview-iframe" class="w-full h-full border-0" />
 				</div>
 			</div>
 		</div>
@@ -363,7 +427,7 @@
 			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 			on:click={() => (useTemplate = false)}>Use unique mail</button
 		>
-		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10">
+		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10 grid-container">
 			<div
 				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 			>
@@ -379,7 +443,7 @@
 				{#if selectedTemplate}
 					{#if containsToContact}
 						<div class="m-2 p-2 border-2 border-gray-300">
-							Enter informations for the to contact to contact in case the template contains ${'{TO_CONTACT}'}:
+							Enter informations for the to contact in case the template contains ${'{TO_CONTACT}'}:
 							<input
 								type="text"
 								bind:value={toContact.firstName}
@@ -420,11 +484,12 @@
 				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 			>
 				{#if selectedTemplate}
+					<h2 class="text-xl font-bold mb-4">Preview</h2>
 					<div class="m-2">
 						<h1>{selectedTemplate.name}</h1>
 					</div>
 					<div class="m-2 border border-gray-500 rounded">
-						{@html selectedTemplate.content}
+						<iframe title="preview" id="preview-iframe" class="w-full h-full border-0" />
 					</div>
 				{:else}
 					<p>Please select a template to see its content</p>
@@ -433,3 +498,41 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 0 auto;
+    }
+
+    /* Responsive design for smaller screens */
+    @media (max-width: 1050px) {
+        .grid-container {
+            grid-template-columns: 1fr;
+            margin: 0.5rem;
+        }
+    }
+
+    /* Adjust button and text alignment for smaller screens */
+    @media (max-width: 768px) {
+        h2 {
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+
+    /* Additional adjustments for very small screens */
+    @media (max-width: 480px) {
+        .grid-container {
+            gap: 5px;
+        }
+        input, select, button {
+            width: 100%;
+        }
+    }
+</style>

@@ -363,7 +363,7 @@
 	}
 </script>
 
-<main class="flex ml-5 mr-5">
+<main class="flex ml-5 mr-5 min-w-[1200px] overflow-x-auto">
 	<div class="w-full border-2 border-rose-500">
 		{#if selectedContact}
 			<div>

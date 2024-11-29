@@ -33,21 +33,21 @@
 
 <div class="m-1 border">
     <div>
-        <h2 class="text-lg font-bold">Concerts</h2>
+        <h2 class="text-lg font-semibold">Concerts</h2>
         {#if concerts && concerts.length > 0}
             <div class="overflow-x-auto">
-                <table class="border border-collapse w-full min-w-max">
+                <table class="border border-collapse w-full text-sm">
                     <thead>
                         <tr class="bg-gray-200">
-                            <th rowspan="2" class="crossed border border-gray-400 p-2"></th>
-                            <th rowspan="2" class="border border-gray-400 p-2">Section</th>
+                            <th rowspan="2" class="crossed border p-1"></th>
+                            <th rowspan="2" class="border p-1">Section</th>
                             {#each concerts as concert}
-                                <th colspan="2" class="border border-gray-400 p-2">{concert.place}</th>
+                                <th colspan="2" class="border p-1">{concert.place}</th>
                             {/each}
                         </tr>
                         <tr class="bg-gray-100">
                             {#each concerts as concert}
-                                <th colspan="2" class="border border-gray-400 p-2">
+                                <th colspan="2" class="border p-1">
                                     <DateShow startTime={concert.startDate} endTime={concert.endDate} withTime />
                                 </th>
                             {/each}
@@ -55,19 +55,19 @@
                     </thead>
                     <tbody>
                         {#each participants as participant}
-                            <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border border-gray-400">
-                                <td class="border border-gray-400 p-2 w-48">
+                            <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border">
+                                <td class="border p-1 whitespace-nowrap text-xs">
                                     {participant.contact.firstName} {participant.contact.lastName}
                                     {#if participant.isSectionLeader}
-                                      <span class="text-sm font-bold text-blue-500">(Leader)</span>
+                                      <span class="text-xs font-semibold text-blue-500">(Leader)</span>
                                     {/if}
                                 </td>
-                                <td class="border border-gray-400 p-2 w-32">{participant.section.name}</td>
+                                <td class="border p-1 text-xs">{participant.section.name}</td>
                                 {#each concerts as concert}
-                                    <td class="{laxInclude(participant, concert) ? 'bg-green-200' : 'bg-red-200'} border border-gray-400 p-2 fixed-width">
-                                        {laxInclude(participant, concert) ? 'present' : 'absent'}
+                                    <td class="{laxInclude(participant, concert) ? 'bg-green-200' : 'bg-red-200'} border p-1 text-center w-6 h-6">
+                                        {laxInclude(participant, concert) ? '✓' : '✗'}
                                     </td>
-                                    <td class="border border-gray-400 p-2">
+                                    <td class="border p-1 text-xs">
                                         {#if participantData = concert.participants?.find(p => p.id === participant.id)}
                                             {participantData ? participantData.pivot_comment : ''}
                                         {/if}
@@ -82,21 +82,21 @@
     </div>
 
     <div class="mt-4">
-        <h2 class="text-lg font-bold">Rehearsals</h2>
+        <h2 class="text-lg font-semibold">Rehearsals</h2>
         {#if rehearsals && rehearsals.length > 0}
             <div class="overflow-x-auto">
-                <table class="border border-collapse w-full min-w-max">
+                <table class="border border-collapse w-full text-sm">
                     <thead>
                         <tr class="bg-gray-200">
-                            <th rowspan="2" class="crossed border border-gray-400 p-2"></th>
-                            <th rowspan="2" class="border border-gray-400 p-2">Section</th>
+                            <th rowspan="2" class="crossed border p-1"></th>
+                            <th rowspan="2" class="border p-1">Section</th>
                             {#each rehearsals as rehearsal}
-                                <th colspan="2" class="border border-gray-400 p-2">{rehearsal.place}</th>
+                                <th colspan="2" class="border p-1">{rehearsal.place}</th>
                             {/each}
                         </tr>
                         <tr class="bg-gray-100">
                             {#each rehearsals as rehearsal}
-                                <th colspan="2" class="border border-gray-400 p-2">
+                                <th colspan="2" class="border p-1">
                                     <DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal/>
                                 </th>
                             {/each}
@@ -104,19 +104,19 @@
                     </thead>
                     <tbody>
                         {#each participants as participant}
-                            <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border border-gray-400">
-                                <td class="border border-gray-400 p-2 w-48">
+                            <tr class="odd:bg-gray-50 even:bg-white hover:bg-gray-200 border">
+                                <td class="border p-1 whitespace-nowrap text-xs">
                                     {participant.contact.firstName} {participant.contact.lastName}
                                     {#if participant.isSectionLeader}
-                                      <span class="text-sm font-bold text-blue-500">(Leader)</span>
+                                      <span class="text-xs font-semibold text-blue-500">(Leader)</span>
                                     {/if}
                                 </td>
-                                <td class="border border-gray-400 p-2 w-32">{participant.section.name}</td>
+                                <td class="border p-1 text-xs">{participant.section.name}</td>
                                 {#each rehearsals as rehearsal}
-                                    <td class="{laxInclude(participant, rehearsal) ? 'bg-green-200' : 'bg-red-200'} border border-gray-400 p-2 fixed-width">
-                                        {laxInclude(participant, rehearsal) ? 'present' : 'absent'}
+                                    <td class="{laxInclude(participant, rehearsal) ? 'bg-green-200' : 'bg-red-200'} border p-1 text-center w-6 h-6">
+                                        {laxInclude(participant, rehearsal) ? '✓' : '✗'}
                                     </td>
-                                    <td class="border border-gray-400 p-2">
+                                    <td class="border p-1 text-xs">
                                         {#if participantData = rehearsal.participants?.find(p => p.id === participant.id)}
                                             {participantData ? participantData.pivot_comment : ''}
                                         {/if}
@@ -143,19 +143,10 @@
         );
     }
 
-    .fixed-width {
-        width: 100px;
-    }
-
     @media (max-width: 768px) {
         table {
             display: block;
             overflow-x: auto;
-            white-space: nowrap;
-        }
-
-        th, td {
-            white-space: nowrap;
         }
     }
 </style>

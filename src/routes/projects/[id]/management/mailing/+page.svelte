@@ -5,7 +5,7 @@
 	import HtmlEditor from '../../../../mailing/HtmlEditor.svelte';
 	import type { Folder } from '$lib/types/Folder';
 	import type { Project } from '$lib/types/Project.js';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 
 	let project: Project;
@@ -68,6 +68,54 @@
 			console.error('Error fetching mailing data');
 		}
 	});
+
+	async function updateIframeContent() {
+        await tick(); // Wait for iframe to load
+        const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (doc) {
+                doc.open();
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body>
+                        ${selectedTemplate ? selectedTemplate.content : ""}
+                    </body>
+                    </html>
+                `);
+                doc.close();
+            }
+        }
+    }
+
+	async function updateIframeContentHtml() {
+		await tick();
+		const iframe = document.getElementById('preview-iframe2') as HTMLIFrameElement;
+		if (iframe && iframe.contentWindow) {
+			const doc = iframe.contentDocument || iframe.contentWindow.document;
+			if (doc) {
+				doc.open();
+				doc.write(`
+					<!DOCTYPE html>
+					<html lang="en">
+					<head>
+						<meta charset="UTF-8">
+						<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					</head>
+					<body>
+						${html}  <!-- Update with the latest HTML content -->
+					</body>
+					</html>
+				`);
+				doc.close();
+			}
+		}
+	}
 
 	async function sendRecruitmentEmail() {
 		console.log('Send Recruitment Notification');
@@ -224,6 +272,21 @@
 			alert('Network error, please try again');
 		}
 	}
+
+	function handleEditorInput(event: CustomEvent<string>) {
+        html = event.detail;
+        updateIframeContent();
+    }
+
+	// Call updateIframeContent whenever selectedTemplate changes
+	$: if (selectedTemplate) {
+        updateIframeContent();
+    }
+
+	$: if (html) {
+		console.log("test");
+		updateIframeContentHtml();
+	}
 </script>
 
 <div
@@ -240,20 +303,22 @@
 		</div>
 	{/if}
 
-	<div class="grid grid-cols-[1fr_2fr] gap-4">
-		<div class="col-span-1 m-5 border-2 rounded-lg border-red-400 w-1/2">
+	<div class="grid-container">
+		<div class="col-span-1 m-5 border-2 rounded-lg border-red-400">
 			<div class="p-3">
 				<h2 class="m-2 text-lg">Important informations</h2>
 				<ul>
 					<li>
-						Last recruitment email sent : {#if lastRecruitmentNotificationSent !== '' && lastRecruitmentNotificationSent !== null && lastRecruitmentNotificationSent !== undefined}<DateShow
-								startTime={lastRecruitmentNotificationSent.toString()}
-							/>{:else}Never{/if}
+						Last recruitment email sent :
+						{#if lastRecruitmentNotificationSent !== '' && lastRecruitmentNotificationSent !== null && lastRecruitmentNotificationSent !== undefined}
+							<DateShow startTime={lastRecruitmentNotificationSent.toString()} />
+						{:else}Never{/if}
 					</li>
 					<li>
-						Last callsheet notification sent : {#if lastCallsheetNotificationSent !== '' && lastCallsheetNotificationSent !== null && lastCallsheetNotificationSent !== undefined}<DateShow
-								startTime={lastCallsheetNotificationSent.toString()}
-							/>{:else}Never{/if}
+						Last callsheet notification sent :
+						{#if lastCallsheetNotificationSent !== '' && lastCallsheetNotificationSent !== null && lastCallsheetNotificationSent !== undefined}
+							<DateShow startTime={lastCallsheetNotificationSent.toString()} />
+						{:else}Never{/if}
 					</li>
 				</ul>
 			</div>
@@ -304,25 +369,22 @@
 		<h2 class="mt-10 text-2xl font-bold mb-2 text-center underline">Unique mail</h2>
 		<button
 			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-			on:click={() => (useTemplate = true)}>Use a template</button
-		>
-		<p class="ml-10">This email will be sent to every accepted participant in this project. </p>
-		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10">
-			<div
-				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
-			>
+			on:click={() => (useTemplate = true)}>Use a template</button>
+		<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
+		<div class="grid-container ml-10 mb-10 pt-5">
+			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
 				<h2 class="text-xl font-bold mb-4">Write your email</h2>
 				<div>
 					<p>
 						To add an image select a folder and click on the name of the image you want to add. You
-						can now paste the appropriate line in the html below.
-						<br />
+						can now paste the appropriate line in the html below.<br />
 						The image cannot appear in the preview but will be sent in the mail.
 					</p>
 					<br />
 					{#if folders && folders.length > 0}
 						<p>
-							Select your folder : <select bind:value={selectedFolder}>
+							Select your folder : 
+							<select bind:value={selectedFolder}>
 								{#each folders as folder}
 									<option value={folder}>{folder.name}</option>
 								{/each}
@@ -360,18 +422,15 @@
 					placeholder="Email Subject"
 					class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 				/>
-				<HtmlEditor bind:content={html} />
+				<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
 				<button
 					class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-					on:click={sendMail}>Send</button
-				>
+					on:click={sendMail}>Send</button>
 			</div>
-			<div
-				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
-			>
+			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
 				<h2 class="text-xl font-bold mb-4">Preview</h2>
 				<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-					{@html html}
+					<iframe id="preview-iframe2" title="Email Preview" class="w-full h-full border-0"></iframe>
 				</div>
 			</div>
 		</div>
@@ -381,12 +440,9 @@
 		<h2 class="mt-10 text-2xl font-bold mb-2 p-3 text-center underline">Template mail</h2>
 		<button
 			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-			on:click={() => (useTemplate = false)}>Use unique mail</button
-		>
-		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10">
-			<div
-				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
-			>
+			on:click={() => (useTemplate = false)}>Use unique mail</button>
+		<div class="grid-container ml-10 mb-10 pt-5">
+			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
 				<h2 class="text-xl font-bold mb-4">Complete the template informations</h2>
 				<p>
 					Please select the template you want to use :
@@ -396,30 +452,37 @@
 						{/each}
 					</select>
 				</p>
-				{#if selectedTemplate}					
+				{#if selectedTemplate}
 					<button
 						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-						on:click={sendTemplateToParticipants}>Send</button
-					>
+						on:click={sendTemplateToParticipants}>Send</button>
 				{/if}
 			</div>
-			<div
-				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
-			>
+			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
 				{#if selectedTemplate}
 					<div class="m-2">
-						
 						<h2 class="text-xl font-bold mb-4">{selectedTemplate.name}</h2>
 					</div>
-					<div class="m-2 border border-gray-500 rounded">
-						{@html selectedTemplate.content}
-					</div>
+					<iframe id="preview-iframe" title="Template Preview" class="w-full h-full border-0"></iframe>
 				{:else}
 					<p>Please select a template to see its content</p>
 				{/if}
 			</div>
 		</div>
 	{/if}
-
-
 </div>
+
+<style>
+	.grid-container {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+	}
+
+	@media (max-width: 1050px) {
+		.grid-container {
+			grid-template-columns: 1fr;
+			margin: 0.5rem;
+		}
+	}
+</style>

@@ -66,7 +66,7 @@
 </script>
 
 <Drawer
-	class="absolute z-10 w-1/3"
+	class="absolute z-10 w-[320px] sm:w-1/3"
 	placement="left"
 	transitionType="fly"
 	{transitionParams}
@@ -80,7 +80,7 @@
 		>
 			search options
 		</h5>
-		<CloseButton on:click={() => (hidden5 = true)} class="mb-4  dark:text-black" />
+		<CloseButton on:click={() => (hidden5 = true)} class="mb-4 dark:text-black" />
 	</div>
 
 	<div class="relative {!paginatorTop ? 'col-span-2' : ''}">
@@ -89,28 +89,37 @@
 			type="submit"
 			on:click={() => dispatchOptionsUpdated()}
 			class="text-white mt-0.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-			>Search</button
 		>
+			Search
+		</button>
 	</div>
 </Drawer>
 
 <div class="grid grid-cols-1 place-items-center p-2">
-	<div class="grid grid-cols-2 w-full mt-2">
+	<div
+		class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full mt-2 items-center justify-items-stretch"
+	>
 		<Button
 			class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
-			on:click={() => (hidden5 = false)}>search options</Button
+			on:click={() => (hidden5 = false)}
 		>
+			search options
+		</Button>
 
 		{#if paginatorTop}
-			<Paginator bind:meta bind:options {changePage} />
+			<div class="sm:col-start-2 col-start-1">
+				<Paginator bind:meta bind:options {changePage} />
+			</div>
 		{/if}
 	</div>
+
 	{#if !showData}
 		<slot />
 	{:else}
 		<Table bind:data bind:options bind:meta bind:uniqueUrl bind:editable {changePage} />
 	{/if}
-	<div class="my-2">
+
+	<div class="mt-4">
 		<Paginator
 			bind:meta
 			bind:options

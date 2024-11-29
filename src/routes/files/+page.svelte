@@ -333,35 +333,37 @@
 </script>
 
 <div class="w-full h-full">
-	<div class="grid grid-cols-5">
-		<div class="col-span-3 p-1 mr-1">
+	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-4">
+		<!-- File Upload Section -->
+		<div class="col-span-1 sm:col-span-2 lg:col-span-3 p-1">
 			<div class="border p-4 border-red-950 w-full h-min mb-1">
 				<label for="files">Upload files:</label>
 				<input id="files" multiple type="file" bind:files />
 
 				<button type="submit" on:click={submitFiles}>Submit</button>
 			</div>
-			<div class="flex">
+			<div class="flex mb-4">
 				<input
 					type="text"
 					placeholder={insideFolder ? `Searching files in ${insideFolder.name}` : 'Search files'}
-					class="flex-1 w-fit p-2 border border-gray-200 rounded-lg shadow mb-1"
+					class="flex-1 w-full p-2 border border-gray-200 rounded-lg shadow"
 					bind:value={searchFile}
 					disabled={insideFolder !== null}
 				/>
 
 				{#if lockedFiles}
-					<button class="align-middle ml-2 mr-2" on:click={clearFilesFilter}>
+					<button class="ml-2" on:click={clearFilesFilter}>
 						<span class="icon-[charm--cross]"></span>
 					</button>
 				{/if}
 			</div>
 			<div class="flex-1 w-full p-2 rounded-lg shadow mb-1">
-				<span class="align-middle mr-1"
-					><span class="icon-[mdi--information-slab-box]" style="color: black;"></span></span
-				>You can drag a file to a folder to link it !
+				<span class="align-middle mr-1">
+					<span class="icon-[mdi--information-slab-box]" style="color: black;"></span>
+				</span>
+				You can drag a file to a folder to link it!
 			</div>
-			<div class="relative grid grid-cols-4">
+			<div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
 				{#if loading}
 					<div>loading...</div>
 				{:else if allFiles instanceof Array && allFiles.length === 0}
@@ -369,13 +371,13 @@
 				{:else}
 					{#each listOfFiles as file}
 						<div
-							class="group text-sm *:break-words block max-w-xs max-h-xs mr-1 mt-1 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:max-h-full *:[&:not(:hover)]:truncate"
+							class="group text-sm break-words block max-w-xs p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:max-h-full"
 							draggable="true"
 							on:dragstart={() => (fileDragged = file)}
 							on:dragend={() => (fileDragged = null)}
 							role="contentinfo"
 						>
-							<div>
+							<div class="flex justify-between">
 								<span class="icon-[mdi--file]"></span>
 								<button
 									class="p-1 w-6 h-6 rounded-full ml-2 border border-gray-300"
@@ -392,81 +394,67 @@
 									<span class="icon-[line-md--edit]"></span>
 								</button>
 								<button
-									class="float-right place-content-center w-6 h-6 rounded-full ml-2"
+									class="w-6 h-6 rounded-full ml-2"
 									on:click={() => deleteFile(file)}
 									title="Delete file"
 								>
-									<span
-										class="icon-[material-symbols--delete-outline]"
-										style="width: 1.2rem; height: 1.2rem; color: red;"
-									></span>
+									<span class="icon-[material-symbols--delete-outline]" style="color: red;"></span>
 								</button>
-								{#if insideFolder}
-									<button
-										class="float-right place-content-center w-6 h-6 rounded-full ml-2"
-										on:click={() => unlinkFile(file)}
-										title="Unlink file from folder"
-									>
-										<span
-											class="icon-[octicon--unlink-24]"
-											style="width: 1.2rem; height: 1.2rem; color: red;"
-										></span>
-									</button>
-								{/if}
 							</div>
-							<h6 class="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">
-								{file.name}
-							</h6>
-							<p class="text-gray-700 dark:text-gray-300">Type : {file.type}</p>
-							<p class="text-gray-700 dark:text-gray-300">Path : {file.path}</p>
+							<h6 class="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">{file.name}</h6>
+							<p class="text-gray-700 dark:text-gray-300">Type: {file.type}</p>
+							<p class="text-gray-700 dark:text-gray-300">Path: {file.path}</p>
 						</div>
 					{/each}
 				{/if}
 			</div>
 		</div>
 
-		<div class="col-span-2 p-1 mr-1">
+		<!-- Folder Creation Section -->
+		<div class="col-span-1 sm:col-span-2 lg:col-span-2 p-1">
 			<div class="border p-4 border-red-950 w-full h-min mb-1">
 				<label for="folders">Create folder:</label>
 				<input id="folders" type="text" bind:value={folderName} />
 
 				<button type="submit" on:click={submitFolder}>Submit</button>
 			</div>
-			<div class="flex">
+			<div class="flex mb-4">
 				<input
 					type="text"
-					placeholder="Search files"
-					class="flex-1 w-fit p-2 border border-gray-200 rounded-lg shadow mb-1"
+					placeholder="Search folders"
+					class="flex-1 w-full p-2 border border-gray-200 rounded-lg shadow"
 					bind:value={searchFolder}
 				/>
 				{#if lockedFolders}
-					<button class="align-middle ml-2 mr-2" on:click={clearFoldersFilter}>
+					<button class="ml-2" on:click={clearFoldersFilter}>
 						<span class="icon-[charm--cross]"></span>
 					</button>
 				{/if}
 			</div>
 			<div class="flex-1 w-full p-2 rounded-lg shadow mb-1">
-				<span class="align-middle mr-1"
-					><span class="icon-[mdi--information-slab-box]" style="color: black;"></span></span
-				>Hover over a folder to see its content
+				<span class="align-middle mr-1">
+					<span class="icon-[mdi--information-slab-box]" style="color: black;"></span>
+				</span>
+				Hover over a folder to see its content
 			</div>
 			{#if loading}
 				<div>loading...</div>
 			{:else if allFolders instanceof Array && allFolders.length === 0}
 				<div>No folders</div>
 			{:else}
-				<div class="grid grid-cols-2">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
 					{#each listOfFolders as folder}
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 						<div
-							class="grid grid-cols-1 group text-sm max-w-xs max-h-xs mr-1 mt-1 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:max-h-full *:[&:not(:hover)]:truncate"
+							class="grid grid-cols-1 group text-sm max-w-xs p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:max-h-full"
+							role="region"
 							on:drop={() => dropHandle(folder)}
 							on:dragover={(e) => e.preventDefault()}
 							on:mouseover={() => fastFilterIn(folder)}
 							on:mouseout={() => fastFilterOut()}
+							on:focus={() => fastFilterIn(folder)}
+							on:blur={() => fastFilterOut()}
 						>
-							<div>
+							<div class="flex justify-between">
 								<span class="icon-[mdi--folder]"></span>
 								<button
 									class="p-1 w-6 h-6 rounded-full ml-2 mr-1 border border-gray-300"
@@ -478,29 +466,15 @@
 								>
 									<span class="flex icon-[mdi--pin-outline]"></span>
 								</button>
-								<!--
 								<button
-									class="p-1 w-6 h-6 rounded-full mr-2 border border-gray-300"
-									on:click={() => {}}
-									title="Validate"
-								>
-									<span class="icon-[mdi--check]"></span>
-								</button>
-								-->
-								<button
-									class="float-right place-content-center w-6 h-6 rounded-full ml-2 mr-2"
+									class="w-6 h-6 rounded-full ml-2 mr-2"
 									on:click={() => deleteFolder(folder)}
 									title="Delete folder"
 								>
-									<span
-										class="icon-[material-symbols--delete-outline]"
-										style="width: 1.2rem; height: 1.2rem; color: red;"
-									></span>
+									<span class="icon-[material-symbols--delete-outline]" style="color: red;"></span>
 								</button>
 							</div>
-							<h6 class="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">
-								{folder.name}
-							</h6>
+							<h6 class="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">{folder.name}</h6>
 						</div>
 					{/each}
 				</div>

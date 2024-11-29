@@ -41,15 +41,13 @@
 
 	onMount(async () => {
 		const res = await fetch(`/api/folders`);
-		
-
 	});
 
 	async function deleteCallsheet() {
 		let confirmDelete = confirm('Are you sure you want to delete this callsheet ?');
-			if (!confirmDelete) {
-				return;
-			}
+		if (!confirmDelete) {
+			return;
+		}
 		const response = await fetch(
 			`/api/projects/${callsheet.projectId}/management/callsheets/${callsheet.id}`,
 			{
@@ -63,7 +61,7 @@
 	}
 </script>
 
-<div class="grid grid-cols-2">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
 	{#if callsheet}
 		<div
 			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
@@ -75,8 +73,7 @@
 						class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
 					>
 						{#if !allowModification}
-							<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"
-							></span>
+							<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
 						{:else}
 							Stop editing
 						{/if}
@@ -100,9 +97,9 @@
 
 				{#if callsheet.id}
 					<div>
-						<a class="text-blue-600" href="/call_sheets/{callsheet.projectId}/-1"
-							><h2 class="text-lg">Link to callsheet</h2></a
-						>
+						<a class="text-blue-600" href="/call_sheets/{callsheet.projectId}/-1">
+							<h2 class="text-lg">Link to callsheet</h2>
+						</a>
 					</div>
 				{/if}
 
@@ -128,11 +125,11 @@
 					{/if}
 					<div>
 						{#if callsheet.contents && callsheet.contents.length > 0}
-							{#each callsheet.contents as content}<div class="grid grid-cols-1 gap-1">
+							{#each callsheet.contents as content}
+								<div class="grid grid-cols-1 gap-1">
 									<div class="flex items-center justify-center">
 										<input
-											class="border border-gray-100 flex-1
-											"
+											class="border border-gray-100 flex-1"
 											type="text"
 											placeholder="Title"
 											bind:value={content.title}
@@ -165,7 +162,7 @@
 							{/each}
 						{/if}
 					</div>
-				</div> 
+				</div>
 				{#if allowModification}
 					<div class="flex justify-end">
 						<button
@@ -179,7 +176,7 @@
 								on:click={deleteCallsheet}
 								class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
 							>
-									Delete callsheet
+								Delete callsheet
 							</button>
 						{/if}
 					</div>

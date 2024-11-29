@@ -313,15 +313,15 @@
 		</div>
 
 		<h4 class="text-lg">Pieces</h4>
-		<div class="container">
-			<div>
+		<div class="container flex flex-col md:flex-row md:gap-4">
+			<div class="flex-1">
 				<h4 class="text-lg sticky top-0 bg-white">Available pieces</h4>
 				{#if allPieces.length === 0}
 					<p>No pieces available</p>
 				{:else}
-					<section bind:this={allPiecesContainer} class="list p-1 min-w-[450px] min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
+					<section bind:this={allPiecesContainer} class="list p-1  min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
 						{#each allPieces as piece}
-							<div class="item">
+							<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
 								{piece.name} - {piece.composer.shortName}
 							</div>
 						{/each}
@@ -329,11 +329,11 @@
 				{/if}
 			</div>
 		
-			<div>
+			<div class="flex-1 mt-4 md:mt-0">
 				<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
-				<section bind:this={selectedPiecesContainer} class="list p-1 min-w-[450px] min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
+				<section bind:this={selectedPiecesContainer} class="list p-1  min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
 					{#each project.pieces as piece}
-						<div class="item">
+						<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
 							{piece.name} - {piece.composer.shortName}
 						</div>
 					{/each}
@@ -356,32 +356,32 @@
 		<h4 class="text-lg">Rehearsals</h4>
 		<div class="m-1 border">
 			{#if !allowModification}
-				<table
-					class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed"
-				>
-					<thead
-						class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
-					>
-						<tr>
-							<th>Date</th>
-							<th>Place</th>
-							<th>Comment</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#if project.rehearsals && project.rehearsals.length}
-							{#each project.rehearsals as rehearsal}
-								<tr>
-									<td><DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal/></td>
-									<td>{rehearsal.place}</td>
-									<td>{rehearsal.comment}</td>
-								</tr>
-							{/each}
-						{:else}
-							<tr><td colspan="3" class="text-center">No rehearsal</td></tr>
-						{/if}
-					</tbody>
-				</table>
+				<div class="overflow-x-auto">
+					<table class="table-auto max-w-min min-w-max">
+						<thead>
+							<tr>
+								<th class="px-3 py-1">Date</th>
+								<th class="px-3 py-1">Place</th>
+								<th class="px-3 py-1">Comment</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#if project.rehearsals && project.rehearsals.length}
+								{#each project.rehearsals as rehearsal}
+									<tr class="rehearsal-entry">
+										<td class="px-3 py-1">
+											<DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal/>
+										</td>
+										<td class="px-3 py-1">{rehearsal.place}</td>
+										<td class="px-3 py-1 max-w-xs">{rehearsal.comment}</td>
+									</tr>
+								{/each}
+							{:else}
+								<tr><td colspan="3" class="text-center px-3 py-1">No rehearsal</td></tr>
+							{/if}
+						</tbody>
+					</table>
+				</div>
 			{:else}
 				<div class="overflow-x-auto">
 					<table class="table-auto max-w-min min-w-max">
@@ -443,28 +443,32 @@
 		<h4 class="text-lg">Concerts</h4>
 		<div class="m-1 border">
 			{#if !allowModification}
-				<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed">
-					<thead class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
+			<div class="overflow-x-auto">
+				<table class="table-auto max-w-min min-w-max">
+					<thead>
 						<tr>
-							<th>Date</th>
-							<th>Place</th>
-							<th>Comment</th>
+							<th class="px-3 py-1">Date</th>
+							<th class="px-3 py-1">Place</th>
+							<th class="px-3 py-1">Comment</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#if project.concerts && project.concerts.length}
 							{#each project.concerts as concert}
-								<tr>
-									<td><DateShow startTime={concert.startDate} endTime={concert.endDate} withTime /></td>
-									<td>{concert.place}</td>
-									<td>{concert.comment}</td>
+								<tr class="concert-entry">
+									<td class="px-3 py-1">
+										<DateShow startTime={concert.startDate} endTime={concert.endDate} withTime />
+									</td>
+									<td class="px-3 py-1">{concert.place}</td>
+									<td class="px-3 py-1 whitespace-normal">{concert.comment}</td>
 								</tr>
 							{/each}
 						{:else}
-							<tr><td colspan="3" class="text-center">No concert</td></tr>
+							<tr><td colspan="3" class="text-center px-3 py-1">No concert</td></tr>
 						{/if}
 					</tbody>
 				</table>
+			</div>
 			{:else}
 				<div class="overflow-x-auto">
 					<table class="table-auto max-w-min min-w-max">
@@ -569,12 +573,10 @@
 					bind:options
 					bind:meta
 				>
-					<div class="grid grid-cols-4">
+					<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
 						{#if contacts}
 							{#each contacts as contact}
-								<div
-									class="flex items-center p-2 border border-gray-200 rounded dark:border-gray-700"
-								>
+								<div class="flex items-center p-4 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800">
 									<input
 										bind:checked={contact.selected}
 										id="bordered-checkbox-${contact.id}"
@@ -584,9 +586,10 @@
 									/>
 									<label
 										for="bordered-checkbox-${contact.id}"
-										class="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-										>{contact.firstName} {contact.lastName}</label
+										class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
 									>
+										{contact.firstName} {contact.lastName}
+									</label>
 								</div>
 							{/each}
 						{/if}
@@ -636,15 +639,7 @@
 	  background-color: #ddd;
 	}
 
-	.container {
-        display: flex;
-        gap: 16px;
-    }
-
-    .item {
-        padding: 4px;
-        border: 1px solid gray;
-        margin-bottom: 4px;
-        background-color: white;
+    .item:active {
+        cursor: grabbing;
     }
 </style>

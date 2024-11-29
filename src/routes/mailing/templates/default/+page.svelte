@@ -19,6 +19,7 @@
 		}
 
 		const data = {
+			id: selectedTemplate.id,
 			name: selectedTemplate.name,
 			content: selectedTemplate.content
 		};

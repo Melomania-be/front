@@ -97,15 +97,20 @@
 	on:optionsUpdated={fetchData}
 ></SimpleFilterer>
 
-<button
-	on:click={() => goto(`${urlFront}/creation`)}
-	class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-	>Add a callsheet</button
->
-{#if callsheets.length > 0}
-	<a
-		href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
-		class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-		>Create a new callsheet from the last one</a
+<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-start">
+	<button
+		on:click={() => goto(`${urlFront}/creation`)}
+		class="w-full sm:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
 	>
-{/if}
+		Add a callsheet
+	</button>
+
+	{#if callsheets.length > 0}
+		<a
+			href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
+			class="w-full sm:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
+		>
+			Create a new callsheet from the last one
+		</a>
+	{/if}
+</div>

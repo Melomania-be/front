@@ -70,48 +70,55 @@
 </script>
 
 <SimpleFilterer
-	bind:data={dataHolder}
-	bind:meta
-	bind:options
-	bind:uniqueUrl
-	on:optionsUpdated={() => fetchData()}
+    bind:data={dataHolder}
+    bind:meta
+    bind:options
+    bind:uniqueUrl
+    on:optionsUpdated={() => fetchData()}
 >
-	<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-		<thead class="text-xs text-gray-700 uppercase dark:text-gray-400">
-			<tr>
-				<th>First name</th>
-				<th>Last name</th>
-				<th>Email</th>
-				<th>Phone</th>
-				<th>Messenger</th>
-				<th>Section</th>
-				<th>Last activity</th>
-				<th>Updated at</th>
-			</tr>
-		</thead>
-		<tbody>
-			{#each participants as participant}
-				<tr
-					on:click={() => goto(uniqueUrl + `/${participant.id}`)}
-					class="cursor-pointer hover:border border-black"
-				>
-					<td>{participant.contact.firstName}</td>
-					<td>{participant.contact.lastName}</td>
-					<td>{participant.contact.email}</td>
-					<td>{participant.contact.phone}</td>
-					<td>{participant.contact.messenger}</td>
-					<td>
-						{participant.section.name}
-						{#if participant.isSectionLeader}
-							<span class="text-sm font-bold text-blue-500">(Leader)</span>
-						{/if}
-					</td>
-					<td><DateShow bind:startTime={participant.lastActivity} /></td>
-					<td><DateShow bind:startTime={participant.updatedAt} /></td>
-				</tr>
-			{/each}
-		</tbody>
-	</table>
+    <div class="w-full overflow-x-auto">
+        <table class="w-full min-w-[800px] text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="bg-gray-100 dark:bg-gray-700 text-xs text-gray-700 uppercase dark:text-gray-400">
+                <tr>
+                    <th class="px-4 py-2">First name</th>
+                    <th class="px-4 py-2">Last name</th>
+                    <th class="px-4 py-2">Email</th>
+                    <th class="px-4 py-2">Phone</th>
+                    <th class="px-4 py-2">Messenger</th>
+                    <th class="px-4 py-2">Section</th>
+                    <th class="px-4 py-2">Last activity</th>
+                    <th class="px-4 py-2">Updated at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each participants as participant}
+                    <tr
+                        on:click={() => goto(uniqueUrl + `/${participant.id}`)}
+                        class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 border-b border-gray-200 dark:border-gray-700"
+                    >
+                        <td class="px-4 py-2">{participant.contact.firstName}</td>
+                        <td class="px-4 py-2">{participant.contact.lastName}</td>
+                        <td class="px-4 py-2">{participant.contact.email}</td>
+                        <td class="px-4 py-2">{participant.contact.phone}</td>
+                        <td class="px-4 py-2">{participant.contact.messenger}</td>
+                        <td class="px-4 py-2">
+                            {participant.section.name}
+                            {#if participant.isSectionLeader}
+                                <span class="text-sm font-bold text-blue-500">(Leader)</span>
+                            {/if}
+                        </td>
+                        <td class="px-4 py-2"><DateShow bind:startTime={participant.lastActivity} /></td>
+                        <td class="px-4 py-2"><DateShow bind:startTime={participant.updatedAt} /></td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
 </SimpleFilterer>
 
-<button on:click={() => goto(`${urlFront}/creation`)}>Add a participant</button>
+<button 
+    on:click={() => goto(`${urlFront}/creation`)} 
+    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+>
+    Add a participant
+</button>
