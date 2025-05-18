@@ -20,6 +20,7 @@
 			}),
 			form: registration.form.map((f) => {
 				return {
+					id: f.id ?? null,
 					text: f.text,
 					type: f.type
 				};
