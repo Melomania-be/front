@@ -1,4 +1,3 @@
-<!-- Registration forms at the end of the registration page  -->
 <script lang="ts">
 	import type { Answer } from '$lib/types/Answer';
 	import type { Form } from '$lib/types/Form';
@@ -18,7 +17,7 @@
 	}
 </script>
 
-<div class="my-1 p-1">
+<div class="border my-1 p-1">
 	{#if form && answer}
 		{#if form.type === 'text'}
 			<div>
@@ -54,9 +53,8 @@
 				</select>
 			</div>
 		{:else if form.type === 'multiple' && form.text.split(':').length > 1}
-			<div >
-				<label class="font-semibold" for="form-{form.id}">{form.text.split(':')[0]}</label>
-				<div class="ml-3">
+			<div>
+				<label for="form-{form.id}">{form.text.split(':')[0]}</label>
 				{#each form.text.split(':')[1].split(';') as option}
 					<div>
 						<input
@@ -78,7 +76,6 @@
 						<label for="form-{form.id}">{option}</label>
 					</div>
 				{/each}
-				</div>
 			</div>
 		{/if}
 	{/if}
