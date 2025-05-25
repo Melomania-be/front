@@ -72,7 +72,7 @@ jobs:
           type: now
           from_branch: ${{ needs.create-release.outputs.branch_name }}
           target_branch: dev
-          message: 'Merge ${{ needs.create-release.outputs.branch_name }} into dev'
+          message: 'Merge release-${{ needs.create-release.outputs.branch_name }} into dev'
           github_token: ${{ secrets.TOKEN }}
 
   update-production:
@@ -82,16 +82,16 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@master
+      - name: Move prod to tag
+        run: |
+          TAG_NAME=v${{ needs.bump-version.outputs.version }}
+          SHA=$(git rev-list -n 1 $TAG_NAME)
 
-      - name: Merge dev -> prod
-        uses: devmasx/merge-branch@master
-        with:
-          type: now
-          from_branch: dev
-          target_branch: prod
-          message: 'Merge dev into prod'
-          github_token: ${{ secrets.TOKEN }}
+          curl -X PATCH \
+            -H "Authorization: token ${{ secrets.TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/git/refs/heads/prod \
+            -d "{\"sha\":\"$SHA\",\"force\":true}"
 
   enable-dev-protection:
     name: Enable Branch Protection
