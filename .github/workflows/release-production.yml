@@ -10,7 +10,7 @@ jobs:
     with:
       branch: release-prod
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
 
   merge:
     runs-on: ubuntu-latest
@@ -47,4 +47,4 @@ jobs:
       branch: release-prod
       lock: true
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}

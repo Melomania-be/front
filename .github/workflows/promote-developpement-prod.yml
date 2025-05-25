@@ -21,7 +21,7 @@ jobs:
       branch: dev
       versionType: ${{ github.event.inputs.versionType || 'patch' }}
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
 
   create-release:
     name: Create Release
@@ -31,7 +31,7 @@ jobs:
       branch: dev
       version: ${{ needs.bump-version.outputs.version }}
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
 
   disable-dev-protection:
     name: Disable Branch Protection
@@ -40,7 +40,7 @@ jobs:
     with:
       branch: dev
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
 
   disable-prod-protection:
     name: Disable Release-Developpement Branch Protection
@@ -49,7 +49,7 @@ jobs:
     with:
       branch: prod
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
 
   update-developpement:
     name: Update Developpement
@@ -65,7 +65,7 @@ jobs:
           from_branch: release-${{ needs.create-release.outputs.branch_name }}
           target_branch: dev
           message: 'Merge release-${{ needs.create-release.outputs.branch_name }} into dev'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.TOKEN }}
 
   update-production:
     name: Update Production
@@ -81,7 +81,7 @@ jobs:
           from_branch: dev
           target_branch: prod
           message: 'Merge dev into prod'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.TOKEN }}
 
   enable-dev-protection:
     name: Enable Branch Protection
@@ -91,7 +91,7 @@ jobs:
       branch: dev
       lock: false
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
 
   enable-prod-protection:
     name: Enable Release-Developpement Branch Protection
@@ -101,4 +101,4 @@ jobs:
       branch: prod
       lock: true
     secrets:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TOKEN: ${{ secrets.TOKEN }}
