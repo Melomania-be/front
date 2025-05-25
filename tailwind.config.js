@@ -5,15 +5,7 @@ export default {
 	darkMode: 'class',
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 	theme: {
-		extend: {
-			colors: {
-				customGray: '#989898',
-				bgGray: '#ECECEC'
-			}
-		}
+		extend: {}
 	},
-	plugins: [
-		addDynamicIconSelectors(),
-		require('@tailwindcss/typography')
-	]
+	plugins: [addDynamicIconSelectors()]
 };
