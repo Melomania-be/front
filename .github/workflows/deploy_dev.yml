@@ -3,6 +3,12 @@ name: Deploy to Development Server
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  packages: read
+
 jobs:
   build:
     name: Build

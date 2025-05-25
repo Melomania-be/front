@@ -1,5 +1,8 @@
 name: enable branch protection rules
 
+permissions:
+  contents: write
+
 on:
   workflow_call:
     inputs:
