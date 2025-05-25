@@ -6,6 +6,8 @@ on:
 jobs:
   disable-protection:
     name: Deactivate Branch Protection
+    permissions:
+      contents: read
     uses: ./.github/workflows/_disable_protection.yml
     with:
       branch: release-prod
@@ -15,6 +17,8 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     needs: disable-protection
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,6 +45,8 @@ jobs:
 
   activate-protection:
     name: Activate Branch Protection
+    permissions:
+      contents: read
     uses: ./.github/workflows/_enable_protection.yml
     needs: merge
     with:
