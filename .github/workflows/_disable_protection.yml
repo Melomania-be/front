@@ -1,12 +1,15 @@
 name: disable branch protection rules
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
       branch:
-        type: string
-        description: 'Branch to checkout'
-        required: true
+       type: string
+       description: 'Branch to checkout'
+       required: true
     secrets:
       TOKEN:
         required: true
