@@ -1,7 +1,8 @@
 name: Promote Developpement to Production
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 on:
   workflow_dispatch:
