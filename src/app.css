@@ -1,4 +1,37 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 @tailwind variants;
+
+.ql-editor blockquote {
+    border: 2px dashed #0077ff;
+    border-radius: 8px;
+    background-color: #f0f8ff;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.ql-editor img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: auto;
+}
+
+.ql-align-center img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ql-align-right img {
+    float: right;
+    margin-left: 1rem;
+}
+
+.ql-align-left img {
+    float: left;
+    margin-right: 1rem;
+}
+
