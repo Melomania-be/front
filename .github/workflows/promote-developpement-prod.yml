@@ -70,9 +70,9 @@ jobs:
         uses: devmasx/merge-branch@master
         with:
           type: now
-          from_branch: release-${{ needs.create-release.outputs.branch_name }}
+          from_branch: ${{ needs.create-release.outputs.branch_name }}
           target_branch: dev
-          message: 'Merge release-${{ needs.create-release.outputs.branch_name }} into dev'
+          message: 'Merge ${{ needs.create-release.outputs.branch_name }} into dev'
           github_token: ${{ secrets.TOKEN }}
 
   update-production:
