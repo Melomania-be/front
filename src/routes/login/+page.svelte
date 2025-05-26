@@ -2,12 +2,17 @@
 	import { goto } from '$app/navigation';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import { redirect } from '@sveltejs/kit';
-
+import toast from 'svelte-french-toast';
 	import { fade, fly, scale } from 'svelte/transition';
 	import { elasticOut } from 'svelte/easing';
+	 import { 
+        faEye,
+        faEyeSlash
+    } from '@fortawesome/free-solid-svg-icons'; 
+	import Fa from 'svelte-fa';
 
 	const responseHandlerClient = new ResponseHandlerClient();
-
+	let showPassword = false;
 	let email = '';
 	let password = '';
 
@@ -56,10 +61,26 @@
 				body: JSON.stringify({ email, password })
 			});
 
-			responseHandlerClient.handle(response, async () => {
-				window.location.href = '/';
-			});
-			loading = false;
+			// responseHandlerClient.handle(response, async () => {
+			// 	window.location.href = '/';
+			// });
+			// loading = false;
+		if (response.ok) {
+      // Optionally show success toast before redirect
+      submitted = true;
+      toast.success('Login successful! Redirecting...');
+        window.location.href = '/';
+     
+    } else {
+      const data = await response.json();
+     const errorMessage = data?.errors?.[0]?.message || 'Invalid email or password';
+      toast.error(errorMessage);
+
+      // Optional: Shake form or mark inputs red if you want UX feedback
+    }
+
+    loading = false;
+  
     }
   }
 
@@ -141,7 +162,7 @@
 			  {/if}
 			</div>
 			
-			<div class="space-y-2" in:fly={{ y: 10, duration: 400, delay: 700 }}>
+			<!-- <div class="space-y-2" in:fly={{ y: 10, duration: 400, delay: 700 }}>
 			  <label for="password" class="block text-sm font-medium text-gray-700">
 				Password
 			  </label>
@@ -157,9 +178,52 @@
 				  {passwordError}
 				</p>
 			  {/if}
-			</div>
+			</div> -->
 			
-			<div class="flex items-center justify-between" in:fly={{ y: 10, duration: 400, delay: 800 }}>
+
+<div class="space-y-2" in:fly={{ y: 10, duration: 400, delay: 700 }}>
+  <label for="password" class="block text-sm font-medium text-gray-700">
+    Password
+  </label>
+
+  <div class="relative">
+	{#if showPassword}
+	  <input
+		id="password"
+		type="text"
+		bind:value={password}
+		class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+		placeholder="Password"
+	  />
+	{:else}
+	  <input
+		id="password"
+		type="password"
+		bind:value={password}
+		class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+		placeholder="••••••••"
+	  />
+	{/if}
+
+    <button
+      type="button"
+      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+      on:click={() => (showPassword = !showPassword)}
+      aria-label="Toggle password visibility"
+    >
+      <Fa icon={showPassword ? faEyeSlash : faEye} />
+    </button>
+  </div>
+
+  {#if passwordError}
+    <p class="text-red-500 text-sm" in:fly={{ y: -10, duration: 200 }}>
+      {passwordError}
+    </p>
+  {/if}
+</div>
+
+
+			<!-- <div class="flex items-center justify-between" in:fly={{ y: 10, duration: 400, delay: 800 }}>
 			  <div class="flex items-center">
 				<input
 				  id="remember-me"
@@ -176,7 +240,7 @@
 				  Forgot password?
 				</a>
 			  </div>
-			</div>
+			</div> -->
 			
 			<div in:fly={{ y: 10, duration: 400, delay: 900 }}>
 			  <button
