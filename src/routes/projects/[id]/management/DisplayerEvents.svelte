@@ -90,7 +90,8 @@
 		{#if mode === 'concerts'}
 			<div class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800 w-full">
 				<ul class="divide-y divide-gray-200 dark:divide-gray-700">
-					{#each project.concerts as concert}
+					<!-- {#each project.concerts as concert} -->
+					 {#each [...project.concerts].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()) as concert}
 						<li class="py-3 sm:py-4">
 							<div class="flex items-center justify-between">
 								<div class="flex items-center space-x-1">
