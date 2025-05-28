@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Answer } from '$lib/types/Answer';
 	import type { Registration } from '$lib/types/Registration';
-	import type {Participant} from '$lib/types/Participant';
+	import type { Participant } from '$lib/types/Participant';
 	import RegistrationForm from './RegistrationForm.svelte';
 	import DateShow from '../DateShow.svelte';
 	import imageBackground from '$lib/assets/BackgrounImage.avif';
@@ -20,30 +20,35 @@
 
 	export let registration: Registration;
 	export let projectId: number;
-	
-	let participants : Participant[] = [];
+
+
+	type ParticipantsCountBySection = {
+		section_id: number;
+		section_name: string | null;
+		participants_count: number;
+	};
+
+	let participants: ParticipantsCountBySection[] = [];
 
 	onMount(async () => {
-    	await loadParticipants();
-  	});
+		await loadParticipants();
+	});
 
 	async function loadParticipants() {
-		console.log('projectId:', projectId); // Ajoute ceci
-		const response = await fetch(`/api/projects/${projectId}/management/participants`);
+		const response = await fetch(`/api/projects/${projectId}/public/participants-count`);
+
 
 		if (!response.ok) {
-		// Gestion d'erreur simple
-		console.error('Erreur lors de la récupération des participants:', response.statusText);
-		return;
+			// Gestion d'erreur simple
+			console.error('Erreur lors de la récupération des participants:', response.statusText);
+			return;
 		}
 
-		const data = await response.json();
+		const data : ParticipantsCountBySection[] = await response.json();
 		console.log('Participants récupérés:', data);
 
 		participants = data;
-		console.log(participants);
 	}
-
 
 	let isMobile = false;
 
@@ -60,7 +65,7 @@
 		};
 	});
 
-	let step: number = 0;
+	let step: number = 2;
 
 	let tabName: string = 'event';
 
@@ -138,7 +143,9 @@
 
 	function handleTextInput(event: Event, id: number, type: 'concert' | 'rehearsal') {
 		const inputElement = event.target as HTMLInputElement;
+		console.log(id);
 		if (type === 'concert') {
+			console.log(newContact.concerts);
 			if (newContact.concerts.some((concert) => concert.id === id)) {
 				newContact.concerts = updateComment(newContact.concerts, id, inputElement.value);
 			}
@@ -157,8 +164,7 @@
 			concertError = false;
 		}
 
-
-		console.log("submit clicked");
+		console.log('submit clicked');
 		let hasError = false;
 
 		if (newContact.rehearsals.length === 0) {
@@ -269,8 +275,40 @@
 		return !Object.values(contactErrors).includes(true);
 	}
 
-	let showPopup = false ;
-	
+	let showPopup = false;
+
+	let openCommentPopUp = false;
+	let commentEventId : number;
+	let commentEventType : 'concert' | 'rehearsal' ;
+
+	function showCommentPopUp(id : number , type : 'concert' | 'rehearsal' ){
+		commentEventId = id;
+		commentEventType = type;
+
+		openCommentPopUp = true;
+	}
+
+	function commentPlaceHolder(id : number, type : 'concert' | 'rehearsal' ) : string {
+		if(type === 'concert'){
+			let comment = newContact.concerts.find((c) => c.id === commentEventId)?.comment;
+			if(comment == undefined || comment == ''){
+				return 'Write your comment...';
+			}
+			else{
+				return comment;
+			}
+		}
+		else{
+			let comment = newContact.rehearsals.find((r) => r.id === commentEventId)?.comment;
+			if(comment == undefined || comment == ''){
+				return 'Write your comment...';
+			}
+			else{
+				return comment;
+			}
+		}
+	}
+
 </script>
 
 <!-- Image fixe avec filtre -->
@@ -279,14 +317,49 @@
 	<div class="overlay-filter"></div>
 </div>
 
+<!-- POPUP section Full-->
 {#if showPopup}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 		<div class="bg-white p-6 rounded-xl shadow-xl w-96 text-center">
 			<h2 class="text-lg font-semibold mb-4">Section Full</h2>
 			<p>The selected section is full.</p>
 			<p>Do you still want to proceed?</p>
-			<button class="mt-4 w-[30%] mr-6 px-4 py-2 bg-[#6b9ad9] text-white rounded" on:click={() => {step = 2; showPopup = false}}>Cancel</button>
-			<button class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white rounded" on:click={() => {step = 3; showPopup = false}}>OK</button>
+			<button
+				class="mt-4 w-[30%] mr-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				on:click={() => {
+					step = 1;
+					showPopup = false;
+				}}>Cancel</button
+			>
+			<button
+				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				on:click={() => {
+					step = 2;
+					showPopup = false;
+				}}>OK</button
+			>
+		</div>
+	</div>
+{/if}
+
+<!-- POPUP Add Comment-->
+{#if openCommentPopUp}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-96 text-center">
+			<h2 class="text-lg font-semibold mb-4">Add a Comment</h2>
+			<input
+				id={`comment-${commentEventType}-${commentEventId}`}
+				class="bg-[#ebebeb] w-full p-1 pl-2 pr-2 border-3 rounded h-full focus:border-blue-500"
+				placeholder={commentPlaceHolder(commentEventId,commentEventType)}
+				on:input={(e) =>
+					handleTextInput(e, commentEventId ?? 0, commentEventType === 'concert' ? 'concert' : 'rehearsal')}
+			/>
+			<button
+				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				on:click={() => {
+					openCommentPopUp = false;
+				}}>Close</button
+			>
 		</div>
 	</div>
 {/if}
@@ -302,12 +375,7 @@
 					<div class="tabs">
 						{#if !isMobile}
 							<Steps
-								steps={[
-									{ text: 'Project Details' },
-									{ text: 'Information' },
-									{ text: 'Contact' },
-									{ text: 'Presence' }
-								]}
+								steps={[{ text: 'Project Details' }, { text: 'Contact' }, { text: 'Attendances' }]}
 								current={step}
 								size="3rem"
 								line="3px"
@@ -316,12 +384,7 @@
 							/>
 						{:else}
 							<Steps
-								steps={[
-									{ text: 'Project' },
-									{ text: 'Information' },
-									{ text: 'Contact' },
-									{ text: 'Presence' }
-								]}
+								steps={[{ text: 'Project' }, { text: 'Contact' }, { text: 'Attendances' }]}
 								current={step}
 								size="2.5rem"
 								line="3px"
@@ -336,7 +399,10 @@
 								>Events</button
 							>
 							<button class:active={tabName === 'program'} on:click={() => (tabName = 'program')}
-								>Programs & Scores</button
+								>Programs</button
+							>
+							<button class:active={tabName === 'info'} on:click={() => (tabName = 'info')}
+								>Information</button
 							>
 						</div>
 					{/if}
@@ -540,6 +606,24 @@
 										<p class="px-6 py-4">No pieces found</p>
 									{/if}
 								{/if}
+								{#if tabName === 'info'}
+									{#if registration.contents && registration.contents.length > 0}
+										<div class="bg-[#ececec] h-full pl-7 pr-7 overflow-y-auto pb-7">
+											{#each registration.contents as content}
+												<h2
+													class="text-2xl font-medium tracking-tight text-black dark:text-white mb-3 mt-5"
+												>
+													{@html content.title}
+												</h2>
+												<div class="w-full flex">
+													<p class="text-gray-500 dark:text-gray-400 text-justify">
+														{@html content.text}
+													</p>
+												</div>
+											{/each}
+										</div>
+									{/if}
+								{/if}
 							</div>
 						</div>
 						<div class="form-body-buttons">
@@ -550,33 +634,8 @@
 							</div>
 						</div>
 					{/if}
-					<!-- Step 2 : Informations -->
+					<!-- Step 2 : Contact -->
 					{#if step === 1}
-						{#if registration.contents && registration.contents.length > 0}
-							<div class="bg-[#ececec] h-full pl-7 pr-7 overflow-y-auto pb-7">
-								{#each registration.contents as content}
-									<h2
-										class="text-2xl font-medium tracking-tight text-black dark:text-white mb-3 mt-5"
-									>
-										{@html content.title}
-									</h2>
-									<div class="w-full flex">
-										<p class="text-gray-500 dark:text-gray-400 text-justify">
-											{@html content.text}
-										</p>
-									</div>
-								{/each}
-							</div>
-						{/if}
-						<div class="form-body-buttons">
-							<div class="bg-white w-full flex justify-center">
-								<button class="bg-blue-500" on:click={() => (step = step - 1)}> Back </button>
-								<button class="bg-blue-500" on:click={() => (step = step + 1)}> Next </button>
-							</div>
-						</div>
-					{/if}
-					<!-- Step 3 : Contact -->
-					{#if step === 2}
 						<div
 							class=" ml-6 w-full self-center mb-5 h-full mr-6 flex flex-col gap-3 content-contact"
 						>
@@ -695,14 +754,14 @@
 										bind:value={newContact.section_id}
 									>
 										{#each registration.project.sectionGroup.sections as section}
-											<option class="
-												{participants.filter(p => p.section.id === section.id).length >= section.size ? 'text-gray-400' : ''}"
-												value={section.id}>
-													{#if participants.filter(p => p.section.id === section.id).length >= section.size}
-														{section.name} - full
-													{:else}
-														{section.name} - {participants.filter(p => p.section.id === section.id).length} / {section.size}
-													{/if}
+											<option
+												value={section.id}
+											>
+												{#if (participants.find(p => p.section_id === section.id)?.participants_count ?? 0) >= section.size}
+													{section.name} (FULL)
+												{:else}
+													{section.name}
+												{/if}
 											</option>
 										{/each}
 									</select>
@@ -730,43 +789,36 @@
 									on:click={() => {
 										if (validateContactFields()) {
 											newContact.concerts = [];
-      										newContact.rehearsals = [];
-											const selectedSection = registration.project?.sectionGroup?.sections?.find((section) => section.id === newContact.section_id);
+											newContact.rehearsals = [];
+											const selectedSection = registration.project?.sectionGroup?.sections?.find(
+												(section) => section.id === newContact.section_id
+											);
 											if (selectedSection && selectedSection.size) {
-												const isFull = participants.filter(p => p.section.id === selectedSection.id).length >= selectedSection.size;
+												const isFull =
+													(participants.find((p) => p.section_id === selectedSection.id)?.participants_count ?? 0) >=
+													selectedSection.size;
 												if (isFull) {
 													showPopup = true;
-													return
+													return;
 												}
 											}
-											step = 3;
+											step = step + 1;
 										}
-										
 									}}
 								>
 									Next
 								</button>
-								
 							</div>
 						</div>
 					{/if}
-					{#if step === 3}
-					
+					{#if step === 2}
 						<div
 							class="bg-[#ececec] pr-5 pt-5 h-full w-full overflow-y-auto pb-10 form-body-content"
 						>
-							<div class="ml-6 mr-8">
+							<div class="ml-6 mr-1">
 								<h3 class="text-xl font-bold tracking-tight text-gray-500 dark:text-white mb-2">
-									Concert attendance
+									Attendances
 								</h3>
-								{#if concertError}
-									<div class="flex">
-										<Fa icon={faWarning} class="text-[14px]" style="color: #ef4444 ;" />
-										<div class="text-red-500 text-xs ml-2">
-											Please select at least one concert you will attend
-										</div>
-									</div>
-								{/if}
 
 								{#if !isMobile}
 									<table
@@ -778,6 +830,7 @@
 												<th class="px-6 py-3">Date</th>
 												<th class="px-6 py-3">Time</th>
 												<th class="px-6 py-3">Location</th>
+												<th class="px-6 py-3">Type</th>
 												<th class="px-6 py-3">Additional information</th>
 												<th class="px-6 py-3">Add a comment</th>
 											</tr>
@@ -785,8 +838,8 @@
 										<tbody
 											class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600"
 										>
-											{#if registration.project?.concerts}
-												{#each registration.project.concerts as concert}
+											{#if combinedEvents.length > 0}
+												{#each combinedEvents as event}
 													<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
 														<td
 															class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md"
@@ -794,48 +847,53 @@
 															<input
 																class="w-5 h-5 accent-[#30598f]"
 																type="checkbox"
-																id={`rehearsal-${concert.id}`}
-																value={concert.id}
-																on:change={(e) =>
-																	handleCheckboxChange(e, concert.id ?? 0, 'concert')}
+																id={`rehearsal-${event.id}`}
+																value={event.id}
+																on:change={(e) => handleCheckboxChange(e, event.id ?? 0, 'concert')}
 															/>
 														</td>
 														<td
 															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
 															><DateShow
-																startTime={concert.startDate}
-																endTime={concert.endDate}
+																startTime={event.startDate}
+																endTime={event.endDate}
 																withTime={false}
 															></DateShow></td
 														>
 														<td
 															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
 															><DateShow
-																startTime={concert.startDate}
-																endTime={concert.endDate}
+																startTime={event.startDate}
+																endTime={event.endDate}
 																withTime={true}
 																withDate={false}
 															></DateShow></td
 														>
 														<td
 															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
-															>{concert.place}</td
+															>{event.place}</td
 														>
+														<td class="px-6 py-3 border-t-2 border-b-2 border-gray-300">
+															{#if event.type === 'concert'}
+																<div class="eventTypeConcert">{event.type}</div>
+															{/if}
+															{#if event.type === 'rehearsal'}
+																<div class="eventTypeRehearsal">{event.type}</div>
+															{/if}
+														</td>
 														<td
 															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
-															>{concert.comment
-																? concert.comment
-																: 'No additionnal information'}</td
+															>{event.comment ? event.comment : 'No additionnal information'}</td
 														>
 														<td
 															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
 														>
 															<input
-																id={`comment-concert-${concert.id}`}
+																id={`comment-concert-${event.id}`}
 																class="bg-[#ebebeb] p-1 pl-2 pr-8 rounded"
 																type="text"
 																placeholder="Write your comment..."
-																on:input={(e) => handleTextInput(e, concert.id ?? 0, 'concert')}
+																on:input={(e) => handleTextInput(e, event.id ?? 0, 'concert')}
 															/>
 														</td>
 													</tr>
@@ -849,219 +907,88 @@
 									</table>
 								{/if}
 								{#if isMobile}
-									{#if registration.project?.concerts}
-										{#each registration.project.concerts as concert}
+									{#if combinedEvents.length > 0}
+										{#each combinedEvents as event}
 											<div
-												class=" bg-white border-[2px] flex flex-1 gap-5 items-center w-full border-[#989898] pl-[10px] m-[10px] p-[5px] rounded-[12px] text-xs relative"
+												class=" bg-white border-[2px] border-[#989898] pl-[10px] m-[15px] p-[5px] rounded-[12px] text-xs relative flex flex-col"
 											>
-												<input
-													class="w-10 h-10 ml-3 accent-[#30598f]"
-													type="checkbox"
-													id={`rehearsal-${concert.id}`}
-													value={concert.id}
-													on:change={(e) => handleCheckboxChange(e, concert.id ?? 0, 'concert')}
-												/>
-												<div class=" w-full">
-													<div class=" flex items-center gap-2 ml-2 p-[2px]">
-														<Fa icon={faCalendar} class="text-[14px]" style="color: #6B9AD9;" />
-														<DateShow
-															startTime={concert.startDate}
-															endTime={concert.endDate}
-															withTime={false}
-														/>
-														<DateShow
-															startTime={concert.startDate}
-															endTime={concert.endDate}
-															withTime={true}
-															withDate={false}
-														/>
-													</div>
-													<div class=" flex items-center gap-2 ml-2 p-[2px]">
-														<Fa icon={faLocationDot} class="text-[14px]" style="color: #6B9AD9;" />
-														{concert.place}
-													</div>
-													<div class=" flex items-center gap-2 ml-2">
-														<div
-															class="bg-gray-200 flex items-center gap-1 m-1 p-1 rounded-md pl-2 pr-2"
-														>
-															<p class="text-gray-600">
-																<span class="text-black font-bold">Information :</span>
-																{concert.comment ? concert.comment : 'No additionnal information'}
-															</p>
+												<div class="flex items-center">
+													<input
+														class="w-5 h-5 accent-[#30598f] ml-2 mr-2"
+														type="checkbox"
+														id={`${event.type}-${event.id}`}
+														value={event.id}
+														on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
+													/>
+													<div class="w-[80%]">
+														<div class="flex flex-col">
+															<div class=" flex items-center gap-2 ml-2 p-[2px]">
+																<Fa icon={faCalendar} class="text-[14px]" style="color: #6B9AD9;" />
+																<DateShow
+																	startTime={event.startDate}
+																	endTime={event.endDate}
+																	withTime={false}
+																	isRehearsal={event.type === 'rehearsal'}
+																/>
+																<DateShow
+																	startTime={event.startDate}
+																	endTime={event.endDate}
+																	withTime={true}
+																	withDate={false}
+																	isRehearsal={event.type === 'rehearsal'}
+																/>
+															</div>
+															<div class=" flex items-center gap-2 ml-2 p-[2px]">
+																<Fa icon={faLocationDot} class="text-[14px]" style="color: #6B9AD9;" />
+																{event.place}
+															</div>
+															<div class=" flex items-center gap-2 ml-2 w-[70%]">
+																<div
+																	class="bg-gray-200 flex items-center gap-1 m-1 p-1 rounded-md pl-2 pr-2"
+																>
+																	<p class="text-gray-600">
+																		<span class="text-black font-bold">Information :</span>
+																		{event.comment ? event.comment : 'No additionnal information'}
+																	</p>
+																</div>
+															</div>
+														
+															{#if event.type === 'rehearsal'}
+																<div
+																	class="absolute font-semibold bottom-[-0.5px] right-[-0.5px] bg-[#6B9AD9] text-white p-2 rounded-tl-2xl rounded-br-[10px]"
+																>
+																	{event.type}
+																</div>
+															{:else}
+																<div
+																	class="absolute font-semibold bottom-[-0.5px] right-[-0.5px] bg-[#a584d2] text-white p-2 rounded-tl-2xl rounded-br-[10px]"
+																>
+																	{event.type}
+																</div>
+															{/if}
 														</div>
 													</div>
 												</div>
-												<div class="w-full ml-2 mr-2">
-													<div class="text-black font-bold mb-1">Add a comment</div>
-													<textarea
-														id={`comment-concert-${concert.id}`}
-														class="bg-[#ebebeb] w-full p-1 pl-2 pr-2 border-3 rounded h-full focus:border-blue-500"
-														placeholder="Write your comment..."
-														on:input={(e) => handleTextInput(e, concert.id ?? 0, 'concert')}
-													/>
-												</div>
-											</div>
-										{/each}
-									{/if}
-								{/if}
-							</div>
-
-							<div class="ml-6 mr-10 mt-10">
-								<h3 class="text-xl font-bold tracking-tight text-gray-500 dark:text-white mb-2">
-									Rehearsal attendance
-								</h3>
-								{#if rehearsalError}
-										<div class="flex">
-											<Fa icon={faWarning} class="text-[14px]" style="color: #ef4444 ;" />
-											<div class="text-red-500 text-xs ml-2">
-												Please select at least one rehearsal you will attend
-											</div>
-										</div>
-									{/if}
-								{#if !isMobile}
-									<table
-										class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border-separate border-spacing-y-2 ml-3"
-									>
-										<thead class="text-s text-black uppercase dark:bg-gray-700 dark:text-gray-400">
-											<tr>
-												<th class="px-6 py-3">Select</th>
-												<th class="px-6 py-3">Date</th>
-												<th class="px-6 py-3">Time</th>
-												<th class="px-6 py-3">Location</th>
-												<th class="px-6 py-3">Additional information</th>
-												<th class="px-6 py-3">Add a comment</th>
-											</tr>
-										</thead>
-										<tbody
-											class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600"
-										>
-											{#if registration.project?.rehearsals}
-												{#each registration.project.rehearsals as rehearsal}
-													<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md"
-														>
-															<input
-																class="w-5 h-5 accent-[#30598f]"
-																type="checkbox"
-																id={`rehearsal-${rehearsal.id}`}
-																value={rehearsal.id}
-																on:change={(e) =>
-																	handleCheckboxChange(e, rehearsal.id ?? 0, 'rehearsal')}
-															/>
-														</td>
-														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
-														>
-															<DateShow
-																startTime={rehearsal.startDate}
-																endTime={rehearsal.endDate}
-																withTime={false}
-																isRehearsal
-															/>
-														</td>
-														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
-														>
-															<DateShow
-																startTime={rehearsal.startDate}
-																endTime={rehearsal.endDate}
-																withTime={true}
-																withDate={false}
-																isRehearsal
-															/>
-														</td>
-														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
-														>
-															{rehearsal.place}
-														</td>
-														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
-														>
-															{rehearsal.comment ? rehearsal.comment : 'No additional information'}
-														</td>
-														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
-														>
-															<input
-																id={`comment-rehearsal-${rehearsal.id}`}
-																class="bg-[#ebebeb] p-1 pl-2 pr-8 rounded"
-																type="text"
-																placeholder="Write your comment..."
-																on:input={(e) => handleTextInput(e, rehearsal.id ?? 0, 'rehearsal')}
-															/>
-														</td>
-													</tr>
-												{/each}
-											{:else}
-												<tr>
-													<td class="px-6 py-4" colspan="5">No rehearsal found</td>
-												</tr>
-											{/if}
-										</tbody>
-									</table>
-								{/if}
-								{#if isMobile}
-									{#if registration.project?.rehearsals}
-										{#each registration.project.rehearsals as rehearsal}
-											<div
-												class="  bg-white border-[2px] flex flex-1 gap-5 items-center w-full border-[#989898] pl-[10px] m-[10px] p-[5px] rounded-[12px] text-xs relative"
-											>
-												<input
-													class="w-10 h-10 ml-3 accent-[#30598f]"
-													type="checkbox"
-													id={`rehearsal-${rehearsal.id}`}
-													value={rehearsal.id}
-													on:change={(e) => handleCheckboxChange(e, rehearsal.id ?? 0, 'concert')}
-												/>
-												<div class=" w-full">
-													<div class=" flex items-center gap-2 ml-2 p-[2px]">
-														<Fa icon={faCalendar} class="text-[14px]" style="color: #6B9AD9;" />
-														<DateShow
-															startTime={rehearsal.startDate}
-															endTime={rehearsal.endDate}
-															withTime={false}
-														/>
-														<DateShow
-															startTime={rehearsal.startDate}
-															endTime={rehearsal.endDate}
-															withTime={true}
-															withDate={false}
-														/>
+												{#if newContact.concerts.some((c) => c.id === event.id) || newContact.rehearsals.some((r) => r.id === event.id)}
+													<div class='w-[50%] ml-[-6px] text-[11px]'>
+													{#if newContact.concerts.find((c) => c.id === event.id)?.comment == '' || newContact.rehearsals.find((r) => r.id === event.id)?.comment == ''}
+													<button class="bg-blue-500" on:click={() => showCommentPopUp(event.id ?? 0,(event.type === 'concert' ? 'concert' : 'rehearsal') )}>
+														Add a comment
+													</button>
+													{:else}
+													<button class="bg-blue-500" on:click={() => showCommentPopUp(event.id ?? 0,(event.type === 'concert' ? 'concert' : 'rehearsal') )}>
+														Edit comment
+													</button>
+													{/if}
 													</div>
-													<div class=" flex items-center gap-2 ml-2 p-[2px]">
-														<Fa icon={faLocationDot} class="text-[14px]" style="color: #6B9AD9;" />
-														{rehearsal.place}
-													</div>
-													<div class=" flex items-center gap-2 ml-2">
-														<div
-															class="bg-gray-200 flex items-center gap-1 m-1 p-1 rounded-md pl-2 pr-2"
-														>
-															<p class="text-gray-600">
-																<span class="text-black font-bold">Information :</span>
-																{rehearsal.comment
-																	? rehearsal.comment
-																	: 'No additionnal information'}
-															</p>
-														</div>
-													</div>
-												</div>
-												<div class="w-full ml-2 mr-2">
-													<div class="text-black font-bold mb-1">Add a comment</div>
-													<textarea
-														id={`comment-concert-${rehearsal.id}`}
-														class="bg-[#ebebeb] w-full p-1 pl-2 pr-2 border-3 rounded h-full focus:border-blue-500"
-														placeholder="Write your comment..."
-														on:input={(e) => handleTextInput(e, rehearsal.id ?? 0, 'concert')}
-													/>
-												</div>
+												{/if}
 											</div>
 										{/each}
 									{:else}
-										<tr>
-											<td class="px-6 py-4" colspan="5">No rehearsal found</td>
-										</tr>
+										<tr
+											><td class="px-6 py-4 border border-gray-300" colspan="5">No events found</td
+											></tr
+										>
 									{/if}
 								{/if}
 							</div>
