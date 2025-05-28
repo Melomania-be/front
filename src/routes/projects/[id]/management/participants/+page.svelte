@@ -57,6 +57,8 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
+            console.log('Réponse brute API participants :', data);
+
 			participants = data.data;
 			meta = data.meta;
 
