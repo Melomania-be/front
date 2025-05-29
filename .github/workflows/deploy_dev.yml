@@ -1,6 +1,9 @@
 name: Deploy to Development Server
 
 on:
+  push:
+    branches:
+      - release-dev
   workflow_dispatch:
 
 permissions:
@@ -20,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Download Build Artifact
