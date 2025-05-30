@@ -70,6 +70,7 @@ import toast from 'svelte-french-toast';
       submitted = true;
       toast.success('Login successful! Redirecting...');
         window.location.href = '/';
+		// await goto('/');
      
     } else {
       const data = await response.json();
