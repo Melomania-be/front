@@ -34,7 +34,10 @@
 		"@fortawesome/free-regular-svg-icons": "^6.5.2",
 		"@fortawesome/free-solid-svg-icons": "^6.5.2",
 		"flowbite-svelte": "^0.46.14",
+		"lucide-svelte": "^0.511.0",
+		"quill": "^2.0.3",
 		"sortablejs": "^1.15.3",
+		"svelte-dnd-action": "^0.9.61",
 		"svelte-fa": "^4.0.2",
 		"sweetalert2": "^11.12.0"
 	}
