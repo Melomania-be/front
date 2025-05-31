@@ -73,7 +73,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
           ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }} \
           '/usr/sbin/cloudlinux-selector stop --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
-          /usr/sbin/cloudlinux-selector start --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front'
+          /usr/sbin/cloudlinux-selector start --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
+          /usr/sbin/cloudlinux-selector install-modules --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front'
 
       - name: Cleaning SSH keys
         if: always()
