@@ -42,8 +42,10 @@ jobs:
 
       - name: Copy entrypoint script
         run: |
+          mkdir -p temp_move
+          mv build/* temp_move/
           mkdir -p build/build
-          mv build/!(build) build/build/
+          mv temp_move/* build/build/
           cp entry.cjs build/entry.cjs
           cp package.json build/package.json
           cp package-lock.json build/package-lock.json
