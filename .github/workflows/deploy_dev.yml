@@ -16,6 +16,8 @@ jobs:
   build:
     name: Build
     uses: ./.github/workflows/_build.yml
+    with:
+      environment: deploy_dev_front
 
   deploy:
     runs-on: ubuntu-latest
