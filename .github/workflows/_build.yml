@@ -20,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -42,8 +43,10 @@ jobs:
       - name: Copy entrypoint script
         run: |
           mkdir -p build/build
-          rsync -av --exclude 'build/' build/ build/build/
+          mv build/* build/build/
           cp entry.cjs build/entry.cjs
+          cp package.json build/package.json
+          cp package-lock.json build/package-lock.json
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
