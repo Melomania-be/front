@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create .env file
+        run: |
+          echo "API_URL=${{ vars.API_URL }}" >> .env
+          echo "BODY_SIZE_LIMIT=${{ vars.BODY_SIZE_LIMIT }}" >> .env
+          echo "ORIGIN=${{ vars.ORIGIN }}" >> .env
+
       - name: Build website
         run: npm run build
 
