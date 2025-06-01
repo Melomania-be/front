@@ -3,6 +3,7 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import { onMount } from 'svelte';
 	import CallsheetShow from './CallsheetShow.svelte';
+	import RichTextEditor from './RichTextEditor.svelte'
 
 	export let callsheet: Callsheet;
 	export let mode: 'modify' | 'create';
@@ -152,12 +153,14 @@
 											</button>
 										{/if}
 									</div>
-									<textarea
-										class="border border-gray-100"
-										placeholder="Html content"
-										bind:value={content.text}
-										disabled={!allowModification}
-									></textarea>
+									{#if allowModification}
+										<RichTextEditor
+											value={content.text}
+											onChange={(v) => content.text = v}
+										/>
+									{:else}
+										<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
+									{/if}
 								</div>
 							{/each}
 						{/if}
