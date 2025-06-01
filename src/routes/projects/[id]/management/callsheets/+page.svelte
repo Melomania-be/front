@@ -6,8 +6,27 @@
 	import type { Callsheet } from '$lib/types/Callsheet.js';
 	import type { TableData } from '$lib/types/TableData';
 	import { onMount } from 'svelte';
+	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
+	import type { Project } from '$lib/types/Project';
 
 	export let data;
+
+
+	let project : Project | undefined;
+
+	async function fetchProject(){
+		if (!data?.id) return;
+
+		const response = await fetch(`/api/projects/${data.id}`, {
+			method: 'GET'
+		});
+
+		if (!response.ok) {
+			console.error('Failed to fetch project');
+			return;
+		}
+		project = await response.json();
+	}
 
 	let callsheets: Callsheet[] = [];
 	let meta: any = {};
@@ -38,6 +57,7 @@
             orderBy: urlParams.get('orderBy') || options.orderBy
         };
 
+		fetchProject();
 		fetchData();
 	});
 
@@ -88,6 +108,8 @@
 	}
 </script>
 
+
+<ProjectHeadDisplayer {project} selectedTab={3} />
 <SimpleFilterer
 	showData
 	bind:data={dataHolder}

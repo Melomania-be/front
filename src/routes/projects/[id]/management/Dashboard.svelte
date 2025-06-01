@@ -12,7 +12,7 @@
 	export let participantsWithoutEmail: Array<any>;
 </script>
 
-<div class="w-full">
+<div class="w-full bg-gray-200 p-4">
 	<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
 
 	<div class="flex flex-col md:flex-row">
