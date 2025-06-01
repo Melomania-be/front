@@ -4,7 +4,7 @@
     import type { Participant } from '$lib/types/Participant.js';
     import type { Concert } from '$lib/types/Concert.js';
     import type { Rehearsal } from '$lib/types/Rehearsal.js';
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
 
     export let data;
     let participants: Array<Participant>;
@@ -14,6 +14,11 @@
     let showRefusalModal = false;
     let refusalMessage = '';
     let isRefusing = false;
+
+    // Variables pour Quill
+    let quillContainer: HTMLElement;
+    let quill: any;
+    let quillLoaded = false;
 
     // Ajout des variables pour stocker TOUTES les dates du projet
     let allConcerts: Concert[] = [];
@@ -33,7 +38,74 @@
             allConcerts = attendanceData.concerts;
             allRehearsals = attendanceData.rehearsals;
         }
+
+        // Charger Quill dynamiquement
+        await loadQuill();
     });
+
+    onDestroy(() => {
+        if (quill) {
+            quill = null;
+        }
+    });
+
+    async function loadQuill() {
+        try {
+            // Charger Quill depuis CDN
+            if (typeof window !== 'undefined' && !window.Quill) {
+                // Charger CSS
+                const linkElement = document.createElement('link');
+                linkElement.rel = 'stylesheet';
+                linkElement.href = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css';
+                document.head.appendChild(linkElement);
+
+                // Charger JS
+                const scriptElement = document.createElement('script');
+                scriptElement.src = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js';
+
+                await new Promise((resolve, reject) => {
+                    scriptElement.onload = resolve;
+                    scriptElement.onerror = reject;
+                    document.head.appendChild(scriptElement);
+                });
+            }
+            quillLoaded = true;
+        } catch (error) {
+            console.error('Erreur lors du chargement de Quill:', error);
+        }
+    }
+
+    function initializeQuill() {
+        if (quillLoaded && quillContainer && window.Quill && !quill) {
+            quill = new window.Quill(quillContainer, {
+                theme: 'snow',
+                placeholder: 'Vous pouvez expliquer les raisons du refus ici...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Synchroniser le contenu avec la variable refusalMessage
+            quill.on('text-change', () => {
+                const html = quill.root.innerHTML;
+                const text = quill.getText();
+                // Utiliser le HTML si il y a du contenu, sinon chaîne vide
+                refusalMessage = text.trim() === '' ? '' : html;
+            });
+
+            // Si il y a déjà du contenu, l'injecter dans Quill
+            if (refusalMessage) {
+                quill.root.innerHTML = refusalMessage;
+            }
+        }
+    }
 
     async function deleteParticipant() {
         const response = await fetch(
@@ -86,12 +158,22 @@
     function openRefusalModal() {
         showRefusalModal = true;
         refusalMessage = '';
+
+        // Initialiser Quill après que le modal soit visible
+        setTimeout(() => {
+            initializeQuill();
+        }, 100);
     }
 
     function closeRefusalModal() {
         showRefusalModal = false;
         refusalMessage = '';
         isRefusing = false;
+
+        // Nettoyer Quill
+        if (quill) {
+            quill.setText('');
+        }
     }
 
     async function refuseParticipant() {
@@ -100,16 +182,23 @@
         isRefusing = true;
 
         try {
-            // Envoyer l'email de refus
+            // Récupérer the contenu final de Quill
+            let finalMessage = '';
+            if (quill) {
+                const text = quill.getText().trim();
+                finalMessage = text ? quill.root.innerHTML : '';
+            }
+
+            // Envoyer l'email de refus avec le template
             const emailResponse = await fetch(`/api/mailing/sendRefusalEmailToParticipant`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    email: currentParticipant.contact.email,
-                    subject: `Refus de participation au projet`,
-                    message: refusalMessage.trim() || `Bonjour ${currentParticipant.contact.firstName},\n\nMerci pour votre candidature, mais nous ne pouvons pas y donner suite.\n\nCordialement.`
+                    projectId: data.id,
+                    participantId: currentParticipant.id,
+                    customMessage: finalMessage || null // Message personnalisé optionnel (HTML)
                 })
             });
 
@@ -281,10 +370,10 @@
     </div>
 </div>
 
-<!-- Modal de refus -->
+<!-- Modal de refus avec Quill Editor -->
 {#if showRefusalModal}
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
                 Refuser la participation
             </h2>
@@ -295,18 +384,21 @@
                 Un email de refus sera automatiquement envoyé au participant. Vous pouvez ajouter un message personnalisé ci-dessous (optionnel).
             </p>
 
-            <div class="mb-4">
+            <div class="mb-6">
                 <label for="refusal-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Message personnalisé (optionnel)
                 </label>
-                <textarea
-                  id="refusal-message"
-                  bind:value={refusalMessage}
-                  placeholder="Vous pouvez expliquer les raisons du refus ici..."
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  rows="4"
-                  disabled={isRefusing}
-                ></textarea>
+
+                <!-- Container pour Quill Editor -->
+                <div
+                  bind:this={quillContainer}
+                  class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRefusing ? 'opacity-50 pointer-events-none' : ''}"
+                  style="font-family: inherit;"
+                ></div>
+
+                {#if !quillLoaded}
+                    <div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
+                {/if}
             </div>
 
             <div class="flex justify-end space-x-3">
@@ -328,3 +420,54 @@
         </div>
     </div>
 {/if}
+
+<style>
+    /* Styles pour Quill Editor en mode sombre */
+    :global(.dark .ql-toolbar) {
+        border-color: #374151 !important;
+        background-color: #1f2937 !important;
+    }
+
+    :global(.dark .ql-container) {
+        border-color: #374151 !important;
+        background-color: #1f2937 !important;
+        color: #f9fafb !important;
+    }
+
+    :global(.dark .ql-editor) {
+        color: #f9fafb !important;
+    }
+
+    :global(.dark .ql-toolbar .ql-stroke) {
+        stroke: #9ca3af !important;
+    }
+
+    :global(.dark .ql-toolbar .ql-fill) {
+        fill: #9ca3af !important;
+    }
+
+    :global(.dark .ql-toolbar button:hover .ql-stroke) {
+        stroke: #f3f4f6 !important;
+    }
+
+    :global(.dark .ql-toolbar button:hover .ql-fill) {
+        fill: #f3f4f6 !important;
+    }
+
+    :global(.dark .ql-picker-label) {
+        color: #9ca3af !important;
+    }
+
+    :global(.dark .ql-picker-options) {
+        background-color: #1f2937 !important;
+        border-color: #374151 !important;
+    }
+
+    :global(.dark .ql-picker-item) {
+        color: #f9fafb !important;
+    }
+
+    :global(.dark .ql-picker-item:hover) {
+        background-color: #374151 !important;
+    }
+</style>
