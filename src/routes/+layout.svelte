@@ -198,7 +198,7 @@
     {/if}
 
     <!-- Main content -->
-    <div class="flex-1 ml-0 sm:ml-64 p-4">
+    <div class="flex-1 ml-0 sm:ml-64">
         <!-- Mobile toggle button -->
         <button 
             class="sm:hidden p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
