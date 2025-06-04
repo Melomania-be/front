@@ -4,8 +4,12 @@
 	import type { Rehearsal } from '$lib/types/Rehearsal.js';
 	import DateShow from '$lib/components/DateShow.svelte';
 	import { onMount } from 'svelte';
+	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
+	import type { Project } from '$lib/types/Project';
 
 	export let data;
+
+    let project : Project;
 
 	let concerts: Concert[] = [];
 	let rehearsals: Rehearsal[] = [];
@@ -23,7 +27,24 @@
 			rehearsals = tmp.rehearsals;
 			participants = tmp.participants;
 		}
+
+        await fetchProject(); 
 	});
+
+    async function fetchProject() {
+        if (!data?.id) return;
+
+        const response = await fetch(`/api/projects/${data.id}`, {
+            method: 'GET'
+        });
+
+        if (!response.ok) {
+            console.error('Failed to fetch project');
+            return;
+        }
+
+        project = await response.json();
+    }
 
 	function laxInclude(participant: Participant, concert: Concert | Rehearsal) {
 		if (!concert.participants) return false;
@@ -31,6 +52,8 @@
 	}
 </script>
 
+<div>
+<ProjectHeadDisplayer project={project} selectedTab={4}></ProjectHeadDisplayer>
 <div class="m-1 border">
     <div>
         <h2 class="text-lg font-semibold">Concerts</h2>
@@ -147,6 +170,7 @@
             </div>
         {/if}
     </div>
+</div>
 </div>
 
 <style>
