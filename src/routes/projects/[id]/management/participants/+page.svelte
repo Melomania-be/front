@@ -95,7 +95,15 @@
 </script>
 
 <ProjectHeadDisplayer {project} selectedTab={1} />
-
+<div class="bg-[#E7E7E7] p-4">
+    <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 text-center">
+        <a
+			href="/projects/{data.id}/management/validation"
+		    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+		>
+			New participant validation
+		</a>
+    </div>
 <SimpleFilterer
     bind:data={dataHolder}
     bind:meta
@@ -153,3 +161,4 @@
 >
     Add a participant
 </button>
+</div>
