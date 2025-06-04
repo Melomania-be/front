@@ -366,18 +366,18 @@
 
 <div class="content">
 	{#if registration}
-		<h1 class="text-6xl font-bold mb-2 p-3 registration-title">
+		<h1 class="font-bold mb-2 p-3 registration-title">
 			Registration to the project : {registration.project?.name || 'No project name available'}
 		</h1>
 		<div class="registration-bloc">
 			<div class="registration-content bg-white w-full h-full">
-				<div class="form-head">
+				<div class="form-head h-auto">
 					<div class="tabs">
 						{#if !isMobile}
 							<Steps
 								steps={[{ text: 'Project Details' }, { text: 'Contact' }, { text: 'Attendances' }]}
 								current={step}
-								size="3rem"
+								size="2.5rem"
 								line="3px"
 								primary="#7DBBE5"
 								secondary="#C7C7C7"
@@ -407,7 +407,7 @@
 						</div>
 					{/if}
 				</div>
-				<div class="from-body">
+				<div class="from-body {step === 0? "h-[78vh]" : "h-[86vh]"}">
 					<!-- Step 1 : Project details -->
 					{#if step === 0}
 						<div class="form-body-content">
@@ -637,7 +637,7 @@
 					<!-- Step 2 : Contact -->
 					{#if step === 1}
 						<div
-							class=" ml-6 w-full self-center mb-5 h-full mr-6 flex flex-col gap-3 content-contact"
+							class="overflow-x-hidden ml-6 w-full self-center pt-5 pb-5 h-full mr-6 flex flex-col gap-3 content-contact"
 						>
 							<div class="flex flex-col h-16">
 								<div
@@ -822,7 +822,7 @@
 
 								{#if !isMobile}
 									<table
-										class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border-separate border-spacing-y-2 ml-3"
+										class="w-full text-xs text-left rtl:text-right text-gray-500 dark:text-gray-400 border-separate border-spacing-y-2 ml-3"
 									>
 										<thead class="text-s text-black uppercase dark:bg-gray-700 dark:text-gray-400">
 											<tr>
@@ -845,7 +845,7 @@
 															class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md"
 														>
 															<input
-																class="w-5 h-5 accent-[#30598f]"
+																class="w-4 h-4 accent-[#30598f]"
 																type="checkbox"
 																id={`rehearsal-${event.id}`}
 																value={event.id}
@@ -1069,7 +1069,7 @@
 		justify-content: center;
 		align-items: center;
 		color: white;
-		font-size: 3rem;
+		font-size: 2rem;
 	}
 	.registration-content {
 		border-radius: 10px;
@@ -1077,6 +1077,7 @@
 		margin-right: 10vw;
 		margin-bottom: 5vh;
 		height: 72vh;
+		min-height: 550px;
 		background-color: white;
 		box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
 		overflow: hidden;
@@ -1085,7 +1086,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
-		height: 75%;
+		padding-bottom: 5vh;
 	}
 	.form-body-buttons {
 		display: flex;
@@ -1120,7 +1121,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		height: 18vh;
+		height: auto;
 		width: 100%;
 	}
 	.tabs {
@@ -1135,10 +1136,10 @@
 	.tabs-details {
 		width: 100%;
 		display: flex;
+		margin-top: 1%;
 		padding-left: 5vw;
 		gap: 5vw;
 		bottom: 0;
-		font-size: larger;
 		font-weight: bold;
 		color: #929292;
 	}
