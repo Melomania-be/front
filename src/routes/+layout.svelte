@@ -214,6 +214,6 @@ import { Toaster } from 'svelte-french-toast';
     </div>
 </div>
 {:else}
-<Toaster position="top-center" />
 <slot />
 {/if}
+<Toaster position="top-center" />

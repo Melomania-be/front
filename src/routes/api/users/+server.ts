@@ -15,7 +15,6 @@ export const GET: RequestHandler = async ({ cookies, request, fetch }) => {
 
 export const PUT: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
-
 	const res = await fetch(`${API_URL}/users/`, {
 		method: 'PUT',
 		headers: {
