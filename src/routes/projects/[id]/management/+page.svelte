@@ -1,6 +1,8 @@
 <script lang="ts">
+	import ProjectModifier from '$lib/components/project/ProjectModifier.svelte';
 	import type { Project } from '$lib/types/Project';
 	import Dashboard from './Dashboard.svelte';
+	import ProjectHeadDisplayer from './ProjectHeadDisplayer.svelte';
 
 	export let data;
 
@@ -8,10 +10,12 @@
 	let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
 	let participantsNotValidated = data.participantsNotValidated;
 	let participantsWithoutEmail = data.participantsWithoutEmail;
+
+	let selectedTab = 0;
 </script>
 
 <div>
-	<h1 class="text-2xl font-bold">{project.name}</h1>
+	<ProjectHeadDisplayer project={project} selectedTab={0}></ProjectHeadDisplayer>
 	<Dashboard
 		{project}
 		{participantsNotSeenCallsheet}

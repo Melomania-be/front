@@ -260,7 +260,7 @@
 	<div class="p-5">
 		<div class="w-full mb-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white">
 			<input
-				class="ml-1 mt-1 w-full"
+				class="ml-1 mt-1 w-full border border-gray-400 shadow-md rounded"
 				bind:value={project.name}
 				placeholder="Project name"
 				disabled={!allowModification}
@@ -354,7 +354,7 @@
 		</div>
 
 		<h4 class="text-lg">Rehearsals</h4>
-		<div class="m-1 border">
+		<!-- <div class="m-1 border">
 			{#if !allowModification}
 				<div class="overflow-x-auto">
 					<table class="table-auto max-w-min min-w-max">
@@ -438,7 +438,104 @@
 					on:click={addRehearsalDate}>Add Rehearsal Date
 				</button>
 			{/if}
-		</div>
+		</div> -->
+<div class="m-2 rounded-lg shadow border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+  {#if !allowModification}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-300">
+        <thead class="bg-gray-100 dark:bg-gray-800 text-xs uppercase font-semibold">
+          <tr>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Place</th>
+            <th class="px-4 py-3">Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#if project.rehearsals?.length}
+            {#each project.rehearsals as rehearsal}
+              <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                <td class="px-4 py-2 whitespace-nowrap">
+                  <DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal />
+                </td>
+                <td class="px-4 py-2 whitespace-nowrap">{rehearsal.place}</td>
+                <td class="px-4 py-2 max-w-xs break-words">{rehearsal.comment}</td>
+              </tr>
+            {/each}
+          {:else}
+            <tr>
+              <td colspan="3" class="text-center px-4 py-3 text-gray-500 dark:text-gray-400">No rehearsal</td>
+            </tr>
+          {/if}
+        </tbody>
+      </table>
+    </div>
+
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-300">
+        <thead class="bg-gray-100 dark:bg-gray-800 text-xs uppercase font-semibold">
+          <tr>
+            <th class="px-4 py-3">Start Date</th>
+            <th class="px-4 py-3">End Date</th>
+            <th class="px-4 py-3">Place</th>
+            <th class="px-4 py-3">Comment</th>
+            <th class="px-4 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each project.rehearsals as rehearsal}
+            <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <td class="px-4 py-2 space-y-1">
+                <DatePicker bind:date={rehearsal.startDate} />
+                <TimePicker bind:date={rehearsal.startDate} />
+              </td>
+              <td class="px-4 py-2 space-y-1">
+                <DatePicker bind:date={rehearsal.endDate} />
+                <TimePicker bind:date={rehearsal.endDate} />
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700"
+                  type="text"
+                  placeholder="Enter place"
+                  bind:value={rehearsal.place}
+                />
+              </td>
+              <td class="px-4 py-2">
+                <textarea
+                  rows="2"
+                  class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 resize-none"
+                  placeholder="Optional comment"
+                  bind:value={rehearsal.comment}
+                ></textarea>
+              </td>
+              <td class="px-4 py-2 text-center">
+                <button
+                  class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-red-300"
+                  on:click={() => removeRehearsalDate(rehearsal)}
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-end px-4 py-3">
+      <button
+        class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+        on:click={addRehearsalDate}
+      >
+        Add Rehearsal Date
+      </button>
+    </div>
+  {/if}
+</div>
+
+
+
 
 		<h4 class="text-lg">Concerts</h4>
 		<div class="m-1 border">

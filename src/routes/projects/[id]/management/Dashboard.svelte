@@ -3,8 +3,11 @@
 	import DisplayerEvents from './DisplayerEvents.svelte';
 	import DisplayerFolder from './DisplayerFolder.svelte';
 	import DisplayerPieces from './DisplayerPieces.svelte';
+	import DisplayerSection from './DisplayerSection.svelte';
 	import DisplayerSheets from './DisplayerSheets.svelte';
 	import Notification from './Notification.svelte';
+	import {faUser} from '@fortawesome/free-solid-svg-icons';
+	import Fa from 'svelte-fa';
 
 	export let project: any;
 	export let participantsNotSeenCallsheet: Array<any>;
@@ -12,8 +15,73 @@
 	export let participantsWithoutEmail: Array<any>;
 </script>
 
-<div class="w-full">
-	<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
+<div class="bg-[#E7E7E7] p-4">
+	<div class="bg-white border-2 border-[#E35656] rounded-[10px] w-[40%]">
+		<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
+	</div>
+
+
+	<div class="flex w-full flex-col md:flex-row gap-6 mt-4">	
+
+		<div class="w-full w-3/5 md:w-7/12">
+			<DisplayerEvents bind:project />
+		</div>
+		<div
+			class="h-full w-2/5 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+		>
+		<div class="flex mt-4 mb-4 ml-4 flex flex-col">
+			<div class="flex items-center">
+				<h1 class="font-bold text-lg">MANAGERS</h1>
+				<div class="ml-auto mr-4">
+					<a
+						class="text-white font-bold text-sm bg-[#6B9AD9] p-2 rounded-[8px]"
+						href="/projects/{project.id}/management/modify">Edit</a
+					>
+				</div>
+			</div>
+			<div class="text-sm my-6 mr-4 grid grid-cols-2 gap-2">
+				{#if project.responsibles && project.responsibles.length === 0}
+					<p class="text-center">No project manager</p>
+				{:else}
+					{#each project.responsibles as responsible}
+						<a href="/contacts/{responsible.id}" class="pl-4 border-[1.5px] border-[#B6B6B6] text-sm flex items-center gap-3 rounded-full p-1 hover:bg-blue-100">
+							<Fa icon={faUser} class="text-[16px]" style="color: #6B9AD9;" />
+							<div class="flex flex-col w-full">
+							<p class="truncate overflow-hidden whitespace-nowrap max-w-[80px]">{responsible.firstName}</p>
+							<p class="truncate overflow-hidden whitespace-nowrap max-w-[90%]">{responsible.lastName}</p>
+							</div>
+						</a>
+					{/each}
+				{/if}
+			</div>
+		</div>
+		</div>
+	</div>
+
+	<div class="mt-4">
+		<DisplayerSection bind:project />
+	</div>
+
+	<div class="flex flex-col md:flex-row">
+		<div class="m-1 w-full md:w-1/2">
+			<DisplayerSheets
+				bind:project
+				bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
+				bind:participantsNotValidated
+			/>
+		</div>
+		<div class="m-1 w-full md:w-1/2">
+			<DisplayerPieces bind:project />
+		</div>
+
+		
+
+
+	</div>
+</div>
+
+
+<!--
 
 	<div class="flex flex-col md:flex-row">
 		<div
@@ -100,4 +168,4 @@
 			<DisplayerFolder bind:project />
 		</div>
 	</div>
-</div>
+-->

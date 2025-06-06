@@ -2,14 +2,17 @@
     export let startTime: string | Date;
     export let endTime: string | Date | null = null;
     export let withTime: boolean = false;
+    export let withDate: boolean = true;
     export let isRehearsal: boolean = false;
 
     console.log(endTime);
     let usableStartTime = new Date(startTime);
     console.log('start', usableStartTime);
-    let usableEndTime = endTime 
-        ? new Date(endTime) 
-        : new Date(usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000));
+    let usableEndTime = endTime
+        ? new Date(endTime)
+        : new Date(
+                usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000)
+            );
     console.log('end', usableEndTime);
 
     const dateOptions: Intl.DateTimeFormatOptions = {
@@ -24,20 +27,32 @@
     };
 
     $: usableStartTime = new Date(startTime);
-    $: usableEndTime = endTime 
-        ? new Date(endTime) 
-        : new Date(usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000));
+    $: usableEndTime = endTime
+        ? new Date(endTime)
+        : new Date(
+                usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000)
+            );
 </script>
 
 <span>
     {#if startTime}
-        {withTime
-            ? usableStartTime.toLocaleTimeString(undefined, timeOption) +
-                ' - ' +
-                (usableEndTime ? usableEndTime.toLocaleTimeString(undefined, timeOption) : '') + ' ' +
-                usableStartTime.toLocaleDateString(undefined, dateOptions)
-            : usableStartTime.toLocaleDateString(undefined, dateOptions) +
-                (endTime ? ' to ' + usableEndTime.toLocaleDateString(undefined, dateOptions) : '')}
+        {#if withTime && withDate}
+            {usableStartTime.toLocaleTimeString(undefined, timeOption)}
+            {' - '}
+            {usableEndTime.toLocaleTimeString(undefined, timeOption)}
+            {' | '}
+            {usableStartTime.toLocaleDateString(undefined, dateOptions)}
+        {:else if withTime}
+            {usableStartTime.toLocaleTimeString(undefined, timeOption)}
+            {' - '}
+            {usableEndTime.toLocaleTimeString(undefined, timeOption)}
+        {:else if withDate}
+            {usableStartTime.toLocaleDateString(undefined, dateOptions)}
+            {#if endTime}
+                {' to '}
+                {usableEndTime.toLocaleDateString(undefined, dateOptions)}
+            {/if}
+        {/if}
     {:else}
         -
     {/if}

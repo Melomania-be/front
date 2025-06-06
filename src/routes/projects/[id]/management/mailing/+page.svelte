@@ -7,6 +7,7 @@
 	import type { Project } from '$lib/types/Project.js';
 	import { onMount, tick } from 'svelte';
 	import type { MailTemplate } from '$lib/types/MailTemplate';
+	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 
 	let project: Project;
 	let folders : Array<Folder>
@@ -288,6 +289,9 @@
 		updateIframeContentHtml();
 	}
 </script>
+
+
+<ProjectHeadDisplayer {project} selectedTab={2} />
 
 <div
 	class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"

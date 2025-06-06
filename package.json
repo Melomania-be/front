@@ -36,6 +36,8 @@
 		"flowbite-svelte": "^0.46.14",
 		"sortablejs": "^1.15.3",
 		"svelte-fa": "^4.0.2",
+		"svelte-french-toast": "^1.2.0",
+		"svelte-steps": "^2.4.1",
 		"sweetalert2": "^11.12.0"
 	}
 }

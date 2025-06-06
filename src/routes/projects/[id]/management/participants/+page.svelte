@@ -1,4 +1,5 @@
 <script lang="ts">
+    
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
@@ -7,8 +8,12 @@
 	import type { Participant } from '$lib/types/Participant';
 	import type { TableData } from '$lib/types/TableData';
 	import { onMount } from 'svelte';
+    import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
+    import type { Project } from '$lib/types/Project';
 
 	export let data;
+    
+    let project : Project | undefined;
 
 	let participants: Participant[] = [];
 	let meta: any = {};
@@ -37,8 +42,25 @@
             orderBy: urlParams.get('orderBy') || options.orderBy
         };
 
+        await fetchProject(); 
 		fetchData();
 	});
+
+    
+    async function fetchProject() {
+	if (!data?.id) return;
+
+	const response = await fetch(`/api/projects/${data.id}`, {
+		method: 'GET'
+	});
+
+	if (!response.ok) {
+		console.error('Failed to fetch project');
+		return;
+	}
+
+	project = await response.json();
+}
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -57,6 +79,8 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
+            console.log('Réponse brute API participants :', data);
+
 			participants = data.data;
 			meta = data.meta;
 
@@ -65,10 +89,21 @@
 				columns: ['id', 'updatedAt', 'lastActivity'],
 				notOrderedColumns: []
 			};
+            console.log("Participants :" , dataHolder)
 		});
 	}
 </script>
 
+<ProjectHeadDisplayer {project} selectedTab={1} />
+<div class="bg-[#E7E7E7] p-4">
+    <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 text-center">
+        <a
+			href="/projects/{data.id}/management/validation"
+		    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+		>
+			New participant validation
+		</a>
+    </div>
 <SimpleFilterer
     bind:data={dataHolder}
     bind:meta
@@ -76,6 +111,7 @@
     bind:uniqueUrl
     on:optionsUpdated={() => fetchData()}
 >
+
     <div class="w-full overflow-x-auto">
         <table class="w-full min-w-[800px] text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="bg-gray-100 dark:bg-gray-700 text-xs text-gray-700 uppercase dark:text-gray-400">
@@ -91,6 +127,7 @@
                 </tr>
             </thead>
             <tbody>
+
                 {#each participants as participant}
                     <tr
                         on:click={() => goto(uniqueUrl + `/${participant.id}`)}
@@ -111,9 +148,11 @@
                         <td class="px-4 py-2"><DateShow bind:startTime={participant.updatedAt} /></td>
                     </tr>
                 {/each}
+                
             </tbody>
         </table>
     </div>
+  
 </SimpleFilterer>
 
 <button 
@@ -122,3 +161,4 @@
 >
     Add a participant
 </button>
+</div>
