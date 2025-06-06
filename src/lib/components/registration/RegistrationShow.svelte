@@ -4,6 +4,19 @@
 	import type { Participant } from '$lib/types/Participant';
 	import RegistrationForm from './RegistrationForm.svelte';
 	import DateShow from '../DateShow.svelte';
+	import imageBackground from '$lib/assets/BackgrounImage.avif';
+	import { Steps } from 'svelte-steps';
+
+	import { comment } from 'postcss';
+	import { onMount } from 'svelte';
+	import {
+		faCalendar,
+		faLocationDot,
+		faUser,
+		faMusic,
+		faWarning
+	} from '@fortawesome/free-solid-svg-icons';
+	import Fa from 'svelte-fa';
 
 	export let registration: Registration;
 	export let projectId: number;
@@ -97,43 +110,51 @@
 	};
 
 	function toggleSelection(array: any[], id: number, comment: string) {
-        const item = array.find((item) => item.id === id);
-        if (item) {
-            return array.filter((item) => item.id !== id);
-        } else {
-            return [...array, { id, comment }];
-        }
-    }
+		const item = array.find((item) => item.id === id);
+		if (item) {
+			return array.filter((item) => item.id !== id);
+		} else {
+			return [...array, { id, comment }];
+		}
+	}
 
-    function updateComment(array: any[], id: number, comment: string) {
-        return array.map((item) => (item.id === id ? { ...item, comment } : item));
-    }
+	function updateComment(array: any[], id: number, comment: string) {
+		return array.map((item) => (item.id === id ? { ...item, comment } : item));
+	}
 
-    function handleCheckboxChange(event: Event, id: number, type: 'concert' | 'rehearsal') {
-        const inputElement = event.target as HTMLInputElement;
-        const commentElement = document.getElementById(`comment-${type}-${id}`) as HTMLInputElement;
-        const comment = commentElement ? commentElement.value : '';
-        if (type === 'concert') {
-            newContact.concerts = toggleSelection(newContact.concerts, id, inputElement.checked ? comment : '');
-        } else {
-            newContact.rehearsals = toggleSelection(newContact.rehearsals, id, inputElement.checked ? comment : '');
-        }
-    }
+	function handleCheckboxChange(event: Event, id: number, type: 'concert' | 'rehearsal') {
+		const inputElement = event.target as HTMLInputElement;
+		const commentElement = document.getElementById(`comment-${type}-${id}`) as HTMLInputElement;
+		const comment = commentElement ? commentElement.value : '';
+		if (type === 'concert') {
+			newContact.concerts = toggleSelection(
+				newContact.concerts,
+				id,
+				inputElement.checked ? comment : ''
+			);
+		} else {
+			newContact.rehearsals = toggleSelection(
+				newContact.rehearsals,
+				id,
+				inputElement.checked ? comment : ''
+			);
+		}
+	}
 
-    function handleTextInput(event: Event, id: number, type: 'concert' | 'rehearsal') {
-        const inputElement = event.target as HTMLInputElement;
+	function handleTextInput(event: Event, id: number, type: 'concert' | 'rehearsal') {
+		const inputElement = event.target as HTMLInputElement;
 		console.log(id);
-        if (type === 'concert') {
+		if (type === 'concert') {
 			console.log(newContact.concerts);
-            if (newContact.concerts.some((concert) => concert.id === id)) {
-                newContact.concerts = updateComment(newContact.concerts, id, inputElement.value);
-            }
-        } else {
-            if (newContact.rehearsals.some((rehearsal) => rehearsal.id === id)) {
-                newContact.rehearsals = updateComment(newContact.rehearsals, id, inputElement.value);
-            }
-        }
-    }
+			if (newContact.concerts.some((concert) => concert.id === id)) {
+				newContact.concerts = updateComment(newContact.concerts, id, inputElement.value);
+			}
+		} else {
+			if (newContact.rehearsals.some((rehearsal) => rehearsal.id === id)) {
+				newContact.rehearsals = updateComment(newContact.rehearsals, id, inputElement.value);
+			}
+		}
+	}
 
 	async function handleSubmit() {
 		if (newContact.rehearsals.length !== 0) {
@@ -152,26 +173,27 @@
 		}
 
 		if (newContact.first_name === '' || newContact.last_name === '' || newContact.email === '') {
-			return alert('Please enter every non optional information.');
+			//return alert('Please enter every non optional information.');
+			hasError = true;
 		}
 
 		if (newContact.section_id === 0) {
-			return alert('Please select the section you want to belong to.');
+			//return alert('Please select the section you want to belong to.');
+			hasError = true;
 		}
 
-        if (newContact.rehearsals.length === 0) {
-            return alert('Please select the rehearsals you will attend to (at least one required).');
-        }
+		if (newContact.concerts.length === 0) {
+			//return alert('Please select the concerts you will attend to (at least one required).');
+			concertError = true;
+			hasError = true;
+		}
 
-        if (newContact.concerts.length === 0) {
-            return alert('Please select the concerts you will attend to (at least one required).');
-        }
+		if (newContact.email === '') {
+			hasError = true;
+		}
 
-		let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-		let isValid = emailPattern.test(newContact.email);
-
-		if (!isValid) {
-			return alert('Please enter a valid email address.');
+		if (hasError) {
+			return;
 		}
 
 		const data = {
@@ -182,8 +204,8 @@
 			phone: newContact.phone,
 			messenger: newContact.messenger,
 			validated_contact: false,
-            rehearsals: newContact.rehearsals,
-            concerts: newContact.concerts,
+			rehearsals: newContact.rehearsals,
+			concerts: newContact.concerts,
 			project_id: registration.project?.id,
 			section_id: newContact.section_id,
 			answers: newContact.answers.map((answer) => {
@@ -287,10 +309,6 @@
 		}
 	}
 
-    const combinedEvents = [
-        ...(registration.project?.concerts || []).map(event => ({ ...event, type: 'concert' })),
-        ...(registration.project?.rehearsals || []).map(event => ({ ...event, type: 'rehearsal' }))
-    ].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 </script>
 
 <!-- Image fixe avec filtre -->
@@ -347,9 +365,6 @@
 {/if}
 
 <div class="content">
-<div
-	class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
->
 	{#if registration}
 		<h1 class="font-bold mb-2 p-3 registration-title">
 			Registration to the project : {registration.project?.name || 'No project name available'}
@@ -646,41 +661,92 @@
 								{/if}
 							</div>
 
-						<div class="mb-2 text-gray-800 dark:text-gray-400">
-							<span>Last name:</span>
-							<input
-								class="p-1"
-								bind:value={newContact.last_name}
-								placeholder="Last name"
-								required
-							/>
-						</div>
+							<div class="flex flex-col h-16">
+								<div
+									class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
+									{contactErrors.last_name ? 'text-red-500 placeholder-red-400' : ''}"
+									style="width: fit-content;"
+								>
+									Last Name*
+								</div>
+								<input
+									class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none
+									{contactErrors.last_name ? 'border-red-500 placeholder-red-400' : ''}"
+									bind:value={newContact.last_name}
+									placeholder="Last name"
+									required
+								/>
+								{#if contactErrors.last_name}
+									<div class="text-red-500 text-right text-xs ml-10 mr-2 mt-1">
+										Last name is required
+									</div>
+								{/if}
+							</div>
 
-						<div class="mb-2 text-gray-800 dark:text-gray-400">
-							<span>Email adress:</span>
-							<input
-								class="p-1"
-								bind:value={newContact.email}
-								placeholder="johndoe@email.com"
-								required
-							/>
-						</div>
+							<div class="flex flex-col h-16">
+								<div
+									class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
+									{contactErrors.email || contactErrors.validEmail ? 'text-red-500 placeholder-red-400' : ''}"
+									style="width: fit-content;"
+								>
+									Email Adress*
+								</div>
+								<input
+									class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none
+									{contactErrors.email || contactErrors.validEmail ? 'border-red-500 placeholder-red-400' : ''}"
+									bind:value={newContact.email}
+									placeholder="example@email.com"
+									required
+								/>
+								{#if contactErrors.email}
+									<div class="text-red-500 text-right text-xs ml-10 mr-2 mt-1">
+										Email is required
+									</div>
+								{/if}
+								{#if contactErrors.validEmail}
+									<div class="text-red-500 text-right text-xs ml-10 mr-2 mt-1">
+										Invalid email address
+									</div>
+								{/if}
+							</div>
 
-						<div class="mb-2 text-gray-800 dark:text-gray-400">
-							<span>Phone number (optional) :</span>
-							<input class="p-1" bind:value={newContact.phone} placeholder="Phone number" />
-						</div>
+							<div class="flex flex-col h-16">
+								<div
+									class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
+									style="width: fit-content;"
+								>
+									Phone Number
+								</div>
+								<input
+									class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none"
+									bind:value={newContact.phone}
+									placeholder="Phone Number"
+								/>
+							</div>
 
-						<div class="mb-2 text-gray-800 dark:text-gray-400">
-							<span>Messenger (optional):</span>
-							<input
-								class="p-1"
-								bind:value={newContact.messenger}
-								placeholder="Messenger username"
-							/>
-						</div>
-					</div>
-				</div>
+							<div class="flex flex-col h-16">
+								<div
+									class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
+									style="width: fit-content;"
+								>
+									Messenger
+								</div>
+								<input
+									class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none"
+									bind:value={newContact.messenger}
+									placeholder="Messenger"
+								/>
+							</div>
+
+							{#if registration.project?.sectionGroup?.sections}
+								<div class="flex flex-col h-16">
+									<div
+										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
+										{contactErrors.section_id ? 'text-red-500 placeholder-red-400' : ''}"
+										style="width: fit-content;"
+									>
+										Section*
+									</div>
 
 									<select
 										class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none
@@ -927,27 +993,30 @@
 								{/if}
 							</div>
 
-				{#if registration.form && registration.form.length > 0}
-					<div class="mt-6 ml-6">
-						<h3
-							class="text-xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-2"
-						>
-							Additional informations
-						</h3>
-						{#each newContact.answers as answer}
-							<RegistrationForm bind:answer bind:forms={registration.form} disabled={false} />
-						{/each}
-					</div>
-				{/if}
-
-				<div class="mt-10 w-full">
-					<button
-						class="text-white bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2
-					ml-10"
-						on:click={handleSubmit}
-					>
-						Submit
-					</button>
+							{#if registration.form && registration.form.length > 0}
+								<div class="mt-10 ml-6">
+									<h3 class="text-xl font-bold tracking-tight text-gray-500 dark:text-white mb-6">
+										Additional informations
+									</h3>
+									<div class="border-2 border-gray-400 rounded-xl p-1 ml-5 mr-8 bg-white">
+										{#each newContact.answers as answer}
+											<RegistrationForm
+												bind:answer
+												bind:forms={registration.form}
+												disabled={false}
+											/>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						</div>
+						<div class="form-body-buttons">
+							<div class="bg-white w-full flex justify-center">
+								<button class="bg-blue-500" on:click={() => (step = step - 1)}> Back </button>
+								<button class="bg-blue-500" on:click={handleSubmit}> Submit </button>
+							</div>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</div>
