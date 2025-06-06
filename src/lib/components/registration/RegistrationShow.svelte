@@ -14,7 +14,8 @@
 		faLocationDot,
 		faUser,
 		faMusic,
-		faWarning
+		faWarning,
+		faCircleInfo
 	} from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 
@@ -51,9 +52,11 @@
 	}
 
 	let isMobile = false;
+	let widthSize : number;
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
+		widthSize = window.innerWidth;
 	};
 
 	onMount(() => {
@@ -65,7 +68,7 @@
 		};
 	});
 
-	let step: number = 2;
+	let step: number = 0;
 
 	let tabName: string = 'event';
 
@@ -238,10 +241,8 @@
 		}
 
 		if (response.ok) {
-			alert(
-				'Registration successful! You will receive news shortly if your registration is accepted.'
-			);
-			window.location.reload();
+			showPopupSubmit = true;
+			
 		}
 	}
 
@@ -277,45 +278,29 @@
 
 	let showPopup = false;
 
-	let openCommentPopUp = false;
-	let commentEventId : number;
-	let commentEventType : 'concert' | 'rehearsal' ;
+	let openInformationPopup = false;
+	let eventInformation : string | null;
+	let eventType : 'concert' | 'rehearsal' ;
+	let eventDate = new Date();
 
-	function showCommentPopUp(id : number , type : 'concert' | 'rehearsal' ){
-		commentEventId = id;
-		commentEventType = type;
+	function showInformationPopUp(info : string | null, type : 'concert' | 'rehearsal' , date : Date){
+		eventInformation = info;
+		eventType = type;
+		eventDate = date;
 
-		openCommentPopUp = true;
+		openInformationPopup = true;
 	}
 
-	function commentPlaceHolder(id : number, type : 'concert' | 'rehearsal' ) : string {
-		if(type === 'concert'){
-			let comment = newContact.concerts.find((c) => c.id === commentEventId)?.comment;
-			if(comment == undefined || comment == ''){
-				return 'Write your comment...';
-			}
-			else{
-				return comment;
-			}
-		}
-		else{
-			let comment = newContact.rehearsals.find((r) => r.id === commentEventId)?.comment;
-			if(comment == undefined || comment == ''){
-				return 'Write your comment...';
-			}
-			else{
-				return comment;
-			}
-		}
-	}
+	let showPopupSubmit = false;
 
 </script>
 
-<!-- Image fixe avec filtre -->
+<!-- Image fixe avec filtre
 <div class="fixed-background">
 	<img src={imageBackground} alt="Background" />
 	<div class="overlay-filter"></div>
 </div>
+ -->
 
 <!-- POPUP section Full-->
 {#if showPopup}
@@ -342,41 +327,76 @@
 	</div>
 {/if}
 
-<!-- POPUP Add Comment-->
-{#if openCommentPopUp}
+{#if showPopupSubmit}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-		<div class="bg-white p-6 rounded-xl shadow-xl w-96 text-center">
-			<h2 class="text-lg font-semibold mb-4">Add a Comment</h2>
-			<input
-				id={`comment-${commentEventType}-${commentEventId}`}
-				class="bg-[#ebebeb] w-full p-1 pl-2 pr-2 border-3 rounded h-full focus:border-blue-500"
-				placeholder={commentPlaceHolder(commentEventId,commentEventType)}
-				on:input={(e) =>
-					handleTextInput(e, commentEventId ?? 0, commentEventType === 'concert' ? 'concert' : 'rehearsal')}
-			/>
+		<div class="bg-white p-6 rounded-xl shadow-xl {!isMobile ? " w-[60%] text-lg" : "w-[90%] text-[15px]" } text-center  text-gray-600">
+			<h2 class="text-lg font-bold mb-4">Registration Submitted Successfully</h2>
+			<p class="font-semibold">Thank you for registering to this project !</p>
+			<p><strong>Please note:</strong> It may take up to 10 days for your registration to be processed</p>
+<p>All communication will be sent from
+<span class="text-blue-400">noreply@melomania.be</span></p>
+<p>Please add this address to your contacts and check your spam folder regularly</p><p>to avoid missing any important updates</p>
 			<button
-				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white font-bold rounded"
 				on:click={() => {
-					openCommentPopUp = false;
+					showPopupSubmit = false;
+					window.location.reload();
+				}}>OK</button
+			>
+		</div>
+	</div>
+{/if}
+
+<!-- POPUP SHOW INFORMATION -->
+{#if openInformationPopup}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">INFORMATION</h2>
+			<div class="text-xs text-gray-500 flex flex-col">
+				<p class="text-lg">{eventType}</p>
+				<DateShow
+					startTime={eventDate}
+					withTime={false}
+					isRehearsal={eventType === 'rehearsal'}
+				/>
+				<DateShow
+					startTime={eventDate}
+					withTime
+					withDate={false}
+					isRehearsal={eventType === 'rehearsal'}
+				/>
+				</div>
+				<p class="text-lg bg-gray-200 w-[90%] rounded-lg px-2 py-3 mt-3">{eventInformation}</p>
+			<button
+				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				on:click={() => {
+					openInformationPopup = false;
 				}}>Close</button
 			>
 		</div>
 	</div>
 {/if}
 
-<div class="content">
+<div class="h-auto">
 	{#if registration}
-		<h1 class="font-bold mb-2 p-3 registration-title">
+		<h1 class="font-bold mb-2 p-3 text-white {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
 			Registration to the project : {registration.project?.name || 'No project name available'}
 		</h1>
-		<div class="registration-bloc">
-			<div class="registration-content bg-white w-full h-full">
+		<div class="h-auto pb-6 flex justify-center">
+			<div class="bg-white w-[80vw] rounded-xl h-auto registration-content">
 				<div class="form-head h-auto">
-					<div class="tabs">
+					<div class="my-2 { !isMobile ? "font-bold" : "font-medium"}" >
+						<div class="flex text-center justify-center items-center">
+							<p class="flex-1 {step >= 0 ? "text-[#7DBBE5]" : "text-[#C7C7C7]"}">Project Details</p>
+							<p class="flex-1 {step >= 1 ? "text-[#7DBBE5]" : "text-[#C7C7C7]"}">Contact</p>
+							<p class="flex-1 {step >= 2 ? "text-[#7DBBE5]" : "text-[#C7C7C7]"}">Attendances</p>
+						</div>
 						{#if !isMobile}
 							<Steps
-								steps={[{ text: 'Project Details' }, { text: 'Contact' }, { text: 'Attendances' }]}
+								steps={[{}, {}, {}]}
 								current={step}
+								clickable={false}
 								size="2.5rem"
 								line="3px"
 								primary="#7DBBE5"
@@ -384,10 +404,11 @@
 							/>
 						{:else}
 							<Steps
-								steps={[{ text: 'Project' }, { text: 'Contact' }, { text: 'Attendances' }]}
+								steps={[{}, {}, {}]}
 								current={step}
 								size="2.5rem"
 								line="3px"
+								clickable={false}
 								primary="#7DBBE5"
 								secondary="#C7C7C7"
 							/>
@@ -399,7 +420,7 @@
 								>Events</button
 							>
 							<button class:active={tabName === 'program'} on:click={() => (tabName = 'program')}
-								>Programs</button
+								>Program</button
 							>
 							<button class:active={tabName === 'info'} on:click={() => (tabName = 'info')}
 								>Information</button
@@ -407,10 +428,10 @@
 						</div>
 					{/if}
 				</div>
-				<div class="from-body {step === 0? "h-[78vh]" : "h-[86vh]"}">
+				<div class="from-body rounded-xl">
 					<!-- Step 1 : Project details -->
 					{#if step === 0}
-						<div class="form-body-content">
+						<div class="form-body-content {!isMobile ? "h-[50vh]" : "h-[60vh]" }">
 							<div class="pb-5">
 								{#if tabName === 'event'}
 									{#if !isMobile}
@@ -436,7 +457,7 @@
 															<tr class="bg-white dark:bg-gray-800">
 																<th
 																	scope="row"
-																	class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md"
+																	class="px-6 py-2 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md"
 																>
 																	<DateShow
 																		startTime={event.startDate}
@@ -446,7 +467,7 @@
 																	/>
 																</th>
 																<td
-																	class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-gray-300"
+																	class="px-6 py-2 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-gray-300"
 																>
 																	<DateShow
 																		startTime={event.startDate}
@@ -456,10 +477,10 @@
 																		isRehearsal={event.type === 'rehearsal'}
 																	/>
 																</td>
-																<td class="px-6 py-3 border-t-2 border-b-2 border-gray-300"
+																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300"
 																	>{event.place}</td
 																>
-																<td class="px-6 py-3 border-t-2 border-b-2 border-gray-300">
+																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
 																	{#if event.type === 'concert'}
 																		<div class="eventTypeConcert">{event.type}</div>
 																	{/if}
@@ -468,7 +489,7 @@
 																	{/if}
 																</td>
 																<td
-																	class="px-6 py-3 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
+																	class="px-6 py-2 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
 																>
 																	{event.comment ? event.comment : 'No comment'}
 																</td>
@@ -626,9 +647,9 @@
 								{/if}
 							</div>
 						</div>
-						<div class="form-body-buttons">
-							<div class="bg-white w-full flex justify-center">
-								<button class="bg-blue-500 max-w-[30%]" on:click={() => (step = step + 1)}>
+						<div class="form-body-buttons rounded-b-xl">
+							<div class="w-full flex justify-center">
+								<button class="from-body-button h-auto max-w-[30%]" on:click={() => (step = step + 1)}>
 									Next
 								</button>
 							</div>
@@ -781,11 +802,11 @@
 								</div>
 							{/if}
 						</div>
-						<div class="form-body-buttons">
-							<div class="bg-white w-full flex justify-center">
-								<button class="bg-blue-500" on:click={() => (step = step - 1)}> Back </button>
+						<div class="form-body-buttons rounded-b-xl">
+							<div class="w-full flex justify-center">
+								<button class="from-body-button" on:click={() => (step = step - 1)}> Back </button>
 								<button
-									class="bg-blue-500"
+									class="from-body-button"
 									on:click={() => {
 										if (validateContactFields()) {
 											newContact.concerts = [];
@@ -813,9 +834,9 @@
 					{/if}
 					{#if step === 2}
 						<div
-							class="bg-[#ececec] pr-5 pt-5 h-full w-full overflow-y-auto pb-10 form-body-content"
+							class="{!isMobile ? "h-[50vh]" : "h-[60vh]" } bg-[#ececec] pt-5 w-full pb-10 form-body-content"
 						>
-							<div class="ml-6 mr-1">
+							<div class="mx-3">
 								<h3 class="text-xl font-bold tracking-tight text-gray-500 dark:text-white mb-2">
 									Attendances
 								</h3>
@@ -882,7 +903,8 @@
 															{/if}
 														</td>
 														<td
-															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300"
+															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300
+															{event.comment ? "" : "text-gray-300"}"
 															>{event.comment ? event.comment : 'No additionnal information'}</td
 														>
 														<td
@@ -912,7 +934,7 @@
 											<div
 												class=" bg-white border-[2px] border-[#989898] pl-[10px] m-[15px] p-[5px] rounded-[12px] text-xs relative flex flex-col"
 											>
-												<div class="flex items-center">
+												<div class="flex items-center ">
 													<input
 														class="w-5 h-5 accent-[#30598f] ml-2 mr-2"
 														type="checkbox"
@@ -920,10 +942,11 @@
 														value={event.id}
 														on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
 													/>
-													<div class="w-[80%]">
+													<div class="w-auto">
 														<div class="flex flex-col">
 															<div class=" flex items-center gap-2 ml-2 p-[2px]">
 																<Fa icon={faCalendar} class="text-[14px]" style="color: #6B9AD9;" />
+																<div class="{widthSize < 450 ? "flex flex-col" : ""}">
 																<DateShow
 																	startTime={event.startDate}
 																	endTime={event.endDate}
@@ -937,6 +960,7 @@
 																	withDate={false}
 																	isRehearsal={event.type === 'rehearsal'}
 																/>
+																</div>
 															</div>
 															<div class=" flex items-center gap-2 ml-2 p-[2px]">
 																<Fa icon={faLocationDot} class="text-[14px]" style="color: #6B9AD9;" />
@@ -946,9 +970,15 @@
 																<div
 																	class="bg-gray-200 flex items-center gap-1 m-1 p-1 rounded-md pl-2 pr-2"
 																>
-																	<p class="text-gray-600">
-																		<span class="text-black font-bold">Information :</span>
-																		{event.comment ? event.comment : 'No additionnal information'}
+																	<p class="text-gray-600 flex flex-col">
+																		<span class="font-bold">Add a comment</span>
+																		<input
+																			id={`comment-concert-${event.id}`}
+																			class="bg-[#ebebeb] p-1 pl-2 pr-8 rounded"
+																			type="text"
+																			placeholder="Write your comment..."
+																			on:input={(e) => handleTextInput(e, event.id ?? 0, 'concert')}
+																		/>
 																	</p>
 																</div>
 															</div>
@@ -968,20 +998,20 @@
 															{/if}
 														</div>
 													</div>
-												</div>
-												{#if newContact.concerts.some((c) => c.id === event.id) || newContact.rehearsals.some((r) => r.id === event.id)}
-													<div class='w-[50%] ml-[-6px] text-[11px]'>
-													{#if newContact.concerts.find((c) => c.id === event.id)?.comment == '' || newContact.rehearsals.find((r) => r.id === event.id)?.comment == ''}
-													<button class="bg-blue-500" on:click={() => showCommentPopUp(event.id ?? 0,(event.type === 'concert' ? 'concert' : 'rehearsal') )}>
-														Add a comment
-													</button>
-													{:else}
-													<button class="bg-blue-500" on:click={() => showCommentPopUp(event.id ?? 0,(event.type === 'concert' ? 'concert' : 'rehearsal') )}>
-														Edit comment
+													{#if event.comment}
+													<button class="h-full flex mb-auto mt-1 mr-1 ml-auto"
+													on:click={() => showInformationPopUp(event.comment,(event.type === "concert" ? "concert" : "rehearsal"),event.startDate)}
+													>
+														
+														
+														<Fa 
+															icon={faCircleInfo}
+															class="text-[20px] "
+															style="color: #6B9AD9;" />
+														
 													</button>
 													{/if}
-													</div>
-												{/if}
+												</div>
 											</div>
 										{/each}
 									{:else}
@@ -1010,10 +1040,10 @@
 								</div>
 							{/if}
 						</div>
-						<div class="form-body-buttons">
-							<div class="bg-white w-full flex justify-center">
-								<button class="bg-blue-500" on:click={() => (step = step - 1)}> Back </button>
-								<button class="bg-blue-500" on:click={handleSubmit}> Submit </button>
+						<div class="form-body-buttons rounded-b-xl">
+							<div class="w-full flex justify-center">
+								<button class="from-body-button" on:click={() => (step = step - 1)}> Back </button>
+								<button class="from-body-button" on:click={handleSubmit}> Submit </button>
 							</div>
 						</div>
 					{/if}
@@ -1024,47 +1054,11 @@
 </div>
 
 <style>
-	/* Image fixe en haut */
-	.fixed-background {
-		position: fixed;
-		top: 0px;
-		left: 0;
-		width: 100vw;
-		height: 35vh;
-		overflow: hidden;
-		z-index: -1;
-	}
-	.fixed-background img {
-		top: 0px;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		overflow-x: hidden;
-	}
-	.overlay-filter {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 35vh;
-		background: linear-gradient(
-			to bottom,
-			#6bb0c7db,
-			/* couleur en haut */ #343cade1 /* couleur en bas */
-		);
-		display: flex;
-		justify-content: center; /* centre horizontalement */
-		align-items: center; /* centre verticalement */
-		text-align: center; /* pour le texte */
-		padding: 0 20px; /* optionnel : un peu de marge sur les côtés */
-		pointer-events: none;
-		overflow-x: hidden;
-	}
 	.registration-title {
 		margin-left: 30px;
 		margin-right: 30px;
-		margin-top: 5vh;
-		margin-bottom: 6vh;
+		margin-top: 3vh;
+		margin-bottom: 2vh;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -1072,28 +1066,18 @@
 		font-size: 2rem;
 	}
 	.registration-content {
-		border-radius: 10px;
-		margin-left: 10vw;
-		margin-right: 10vw;
-		margin-bottom: 5vh;
-		height: 72vh;
-		min-height: 550px;
-		background-color: white;
 		box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
-		overflow: hidden;
 	}
 	.from-body {
 		display: flex;
 		flex-direction: column;
-		justify-content: flex-end;
-		padding-bottom: 5vh;
 	}
 	.form-body-buttons {
 		display: flex;
-		box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3);
+		box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.2);
 		justify-content: center;
 	}
-	.from-body button {
+	.from-body-button {
 		height: 35px;
 		border-radius: 7px;
 		width: 100%;
@@ -1108,7 +1092,6 @@
 	.form-body-content {
 		background-color: #ececec;
 		width: 100%;
-		height: 100%;
 		overflow-y: auto;
 	}
 	.registration-bloc {
@@ -1134,13 +1117,12 @@
 		font-size: small;
 	}
 	.tabs-details {
+		margin-top: -10px;
 		width: 100%;
 		display: flex;
-		margin-top: 1%;
 		padding-left: 5vw;
 		gap: 5vw;
-		bottom: 0;
-		font-weight: bold;
+		font-weight: 500;
 		color: #929292;
 	}
 	.tabs-details button {
@@ -1243,9 +1225,8 @@
 			text-overflow: clip;
 		}
 		.registration-content {
+			width: 90%;
 			border-radius: 10px;
-			margin-left: 10vw;
-			margin-right: 10vw;
 			margin-bottom: 2px;
 			background-color: white;
 			box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
