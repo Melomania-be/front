@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="351b0e8b-13f0-4585-9d36-b2ece3272420" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/api/templates/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/templates/+server.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/mailing/templates/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mailing/templates/+page.svelte" afterDir="false" />
-    </list>
+    <list default="true" id="351b0e8b-13f0-4585-9d36-b2ece3272420" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -106,7 +100,7 @@
       <workItem from="1748875859447" duration="782000" />
       <workItem from="1749107523618" duration="1562000" />
       <workItem from="1749116416531" duration="652000" />
-      <workItem from="1749380536789" duration="5535000" />
+      <workItem from="1749380536789" duration="6210000" />
     </task>
     <servers />
   </component>
