@@ -10,17 +10,17 @@
     let participants: Array<Participant>;
     let currentParticipant: Participant | null;
 
-    // Variables pour le modal de refus
+    // Variables for refusal modal
     let showRefusalModal = false;
     let refusalMessage = '';
     let isRefusing = false;
 
-    // Variables pour Quill
+    // Variables for Quill
     let quillContainer: HTMLElement;
     let quill: any;
     let quillLoaded = false;
 
-    // Ajout des variables pour stocker TOUTES les dates du projet
+    // Variables to store ALL project dates
     let allConcerts: Concert[] = [];
     let allRehearsals: Rehearsal[] = [];
 
@@ -31,7 +31,7 @@
             participants = await responseParticipants.json();
         }
 
-        // Récupérer TOUTES les dates du projet (comme dans attendance/+page.svelte)
+        // Fetch ALL project dates (like in attendance/+page.svelte)
         const responseAttendance = await fetch(`/api/projects/${data.id}/management/attendance`);
         if (responseAttendance.ok) {
             const attendanceData = await responseAttendance.json();
@@ -39,7 +39,7 @@
             allRehearsals = attendanceData.rehearsals;
         }
 
-        // Charger Quill dynamiquement
+        // Load Quill dynamically
         await loadQuill();
     });
 
@@ -51,15 +51,15 @@
 
     async function loadQuill() {
         try {
-            // Charger Quill depuis CDN
+            // Load Quill from CDN
             if (typeof window !== 'undefined' && !window.Quill) {
-                // Charger CSS
+                // Load CSS
                 const linkElement = document.createElement('link');
                 linkElement.rel = 'stylesheet';
                 linkElement.href = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css';
                 document.head.appendChild(linkElement);
 
-                // Charger JS
+                // Load JS
                 const scriptElement = document.createElement('script');
                 scriptElement.src = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js';
 
@@ -71,7 +71,7 @@
             }
             quillLoaded = true;
         } catch (error) {
-            console.error('Erreur lors du chargement de Quill:', error);
+            console.error('Error loading Quill:', error);
         }
     }
 
@@ -79,7 +79,7 @@
         if (quillLoaded && quillContainer && window.Quill && !quill) {
             quill = new window.Quill(quillContainer, {
                 theme: 'snow',
-                placeholder: 'Vous pouvez expliquer les raisons du refus ici...',
+                placeholder: 'You can explain the reasons for refusal here...',
                 modules: {
                     toolbar: [
                         [{ 'header': [1, 2, 3, false] }],
@@ -92,15 +92,15 @@
                 }
             });
 
-            // Synchroniser le contenu avec la variable refusalMessage
+            // Synchronize content with refusalMessage variable
             quill.on('text-change', () => {
                 const html = quill.root.innerHTML;
                 const text = quill.getText();
-                // Utiliser le HTML si il y a du contenu, sinon chaîne vide
+                // Use HTML if there's content, otherwise empty string
                 refusalMessage = text.trim() === '' ? '' : html;
             });
 
-            // Si il y a déjà du contenu, l'injecter dans Quill
+            // If there's already content, inject it into Quill
             if (refusalMessage) {
                 quill.root.innerHTML = refusalMessage;
             }
@@ -159,7 +159,7 @@
         showRefusalModal = true;
         refusalMessage = '';
 
-        // Initialiser Quill après que le modal soit visible
+        // Initialize Quill after modal is visible
         setTimeout(() => {
             initializeQuill();
         }, 100);
@@ -170,7 +170,7 @@
         refusalMessage = '';
         isRefusing = false;
 
-        // Nettoyer Quill
+        // Clean up Quill
         if (quill) {
             quill.setText('');
         }
@@ -182,14 +182,14 @@
         isRefusing = true;
 
         try {
-            // Récupérer the contenu final de Quill
+            // Get final content from Quill
             let finalMessage = '';
             if (quill) {
                 const text = quill.getText().trim();
                 finalMessage = text ? quill.root.innerHTML : '';
             }
 
-            // Envoyer l'email de refus avec le template
+            // Send refusal email with template
             const emailResponse = await fetch(`/api/mailing/sendRefusalEmailToParticipant`, {
                 method: 'POST',
                 headers: {
@@ -198,17 +198,17 @@
                 body: JSON.stringify({
                     projectId: data.id,
                     participantId: currentParticipant.id,
-                    customMessage: finalMessage || null // Message personnalisé optionnel (HTML)
+                    customMessage: finalMessage || null // Optional custom message (HTML)
                 })
             });
 
             if (!emailResponse.ok) {
                 const errorData = await emailResponse.json();
-                alert(`Erreur lors de l'envoi de l'email: ${errorData.message || 'Erreur inconnue'}`);
+                alert(`Error sending email: ${errorData.message || 'Unknown error'}`);
                 return;
             }
 
-            // Supprimer le participant
+            // Delete participant
             const deleteResponse = await fetch(
               `/api/projects/${data.id}/management/participants/${currentParticipant.id}`,
               {
@@ -225,14 +225,14 @@
                 );
                 currentParticipant = null;
                 closeRefusalModal();
-                alert('Email de refus envoyé et participant supprimé avec succès');
+                alert('Refusal email sent and participant successfully deleted');
             } else {
-                alert('Email envoyé mais erreur lors de la suppression du participant');
+                alert('Email sent but error occurred while deleting participant');
             }
 
         } catch (error) {
-            console.error('Erreur lors du refus:', error);
-            alert('Erreur réseau, veuillez réessayer');
+            console.error('Error during refusal:', error);
+            alert('Network error, please try again');
         } finally {
             isRefusing = false;
         }
@@ -247,8 +247,8 @@
                 <table class="min-w-full bg-white dark:bg-gray-800">
                     <thead>
                     <tr>
-                        <th class="py-2 px-4 border-b">Firstname</th>
-                        <th class="py-2 px-4 border-b">Lastname</th>
+                        <th class="py-2 px-4 border-b">First Name</th>
+                        <th class="py-2 px-4 border-b">Last Name</th>
                         <th class="py-2 px-4 border-b">Section</th>
                         <th class="py-2 px-4 border-b"></th>
                     </tr>
@@ -292,7 +292,7 @@
                                 <span class="font-semibold">Messenger:</span> {currentParticipant.contact.messenger}
                             </div>
                             <div class="mb-2">
-                                <span class="font-semibold">Comments:</span> {currentParticipant.contact.comments ?? 'no comments'}
+                                <span class="font-semibold">Comments:</span> {currentParticipant.contact.comments ?? 'No comments'}
                             </div>
                         </div>
                     </div>
@@ -317,7 +317,7 @@
                             </div>
                             <div class="mb-2">
                                 <h3 class="text-lg">Concerts</h3>
-                                <!-- Utiliser TOUS les concerts du projet au lieu de seulement ceux du participant -->
+                                <!-- Use ALL concerts from the project instead of only participant's ones -->
                                 <AttendancePicker
                                   concertsOrRehearsals={allConcerts}
                                   type="concert"
@@ -327,7 +327,7 @@
                             </div>
                             <div class="mb-2">
                                 <h3 class="text-lg">Rehearsals</h3>
-                                <!-- Utiliser TOUTES les répétitions du projet au lieu de seulement celles du participant -->
+                                <!-- Use ALL rehearsals from the project instead of only participant's ones -->
                                 <AttendancePicker
                                   concertsOrRehearsals={allRehearsals}
                                   type="rehearsal"
@@ -370,26 +370,26 @@
     </div>
 </div>
 
-<!-- Modal de refus avec Quill Editor -->
+<!-- Refusal modal with Quill Editor -->
 {#if showRefusalModal}
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-                Refuser la participation
+                Refuse Participation
             </h2>
             <p class="mb-4 text-gray-700 dark:text-gray-300">
-                Vous êtes sur le point de refuser la participation de <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
+                You are about to refuse the participation of <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
             </p>
             <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Un email de refus sera automatiquement envoyé au participant. Vous pouvez ajouter un message personnalisé ci-dessous (optionnel).
+                A refusal email will be automatically sent to the participant. You can add a custom message below (optional).
             </p>
 
             <div class="mb-6">
                 <label for="refusal-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Message personnalisé (optionnel)
+                    Custom message (optional)
                 </label>
 
-                <!-- Container pour Quill Editor -->
+                <!-- Container for Quill Editor -->
                 <div
                   bind:this={quillContainer}
                   class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRefusing ? 'opacity-50 pointer-events-none' : ''}"
@@ -397,7 +397,7 @@
                 ></div>
 
                 {#if !quillLoaded}
-                    <div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
+                    <div class="text-sm text-gray-500 mt-2">Loading editor...</div>
                 {/if}
             </div>
 
@@ -407,14 +407,14 @@
                   on:click={closeRefusalModal}
                   disabled={isRefusing}
                 >
-                    Annuler
+                    Cancel
                 </button>
                 <button
                   class="px-4 py-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
                   on:click={refuseParticipant}
                   disabled={isRefusing}
                 >
-                    {isRefusing ? 'Envoi en cours...' : 'Refuser et envoyer l\'email'}
+                    {isRefusing ? 'Sending...' : 'Refuse and send email'}
                 </button>
             </div>
         </div>
@@ -422,7 +422,7 @@
 {/if}
 
 <style>
-    /* Styles pour Quill Editor en mode sombre */
+    /* Styles for Quill Editor in dark mode */
     :global(.dark .ql-toolbar) {
         border-color: #374151 !important;
         background-color: #1f2937 !important;

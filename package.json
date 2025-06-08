@@ -39,6 +39,7 @@
 		"sortablejs": "^1.15.3",
 		"svelte-dnd-action": "^0.9.61",
 		"svelte-fa": "^4.0.2",
+		"svelte-quill": "^1.2.0",
 		"sweetalert2": "^11.12.0"
 	}
 }

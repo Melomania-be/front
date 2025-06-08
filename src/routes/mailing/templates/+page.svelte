@@ -37,6 +37,8 @@
         return newOne ? newTemplateToSave : selectedTemplate;
     }
 
+	// Dans votre fonction saveTemplate(), ajoutez cette vérification :
+
 	async function saveTemplate() {
 		console.log('Save Template');
 		if (newOne) {
@@ -44,10 +46,20 @@
 				alert('Please fill all fields');
 				return;
 			}
+
+			// Assurez-vous que is_default est défini (correction 1)
+			if (newTemplateToSave.is_default === undefined) {
+				newTemplateToSave.is_default = false;
+			}
+
 			let confirmSave = confirm('Are you sure you want to save this template ?');
 			if (!confirmSave) {
 				return;
 			}
+
+			// Ajoutez un log pour vérifier les données envoyées (correction 2)
+			console.log('Data to send:', newTemplateToSave);
+
 			const res = await fetch('/api/templates', {
 				method: 'PUT',
 				headers: {
@@ -55,6 +67,14 @@
 				},
 				body: JSON.stringify(newTemplateToSave)
 			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				console.error('Error saving template:', errorData);
+				alert('Error saving template: ' + errorData.message);
+				return;
+			}
+
 			const data = await res.json();
 			templates.push(data);
 			selectedTemplate = data;
@@ -64,10 +84,20 @@
 				alert('Please fill all fields');
 				return;
 			}
+
+			// Assurez-vous que is_default est défini (correction 3)
+			if (selectedTemplate.is_default === undefined) {
+				selectedTemplate.is_default = false;
+			}
+
 			let confirmSave = confirm('Are you sure you want to save these edits ?');
 			if (!confirmSave) {
 				return;
 			}
+
+			// Ajoutez un log pour vérifier les données envoyées (correction 4)
+			console.log('Data to send:', selectedTemplate);
+
 			const res = await fetch(`/api/templates`, {
 				method: 'PUT',
 				headers: {
@@ -75,6 +105,14 @@
 				},
 				body: JSON.stringify(selectedTemplate)
 			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				console.error('Error saving template:', errorData);
+				alert('Error saving template: ' + errorData.message);
+				return;
+			}
+
 			const data = await res.json();
 			const index = templates.findIndex((template) => template.id === data.id);
 			templates[index] = data;
@@ -82,6 +120,26 @@
 		}
 		alert('Template saved');
 	}
+
+	// Modifiez aussi votre fonction onMount pour initialiser correctement is_default :
+
+	onMount(async () => {
+		const res = await fetch('/api/templates');
+		const data = await res.json();
+		templates = data;
+
+		// Assurez-vous que chaque template a is_default défini (correction 5)
+		templates = templates.map(template => ({
+			...template,
+			is_default: template.is_default ?? false
+		}));
+
+		selectedTemplate = templates[0];
+
+		const resFolder = await fetch('/api/folders');
+		const dataFolder = await resFolder.json();
+		folders = dataFolder;
+	});
 
 	async function deleteTemplate() {
 		console.log('delete');
@@ -239,7 +297,7 @@
 			<div class="pt-5">
 				{#if templates && templates.length > 0}
 					<p>
-						Please select the template you want to edit : 
+						Please select the template you want to edit :
 						<select bind:value={selectedTemplate} on:change={updateIframeContent}>
 							{#each templates as template}
 								<option value={template}>{template.name}</option>
