@@ -39,7 +39,7 @@
 		<img src={imageBackground} alt="Background" />
 		<div class="overlay-filter"></div>
 	</div>
-	<RegistrationShow bind:registration {projectId} />
+	<RegistrationShow bind:registration {projectId} registrationModifierMode={false}/>
 {/if}
 
 

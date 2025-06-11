@@ -21,7 +21,9 @@
 
 	export let registration: Registration;
 	export let projectId: number;
+	export let registrationModifierMode: boolean;
 
+	console.log("mode" , registrationModifierMode);
 
 	type ParticipantsCountBySection = {
 		section_id: number;
@@ -55,7 +57,7 @@
 	let widthSize : number;
 
 	const checkMobile = () => {
-		isMobile = window.innerWidth <= 1000;
+		isMobile = window.innerWidth <= 1000 || registrationModifierMode;
 		widthSize = window.innerWidth;
 	};
 
@@ -160,7 +162,10 @@
 	}
 
 	async function handleSubmit() {
-
+		if(registrationModifierMode){
+			return
+		}
+		
 		let hasError = false;
 
 		if (newContact.rehearsals.length === 0) {
@@ -253,14 +258,14 @@
 	let concertError = false;
 
 	function validateContactFields() {
-		contactErrors.first_name = newContact.first_name.trim() === '';
-		contactErrors.last_name = newContact.last_name.trim() === '';
-		contactErrors.email = newContact.email.trim() === '';
-		contactErrors.section_id = newContact.section_id === 0;
-
-		let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-		contactErrors.validEmail = !emailPattern.test(newContact.email);
-
+		if(!registrationModifierMode){
+			contactErrors.first_name = newContact.first_name.trim() === '';
+			contactErrors.last_name = newContact.last_name.trim() === '';
+			contactErrors.email = newContact.email.trim() === '';
+			contactErrors.section_id = newContact.section_id === 0;
+			let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+			contactErrors.validEmail = !emailPattern.test(newContact.email);
+		}
 		return !Object.values(contactErrors).includes(true);
 	}
 
@@ -366,13 +371,13 @@
 	</div>
 {/if}
 
-<div class="h-auto">
+<div class="h-auto w-[100%]">
 	{#if registration}
-		<h1 class="font-bold mb-2 p-3 text-white {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
+		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-black" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
 			Registration to the project : {registration.project?.name || 'No project name available'}
 		</h1>
 		<div class="h-auto pb-6 flex justify-center">
-			<div class="bg-white w-[80vw] rounded-xl h-auto registration-content">
+			<div class="bg-white w-[80%] rounded-xl h-auto registration-content">
 				<div class="form-head h-auto">
 					<div class="my-2 { !isMobile ? "font-bold" : "font-medium"}" >
 						<div class="flex text-center justify-center items-center">
@@ -1042,17 +1047,6 @@
 </div>
 
 <style>
-	.registration-title {
-		margin-left: 30px;
-		margin-right: 30px;
-		margin-top: 3vh;
-		margin-bottom: 2vh;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		color: white;
-		font-size: 2rem;
-	}
 	.registration-content {
 		box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
 	}
@@ -1083,12 +1077,12 @@
 		overflow-y: auto;
 	}
 	.registration-bloc {
-		width: 100vw;
+		width: 100%;
 		display: flex;
 		justify-content: center;
 	}
 	.form-head {
-		position: relative;
+		position: relative;	
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
@@ -1154,64 +1148,6 @@
 		font-size: medium;
 	}
 	@media (max-width: 700px) {
-		/* Cible les écrans mobiles et tablettes */
-		.registration-title {
-			margin-left: 30px;
-			margin-right: 30px;
-			margin-top: 20px;
-			margin-bottom: 20px;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			color: white;
-			font-size: 2rem;
-		}
-		/* Image fixe en haut */
-		.fixed-background {
-			position: fixed;
-			top: 0px;
-			left: 0;
-			width: 100vw;
-			height: 35vh;
-			overflow: hidden;
-			z-index: -1;
-		}
-		.fixed-background img {
-			top: 0px;
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-		}
-		.overlay-filter {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 35vh;
-			background: linear-gradient(
-				to bottom,
-				#6bb0c7db,
-				/* couleur en haut */ #343cade1 /* couleur en bas */
-			);
-			display: flex;
-			justify-content: center; /* centre horizontalement */
-			align-items: center; /* centre verticalement */
-			text-align: center; /* pour le texte */
-			padding: 0 20px; /* optionnel : un peu de marge sur les côtés */
-			pointer-events: none;
-		}
-		.tabs {
-			justify-content: center;
-			align-items: center;
-			margin-top: 15px;
-			width: 100%;
-			height: 70%;
-			pointer-events: none;
-			font-size: x-small;
-			overflow: hidden;
-			white-space: nowrap;
-			text-overflow: clip;
-		}
 		.registration-content {
 			width: 90%;
 			border-radius: 10px;
