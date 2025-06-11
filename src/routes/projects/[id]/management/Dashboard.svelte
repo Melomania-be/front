@@ -16,8 +16,26 @@
 </script>
 
 <div class="bg-[#E7E7E7] p-4">
-	<div class="bg-white border-2 border-[#E35656] rounded-[10px] w-[40%]">
-		<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
+	<div class="flex flex-row items-center h-full">
+		<div class="bg-white border-2 border-[#E35656] rounded-[10px] w-[40%]">
+			<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
+		</div>
+		<div class="flex w-[50%] mr-0 ml-auto text-white h-[100px] font-bold">
+			<div class="flex w-full gap-6 text-center">
+				<div class="rounded-lg py-2 px-4 flex-1 h-full bg-[#6CB1C8]">
+					<p>PARTICIPANTS</p>
+					<p class="text-[45px] font-extrabold -mt-1">{project.participants.length}</p>
+				</div>
+				<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
+					<p>REHEARSALS</p>
+					<p class="text-[45px] font-extrabold -mt-1">{project.rehearsals.length}</p>
+				</div>
+				<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
+					<p>CONCERTS</p>
+					<p class="text-[45px] font-extrabold -mt-1">{project.concerts.length}</p>
+				</div>
+			</div>
+		</div>
 	</div>
 
 
@@ -62,21 +80,17 @@
 		<DisplayerSection bind:project />
 	</div>
 
-	<div class="flex flex-col md:flex-row">
-		<div class="m-1 w-full md:w-1/2">
+	<div class="flex mt-4">
+		<div class="w-full">
 			<DisplayerSheets
 				bind:project
 				bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
 				bind:participantsNotValidated
 			/>
 		</div>
-		<div class="m-1 w-full md:w-1/2">
-			<DisplayerPieces bind:project />
-		</div>
-
-		
-
-
+	</div>
+	<div class="m-1 w-full md:w-1/2">
+		<DisplayerPieces bind:project />
 	</div>
 </div>
 

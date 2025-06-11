@@ -3,10 +3,31 @@
     import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
     import type { Participant } from '$lib/types/Participant.js';
     import { onMount } from 'svelte';
+	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
+	import type { Project } from '$lib/types/Project';
+	import { faRecordVinyl } from '@fortawesome/free-solid-svg-icons';
 
     export let data;
     let participants: Array<Participant>;
     let currentParticipant: Participant | null;
+
+    let project : Project | undefined;
+
+    async function fetchProject() {
+		if (!data?.id) return;
+
+		const response = await fetch(`/api/projects/${data.id}`, {
+			method: 'GET'
+		});
+
+		if (!response.ok) {
+			console.error('Failed to fetch project');
+			return;
+		}
+
+		project = await response.json();
+		console.log("DATA : " , project )
+	}
 
     onMount(async () => {
         const responseParticipants = await fetch(`/api/projects/${data.id}/management/validation`);
@@ -14,6 +35,8 @@
         if (responseParticipants.ok) {
             participants = await responseParticipants.json();
         }
+
+        fetchProject();
     });
 
     async function deleteParticipant() {
@@ -63,9 +86,12 @@
             currentParticipant = null;
         }
     }
+
 </script>
 
-<div class="m-4 p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+<ProjectHeadDisplayer project={project} selectedTab={1}/>
+<div class="bg-[#E7E7E7] p-4">
+<div class="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#if participants && participants.length > 0}
             <div>
@@ -194,4 +220,5 @@
             </div>
         {/if}
     </div>
+</div>
 </div>

@@ -31,18 +31,19 @@
 		</div>
         
 	</div>
-    <p class="mb-4 text-sm">Group Section : {project.sectionGroup ? project.sectionGroup.name : "None"}</p>
+    {#if project.sectionGroup}
+    <p class="mb-4 text-sm">Group Section : { project.sectionGroup.name}</p>
     <div class="text-xs gap-2 text-center">
         <div class="flex flex-row gap-2 w-full h-[100px] border-t border-t-dotted border-l-2 border-l-[#8C8C8C] px-1">
         {#each project.sectionGroup.sections as section}
             <button
             on:mouseenter={() => showParticipantsNumber = true}
-			on:mouseleave={() => showParticipantsNumber = false}
-            class="tooltip-wrapper flex-1 mt-auto mb-0 max-h-[100px] rounded-t
-            {(countMap[section.id] ? countMap[section.id] : 0) > section.size ? "bg-[#D1A9FF]" : "bg-blue-200"}"
+			      on:mouseleave={() => showParticipantsNumber = false}
+            class="tooltip-wrapper flex-1 mt-auto mb-0 max-h-[99px] rounded-t
+            {(countMap[section.id] ? countMap[section.id] : 0) >= section.size ? "bg-[#D1A9FF] hover:bg-purple-400" : "bg-blue-200 hover:bg-blue-300"}"
             style="height: {(countMap[section.id] ? countMap[section.id] : 0) / section.size *100}%;">
             <div class="tooltip font-s pointer-events-none {showParticipantsNumber ? 'visible' : ''}">
-					<p> {countMap[section.id] ? countMap[section.id] : 0} / {section.size} </p>
+					<p class="text-[10px]"> {countMap[section.id] ? countMap[section.id] : 0} / {section.size} </p>
 				</div>
             </button>
         {/each}
@@ -54,6 +55,9 @@
         {/each}
         </div>
     </div>
+    {:else}
+        <p class="text-sm text-center mb-4"> No Section Group </p>
+    {/if}
 </div>
 
 

@@ -35,7 +35,7 @@
 		});
 
 		if (response.ok) {
-			goto(`/projects/${projectId}/management`);
+			goto(`/projects/${projectId}/management/registration`);
 		} else {
 			alert('An error occured');
 		}
@@ -54,7 +54,7 @@
 	}
 </script>
 
-<div class="grid grid-cols-2">
+<div class="grid grid-cols-2 bg-[#E7E7E7]">
 	{#if registration}
 		<div
 			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
@@ -164,6 +164,8 @@
 				{/if}
 			</div>
 		</div>
-		<RegistrationShow bind:registration {projectId} />
+		<div class="">
+			<RegistrationShow bind:registration {projectId} registrationModifierMode={true} />
+		</div>
 	{/if}
 </div>
