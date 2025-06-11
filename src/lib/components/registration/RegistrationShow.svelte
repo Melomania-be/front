@@ -21,7 +21,7 @@
 
 	export let registration: Registration;
 	export let projectId: number;
-	export let registrationModifierMode: boolean;
+	export let registrationModifierMode : boolean;
 
 	console.log("mode" , registrationModifierMode);
 
@@ -62,6 +62,7 @@
 	};
 
 	onMount(() => {
+		console.log("ismobile?",isMobile)
 		checkMobile();
 		window.addEventListener('resize', checkMobile);
 
@@ -263,8 +264,10 @@
 			contactErrors.last_name = newContact.last_name.trim() === '';
 			contactErrors.email = newContact.email.trim() === '';
 			contactErrors.section_id = newContact.section_id === 0;
+
 			let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 			contactErrors.validEmail = !emailPattern.test(newContact.email);
+
 		}
 		return !Object.values(contactErrors).includes(true);
 	}
@@ -372,11 +375,14 @@
 {/if}
 
 <div class="h-auto w-[100%]">
+<div class="h-auto w-[100%]">
 	{#if registration}
+		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-black" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
 		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-black" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
 			Registration to the project : {registration.project?.name || 'No project name available'}
 		</h1>
 		<div class="h-auto pb-6 flex justify-center">
+			<div class="bg-white w-[80%] rounded-xl h-auto registration-content">
 			<div class="bg-white w-[80%] rounded-xl h-auto registration-content">
 				<div class="form-head h-auto">
 					<div class="my-2 { !isMobile ? "font-bold" : "font-medium"}" >
@@ -656,14 +662,14 @@
 							<div class="flex flex-col h-16">
 								<div
 									class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
-									{contactErrors.first_name ? 'text-red-500 placeholder-red-400' : ''}"
+									{contactErrors.first_name  ? 'text-red-500 placeholder-red-400' : ''}"
 									style="width: fit-content;"
 								>
 									First Name*
 								</div>
 								<input
 									class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none
-									{contactErrors.first_name ? 'border-red-500 placeholder-red-400' : ''}"
+									{contactErrors.first_name  ? 'border-red-500 placeholder-red-400' : ''}"
 									bind:value={newContact.first_name}
 									placeholder="First name"
 									required
@@ -1077,6 +1083,7 @@
 		overflow-y: auto;
 	}
 	.registration-bloc {
+		width: 100%;
 		width: 100%;
 		display: flex;
 		justify-content: center;

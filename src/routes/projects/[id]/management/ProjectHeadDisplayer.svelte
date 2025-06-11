@@ -5,14 +5,18 @@
 	import DateShow from '$lib/components/DateShow.svelte';
 
 	export let project : any;
-
+	
     export let selectedTab: number;
+
+	console.log("PROJECT" , project)
 
 	let participantsUrl: string;
 	let maillingUrl: string;
 	let projectUrl: string;
     let callsheetUrl : string;
 	let attendanceUrl : string;
+	
+	let participantNotValidated : number = 0;
 
 	// Reactif : met à jour les URLs dès que project devient dispo
 	$: if (project) {
@@ -21,6 +25,14 @@
 		projectUrl = `/projects/${project.id}/management`;
         callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
+
+		if(project?.participants){
+        for(const p of project.participants){
+            if( !p.accepted ){
+                participantNotValidated++;
+            }
+        }
+    }
 	}
 </script>
 
@@ -51,7 +63,11 @@
 <!--Tabs-->
 <div class="ml-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
 	<button class=" p-3 {selectedTab === 0 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(projectUrl)}>Project Details</button>
-	<button class=" p-3 {selectedTab === 1 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(participantsUrl)}>Participants</button>
+	<button class="flex gap-1 items-center p-3 {selectedTab === 1 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(participantsUrl)}>Participants
+		{#if participantNotValidated}
+			<div class="mt-1 bg-red-400 text-white w-[20px] h-[20px] rounded-full text-sm text-center"> {participantNotValidated} </div>
+		{/if}
+	</button>
 	<button class=" p-3 {selectedTab === 2 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(maillingUrl)}>Mailling</button>
 	<button class=" p-3 {selectedTab === 3 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(callsheetUrl)}>Callsheet</button>
 	<button class=" p-3 {selectedTab === 4 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(attendanceUrl)}>Attendances</button>

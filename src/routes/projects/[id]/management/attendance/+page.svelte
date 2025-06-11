@@ -42,7 +42,7 @@
             console.error('Failed to fetch project');
             return;
         }
-
+       
         project = await response.json();
     }
 

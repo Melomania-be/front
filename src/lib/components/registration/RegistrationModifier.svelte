@@ -36,6 +36,7 @@
 
 		if (response.ok) {
 			goto(`/projects/${projectId}/management/registration`);
+			goto(`/projects/${projectId}/management/registration`);
 		} else {
 			alert('An error occured');
 		}
@@ -54,6 +55,7 @@
 	}
 </script>
 
+<div class="grid grid-cols-2 bg-[#E7E7E7]">
 <div class="grid grid-cols-2 bg-[#E7E7E7]">
 	{#if registration}
 		<div
@@ -164,6 +166,8 @@
 				{/if}
 			</div>
 		</div>
-		<RegistrationShow bind:registration {projectId} registrationModifierMode={true} />
+		<div class="">
+			<RegistrationShow bind:registration {projectId} registrationModifierMode={true} />
+		</div>
 	{/if}
 </div>

@@ -14,7 +14,7 @@
 	let selectedTab = 0;
 </script>
 
-<div>
+<div class="overflow-x-hidden">
 	<ProjectHeadDisplayer project={project} selectedTab={0}></ProjectHeadDisplayer>
 	<Dashboard
 		{project}
