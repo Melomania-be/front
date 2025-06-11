@@ -160,14 +160,7 @@
 	}
 
 	async function handleSubmit() {
-		if (newContact.rehearsals.length !== 0) {
-			rehearsalError = false;
-		}
-		if (newContact.concerts.length !== 0) {
-			concertError = false;
-		}
 
-		console.log('submit clicked');
 		let hasError = false;
 
 		if (newContact.rehearsals.length === 0) {
@@ -176,18 +169,12 @@
 		}
 
 		if (newContact.first_name === '' || newContact.last_name === '' || newContact.email === '') {
-			//return alert('Please enter every non optional information.');
+			return alert('Please enter every non optional information.');
 			hasError = true;
 		}
 
 		if (newContact.section_id === 0) {
-			//return alert('Please select the section you want to belong to.');
-			hasError = true;
-		}
-
-		if (newContact.concerts.length === 0) {
-			//return alert('Please select the concerts you will attend to (at least one required).');
-			concertError = true;
+			return alert('Please select the section you want to belong to.');
 			hasError = true;
 		}
 
@@ -196,6 +183,7 @@
 		}
 
 		if (hasError) {
+			console.log("ERROR")
 			return;
 		}
 
@@ -866,11 +854,11 @@
 															class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md"
 														>
 															<input
-																class="w-4 h-4 accent-[#30598f]"
+																class="w-5 h-5 accent-[#30598f] ml-2 mr-2"
 																type="checkbox"
-																id={`rehearsal-${event.id}`}
+																id={`${event.type}-${event.id}`}
 																value={event.id}
-																on:change={(e) => handleCheckboxChange(e, event.id ?? 0, 'concert')}
+																on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
 															/>
 														</td>
 														<td
