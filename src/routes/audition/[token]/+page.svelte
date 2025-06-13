@@ -12,18 +12,78 @@
 	let submitting = false;
 	let candidateNotes = '';
 
-	// Variables pour l'upload
+	// Variables pour l'upload - CORRIGÉES
 	let selectedFiles: FileList | null = null;
+	let fileInput: HTMLInputElement; // Référence directe à l'input
 	let fileType = 'video';
 	let fileDescription = '';
 	let uploadProgress = 0;
+	let fileValidationError = ''; // Pour afficher les erreurs de validation
 
-	const allowedTypes = {
-		video: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv'],
-		audio: ['.mp3', '.wav', '.aac', '.flac', '.ogg'],
-		pdf: ['.pdf'],
-		image: ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
-	};
+	// ======= FONCTIONS CORRIGÉES =======
+
+	// Fonction pour valider le type de fichier côté client
+	function isValidFileType(file, allowedTypes) {
+		const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+		return allowedTypes.includes(fileExtension);
+	}
+
+	// Amélioration de la fonction getAcceptedTypes pour être plus précise
+	function getAcceptedTypes() {
+		const typeMap = {
+			video: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm'],
+			audio: ['.mp3', '.wav', '.aac', '.flac', '.ogg', '.m4a'],
+			pdf: ['.pdf'],
+			image: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+		};
+
+		return typeMap[fileType] || [];
+	}
+
+	// Validation en temps réel du fichier sélectionné - CORRIGÉE
+	function handleFileSelection() {
+		fileValidationError = ''; // Reset des erreurs précédentes
+
+		if (!selectedFiles || selectedFiles.length === 0) {
+			return;
+		}
+
+		const file = selectedFiles[0];
+		const acceptedTypes = getAcceptedTypes();
+
+		// Vérifier le type de fichier
+		if (!isValidFileType(file, acceptedTypes)) {
+			fileValidationError = `Type de fichier non autorisé. Types acceptés pour ${fileType}: ${acceptedTypes.join(', ')}`;
+			// NE PAS RESET selectedFiles ici - laissez l'utilisateur voir l'erreur
+			return;
+		}
+
+		// Vérifier la taille
+		const maxSize = 50 * 1024 * 1024; // 50MB
+		if (file.size > maxSize) {
+			fileValidationError = `Fichier trop volumineux: ${formatFileSize(file.size)}. Taille maximum: 50MB`;
+			// NE PAS RESET selectedFiles ici - laissez l'utilisateur voir l'erreur
+			return;
+		}
+
+		console.log('File selected and validated:', {
+			name: file.name,
+			size: formatFileSize(file.size),
+			type: file.type
+		});
+	}
+
+	// Fonction pour reset proprement la sélection de fichier
+	function resetFileSelection() {
+		selectedFiles = null;
+		fileDescription = '';
+		fileValidationError = '';
+		if (fileInput) {
+			fileInput.value = '';
+		}
+	}
+
+	// ======= FONCTIONS EXISTANTES =======
 
 	onMount(async () => {
 		await loadAudition();
@@ -52,7 +112,9 @@
 		}
 	}
 
+	// Fonction d'upload CORRIGÉE
 	async function uploadFile() {
+		// Vérifications préliminaires
 		if (!selectedFiles || selectedFiles.length === 0) {
 			alert('Veuillez sélectionner un fichier');
 			return;
@@ -63,36 +125,104 @@
 			return;
 		}
 
+		// Vérifier s'il y a une erreur de validation
+		if (fileValidationError) {
+			alert(`Erreur de validation: ${fileValidationError}`);
+			return;
+		}
+
+		const file = selectedFiles[0];
+
+		// Double vérification de la validation
+		const acceptedTypes = getAcceptedTypes();
+		if (!isValidFileType(file, acceptedTypes)) {
+			alert(`Type de fichier non autorisé pour ${fileType}`);
+			return;
+		}
+
+		const maxSize = 50 * 1024 * 1024; // 50MB
+		if (file.size > maxSize) {
+			alert('Le fichier est trop volumineux. Taille maximum autorisée : 50MB');
+			return;
+		}
+
 		uploading = true;
 		uploadProgress = 0;
 
 		try {
+			console.log('Starting file upload...');
+			console.log('File details:', {
+				name: file.name,
+				size: file.size,
+				type: file.type,
+				fileType: fileType,
+				description: fileDescription.trim()
+			});
+
 			const formData = new FormData();
-			formData.append('file', selectedFiles[0]);
+			formData.append('file', file);
 			formData.append('fileType', fileType);
-			formData.append('description', fileDescription);
+			formData.append('description', fileDescription.trim());
+
+			// Vérification FormData pour debug
+			console.log('FormData contents:');
+			for (const [key, value] of formData.entries()) {
+				if (value instanceof File) {
+					console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+				} else {
+					console.log(`${key}: ${value}`);
+				}
+			}
+
+			// Vérification finale avant envoi
+			if (!formData.get('file')) {
+				console.error('CRITICAL: No file in FormData!');
+				alert('Erreur critique: fichier manquant dans les données à envoyer');
+				return;
+			}
 
 			const response = await fetch(`/api/audition/${data.token}`, {
 				method: 'POST',
 				body: formData
+				// IMPORTANT: Ne PAS définir Content-Type, laisser le navigateur le faire
 			});
 
+			console.log('Upload response status:', response.status);
+
 			if (response.ok) {
+				const result = await response.json();
+				console.log('Upload successful:', result);
+
 				// Recharger les données de l'audition pour afficher le nouveau fichier
 				await loadAudition();
 
-				// Reset form
-				selectedFiles = null;
-				fileDescription = '';
+				// Reset form APRÈS succès
+				resetFileSelection();
 
 				alert('Fichier uploadé avec succès !');
 			} else {
-				const errorData = await response.json();
-				alert(`Erreur: ${errorData.error || 'Erreur inconnue'}`);
+				const errorText = await response.text();
+				console.error('Upload failed:', errorText);
+
+				try {
+					const errorData = JSON.parse(errorText);
+					alert(`Erreur: ${errorData.error || 'Erreur inconnue'}`);
+
+					// Log des détails pour debug
+					if (errorData.details) {
+						console.error('Error details:', errorData.details);
+					}
+					if (errorData.received) {
+						console.error('Data received by server:', errorData.received);
+					}
+				} catch (parseError) {
+					console.error('Error parsing error response:', parseError);
+					alert(`Erreur serveur: ${errorText}`);
+				}
 			}
 		} catch (err) {
-			alert('Erreur réseau lors de l\'upload');
-			console.error('Upload error:', err);
+			console.error('Network error during upload:', err);
+			alert('Erreur réseau lors de l\'upload. Vérifiez votre connexion et réessayez.');
 		} finally {
 			uploading = false;
 			uploadProgress = 0;
@@ -149,10 +279,6 @@
 		} finally {
 			submitting = false;
 		}
-	}
-
-	function getAcceptedTypes() {
-		return allowedTypes[fileType].join(',');
 	}
 
 	function formatFileSize(bytes: number): string {
@@ -297,30 +423,59 @@
 			</div>
 
 			{#if !audition.is_submitted}
-				<!-- Upload de fichiers -->
+				<!-- Upload de fichiers - SECTION CORRIGÉE -->
 				<div class="bg-white rounded-lg shadow-md p-6 mb-6">
 					<h2 class="text-xl font-semibold text-gray-900 mb-4">Upload de fichiers</h2>
 
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-2">Type de fichier</label>
-							<select bind:value={fileType} class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-								<option value="video">Vidéo</option>
-								<option value="audio">Audio</option>
-								<option value="pdf">PDF</option>
-								<option value="image">Image</option>
+							<select
+								bind:value={fileType}
+								on:change={() => {
+									// Reset file selection when changing type
+									resetFileSelection();
+								}}
+								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								disabled={uploading}
+							>
+								<option value="video">Vidéo (.mp4, .avi, .mov, etc.)</option>
+								<option value="audio">Audio (.mp3, .wav, .aac, etc.)</option>
+								<option value="pdf">PDF (.pdf)</option>
+								<option value="image">Image (.jpg, .png, .gif, etc.)</option>
 							</select>
 						</div>
 
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Fichier</label>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								Fichier
+								<span class="text-xs text-gray-500">(Max: 50MB)</span>
+							</label>
 							<input
 								type="file"
+								bind:this={fileInput}
 								bind:files={selectedFiles}
-								accept={getAcceptedTypes()}
-								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								on:change={handleFileSelection}
+								accept={getAcceptedTypes().join(',')}
+								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 								disabled={uploading}
 							/>
+
+							<!-- Affichage des erreurs de validation -->
+							{#if fileValidationError}
+								<div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+									⚠️ {fileValidationError}
+								</div>
+							{/if}
+
+							<!-- Informations sur le fichier sélectionné -->
+							{#if selectedFiles && selectedFiles.length > 0 && !fileValidationError}
+								<div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+									✅ Fichier sélectionné: <strong>{selectedFiles[0].name}</strong>
+									<br>
+									Taille: <strong>{formatFileSize(selectedFiles[0].size)}</strong>
+								</div>
+							{/if}
 						</div>
 					</div>
 
@@ -330,25 +485,61 @@
 							type="text"
 							bind:value={fileDescription}
 							placeholder="ex: Interprétation de Bach Invention No.1"
+							maxlength="255"
 							class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 							disabled={uploading}
 						/>
+						<div class="text-xs text-gray-500 mt-1">
+							{fileDescription.length}/255 caractères
+						</div>
 					</div>
 
-					<button
-						on:click={uploadFile}
-						disabled={uploading || !selectedFiles || !fileDescription.trim()}
-						class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{uploading ? 'Upload en cours...' : 'Uploader le fichier'}
-					</button>
+					<!-- Informations sur les types de fichiers acceptés -->
+					<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+						<h4 class="text-sm font-medium text-blue-800 mb-2">Types de fichiers acceptés :</h4>
+						<div class="text-xs text-blue-700 space-y-1">
+							<div><strong>Vidéo :</strong> MP4, AVI, MOV, WMV, FLV, MKV, WebM</div>
+							<div><strong>Audio :</strong> MP3, WAV, AAC, FLAC, OGG, M4A</div>
+							<div><strong>PDF :</strong> Documents PDF uniquement</div>
+							<div><strong>Image :</strong> JPG, PNG, GIF, BMP, WebP</div>
+						</div>
+						<div class="text-xs text-blue-600 mt-2">
+							<strong>Taille maximum :</strong> 50MB par fichier
+						</div>
+					</div>
 
-					{#if uploadProgress > 0}
+					<div class="flex items-center justify-between">
+						<button
+							on:click={uploadFile}
+							disabled={uploading || !selectedFiles || !fileDescription.trim() || fileValidationError}
+							class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							{#if uploading}
+								<div class="flex items-center">
+									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+									Upload en cours...
+								</div>
+							{:else}
+								Upload le fichier
+							{/if}
+						</button>
+
+						{#if selectedFiles && selectedFiles.length > 0 && !uploading}
+							<button
+								on:click={resetFileSelection}
+								class="text-gray-500 hover:text-gray-700 text-sm"
+							>
+								Annuler la sélection
+							</button>
+						{/if}
+					</div>
+
+					{#if uploadProgress > 0 && uploading}
 						<div class="mt-4">
 							<div class="bg-gray-200 rounded-full h-2">
-								<div class="bg-blue-600 h-2 rounded-full" style="width: {uploadProgress}%"></div>
+								<div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {uploadProgress}%"></div>
 							</div>
-							<p class="text-sm text-gray-600 mt-1">{uploadProgress}% uploadé</p>
+							<p class="text-sm text-gray-600 mt-1 text-center">{uploadProgress}% uploadé</p>
 						</div>
 					{/if}
 				</div>
@@ -375,7 +566,7 @@
 										class="text-red-600 hover:text-red-800 ml-4"
 									>
 										<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-											<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 012 0v6a1 1 0 11-2 0V9zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
+											<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 112 0v6a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
 										</svg>
 									</button>
 								{/if}

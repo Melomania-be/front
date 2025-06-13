@@ -1,716 +1,835 @@
+<!-- src/routes/projects/[id]/management/validation/+page.svelte - Version améliorée -->
 <script lang="ts">
-    import AttendancePicker from '$lib/components/participant/AttendancePicker.svelte';
-    import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
-    import type { Participant } from '$lib/types/Participant.js';
-    import type { Concert } from '$lib/types/Concert.js';
-    import type { Rehearsal } from '$lib/types/Rehearsal.js';
-    import { onMount, onDestroy } from 'svelte';
+	import AttendancePicker from '$lib/components/participant/AttendancePicker.svelte';
+	import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
+	import type { Participant } from '$lib/types/Participant.js';
+	import type { Concert } from '$lib/types/Concert.js';
+	import type { Rehearsal } from '$lib/types/Rehearsal.js';
+	import { onMount, onDestroy } from 'svelte';
+	import { goto } from '$app/navigation'; // Ajout pour navigation
 
-    export let data;
-    let participants: Array<Participant>;
-    let currentParticipant: Participant | null;
+	export let data;
+	let participants: Array<Participant>;
+	let currentParticipant: Participant | null;
 
-    // Variables pour le modal de refus
-    let showRefusalModal = false;
-    let refusalMessage = '';
-    let isRefusing = false;
+	// Variables pour le modal de refus
+	let showRefusalModal = false;
+	let refusalMessage = '';
+	let isRefusing = false;
 
-    // Variables pour le modal d'audition
-    let showAuditionModal = false;
-    let auditionInstructions = '';
-    let auditionRequiredFiles = [''];
-    let auditionDeadline = '';
-    let isRequestingAudition = false;
+	// Variables pour le modal d'audition
+	let showAuditionModal = false;
+	let auditionInstructions = '';
+	let auditionRequiredFiles = [''];
+	let auditionDeadline = '';
+	let isRequestingAudition = false;
 
-    // Variables for Quill
-    let quillContainer: HTMLElement;
-    let quillAuditionContainer: HTMLElement;
-    let quill: any;
-    let quillAudition: any;
-    let quillLoaded = false;
+	// Variables for Quill
+	let quillContainer: HTMLElement;
+	let quillAuditionContainer: HTMLElement;
+	let quill: any;
+	let quillAudition: any;
+	let quillLoaded = false;
 
-    // Variables to store ALL project dates
-    let allConcerts: Concert[] = [];
-    let allRehearsals: Rehearsal[] = [];
+	// Variables to store ALL project dates
+	let allConcerts: Concert[] = [];
+	let allRehearsals: Rehearsal[] = [];
 
-    onMount(async () => {
-        const responseParticipants = await fetch(`/api/projects/${data.id}/management/validation`);
+	onMount(async () => {
+		await loadParticipants();
+		await loadProjectData();
+		await loadQuill();
+	});
 
-        if (responseParticipants.ok) {
-            participants = await responseParticipants.json();
-        }
+	async function loadParticipants() {
+		try {
+			const responseParticipants = await fetch(`/api/projects/${data.id}/management/validation`);
+			if (responseParticipants.ok) {
+				participants = await responseParticipants.json();
+			} else {
+				console.error('Failed to load participants');
+			}
+		} catch (error) {
+			console.error('Error loading participants:', error);
+		}
+	}
 
-        // Fetch ALL project dates
-        const responseAttendance = await fetch(`/api/projects/${data.id}/management/attendance`);
-        if (responseAttendance.ok) {
-            const attendanceData = await responseAttendance.json();
-            allConcerts = attendanceData.concerts;
-            allRehearsals = attendanceData.rehearsals;
-        }
+	async function loadProjectData() {
+		try {
+			// Fetch ALL project dates
+			const responseAttendance = await fetch(`/api/projects/${data.id}/management/attendance`);
+			if (responseAttendance.ok) {
+				const attendanceData = await responseAttendance.json();
+				allConcerts = attendanceData.concerts;
+				allRehearsals = attendanceData.rehearsals;
+			}
+		} catch (error) {
+			console.error('Error loading project data:', error);
+		}
+	}
 
-        // Load Quill dynamically
-        await loadQuill();
-    });
+	onDestroy(() => {
+		if (quill) {
+			quill = null;
+		}
+		if (quillAudition) {
+			quillAudition = null;
+		}
+	});
 
-    onDestroy(() => {
-        if (quill) {
-            quill = null;
-        }
-        if (quillAudition) {
-            quillAudition = null;
-        }
-    });
+	async function loadQuill() {
+		try {
+			if (typeof window !== 'undefined' && !window.Quill) {
+				// Load CSS
+				const linkElement = document.createElement('link');
+				linkElement.rel = 'stylesheet';
+				linkElement.href = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css';
+				document.head.appendChild(linkElement);
 
-    async function loadQuill() {
-        try {
-            if (typeof window !== 'undefined' && !window.Quill) {
-                // Load CSS
-                const linkElement = document.createElement('link');
-                linkElement.rel = 'stylesheet';
-                linkElement.href = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css';
-                document.head.appendChild(linkElement);
+				// Load JS
+				const scriptElement = document.createElement('script');
+				scriptElement.src = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js';
 
-                // Load JS
-                const scriptElement = document.createElement('script');
-                scriptElement.src = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js';
+				await new Promise((resolve, reject) => {
+					scriptElement.onload = resolve;
+					scriptElement.onerror = reject;
+					document.head.appendChild(scriptElement);
+				});
+			}
+			quillLoaded = true;
+		} catch (error) {
+			console.error('Error loading Quill:', error);
+		}
+	}
 
-                await new Promise((resolve, reject) => {
-                    scriptElement.onload = resolve;
-                    scriptElement.onerror = reject;
-                    document.head.appendChild(scriptElement);
-                });
-            }
-            quillLoaded = true;
-        } catch (error) {
-            console.error('Error loading Quill:', error);
-        }
-    }
+	function initializeQuill() {
+		if (quillLoaded && quillContainer && window.Quill && !quill) {
+			quill = new window.Quill(quillContainer, {
+				theme: 'snow',
+				placeholder: 'Vous pouvez expliquer les raisons du refus ici...',
+				modules: {
+					toolbar: [
+						[{ 'header': [1, 2, 3, false] }],
+						['bold', 'italic', 'underline'],
+						[{ 'list': 'ordered'}, { 'list': 'bullet' }],
+						[{ 'color': [] }, { 'background': [] }],
+						['link'],
+						['clean']
+					]
+				}
+			});
 
-    function initializeQuill() {
-        if (quillLoaded && quillContainer && window.Quill && !quill) {
-            quill = new window.Quill(quillContainer, {
-                theme: 'snow',
-                placeholder: 'You can explain the reasons for refusal here...',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'color': [] }, { 'background': [] }],
-                        ['link'],
-                        ['clean']
-                    ]
-                }
-            });
+			quill.on('text-change', () => {
+				const html = quill.root.innerHTML;
+				const text = quill.getText();
+				refusalMessage = text.trim() === '' ? '' : html;
+			});
 
-            quill.on('text-change', () => {
-                const html = quill.root.innerHTML;
-                const text = quill.getText();
-                refusalMessage = text.trim() === '' ? '' : html;
-            });
+			if (refusalMessage) {
+				quill.root.innerHTML = refusalMessage;
+			}
+		}
+	}
 
-            if (refusalMessage) {
-                quill.root.innerHTML = refusalMessage;
-            }
-        }
-    }
+	function initializeAuditionQuill() {
+		if (quillLoaded && quillAuditionContainer && window.Quill && !quillAudition) {
+			quillAudition = new window.Quill(quillAuditionContainer, {
+				theme: 'snow',
+				placeholder: 'Décrivez ce que le candidat doit préparer pour l\'audition...',
+				modules: {
+					toolbar: [
+						[{ 'header': [1, 2, 3, false] }],
+						['bold', 'italic', 'underline'],
+						[{ 'list': 'ordered'}, { 'list': 'bullet' }],
+						[{ 'color': [] }, { 'background': [] }],
+						['link'],
+						['clean']
+					]
+				}
+			});
 
-    function initializeAuditionQuill() {
-        if (quillLoaded && quillAuditionContainer && window.Quill && !quillAudition) {
-            quillAudition = new window.Quill(quillAuditionContainer, {
-                theme: 'snow',
-                placeholder: 'Describe what the candidate should prepare for the audition...',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'color': [] }, { 'background': [] }],
-                        ['link'],
-                        ['clean']
-                    ]
-                }
-            });
+			quillAudition.on('text-change', () => {
+				const html = quillAudition.root.innerHTML;
+				const text = quillAudition.getText();
+				auditionInstructions = text.trim() === '' ? '' : html;
+			});
 
-            quillAudition.on('text-change', () => {
-                const html = quillAudition.root.innerHTML;
-                const text = quillAudition.getText();
-                auditionInstructions = text.trim() === '' ? '' : html;
-            });
+			if (auditionInstructions) {
+				quillAudition.root.innerHTML = auditionInstructions;
+			}
+		}
+	}
 
-            if (auditionInstructions) {
-                quillAudition.root.innerHTML = auditionInstructions;
-            }
-        }
-    }
+	// Fonctions existantes...
+	async function deleteParticipant() {
+		if (!currentParticipant) return;
 
-    // Fonctions existantes...
-    async function deleteParticipant() {
-        const response = await fetch(
-          `/api/projects/${data.id}/management/participants/${currentParticipant!.id}`,
-          {
-              method: 'DELETE',
-              headers: {
-                  'Content-Type': 'application/json'
-              }
-          }
-        );
+		try {
+			const response = await fetch(
+				`/api/projects/${data.id}/management/participants/${currentParticipant.id}`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
 
-        if (response.ok) {
-            participants = participants.filter(
-              (participant) => participant.id !== currentParticipant!.id
-            );
-            currentParticipant = null;
-        }
-    }
+			if (response.ok) {
+				participants = participants.filter(
+					(participant) => participant.id !== currentParticipant!.id
+				);
+				currentParticipant = null;
+			} else {
+				alert('Erreur lors de la suppression');
+			}
+		} catch (error) {
+			console.error('Error deleting participant:', error);
+			alert('Erreur réseau');
+		}
+	}
 
-    async function validateParticipant() {
-        const responseEmail = await fetch(`/api/mailing/sendParticipationValidationNotifications`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ projectId: data.id, contactId: currentParticipant!.contact.id })
-        });
+	async function validateParticipant() {
+		if (!currentParticipant) return;
 
-        if (!responseEmail.ok) {
-            console.error('Failed to send email');
-        }
+		try {
+			// Envoyer l'email de validation
+			const responseEmail = await fetch(`/api/mailing/sendParticipationValidationNotifications`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ projectId: data.id, contactId: currentParticipant.contact.id })
+			});
 
-        const response = await fetch(`/api/projects/${data.id}/management/validation`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id: currentParticipant!.id })
-        });
+			if (!responseEmail.ok) {
+				console.error('Failed to send email');
+			}
 
-        if (response.ok) {
-            participants = participants.filter(
-              (participant) => participant.id !== currentParticipant!.id
-            );
-            currentParticipant = null;
-        }
-    }
+			// Valider le participant
+			const response = await fetch(`/api/projects/${data.id}/management/validation`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ id: currentParticipant.id })
+			});
 
-    // Nouvelles fonctions pour les auditions
-    function openAuditionModal() {
-        showAuditionModal = true;
-        auditionInstructions = '';
-        auditionRequiredFiles = [''];
-        auditionDeadline = '';
+			if (response.ok) {
+				participants = participants.filter(
+					(participant) => participant.id !== currentParticipant!.id
+				);
+				currentParticipant = null;
+				alert('Participant validé avec succès');
+			} else {
+				alert('Erreur lors de la validation');
+			}
+		} catch (error) {
+			console.error('Error validating participant:', error);
+			alert('Erreur réseau');
+		}
+	}
 
-        setTimeout(() => {
-            initializeAuditionQuill();
-        }, 100);
-    }
+	// Nouvelles fonctions pour les auditions
+	function openAuditionModal() {
+		showAuditionModal = true;
+		auditionInstructions = '';
+		auditionRequiredFiles = [''];
+		auditionDeadline = '';
 
-    function closeAuditionModal() {
-        showAuditionModal = false;
-        auditionInstructions = '';
-        auditionRequiredFiles = [''];
-        auditionDeadline = '';
-        isRequestingAudition = false;
+		setTimeout(() => {
+			initializeAuditionQuill();
+		}, 100);
+	}
 
-        if (quillAudition) {
-            quillAudition.setText('');
-        }
-    }
+	function closeAuditionModal() {
+		showAuditionModal = false;
+		auditionInstructions = '';
+		auditionRequiredFiles = [''];
+		auditionDeadline = '';
+		isRequestingAudition = false;
 
-    function addRequiredFile() {
-        auditionRequiredFiles = [...auditionRequiredFiles, ''];
-    }
+		if (quillAudition) {
+			quillAudition.setText('');
+		}
+	}
 
-    function removeRequiredFile(index: number) {
-        auditionRequiredFiles = auditionRequiredFiles.filter((_, i) => i !== index);
-    }
+	function addRequiredFile() {
+		auditionRequiredFiles = [...auditionRequiredFiles, ''];
+	}
 
-    async function requestAudition() {
-        if (!currentParticipant) return;
+	function removeRequiredFile(index: number) {
+		auditionRequiredFiles = auditionRequiredFiles.filter((_, i) => i !== index);
+	}
 
-        isRequestingAudition = true;
+	async function requestAudition() {
+		if (!currentParticipant) return;
 
-        try {
-            let finalInstructions = '';
-            if (quillAudition) {
-                const text = quillAudition.getText().trim();
-                finalInstructions = text ? quillAudition.root.innerHTML : '';
-            }
+		isRequestingAudition = true;
 
-            // Nettoyer et filtrer les fichiers requis
-            const filteredRequiredFiles = auditionRequiredFiles
-              .filter(file => file && file.trim() !== '')
-              .map(file => file.trim());
+		try {
+			let finalInstructions = '';
+			if (quillAudition) {
+				const text = quillAudition.getText().trim();
+				finalInstructions = text ? quillAudition.root.innerHTML : '';
+			}
 
-            // Construire les données avec validation
-            const auditionData = {
-                instructions: finalInstructions || '',
-                required_files: filteredRequiredFiles,
-                deadline: auditionDeadline || null
-            };
+			// Nettoyer et filtrer les fichiers requis
+			const filteredRequiredFiles = auditionRequiredFiles
+				.filter(file => file && file.trim() !== '')
+				.map(file => file.trim());
 
-            console.log('Sending audition data:', auditionData); // Debug
+			// Construire les données avec validation
+			const auditionData = {
+				instructions: finalInstructions || '',
+				required_files: filteredRequiredFiles,
+				deadline: auditionDeadline || null
+			};
 
-            // Construire l'URL correctement
-            const url = `/api/projects/${data.id}/management/participants/${currentParticipant.id}/request-audition`;
-            console.log('Request URL:', url); // Debug
+			console.log('Sending audition data:', auditionData);
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(auditionData)
-            });
+			const url = `/api/projects/${data.id}/management/participants/${currentParticipant.id}/request-audition`;
+			console.log('Request URL:', url);
 
-            if (response.ok) {
-                // Mettre à jour le statut du participant localement
-                const participantIndex = participants.findIndex(p => p.id === currentParticipant!.id);
-                if (participantIndex !== -1) {
-                    participants[participantIndex].audition_status = 'pending';
-                    participants = [...participants]; // Trigger reactivity
-                }
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(auditionData)
+			});
 
-                closeAuditionModal();
-                alert('Demande d\'audition envoyée avec succès');
-            } else {
-                const errorText = await response.text();
-                console.error('Server response:', errorText);
-                try {
-                    const errorData = JSON.parse(errorText);
-                    alert(`Erreur: ${errorData.message || errorData.error || 'Erreur inconnue'}`);
-                } catch {
-                    alert(`Erreur serveur: ${errorText}`);
-                }
-            }
+			if (response.ok) {
+				// Recharger les participants pour obtenir le statut mis à jour
+				await loadParticipants();
 
-        } catch (error) {
-            console.error('Error requesting audition:', error);
-            alert('Erreur réseau, veuillez réessayer');
-        } finally {
-            isRequestingAudition = false;
-        }
-    }
+				// Mettre à jour le participant actuel
+				if (currentParticipant) {
+					const updatedParticipant = participants.find(p => p.id === currentParticipant!.id);
+					if (updatedParticipant) {
+						currentParticipant = updatedParticipant;
+					}
+				}
 
-    // Fonctions existantes pour le refus...
-    function openRefusalModal() {
-        showRefusalModal = true;
-        refusalMessage = '';
+				closeAuditionModal();
+				alert('Demande d\'audition envoyée avec succès');
+			} else {
+				const errorText = await response.text();
+				console.error('Server response:', errorText);
+				try {
+					const errorData = JSON.parse(errorText);
+					alert(`Erreur: ${errorData.message || errorData.error || 'Erreur inconnue'}`);
+				} catch {
+					alert(`Erreur serveur: ${errorText}`);
+				}
+			}
 
-        setTimeout(() => {
-            initializeQuill();
-        }, 100);
-    }
+		} catch (error) {
+			console.error('Error requesting audition:', error);
+			alert('Erreur réseau, veuillez réessayer');
+		} finally {
+			isRequestingAudition = false;
+		}
+	}
 
-    function closeRefusalModal() {
-        showRefusalModal = false;
-        refusalMessage = '';
-        isRefusing = false;
+	// Fonctions pour le refus...
+	function openRefusalModal() {
+		showRefusalModal = true;
+		refusalMessage = '';
 
-        if (quill) {
-            quill.setText('');
-        }
-    }
+		setTimeout(() => {
+			initializeQuill();
+		}, 100);
+	}
 
-    async function refuseParticipant() {
-        if (!currentParticipant) return;
+	function closeRefusalModal() {
+		showRefusalModal = false;
+		refusalMessage = '';
+		isRefusing = false;
 
-        isRefusing = true;
+		if (quill) {
+			quill.setText('');
+		}
+	}
 
-        try {
-            let finalMessage = '';
-            if (quill) {
-                const text = quill.getText().trim();
-                finalMessage = text ? quill.root.innerHTML : '';
-            }
+	async function refuseParticipant() {
+		if (!currentParticipant) return;
 
-            const emailResponse = await fetch(`/api/mailing/sendRefusalEmailToParticipant`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    projectId: data.id,
-                    participantId: currentParticipant.id,
-                    customMessage: finalMessage || null
-                })
-            });
+		isRefusing = true;
 
-            if (!emailResponse.ok) {
-                const errorData = await emailResponse.json();
-                alert(`Error sending email: ${errorData.message || 'Unknown error'}`);
-                return;
-            }
+		try {
+			let finalMessage = '';
+			if (quill) {
+				const text = quill.getText().trim();
+				finalMessage = text ? quill.root.innerHTML : '';
+			}
 
-            const deleteResponse = await fetch(
-              `/api/projects/${data.id}/management/participants/${currentParticipant.id}`,
-              {
-                  method: 'DELETE',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  }
-              }
-            );
+			const emailResponse = await fetch(`/api/mailing/sendRefusalEmailToParticipant`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					projectId: data.id,
+					participantId: currentParticipant.id,
+					customMessage: finalMessage || null
+				})
+			});
 
-            if (deleteResponse.ok) {
-                participants = participants.filter(
-                  (participant) => participant.id !== currentParticipant!.id
-                );
-                currentParticipant = null;
-                closeRefusalModal();
-                alert('Refusal email sent and participant successfully deleted');
-            } else {
-                alert('Email sent but error occurred while deleting participant');
-            }
+			if (!emailResponse.ok) {
+				const errorData = await emailResponse.json();
+				alert(`Erreur envoi email: ${errorData.message || 'Erreur inconnue'}`);
+				return;
+			}
 
-        } catch (error) {
-            console.error('Error during refusal:', error);
-            alert('Network error, please try again');
-        } finally {
-            isRefusing = false;
-        }
-    }
+			const deleteResponse = await fetch(
+				`/api/projects/${data.id}/management/participants/${currentParticipant.id}`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
 
-    // Fonction pour obtenir le badge de statut d'audition
-    function getAuditionStatusBadge(auditionStatus: string) {
-        switch (auditionStatus) {
-            case 'pending':
-                return { text: 'Audition en cours', class: 'bg-yellow-100 text-yellow-800' };
-            case 'completed':
-                return { text: 'Audition terminée', class: 'bg-blue-100 text-blue-800' };
-            default:
-                return null;
-        }
-    }
+			if (deleteResponse.ok) {
+				participants = participants.filter(
+					(participant) => participant.id !== currentParticipant!.id
+				);
+				currentParticipant = null;
+				closeRefusalModal();
+				alert('Email de refus envoyé et participant supprimé avec succès');
+			} else {
+				alert('Email envoyé mais erreur lors de la suppression du participant');
+			}
+
+		} catch (error) {
+			console.error('Error during refusal:', error);
+			alert('Erreur réseau, veuillez réessayer');
+		} finally {
+			isRefusing = false;
+		}
+	}
+
+	// Fonction pour obtenir le badge de statut d'audition
+	function getAuditionStatusBadge(auditionStatus: string) {
+		switch (auditionStatus) {
+			case 'pending':
+				return { text: 'Audition en cours', class: 'bg-yellow-100 text-yellow-800' };
+			case 'completed':
+				return { text: 'Audition terminée', class: 'bg-blue-100 text-blue-800' };
+			default:
+				return null;
+		}
+	}
+
+	// Nouvelle fonction pour aller à la page des auditions
+	function goToAuditions() {
+		goto(`/projects/${data.id}/management/auditions`);
+	}
 </script>
 
 <div class="m-4 p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {#if participants && participants.length > 0}
-            <div>
-                <h1 class="text-2xl mb-4">You need to validate the registration of {participants.length} person(s):</h1>
-                <table class="min-w-full bg-white dark:bg-gray-800">
-                    <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">First Name</th>
-                        <th class="py-2 px-4 border-b">Last Name</th>
-                        <th class="py-2 px-4 border-b">Section</th>
-                        <th class="py-2 px-4 border-b">Status</th>
-                        <th class="py-2 px-4 border-b"></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {#each participants as participant}
-                        <tr class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-                                {participant.contact.firstName}
-                            </td>
-                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-                                {participant.contact.lastName}
-                            </td>
-                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-                                {participant.section.name}
-                            </td>
-                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-                                {#if participant.audition_status && participant.audition_status !== 'none'}
-                                    {@const badge = getAuditionStatusBadge(participant.audition_status)}
-                                    {#if badge}
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full {badge.class}">
-                                            {badge.text}
+	<!-- En-tête avec boutons de navigation -->
+	<div class="flex justify-between items-center mb-6">
+		<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Validation des candidatures</h1>
+		<div class="flex gap-3">
+			<button
+				on:click={goToAuditions}
+				class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+			>
+				📋 Voir les auditions
+			</button>
+			<button
+				on:click={() => goto(`/projects/${data.id}/management`)}
+				class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+			>
+				Retour au projet
+			</button>
+		</div>
+	</div>
+
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+		{#if participants && participants.length > 0}
+			<div>
+				<h2 class="text-2xl mb-4">Vous devez valider l'inscription de {participants.length} personne(s) :</h2>
+				<div class="overflow-x-auto">
+					<table class="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+						<thead class="bg-gray-50 dark:bg-gray-700">
+						<tr>
+							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Prénom</th>
+							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Nom</th>
+							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Section</th>
+							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Statut</th>
+							<th class="py-3 px-4 border-b"></th>
+						</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+						{#each participants as participant}
+							<tr class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
+									{participant.contact.firstName}
+								</td>
+								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
+									{participant.contact.lastName}
+								</td>
+								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
+									{participant.section.name}
+								</td>
+								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
+									{#if participant.audition_status && participant.audition_status !== 'none'}
+										{@const badge = getAuditionStatusBadge(participant.audition_status)}
+										{#if badge}
+                                            <span class="px-2 py-1 text-xs font-semibold rounded-full {badge.class}">
+                                                {badge.text}
+                                            </span>
+										{/if}
+									{:else}
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                                            En attente
                                         </span>
-                                    {/if}
-                                {:else}
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                        En attente
+									{/if}
+								</td>
+								<td class="py-3 px-4 border-b text-right">
+									<button
+										class="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50"
+										on:click={() => (currentParticipant = participant)}
+										title="Voir les détails"
+									>
+										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+										</svg>
+									</button>
+								</td>
+							</tr>
+						{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{:else}
+			<div class="text-center py-12">
+				<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+				</svg>
+				<h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun participant à valider</h3>
+				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Toutes les candidatures ont été traitées.</p>
+			</div>
+		{/if}
+
+		{#if currentParticipant}
+			<div class="relative border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+				<div class={currentParticipant.contact.validated ? '' : 'opacity-50 pointer-events-none'}>
+					<h2 class="text-2xl text-center mb-4 text-gray-900 dark:text-white">Demande de participation :</h2>
+
+					<!-- Affichage du statut d'audition -->
+					{#if currentParticipant.audition_status && currentParticipant.audition_status !== 'none'}
+						{@const badge = getAuditionStatusBadge(currentParticipant.audition_status)}
+						{#if badge}
+							<div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+								<div class="flex items-center justify-between">
+                                    <span class="px-2 py-1 text-sm font-semibold rounded-full {badge.class}">
+                                        {badge.text}
                                     </span>
-                                {/if}
-                            </td>
-                            <td class="py-2 px-4 border-b text-right">
-                                <button class="text-blue-500 hover:text-blue-700" on:click={() => (currentParticipant = participant)}>
-                                    <span class="icon-[formkit--arrowright]"></span>
-                                </button>
-                            </td>
-                        </tr>
-                    {/each}
-                    </tbody>
-                </table>
-            </div>
-        {:else}
-            <h1 class="text-2xl">There is no participant to validate</h1>
-        {/if}
+									<button
+										on:click={goToAuditions}
+										class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+									>
+										Voir les auditions →
+									</button>
+								</div>
+								{#if currentParticipant.audition_deadline}
+									<p class="text-sm text-gray-600 dark:text-gray-300 mt-2">
+										Échéance : {new Date(currentParticipant.audition_deadline).toLocaleDateString('fr-FR')}
+									</p>
+								{/if}
+							</div>
+						{/if}
+					{/if}
 
-        {#if currentParticipant}
-            <div class="relative border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
-                <div class={currentParticipant.contact.validated ? '' : 'opacity-50 pointer-events-none'}>
-                    <h1 class="text-2xl text-center mb-4">Participant request:</h1>
+					<!-- Informations de contact -->
+					<div class="mb-6">
+						<h3 class="text-xl mb-3 text-gray-900 dark:text-white">Contact :</h3>
+						<div class="border p-4 rounded-lg bg-white dark:bg-gray-800 space-y-2">
+							<div class="flex">
+								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Nom :</span>
+								<span class="text-gray-900 dark:text-white">{currentParticipant.contact.firstName} {currentParticipant.contact.lastName}</span>
+							</div>
+							<div class="flex">
+								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Email :</span>
+								<a href="mailto:{currentParticipant.contact.email}" class="text-blue-500 hover:text-blue-700">{currentParticipant.contact.email}</a>
+							</div>
+							<div class="flex">
+								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Téléphone :</span>
+								<span class="text-gray-900 dark:text-white">{currentParticipant.contact.phone || 'Non renseigné'}</span>
+							</div>
+							<div class="flex">
+								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Messenger :</span>
+								<span class="text-gray-900 dark:text-white">{currentParticipant.contact.messenger || 'Non renseigné'}</span>
+							</div>
+							{#if currentParticipant.contact.comments}
+								<div class="flex">
+									<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Commentaires :</span>
+									<span class="text-gray-900 dark:text-white">{currentParticipant.contact.comments}</span>
+								</div>
+							{/if}
+						</div>
+					</div>
 
-                    <!-- Affichage du statut d'audition -->
-                    {#if currentParticipant.audition_status && currentParticipant.audition_status !== 'none'}
-                        {@const badge = getAuditionStatusBadge(currentParticipant.audition_status)}
-                        {#if badge}
-                            <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <span class="px-2 py-1 text-sm font-semibold rounded-full {badge.class}">
-                                    {badge.text}
-                                </span>
-                                {#if currentParticipant.audition_deadline}
-                                    <p class="text-sm text-gray-600 mt-2">
-                                        Deadline: {new Date(currentParticipant.audition_deadline).toLocaleDateString()}
-                                    </p>
-                                {/if}
-                            </div>
-                        {/if}
-                    {/if}
+					<!-- Formulaire d'inscription -->
+					<div class="mb-6">
+						<h3 class="text-xl mb-3 text-gray-900 dark:text-white">Formulaire d'inscription :</h3>
+						<div class="border p-4 rounded-lg bg-white dark:bg-gray-800 space-y-4">
+							<div>
+								<span class="font-semibold text-gray-700 dark:text-gray-300">Section :</span>
+								<span class="text-gray-900 dark:text-white">{currentParticipant.section.name}</span>
+							</div>
 
-                    <div class="mb-4">
-                        <h2 class="text-xl mb-2">Contact:</h2>
-                        <div class="border p-2 rounded-lg bg-white dark:bg-gray-800">
-                            <div class="mb-2">
-                                <span class="font-semibold">Name:</span> {currentParticipant.contact.firstName} {currentParticipant.contact.lastName}
-                            </div>
-                            <div class="mb-2">
-                                <span class="font-semibold">Email:</span> <a href="mailto:{currentParticipant.contact.email}" class="text-blue-500">{currentParticipant.contact.email}</a>
-                            </div>
-                            <div class="mb-2">
-                                <span class="font-semibold">Phone:</span> {currentParticipant.contact.phone}
-                            </div>
-                            <div class="mb-2">
-                                <span class="font-semibold">Messenger:</span> {currentParticipant.contact.messenger}
-                            </div>
-                            <div class="mb-2">
-                                <span class="font-semibold">Comments:</span> {currentParticipant.contact.comments ?? 'No comments'}
-                            </div>
-                        </div>
-                    </div>
+							{#if currentParticipant.answers.length > 0}
+								<div>
+									<span class="font-semibold text-gray-700 dark:text-gray-300">Réponses au formulaire :</span>
+									<div class="mt-2 space-y-2">
+										{#each currentParticipant.answers as answer}
+											{#if answer.form}
+												<RegistrationForm forms={[]} bind:answer disabled />
+											{/if}
+										{/each}
+									</div>
+								</div>
+							{/if}
 
-                    <div class="mb-4">
-                        <h2 class="text-xl mb-2">Registration form:</h2>
-                        <div class="border p-2 rounded-lg bg-white dark:bg-gray-800">
-                            <div class="mb-2">
-                                <span class="font-semibold">Section:</span> {currentParticipant.section.name}
-                            </div>
-                            <div class="mb-2">
-                                <span class="font-semibold">Custom form:</span>
-                                {#if currentParticipant.answers.length > 0}
-                                    {#each currentParticipant.answers as answer}
-                                        {#if answer.form}
-                                            <RegistrationForm forms={[]} bind:answer disabled />
-                                        {/if}
-                                    {/each}
-                                {:else}
-                                    <span>No custom form</span>
-                                {/if}
-                            </div>
-                            <div class="mb-2">
-                                <h3 class="text-lg">Concerts</h3>
-                                <AttendancePicker
-                                  concertsOrRehearsals={allConcerts}
-                                  type="concert"
-                                  participants={[currentParticipant]}
-                                  disabled
-                                />
-                            </div>
-                            <div class="mb-2">
-                                <h3 class="text-lg">Rehearsals</h3>
-                                <AttendancePicker
-                                  concertsOrRehearsals={allRehearsals}
-                                  type="rehearsal"
-                                  participants={[currentParticipant]}
-                                  disabled
-                                />
-                            </div>
-                        </div>
-                    </div>
+							<div>
+								<h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Concerts</h4>
+								<AttendancePicker
+									concertsOrRehearsals={allConcerts}
+									type="concert"
+									participants={[currentParticipant]}
+									disabled
+								/>
+							</div>
 
-                    <div class="flex justify-between flex-wrap gap-2">
-                        <button
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                          on:click={() => {
-                                validateParticipant();
-                            }}
-                        >
-                            Validate and send confirmation email
-                        </button>
+							<div>
+								<h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Répétitions</h4>
+								<AttendancePicker
+									concertsOrRehearsals={allRehearsals}
+									type="rehearsal"
+									participants={[currentParticipant]}
+									disabled
+								/>
+							</div>
+						</div>
+					</div>
 
-                        <!-- Nouveau bouton d'audition -->
-                        {#if !currentParticipant.audition_status || currentParticipant.audition_status === 'none'}
-                            <button
-                              class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-                              on:click={openAuditionModal}
-                            >
-                                Request audition
-                            </button>
-                        {:else}
-                            <button
-                              class="bg-gray-400 text-white font-bold py-2 px-4 rounded cursor-not-allowed"
-                              disabled
-                            >
-                                Audition {currentParticipant.audition_status}
-                            </button>
-                        {/if}
+					<!-- Boutons d'action -->
+					<div class="flex flex-wrap gap-3 justify-center">
+						<button
+							class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+							on:click={validateParticipant}
+						>
+							✅ Valider et envoyer confirmation
+						</button>
 
-                        <button
-                          class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                          on:click={openRefusalModal}
-                        >
-                            Refuse and delete participant
-                        </button>
-                    </div>
-                </div>
+						<!-- Bouton d'audition -->
+						{#if !currentParticipant.audition_status || currentParticipant.audition_status === 'none'}
+							<button
+								class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+								on:click={openAuditionModal}
+							>
+								🎭 Demander une audition
+							</button>
+						{:else}
+							<button
+								class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed"
+								disabled
+								title="Audition déjà demandée"
+							>
+								🎭 Audition {currentParticipant.audition_status === 'pending' ? 'en cours' : 'terminée'}
+							</button>
+						{/if}
 
-                {#if !currentParticipant.contact.validated}
-                    <div class="absolute top-0 left-0 right-0 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg">
-                        <h1 class="text-2xl mb-2">You need to validate this person first!</h1>
-                        <a href="/contacts/validation" class="text-blue-500">Contact validation page</a>
-                    </div>
-                {/if}
-            </div>
-        {:else}
-            <div class="border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
-                <h1 class="text-2xl">No participant selected</h1>
-            </div>
-        {/if}
-    </div>
+						<button
+							class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+							on:click={openRefusalModal}
+						>
+							❌ Refuser et supprimer
+						</button>
+					</div>
+				</div>
+
+				<!-- Overlay si contact non validé -->
+				{#if !currentParticipant.contact.validated}
+					<div class="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-95 p-4 rounded-lg flex items-center justify-center">
+						<div class="text-center">
+							<h3 class="text-xl mb-2 text-gray-900 dark:text-white">Vous devez d'abord valider cette personne !</h3>
+							<a href="/contacts/validation" class="text-blue-500 hover:text-blue-700 font-medium">
+								→ Page de validation des contacts
+							</a>
+						</div>
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<div class="border p-8 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
+				<svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+				</svg>
+				<h3 class="text-xl text-gray-900 dark:text-white">Aucun participant sélectionné</h3>
+				<p class="text-gray-600 dark:text-gray-400 mt-2">Cliquez sur un participant dans la liste pour voir ses détails</p>
+			</div>
+		{/if}
+	</div>
 </div>
 
 <!-- Modal d'audition -->
 {#if showAuditionModal}
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-                Request Audition
-            </h2>
-            <p class="mb-4 text-gray-700 dark:text-gray-300">
-                You are about to request an audition from <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
-            </p>
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+			<h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+				🎭 Demander une audition
+			</h2>
+			<p class="mb-4 text-gray-700 dark:text-gray-300">
+				Vous allez demander une audition à <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
+			</p>
 
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Instructions for the candidate
-                </label>
-                <div
-                  bind:this={quillAuditionContainer}
-                  class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRequestingAudition ? 'opacity-50 pointer-events-none' : ''}"
-                  style="font-family: inherit;"
-                ></div>
-                {#if !quillLoaded}
-                    <div class="text-sm text-gray-500 mt-2">Loading editor...</div>
-                {/if}
-            </div>
+			<div class="mb-6">
+				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+					Instructions pour le candidat
+				</label>
+				<div
+					bind:this={quillAuditionContainer}
+					class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRequestingAudition ? 'opacity-50 pointer-events-none' : ''}"
+					style="font-family: inherit;"
+				></div>
+				{#if !quillLoaded}
+					<div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
+				{/if}
+			</div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Required files/materials
-                </label>
-                {#each auditionRequiredFiles as file, index}
-                    <div class="flex mb-2">
-                        <input
-                          type="text"
-                          bind:value={auditionRequiredFiles[index]}
-                          placeholder="e.g., Video performance of piece X, CV, etc."
-                          class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          disabled={isRequestingAudition}
-                        />
-                        <button
-                          type="button"
-                          on:click={() => removeRequiredFile(index)}
-                          class="px-3 py-2 bg-red-500 text-white rounded-r-md hover:bg-red-600 disabled:opacity-50"
-                          disabled={auditionRequiredFiles.length === 1 || isRequestingAudition}
-                        >
-                            Remove
-                        </button>
-                    </div>
-                {/each}
-                <button
-                  type="button"
-                  on:click={addRequiredFile}
-                  class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-                  disabled={isRequestingAudition}
-                >
-                    Add required file
-                </button>
-            </div>
+			<div class="mb-6">
+				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+					Fichiers/matériels requis
+				</label>
+				{#each auditionRequiredFiles as file, index}
+					<div class="flex mb-2">
+						<input
+							type="text"
+							bind:value={auditionRequiredFiles[index]}
+							placeholder="ex: Vidéo d'interprétation de la pièce X, CV, etc."
+							class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							disabled={isRequestingAudition}
+						/>
+						<button
+							type="button"
+							on:click={() => removeRequiredFile(index)}
+							class="px-3 py-2 bg-red-500 text-white rounded-r-md hover:bg-red-600 disabled:opacity-50"
+							disabled={auditionRequiredFiles.length === 1 || isRequestingAudition}
+						>
+							Supprimer
+						</button>
+					</div>
+				{/each}
+				<button
+					type="button"
+					on:click={addRequiredFile}
+					class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+					disabled={isRequestingAudition}
+				>
+					Ajouter un fichier requis
+				</button>
+			</div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Deadline (optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  bind:value={auditionDeadline}
-                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isRequestingAudition}
-                />
-            </div>
+			<div class="mb-6">
+				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+					Date limite (optionnel)
+				</label>
+				<input
+					type="datetime-local"
+					bind:value={auditionDeadline}
+					class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					disabled={isRequestingAudition}
+				/>
+			</div>
 
-            <div class="flex justify-end space-x-3">
-                <button
-                  class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  on:click={closeAuditionModal}
-                  disabled={isRequestingAudition}
-                >
-                    Cancel
-                </button>
-                <button
-                  class="px-4 py-2 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                  on:click={requestAudition}
-                  disabled={isRequestingAudition}
-                >
-                    {isRequestingAudition ? 'Sending...' : 'Send audition request'}
-                </button>
-            </div>
-        </div>
-    </div>
+			<div class="flex justify-end space-x-3">
+				<button
+					class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+					on:click={closeAuditionModal}
+					disabled={isRequestingAudition}
+				>
+					Annuler
+				</button>
+				<button
+					class="px-4 py-2 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
+					on:click={requestAudition}
+					disabled={isRequestingAudition}
+				>
+					{isRequestingAudition ? 'Envoi...' : 'Envoyer la demande d\'audition'}
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}
 
-<!-- Modal de refus (existant, pas de modification) -->
+<!-- Modal de refus -->
 {#if showRefusalModal}
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-                Refuse Participation
-            </h2>
-            <p class="mb-4 text-gray-700 dark:text-gray-300">
-                You are about to refuse the participation of <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
-            </p>
-            <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                A refusal email will be automatically sent to the participant. You can add a custom message below (optional).
-            </p>
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+			<h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+				Refuser la participation
+			</h2>
+			<p class="mb-4 text-gray-700 dark:text-gray-300">
+				Vous allez refuser la participation de <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
+			</p>
+			<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+				Un email de refus sera automatiquement envoyé au participant. Vous pouvez ajouter un message personnalisé ci-dessous (optionnel).
+			</p>
 
-            <div class="mb-6">
-                <label for="refusal-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Custom message (optional)
-                </label>
-                <div
-                  bind:this={quillContainer}
-                  class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRefusing ? 'opacity-50 pointer-events-none' : ''}"
-                  style="font-family: inherit;"
-                ></div>
-                {#if !quillLoaded}
-                    <div class="text-sm text-gray-500 mt-2">Loading editor...</div>
-                {/if}
-            </div>
+			<div class="mb-6">
+				<label for="refusal-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+					Message personnalisé (optionnel)
+				</label>
+				<div
+					bind:this={quillContainer}
+					class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRefusing ? 'opacity-50 pointer-events-none' : ''}"
+					style="font-family: inherit;"
+				></div>
+				{#if !quillLoaded}
+					<div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
+				{/if}
+			</div>
 
-            <div class="flex justify-end space-x-3">
-                <button
-                  class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  on:click={closeRefusalModal}
-                  disabled={isRefusing}
-                >
-                    Cancel
-                </button>
-                <button
-                  class="px-4 py-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                  on:click={refuseParticipant}
-                  disabled={isRefusing}
-                >
-                    {isRefusing ? 'Sending...' : 'Refuse and send email'}
-                </button>
-            </div>
-        </div>
-    </div>
+			<div class="flex justify-end space-x-3">
+				<button
+					class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+					on:click={closeRefusalModal}
+					disabled={isRefusing}
+				>
+					Annuler
+				</button>
+				<button
+					class="px-4 py-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
+					on:click={refuseParticipant}
+					disabled={isRefusing}
+				>
+					{isRefusing ? 'Envoi...' : 'Refuser et envoyer email'}
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}
 
 <style>
+    /* Styles pour Quill Editor */
+    :global(.ql-toolbar) {
+        border-color: #d1d5db !important;
+        background-color: #f9fafb !important;
+    }
+
+    :global(.ql-container) {
+        border-color: #d1d5db !important;
+        background-color: #ffffff !important;
+    }
+
     /* Styles pour Quill Editor en mode sombre */
     :global(.dark .ql-toolbar) {
         border-color: #374151 !important;
