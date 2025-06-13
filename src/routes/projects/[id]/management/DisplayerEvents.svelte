@@ -16,7 +16,7 @@
 
 	let showAllEvent = false;
 
-	$: eventsToDisplay = showAllEvent ? eventList : eventList.slice(0, 6)
+	$: eventsToDisplay = showAllEvent ? eventList : eventList.slice(0, 4)
 
 	let commentMapRehearsal: Record<number, boolean> = {};
 	let commentMapConcert: Record<number, boolean> = {};
@@ -63,7 +63,7 @@
 					<tbody>
 						{#each eventsToDisplay as event}
 							<tr class="text-xs">
-								<td class="border-y-[1.5px] border-[#B6B6B6] border-l-[1.5px] rounded-l-2xl pl-4 w-[42%]
+								<td class="border-y-[1.5px] border-[#B6B6B6] border-l-[1.5px] rounded-l-2xl pl-4 w-[30%]
 								{todayIso > event.startDate ? "bg-[#EDEDED]" : ""}">
 									<div class="flex items-center gap-2">
 										<Fa icon={faCalendar} class="text-[14px]" style="color: #6B9AD9;" />
@@ -97,42 +97,22 @@
 										</h3>
 									</div>
 								</td>
-								<td class="border-y-[1.5px] border-[#B6B6B6] pr-4 pl-4 pt-1
+								<td class="break-words w-[30%] border-y-[1.5px] border-[#B6B6B6]
 								{todayIso > event.startDate ? "bg-[#EDEDED]" : ""}">
-									{#if event.comment}
-									<button class="tooltip-wrapper"
-									on:mouseenter={() =>
-									{if(event.type === "rehearsal"){
-										commentMapRehearsal[event.id] = true;
-									}
-									else{
-										commentMapConcert[event.id] = true;
-									}}}
-									on:mouseleave={() =>
-									{if(event.type === "rehearsal"){
-										commentMapRehearsal[event.id] = false;
-									}
-									else{
-										commentMapConcert[event.id] = false;
-									}}}
-									>
-									<Fa icon={faCommentDots} class="text-[16px]" style="color: #6B9AD9;" />
-									<div class="tooltip font-s pointer-events-none {commentMapConcert[event.id]||commentMapRehearsal[event.id] ? 'visible' : ''}">
-										<p><strong>Comment :</strong> {event.comment}</p>
-									</div>
-									</button>
-									{/if}
+								{#if event.comment}
+									<strong> Comment : </strong>{event.comment}
+								{/if}
 								</td>
 								<td
 									class="border-y-[1.5px] border-[#B6B6B6] rounded-r-2xl border-r-[1.5px] pr-4 text-right
 									{todayIso > event.startDate ? "bg-[#EDEDED]" : ""}"
 								>
 									{#if event.type === 'rehearsal'}
-										<div class="font-semibold bg-[#6B9AD9] text-white text-center rounded-lg p-1">
+										<div class="font-semibold ml-auto w-[100px] bg-[#6B9AD9] text-white text-center rounded-lg p-1">
 											{event.type}
 										</div>
 									{:else}
-										<div class="font-semibold bg-[#a584d2] text-white text-center rounded-lg p-1">
+										<div class="font-semibold ml-auto w-[100px] bg-[#a584d2] text-white text-center rounded-lg p-1">
 											{event.type}
 										</div>
 									{/if}
@@ -141,7 +121,7 @@
 						{/each}
 					</tbody>
 				</table>
-				{#if eventList.length > 6 }
+				{#if eventList.length > 4 }
 					<button class="w-full flex justify-center"
 					on:click={() => {showAllEvent = !showAllEvent}} >
 						{#if !showAllEvent}

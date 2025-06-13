@@ -4,17 +4,39 @@
 	import { faCalendar } from '@fortawesome/free-regular-svg-icons';
 	import { faLocationDot , faCommentDots , faChevronDown , faChevronUp } from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
+	import SortableMin from 'sortablejs';
 
 	export let project: any;
 
-    const countMap: Record<number, number> = {};
+  const map = new Map<number, number>();
 
-    for (const p of project.participants) {
-    countMap[p.sectionId] = (countMap[p.sectionId] ?? 0) + 1;
-    }
-    console.log(countMap);
+  for (const section of project.sectionGroup?.sections) {
+    map.set(section.id, 0);
+  }
+
+  for (const p of project.participants) {
+    const current = map.get(p.sectionId) ?? 0;
+    map.set(p.sectionId, current + 1);
+  }
+  console.log("map" , map)
+  
+
+  const sortedEntries = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  let countArray: [number, number][] = Array.from(map);
 
     let showParticipantsNumber = false;
+
+    let sort : boolean = false;
+
+    function changeSorting(){
+      sort = !sort;
+      if(sort){
+        countArray = sortedEntries;
+      }
+      else{
+        countArray = Array.from(map);
+      }
+    }
 </script>
 
 <div
@@ -35,26 +57,29 @@
     <p class="mb-4 text-sm">Group Section : { project.sectionGroup.name}</p>
     <div class="text-xs gap-2 text-center">
         <div class="flex flex-row gap-2 w-full h-[100px] border-t border-t-dotted border-l-2 border-l-[#8C8C8C] px-1">
-        {#each project.sectionGroup.sections as section}
+        {#each countArray as [section , participantCount]}
             <button
             on:mouseenter={() => showParticipantsNumber = true}
 			      on:mouseleave={() => showParticipantsNumber = false}
             class="tooltip-wrapper flex-1 mt-auto mb-0 max-h-[99px] rounded-t
-            {(countMap[section.id] ? countMap[section.id] : 0) >= section.size ? "bg-[#D1A9FF] hover:bg-purple-400" : "bg-blue-200 hover:bg-blue-300"}"
-            style="height: {(countMap[section.id] ? countMap[section.id] : 0) / section.size *100}%;">
+            { participantCount >= project.sectionGroup.sections.find(s => s.id === section).size ? "bg-[#D1A9FF] hover:bg-purple-400" : "bg-blue-200 hover:bg-blue-300"}"
+            style="height: { participantCount / project.sectionGroup.sections.find(s => s.id === section).size *100}%;">
             <div class="tooltip font-s pointer-events-none {showParticipantsNumber ? 'visible' : ''}">
-					<p class="text-[10px]"> {countMap[section.id] ? countMap[section.id] : 0} / {section.size} </p>
+					<p class="text-[10px]"> {participantCount} / {project.sectionGroup.sections.find(s => s.id === section).size} </p>
 				</div>
             </button>
         {/each}
         </div>
         <hr class="border border-[#8C8C8C]"/>
         <div class="flex gap-2 w-full border-l-2 border-white px-1">
-        {#each project.sectionGroup.sections as section}
-            <p class="flex-1 leading-tight text-[8px]">{section.name}</p>
+        {#each countArray as [section , participantCount]}
+            <p class="flex-1 leading-tight text-[8px]">{project.sectionGroup.sections.find(s => s.id === section).name}</p>
         {/each}
         </div>
     </div>
+    <button class="text-white font-bold text-sm bg-[#6B9AD9] p-2 rounded-[8px]"
+    on:click={() => changeSorting()}
+    >sort</button>
     {:else}
         <p class="text-sm text-center mb-4"> No Section Group </p>
     {/if}
