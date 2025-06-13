@@ -12,10 +12,19 @@
 	let sectionGroupDetails = false;
 	let callsheetDetails = false;
 	let registrationDetails = false;
+
+	let informationDisplayed : boolean = (
+		(!project.responsibles || project.responsibles.length === 0)
+		|| project.rehearsals.length === 0
+		|| project.concerts.length === 0
+		|| project.sectionGroup?.sections.length === 0
+		|| (!project.callsheets || project.callsheets?.length === 0 )
+		|| !project.registration
+	);
 </script>
 
 <div class="p-2 pl-4 pr-4">
-	<h3 class="text-lg font-bold text-[#E35656] uppercase">Informations</h3>
+	<h3 class="text-lg font-bold text-[#E35656] uppercase">Information</h3>
 	<div
 		class="p-3 pl-8 w-full flex flex-wrap gap-2 justify-center"
 	>
@@ -38,83 +47,87 @@
 			</div>
 		{/if}
 		-->
-		{#if !project.responsibles || project.responsibles.length === 0}
-			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
-				href="/projects/{project.id}/management/modify"
-				on:mouseenter={() => managerDetails = true}
-				on:mouseleave={() => managerDetails = false}
-				>
-				<span>No Manager</span>
-				<div class="tooltip font-s pointer-events-none {managerDetails ? 'visible' : ''}">
-					Please add at least one person to be in charge of the project. This person will have its
-					contact informations displayed for this project.
-				</div>
-			</a>
-		{/if}
-		{#if project.rehearsals.length === 0}
-			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
-				href="/projects/{project.id}/management/modify"
-				on:mouseenter={() => rehearsalDetails = true}
-				on:mouseleave={() => rehearsalDetails = false}
-				>
-				<span>No Rehearsal</span>
-				<div class="tooltip font-s pointer-events-none {rehearsalDetails ? 'visible' : ''}">
-					Please add at least one rehearsal to the project. This will allow participants to know
-					when they have to be present.
-				</div>
-			</a>
-		{/if}
-		{#if project.concerts.length === 0}
-			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
-				href="/projects/{project.id}/management/modify"
-				on:mouseenter={() => concertDetails = true}
-				on:mouseleave={() => concertDetails = false}
-				>
-				<span>No Concert</span>
-				<div class="tooltip font-s pointer-events-none {concertDetails ? 'visible' : ''}">
-					Please add at least one concert to the project. This will allow participants to know when
-					they have to be present.
-				</div>
-			</a>
-		{/if}
-		{#if project.sectionGroup?.sections.length === 0}
-			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
-				href="/sectionGroups"
-				on:mouseenter={() => sectionGroupDetails = true}
-				on:mouseleave={() => sectionGroupDetails = false}
-				>
-				<span>No Section</span>
-				<div class="tooltip font-s pointer-events-none {sectionGroupDetails ? 'visible' : ''}">
-					Please add at least one section to the section group. This will allow participants to know
-					in which section they are.
-				</div>
-			</a>
-		{/if}
-		{#if !project.callsheets || project.callsheets?.length === 0}
-			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
-				href="/projects/{project.id}/management/callsheets"
-				on:mouseenter={() => callsheetDetails = true}
-				on:mouseleave={() => callsheetDetails = false}
-				>
-				<span>No Callsheet</span>
-				<div class="tooltip font-s pointer-events-none {callsheetDetails ? 'visible' : ''}">
-					Please add at least one callsheet to the project. This will allow participants to have
-					informations about this project when needed.
-				</div>
-			</a>
-		{/if}
-		{#if !project.registration}
-			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
-				href="/projects/{project.id}/management/registration"
-				on:mouseenter={() => registrationDetails = true}
-				on:mouseleave={() => registrationDetails = false}
-				>
-				<span>No Registration</span>
-				<div class="tooltip font-s pointer-events-none {registrationDetails ? 'visible' : ''}">
-					Please add a registration to the project. With this you will allow people to register to
-					this project if they have the link.
-				</div>
-			</a>
+		{#if informationDisplayed}
+			{#if !project.responsibles || project.responsibles.length === 0}
+				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					href="/projects/{project.id}/management/modify"
+					on:mouseenter={() => managerDetails = true}
+					on:mouseleave={() => managerDetails = false}
+					>
+					<span>No Manager</span>
+					<div class="tooltip font-s pointer-events-none {managerDetails ? 'visible' : ''}">
+						Please add at least one person to be in charge of the project. This person will have its
+						contact informations displayed for this project.
+					</div>
+				</a>
+			{/if}
+			{#if project.rehearsals.length === 0}
+				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					href="/projects/{project.id}/management/modify"
+					on:mouseenter={() => rehearsalDetails = true}
+					on:mouseleave={() => rehearsalDetails = false}
+					>
+					<span>No Rehearsal</span>
+					<div class="tooltip font-s pointer-events-none {rehearsalDetails ? 'visible' : ''}">
+						Please add at least one rehearsal to the project. This will allow participants to know
+						when they have to be present.
+					</div>
+				</a>
+			{/if}
+			{#if project.concerts.length === 0}
+				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					href="/projects/{project.id}/management/modify"
+					on:mouseenter={() => concertDetails = true}
+					on:mouseleave={() => concertDetails = false}
+					>
+					<span>No Concert</span>
+					<div class="tooltip font-s pointer-events-none {concertDetails ? 'visible' : ''}">
+						Please add at least one concert to the project. This will allow participants to know when
+						they have to be present.
+					</div>
+				</a>
+			{/if}
+			{#if project.sectionGroup?.sections.length === 0}
+				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					href="/sectionGroups"
+					on:mouseenter={() => sectionGroupDetails = true}
+					on:mouseleave={() => sectionGroupDetails = false}
+					>
+					<span>No Section</span>
+					<div class="tooltip font-s pointer-events-none {sectionGroupDetails ? 'visible' : ''}">
+						Please add at least one section to the section group. This will allow participants to know
+						in which section they are.
+					</div>
+				</a>
+			{/if}
+			{#if !project.callsheets || project.callsheets?.length === 0}
+				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					href="/projects/{project.id}/management/callsheets"
+					on:mouseenter={() => callsheetDetails = true}
+					on:mouseleave={() => callsheetDetails = false}
+					>
+					<span>No Callsheet</span>
+					<div class="tooltip font-s pointer-events-none {callsheetDetails ? 'visible' : ''}">
+						Please add at least one callsheet to the project. This will allow participants to have
+						informations about this project when needed.
+					</div>
+				</a>
+			{/if}
+			{#if !project.registration}
+				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					href="/projects/{project.id}/management/registration"
+					on:mouseenter={() => registrationDetails = true}
+					on:mouseleave={() => registrationDetails = false}
+					>
+					<span>No Registration</span>
+					<div class="tooltip font-s pointer-events-none {registrationDetails ? 'visible' : ''}">
+						Please add a registration to the project. With this you will allow people to register to
+						this project if they have the link.
+					</div>
+				</a>
+			{/if}
+		{:else}
+			<p class="mb-4 text-gray-500 uppercase">No information</p>
 		{/if}
 		<!--
 		{#if participantsNotValidated.length > 0}
@@ -143,6 +156,7 @@
     position: relative;
     display: inline-block;
     cursor: pointer;
+	overflow: visible;
   }
 
   .tooltip {
@@ -161,7 +175,7 @@
     font-size: 0.8rem;
     white-space: normal;
 	word-wrap: break-word;
-    z-index: 100;
+    z-index: 500;
     opacity: 0;
     transition: opacity 0.2s;
   }
