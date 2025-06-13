@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DateShow from '$lib/components/DateShow.svelte';
+	import type { Participant } from '$lib/types/Participant';
 	import DisplayerEvents from './DisplayerEvents.svelte';
 	import DisplayerFolder from './DisplayerFolder.svelte';
 	import DisplayerPieces from './DisplayerPieces.svelte';
@@ -10,8 +11,10 @@
 	import Fa from 'svelte-fa';
 
 	export let project: any;
+	export let participants: Participant[];
 	export let participantsNotSeenCallsheet: Array<any>;
 	export let participantsNotValidated: Array<any>;
+	console.log("PROZAZEA" , participantsNotValidated)
 	export let participantsWithoutEmail: Array<any>;
 </script>
 
@@ -75,13 +78,14 @@
 		</div>
 
 	<div class="mt-4">
-		<DisplayerSection bind:project />
+		<DisplayerSection bind:project bind:participants participantsNotValidated={participantsNotValidated} />
 	</div>
 
 	<div class="flex mt-4">
 		<div class="w-full">
 			<DisplayerSheets
 				bind:project
+				bind:participants
 				bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
 				bind:participantsNotValidated
 			/>
