@@ -39,13 +39,12 @@
 	</div>
 
 
-	<div class="flex w-full flex-col md:flex-row gap-6 mt-4">	
+	<div class="flex w-[100%] flex-col md:flex-row gap-6 mt-4">	
+		<DisplayerEvents bind:project />
+	</div>
 
-		<div class="w-full w-3/5 md:w-7/12">
-			<DisplayerEvents bind:project />
-		</div>
-		<div
-			class="h-full w-2/5 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+	<div
+			class="h-full w-2/5 mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
 		>
 		<div class="flex mt-4 mb-4 ml-4 flex flex-col">
 			<div class="flex items-center">
@@ -74,7 +73,6 @@
 			</div>
 		</div>
 		</div>
-	</div>
 
 	<div class="mt-4">
 		<DisplayerSection bind:project />
