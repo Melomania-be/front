@@ -237,24 +237,31 @@
                 finalInstructions = text ? quillAudition.root.innerHTML : '';
             }
 
-            const filteredRequiredFiles = auditionRequiredFiles.filter(file => file.trim() !== '');
+            // Nettoyer et filtrer les fichiers requis
+            const filteredRequiredFiles = auditionRequiredFiles
+              .filter(file => file && file.trim() !== '')
+              .map(file => file.trim());
 
+            // Construire les données avec validation
             const auditionData = {
-                instructions: finalInstructions,
+                instructions: finalInstructions || '',
                 required_files: filteredRequiredFiles,
-                deadline: auditionDeadline ? new Date(auditionDeadline) : null
+                deadline: auditionDeadline || null
             };
 
-            const response = await fetch(
-              `/api/projects/${data.id}/management/participants/${currentParticipant.id}/request-audition`,
-              {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(auditionData)
-              }
-            );
+            console.log('Sending audition data:', auditionData); // Debug
+
+            // Construire l'URL correctement
+            const url = `/api/projects/${data.id}/management/participants/${currentParticipant.id}/request-audition`;
+            console.log('Request URL:', url); // Debug
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(auditionData)
+            });
 
             if (response.ok) {
                 // Mettre à jour le statut du participant localement
@@ -267,8 +274,14 @@
                 closeAuditionModal();
                 alert('Demande d\'audition envoyée avec succès');
             } else {
-                const errorData = await response.json();
-                alert(`Erreur: ${errorData.error || 'Erreur inconnue'}`);
+                const errorText = await response.text();
+                console.error('Server response:', errorText);
+                try {
+                    const errorData = JSON.parse(errorText);
+                    alert(`Erreur: ${errorData.message || errorData.error || 'Erreur inconnue'}`);
+                } catch {
+                    alert(`Erreur serveur: ${errorText}`);
+                }
             }
 
         } catch (error) {

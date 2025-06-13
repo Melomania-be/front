@@ -184,10 +184,12 @@
 							{audition.participant.section.name}
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap">
-							{@const badge = getStatusBadge(audition)}
-							<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {badge.class}">
-                                    {badge.text}
-                                </span>
+							{#if true}
+								{@const badge = getStatusBadge(audition)}
+								<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {badge.class}">
+									{badge.text}
+								</span>
+							{/if}
 						</td>
 						<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 							{#if audition.deadline}
@@ -260,10 +262,12 @@
 					</div>
 					<div>
 						<h4 class="text-sm font-medium text-gray-500 mb-1">Statut</h4>
-						{@const badge = getStatusBadge(selectedAudition)}
-						<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {badge.class}">
-                            {badge.text}
-                        </span>
+						{#if true}
+							{@const badge = getStatusBadge(selectedAudition)}
+							<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {badge.class}">
+								{badge.text}
+							</span>
+						{/if}
 					</div>
 					{#if selectedAudition.deadline}
 						<div>

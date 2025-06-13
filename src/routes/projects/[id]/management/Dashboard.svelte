@@ -32,7 +32,7 @@
 				{:else}
 					{#each project.responsibles as responsible}
 						<a href="/contacts/{responsible.id}" class="rounded-full bg-slate-100 p-1"
-							>{responsible.firstName} {responsible.lastName}</a
+						>{responsible.firstName} {responsible.lastName}</a
 						>
 					{/each}
 				{/if}
@@ -73,6 +73,13 @@
 					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 				>
 					New participant validation
+				</a>
+				<!-- Nouveau bouton pour la gestion des auditions -->
+				<a
+					href="/projects/{project.id}/management/auditions"
+					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-purple-700 rounded-lg hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+				>
+					Gestion des auditions
 				</a>
 			</div>
 		</div>
