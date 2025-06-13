@@ -1,35 +1,58 @@
 <script lang="ts">
     import AttendancePicker from '$lib/components/participant/AttendancePicker.svelte';
     import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
-    import type { Participant } from '$lib/types/Participant.js';
+    import type { Participant } from '$lib/types/Participant.js'
+    import type { Concert } from '$lib/types/Concert.js';
+    import type { Rehearsal } from '$lib/types/Rehearsal.js';
     import { onMount } from 'svelte';
 
     export let data;
     let participants: Array<Participant>;
     let currentParticipant: Participant | null;
+    let allConcerts: Concert[] = [];
+    let allRehearsals: Rehearsal[] = [];
+    let isLoadingAttendance = true; // État pour le chargement
 
     onMount(async () => {
+        // Charger les participants
         const responseParticipants = await fetch(`/api/projects/${data.id}/management/validation`);
-
         if (responseParticipants.ok) {
             participants = await responseParticipants.json();
+        }
+
+        // Charger TOUTES les dates du projet
+        try {
+            const responseAttendance = await fetch(`/api/projects/${data.id}/management/attendance`);
+            if (responseAttendance.ok) {
+                const attendanceData = await responseAttendance.json();
+                allConcerts = attendanceData.concerts || [];
+                allRehearsals = attendanceData.rehearsals || [];
+                console.log('Concerts chargés:', allConcerts);
+                console.log('Répétitions chargées:', allRehearsals);
+            } else {
+                console.error('Erreur lors du chargement des données d\'attendance');
+            }
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+        } finally {
+            isLoadingAttendance = false;
         }
     });
 
     async function deleteParticipant() {
         const response = await fetch(
-            `/api/projects/${data.id}/management/participants/${currentParticipant!.id}`,
-            {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
+          `/api/projects/${data.id}/management/participants/${currentParticipant!.id}`,
+          {
+              method: 'DELETE',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          }
         );
 
         if (response.ok) {
             participants = participants.filter(
-                (participant) => participant.id !== currentParticipant!.id
+              (participant) => participant.id !== currentParticipant!.id
             );
             currentParticipant = null;
         }
@@ -47,7 +70,7 @@
         if (!responseEmail.ok) {
             console.error('Failed to send email');
         }
-        
+
         const response = await fetch(`/api/projects/${data.id}/management/validation`, {
             method: 'POST',
             headers: {
@@ -58,7 +81,7 @@
 
         if (response.ok) {
             participants = participants.filter(
-                (participant) => participant.id !== currentParticipant!.id
+              (participant) => participant.id !== currentParticipant!.id
             );
             currentParticipant = null;
         }
@@ -72,36 +95,38 @@
                 <h1 class="text-2xl mb-4">You need to validate the registration of {participants.length} person(s):</h1>
                 <table class="min-w-full bg-white dark:bg-gray-800">
                     <thead>
-                        <tr>
-                            <th class="py-2 px-4 border-b">Firstname</th>
-                            <th class="py-2 px-4 border-b">Lastname</th>
-                            <th class="py-2 px-4 border-b">Section</th>
-                            <th class="py-2 px-4 border-b"></th>
-                        </tr>
+                    <tr>
+                        <th class="py-2 px-4 border-b">Firstname</th>
+                        <th class="py-2 px-4 border-b">Lastname</th>
+                        <th class="py-2 px-4 border-b">Section</th>
+                        <th class="py-2 px-4 border-b"></th>
+                    </tr>
                     </thead>
                     <tbody>
-                        {#each participants as participant}
-                            <tr class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                                <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>{participant.contact.firstName}</td>
-                                <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>{participant.contact.lastName}</td>
-                                <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>{participant.section.name}</td>
-                                <td class="py-2 px-4 border-b text-right">
-                                    <button class="text-blue-500 hover:text-blue-700" on:click={() => (currentParticipant = participant)}>
-                                        <span class="icon-[formkit--arrowright]"></span>
-                                    </button>
-                                </td>
-                            </tr>
-                        {/each}
+                    {#each participants as participant}
+                        <tr class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>{participant.contact.firstName}</td>
+                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>{participant.contact.lastName}</td>
+                            <td class="py-2 px-4 border-b" on:click={() => (currentParticipant = participant)}>{participant.section.name}</td>
+                            <td class="py-2 px-4 border-b text-right">
+                                <button class="text-blue-500 hover:text-blue-700" on:click={() => (currentParticipant = participant)}>
+                                    <span class="icon-[formkit--arrowright]"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    {/each}
                     </tbody>
                 </table>
             </div>
         {:else}
             <h1 class="text-2xl">There is no participant to validate</h1>
         {/if}
+
         {#if currentParticipant}
             <div class="relative border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
                 <div class={currentParticipant.contact.validated ? '' : 'opacity-50 pointer-events-none'}>
                     <h1 class="text-2xl text-center mb-4">Participant request:</h1>
+
                     <div class="mb-4">
                         <h2 class="text-xl mb-2">Contact:</h2>
                         <div class="border p-2 rounded-lg bg-white dark:bg-gray-800">
@@ -141,38 +166,61 @@
                                     <span>No custom form</span>
                                 {/if}
                             </div>
-                            <div class="mb-2">
-                                <h3 class="text-lg">Rehearsals</h3>
-                                <AttendancePicker
-                                    concertsOrRehearsals={currentParticipant.rehearsals}
-                                    type="rehearsal"
-                                    participants={[currentParticipant]}
-                                    disabled
-                                />
-                            </div>
+
+                            <!-- Section Concerts avec vérification du chargement -->
                             <div class="mb-2">
                                 <h3 class="text-lg">Concerts</h3>
-                                <AttendancePicker
-                                    concertsOrRehearsals={currentParticipant.concerts}
-                                    type="concert"
-                                    participants={[currentParticipant]}
-                                    disabled
-                                />
+                                {#if isLoadingAttendance}
+                                    <div class="flex items-center gap-2 p-4">
+                                        <div class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span class="text-gray-600 dark:text-gray-400">Chargement des concerts...</span>
+                                    </div>
+                                {:else if allConcerts.length > 0}
+                                    <AttendancePicker
+                                      concertsOrRehearsals={allConcerts}
+                                      type="concert"
+                                      participants={[currentParticipant]}
+                                      disabled
+                                    />
+                                {:else}
+                                    <p class="text-gray-600 dark:text-gray-400 p-4">Aucun concert planifié pour ce projet.</p>
+                                {/if}
+                            </div>
+
+                            <!-- Section Répétitions avec vérification du chargement -->
+                            <div class="mb-2">
+                                <h3 class="text-lg">Rehearsals</h3>
+                                {#if isLoadingAttendance}
+                                    <div class="flex items-center gap-2 p-4">
+                                        <div class="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span class="text-gray-600 dark:text-gray-400">Chargement des répétitions...</span>
+                                    </div>
+                                {:else if allRehearsals.length > 0}
+                                    <AttendancePicker
+                                      concertsOrRehearsals={allRehearsals}
+                                      type="rehearsal"
+                                      participants={[currentParticipant]}
+                                      disabled
+                                    />
+                                {:else}
+                                    <p class="text-gray-600 dark:text-gray-400 p-4">Aucune répétition planifiée pour ce projet.</p>
+                                {/if}
                             </div>
                         </div>
                     </div>
+
                     <div class="flex justify-between">
                         <button
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            on:click={() => {
+                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                          on:click={() => {
                                 validateParticipant();
                             }}
                         >
                             Validate and send confirmation email
                         </button>
                         <button
-                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                            on:click={() => {
+                          class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                          on:click={() => {
                                 deleteParticipant();
                             }}
                         >
