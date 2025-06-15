@@ -126,6 +126,8 @@ jobs:
   activate-protection:
     name: Activate Branch Protection
     needs: deploy
+    permissions:
+      contents: write
     uses: ./.github/workflows/_enable_protection.yml
     with:
       branch: release-prod
