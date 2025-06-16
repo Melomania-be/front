@@ -5,17 +5,32 @@
 	import CallsheetShow from './CallsheetShow.svelte';
 	import RichTextEditor from './RichTextEditor.svelte'
 
-	export let callsheet: Callsheet;
+	export let callsheet: Callsheet | null = null;
 	export let mode: 'modify' | 'create';
 
 	let allowModification = mode === 'modify' ? false : true;
 	let isLoading = false;
 	let errorMessage = '';
 	let successMessage = '';
+	let loadingError = '';
+	let callsheetLoaded = false;
+
+	// Initialisation sécurisée des contenus
+	$: if (callsheet && !callsheet.contents) {
+		callsheet.contents = [];
+	}
+
+	// Compteur pour générer des IDs uniques pour les nouveaux contenus
+	$: contentIdCounter = Math.max(...(callsheet?.contents?.map(c => c.id || 0) || [0])) + 1;
 
 	// Validation des champs requis
 	function validateCallsheet() {
 		const errors = [];
+
+		if (!callsheet) {
+			errors.push('Callsheet non chargée');
+			return errors;
+		}
 
 		if (!callsheet.version || callsheet.version.trim() === '') {
 			errors.push('La version est requise');
@@ -35,6 +50,11 @@
 	}
 
 	async function saveCallsheet() {
+		if (!callsheet) {
+			errorMessage = 'Callsheet non disponible';
+			return;
+		}
+
 		// Réinitialiser les messages
 		errorMessage = '';
 		successMessage = '';
@@ -53,7 +73,7 @@
 				id: callsheet.id,
 				project_id: callsheet.projectId,
 				version: callsheet.version.trim(),
-				contents: callsheet.contents.map((content) => {
+				contents: (callsheet.contents || []).map((content) => {
 					return {
 						id: content.id,
 						title: content.title.trim(),
@@ -94,11 +114,47 @@
 		}
 	}
 
+	// Fonction pour charger la callsheet avec gestion d'erreur
+	async function loadCallsheet(projectId: string, callsheetId: string) {
+		try {
+			loadingError = '';
+			const response = await fetch(`/api/projects/${projectId}/management/callsheets/${callsheetId}`);
+
+			if (!response.ok) {
+				if (response.status === 404) {
+					loadingError = 'Callsheet non trouvée';
+				} else if (response.status === 500) {
+					loadingError = 'Erreur serveur. Vérifiez les logs du serveur.';
+				} else {
+					loadingError = `Erreur ${response.status}: ${response.statusText}`;
+				}
+				return null;
+			}
+
+			const data = await response.json();
+			callsheetLoaded = true;
+			return data;
+		} catch (error) {
+			console.error('Erreur lors du chargement de la callsheet:', error);
+			loadingError = 'Erreur de connexion au serveur';
+			return null;
+		}
+	}
+
 	onMount(async () => {
-		const res = await fetch(`/api/folders`);
+		try {
+			const res = await fetch(`/api/folders`);
+		} catch (error) {
+			console.warn('Erreur lors du chargement des dossiers:', error);
+		}
 	});
 
 	async function deleteCallsheet() {
+		if (!callsheet) {
+			errorMessage = 'Callsheet non disponible';
+			return;
+		}
+
 		let confirmDelete = confirm('Êtes-vous sûr de vouloir supprimer cette callsheet ?');
 		if (!confirmDelete) {
 			return;
@@ -109,10 +165,10 @@
 
 		try {
 			const response = await fetch(
-				`/api/projects/${callsheet.projectId}/management/callsheets/${callsheet.id}`,
-				{
-					method: 'DELETE'
-				}
+					`/api/projects/${callsheet.projectId}/management/callsheets/${callsheet.id}`,
+					{
+						method: 'DELETE'
+					}
 			);
 
 			if (response.ok) {
@@ -135,19 +191,67 @@
 	function isFieldValid(field: string) {
 		return field && field.trim() !== '';
 	}
+
+	// Fonction pour supprimer un contenu spécifique
+	function removeContent(contentToRemove: any) {
+		if (!callsheet || !callsheet.contents) return;
+
+		callsheet.contents = callsheet.contents.filter(content => content !== contentToRemove);
+		callsheet = callsheet; // Force la réactivité
+	}
+
+	// Fonction pour ajouter un nouveau contenu
+	function addNewContent() {
+		if (!callsheet) return;
+
+		if (!callsheet.contents) {
+			callsheet.contents = [];
+		}
+
+		const newContent = {
+			title: '',
+			text: '',
+			callsheet_id: 0,
+			id: contentIdCounter++, // ID temporaire unique
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+		callsheet.contents.push(newContent);
+		callsheet = callsheet; // Force la réactivité
+	}
 </script>
+
+<!-- Gestion des erreurs de chargement -->
+{#if loadingError}
+	<div class="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-600 dark:text-red-300">
+		<div class="flex items-center gap-2">
+			<span class="icon-[tabler--alert-circle]" style="width: 1.5rem; height: 1.5rem;"></span>
+			<div>
+				<h3 class="font-semibold">Erreur de chargement</h3>
+				<p>{loadingError}</p>
+				<button
+						on:click={() => window.location.reload()}
+						class="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+				>
+					Recharger la page
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
 	{#if callsheet}
 		<div
-			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+				class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
 			{#if mode === 'modify'}
 				<div class="absolute top-0 right-0 p-1">
 					<button
-						on:click={() => (allowModification = !allowModification)}
-						class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-						disabled={isLoading}
+							on:click={() => (allowModification = !allowModification)}
+							class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+							disabled={isLoading}
+							aria-label="Activer/désactiver la modification"
 					>
 						{#if !allowModification}
 							<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
@@ -181,19 +285,20 @@
 				{/if}
 
 				<div class="mb-4">
-					<label class="block text-lg font-medium mb-2">
+					<label for="version-input" class="block text-lg font-medium mb-2">
 						Version <span class="text-red-500">*</span>
 					</label>
 					<input
-						class={`border rounded px-3 py-2 w-full ${
+							id="version-input"
+							class={`border rounded px-3 py-2 w-full ${
 							allowModification && !isFieldValid(callsheet.version)
 								? 'border-red-400 bg-red-50 dark:bg-red-900 dark:border-red-600'
 								: 'border-gray-300 dark:border-gray-600'
 						} ${!allowModification ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`}
-						type="text"
-						placeholder="Entrez la version (ex: 1.0, v2.1, etc.)"
-						bind:value={callsheet.version}
-						disabled={!allowModification || isLoading}
+							type="text"
+							placeholder="Entrez la version (ex: 1.0, v2.1, etc.)"
+							bind:value={callsheet.version}
+							disabled={!allowModification || isLoading}
 					/>
 					{#if allowModification && !isFieldValid(callsheet.version)}
 						<p class="text-red-500 text-sm mt-1">La version est requise</p>
@@ -205,7 +310,7 @@
 						<a class="text-blue-600 hover:text-blue-800 dark:text-blue-400" href="/call_sheets/{callsheet.projectId}/-1">
 							<h2 class="text-lg flex items-center gap-2">
 								<span class="icon-[tabler--external-link]" style="width: 1rem; height: 1rem;"></span>
-								Lien vers la callsheet
+								Link to the callsheet
 							</h2>
 						</a>
 					</div>
@@ -213,58 +318,51 @@
 
 				<div class="mb-5">
 					<h2 class="text-lg font-medium mb-2">
-						Contenus <span class="text-red-500">*</span>
+						Contents <span class="text-red-500">*</span>
 					</h2>
 					{#if allowModification}
 						<button
-							class="bg-rose-500 hover:bg-rose-600 text-white p-2 rounded m-1 disabled:opacity-50"
-							disabled={isLoading}
-							on:click={() => {
-								callsheet.contents.push({
-									title: '',
-									text: '',
-									callsheet_id: 0,
-									id: null,
-									createdAt: new Date(),
-									updatedAt: new Date()
-								});
-								callsheet = callsheet;
-							}}
+								class="bg-rose-500 hover:bg-rose-600 text-white p-2 rounded m-1 disabled:opacity-50"
+								disabled={isLoading}
+								on:click={addNewContent}
+								aria-label="Ajouter un nouveau contenu"
 						>
 							<span class="flex items-center gap-2">
 								<span class="icon-[tabler--plus]" style="width: 1rem; height: 1rem;"></span>
-								Ajouter du contenu
+								Add content
 							</span>
 						</button>
 					{/if}
 					<div>
 						{#if callsheet.contents && callsheet.contents.length > 0}
-							{#each callsheet.contents as content, index}
+							{#each callsheet.contents as content (content.id || content)}
 								<div class="grid grid-cols-1 gap-1 mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
 									<div class="flex items-center justify-center">
+										<label for="content-title-{content.id}" class="sr-only">
+											Titre du contenu
+										</label>
 										<input
-											class={`border rounded px-3 py-2 flex-1 ${
+												id="content-title-{content.id}"
+												class={`border rounded px-3 py-2 flex-1 ${
 												allowModification && !isFieldValid(content.title)
 													? 'border-red-400 bg-red-50 dark:bg-red-900'
 													: 'border-gray-300 dark:border-gray-600'
 											} ${!allowModification ? 'bg-gray-100 dark:bg-gray-600' : 'bg-white dark:bg-gray-800'}`}
-											type="text"
-											placeholder="Titre du contenu *"
-											bind:value={content.title}
-											disabled={!allowModification || isLoading}
+												type="text"
+												placeholder="Titre du contenu *"
+												bind:value={content.title}
+												disabled={!allowModification || isLoading}
 										/>
 										{#if allowModification}
 											<button
-												class="m-1 p-2 text-red-500 hover:text-red-700 disabled:opacity-50"
-												disabled={isLoading}
-												on:click={() => {
-													callsheet.contents = callsheet.contents.filter((_, i) => i !== index);
-													callsheet = callsheet;
-												}}
+													class="m-1 p-2 text-red-500 hover:text-red-700 disabled:opacity-50"
+													disabled={isLoading}
+													on:click={() => removeContent(content)}
+													aria-label="Supprimer ce contenu"
 											>
 												<span
-													class="icon-[tabler--trash]"
-													style="width: 1.2rem; height: 1.2rem;"
+														class="icon-[tabler--trash]"
+														style="width: 1.2rem; height: 1.2rem;"
 												></span>
 											</button>
 										{/if}
@@ -274,8 +372,8 @@
 									{/if}
 									{#if allowModification}
 										<RichTextEditor
-											value={content.text}
-											onChange={(v) => content.text = v}
+												value={content.text}
+												onChange={(v) => content.text = v}
 										/>
 									{:else}
 										<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
@@ -293,29 +391,29 @@
 				{#if allowModification}
 					<div class="flex justify-end gap-3">
 						<button
-							on:click={saveCallsheet}
-							disabled={isLoading}
-							class="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+								on:click={saveCallsheet}
+								disabled={isLoading}
+								class="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded flex items-center gap-2"
 						>
 							{#if isLoading}
 								<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 							{:else}
 								<span class="icon-[tabler--device-floppy]" style="width: 1rem; height: 1rem;"></span>
 							{/if}
-							{isLoading ? 'Sauvegarde...' : 'Enregistrer'}
+							{isLoading ? 'Sauvegarde...' : 'Save'}
 						</button>
 						{#if mode == 'modify'}
 							<button
-								on:click={deleteCallsheet}
-								disabled={isLoading}
-								class="bg-red-500 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+									on:click={deleteCallsheet}
+									disabled={isLoading}
+									class="bg-red-500 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded flex items-center gap-2"
 							>
 								{#if isLoading}
 									<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 								{:else}
 									<span class="icon-[tabler--trash]" style="width: 1rem; height: 1rem;"></span>
 								{/if}
-								{isLoading ? 'Suppression...' : 'Supprimer'}
+								{isLoading ? 'Suppression...' : 'Delete'}
 							</button>
 						{/if}
 					</div>
@@ -323,5 +421,15 @@
 			</div>
 		</div>
 		<CallsheetShow {callsheet} />
+	{:else}
+		<div class="flex justify-center items-center h-64 col-span-full">
+			<div class="text-center">
+				<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+				<p class="text-gray-600 dark:text-gray-400">Chargement de la callsheet...</p>
+				<p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
+					Si le chargement prend trop de temps, vérifiez votre connexion ou rechargez la page.
+				</p>
+			</div>
+		</div>
 	{/if}
 </div>
