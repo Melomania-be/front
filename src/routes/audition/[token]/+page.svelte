@@ -11,6 +11,7 @@
 	let uploading = false;
 	let submitting = false;
 	let candidateNotes = '';
+	let saving = false; // Nouvelle variable pour sauvegarder et quitter
 
 	// Variables pour l'upload - CORRIGÉES
 	let selectedFiles: FileList | null = null;
@@ -54,7 +55,6 @@
 		// Vérifier le type de fichier
 		if (!isValidFileType(file, acceptedTypes)) {
 			fileValidationError = `Type de fichier non autorisé. Types acceptés pour ${fileType}: ${acceptedTypes.join(', ')}`;
-			// NE PAS RESET selectedFiles ici - laissez l'utilisateur voir l'erreur
 			return;
 		}
 
@@ -62,7 +62,6 @@
 		const maxSize = 50 * 1024 * 1024; // 50MB
 		if (file.size > maxSize) {
 			fileValidationError = `Fichier trop volumineux: ${formatFileSize(file.size)}. Taille maximum: 50MB`;
-			// NE PAS RESET selectedFiles ici - laissez l'utilisateur voir l'erreur
 			return;
 		}
 
@@ -95,6 +94,12 @@
 
 			if (response.ok) {
 				audition = await response.json();
+
+				// Charger les notes existantes si elles existent
+				if (audition.candidate_notes) {
+					candidateNotes = audition.candidate_notes;
+				}
+
 				loading = false;
 			} else if (response.status === 404) {
 				error = 'Audition non trouvée ou token invalide';
@@ -112,7 +117,7 @@
 		}
 	}
 
-	// Fonction d'upload CORRIGÉE
+	// ✅ FONCTION D'UPLOAD COMPLÈTEMENT CORRIGÉE AVEC URL FIXE
 	async function uploadFile() {
 		// Vérifications préliminaires
 		if (!selectedFiles || selectedFiles.length === 0) {
@@ -150,13 +155,14 @@
 		uploadProgress = 0;
 
 		try {
-			console.log('Starting file upload...');
-			console.log('File details:', {
+			console.log('🚀 Starting file upload...');
+			console.log('📁 File details:', {
 				name: file.name,
 				size: file.size,
 				type: file.type,
 				fileType: fileType,
-				description: fileDescription.trim()
+				description: fileDescription.trim(),
+				sizeFormatted: formatFileSize(file.size)
 			});
 
 			const formData = new FormData();
@@ -164,34 +170,59 @@
 			formData.append('fileType', fileType);
 			formData.append('description', fileDescription.trim());
 
-			// Vérification FormData pour debug
-			console.log('FormData contents:');
-			for (const [key, value] of formData.entries()) {
-				if (value instanceof File) {
-					console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-				} else {
-					console.log(`${key}: ${value}`);
+			// ✅ AMÉLIORATION : Timeout plus long pour gros fichiers
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => {
+				console.log('⏰ Upload timeout after 10 minutes');
+				controller.abort();
+			}, 10 * 60 * 1000); // 10 minutes timeout
+
+			// ✅ CORRECT : URL avec /upload
+			const uploadUrl = `/api/audition/${data.token}/upload`;
+			console.log('📤 Uploading to:', uploadUrl);
+
+			let response;
+
+			try {
+				response = await fetch(uploadUrl, {
+					method: 'POST',
+					body: formData,
+					signal: controller.signal
+				});
+			} catch (fetchError) {
+				clearTimeout(timeoutId);
+
+				// ✅ SOLUTION DE FALLBACK : Si échec avec proxy, essayer URL directe
+				console.log('❌ Proxy failed, trying direct backend URL...');
+				const directUrl = `http://localhost:3333/api/audition/${data.token}/upload`;
+				console.log('📤 Retry with direct URL:', directUrl);
+
+				const retryController = new AbortController();
+				const retryTimeoutId = setTimeout(() => {
+					retryController.abort();
+				}, 10 * 60 * 1000);
+
+				try {
+					response = await fetch(directUrl, {
+						method: 'POST',
+						body: formData,
+						signal: retryController.signal
+					});
+					clearTimeout(retryTimeoutId);
+				} catch (retryError) {
+					clearTimeout(retryTimeoutId);
+					throw retryError;
 				}
 			}
 
-			// Vérification finale avant envoi
-			if (!formData.get('file')) {
-				console.error('CRITICAL: No file in FormData!');
-				alert('Erreur critique: fichier manquant dans les données à envoyer');
-				return;
-			}
+			clearTimeout(timeoutId);
 
-			const response = await fetch(`/api/audition/${data.token}`, {
-				method: 'POST',
-				body: formData
-				// IMPORTANT: Ne PAS définir Content-Type, laisser le navigateur le faire
-			});
-
-			console.log('Upload response status:', response.status);
+			console.log('📥 Upload response status:', response.status);
+			console.log('📋 Response headers:', response.headers.get('content-type'));
 
 			if (response.ok) {
 				const result = await response.json();
-				console.log('Upload successful:', result);
+				console.log('✅ Upload successful:', result);
 
 				// Recharger les données de l'audition pour afficher le nouveau fichier
 				await loadAudition();
@@ -201,28 +232,56 @@
 
 				alert('Fichier uploadé avec succès !');
 			} else {
-				const errorText = await response.text();
-				console.error('Upload failed:', errorText);
+				// ✅ AMÉLIORATION : Meilleure gestion d'erreurs
+				let errorMessage = `Échec de l'upload (Status: ${response.status})`;
 
 				try {
-					const errorData = JSON.parse(errorText);
-					alert(`Erreur: ${errorData.error || 'Erreur inconnue'}`);
+					const contentType = response.headers.get('content-type');
 
-					// Log des détails pour debug
-					if (errorData.details) {
-						console.error('Error details:', errorData.details);
-					}
-					if (errorData.received) {
-						console.error('Data received by server:', errorData.received);
+					if (contentType && contentType.includes('application/json')) {
+						const errorData = await response.json();
+						errorMessage = errorData.error || errorData.message || errorMessage;
+
+						if (errorData.details) {
+							console.error('❌ Server error details:', errorData.details);
+						}
+					} else {
+						const errorText = await response.text();
+						console.error('❌ Server response (text):', errorText.substring(0, 300));
+
+						// Messages d'erreur plus clairs selon le statut
+						if (response.status === 404) {
+							errorMessage = 'Route non trouvée. Vérifiez que le serveur backend fonctionne.';
+						} else if (response.status === 413) {
+							errorMessage = 'Fichier trop volumineux pour le serveur.';
+						} else if (response.status === 500) {
+							errorMessage = 'Erreur serveur. Vérifiez les logs du backend.';
+						} else if (response.status === 422) {
+							errorMessage = 'Données invalides. Vérifiez le type et la taille du fichier.';
+						}
 					}
 				} catch (parseError) {
-					console.error('Error parsing error response:', parseError);
-					alert(`Erreur serveur: ${errorText}`);
+					console.error('❌ Error parsing response:', parseError);
 				}
+
+				alert(`Erreur: ${errorMessage}`);
 			}
 		} catch (err) {
-			console.error('Network error during upload:', err);
-			alert('Erreur réseau lors de l\'upload. Vérifiez votre connexion et réessayez.');
+			console.error('❌ Network error during upload:', err);
+
+			let errorMessage = 'Erreur réseau lors de l\'upload.';
+
+			if (err.name === 'AbortError') {
+				errorMessage = 'Timeout: l\'upload a pris trop de temps. Essayez avec un fichier plus petit.';
+			} else if (err.message.includes('Failed to fetch')) {
+				errorMessage = 'Impossible de joindre le serveur. Vérifiez que le backend AdonisJS fonctionne sur le port 3333.';
+			} else if (err.message.includes('NetworkError')) {
+				errorMessage = 'Erreur réseau. Vérifiez votre connexion Internet.';
+			} else if (err.message.includes('ERR_CONNECTION_RESET')) {
+				errorMessage = 'Connexion interrompue. Le serveur pourrait avoir un problème avec les gros fichiers.';
+			}
+
+			alert(`${errorMessage}\n\nDétails techniques dans la console (F12).`);
 		} finally {
 			uploading = false;
 			uploadProgress = 0;
@@ -250,7 +309,54 @@
 		}
 	}
 
+	// NOUVELLE FONCTION : Sauvegarder et quitter
+	async function saveAndExit() {
+		saving = true;
+
+		try {
+			// Sauvegarder les notes temporaires si il y en a
+			if (candidateNotes.trim()) {
+				const response = await fetch(`/api/audition/${data.token}/save-notes`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						notes: candidateNotes.trim()
+					})
+				});
+
+				if (response.ok) {
+					alert('Vos notes ont été sauvegardées. Vous pouvez revenir plus tard pour continuer votre audition.');
+				} else {
+					alert('Erreur lors de la sauvegarde des notes, mais vous pouvez quitter.');
+				}
+			} else {
+				alert('Session fermée. Vous pouvez revenir plus tard pour continuer votre audition.');
+			}
+
+			// Tenter de fermer la fenêtre (fonctionne si ouverte via window.open)
+			if (window.opener) {
+				window.close();
+			} else {
+				// Si on ne peut pas fermer, rediriger vers une page de confirmation
+				window.location.href = 'about:blank';
+			}
+		} catch (error) {
+			console.error('Error saving:', error);
+			alert('Erreur lors de la sauvegarde, mais vous pouvez quitter en fermant l\'onglet.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	// ✅ FONCTION SUBMITAUDITION CORRIGÉE
 	async function submitAudition() {
+		if (!audition.files || audition.files.length === 0) {
+			alert('Vous devez uploader au moins un fichier avant de soumettre votre audition.');
+			return;
+		}
+
 		if (!confirm('Êtes-vous sûr de vouloir soumettre votre audition ? Vous ne pourrez plus modifier après soumission.')) {
 			return;
 		}
@@ -270,12 +376,18 @@
 
 			if (response.ok) {
 				await loadAudition();
-				alert('Audition soumise avec succès ! Merci pour votre participation.');
+				// Le message de succès sera affiché automatiquement via la condition audition.is_submitted
+			} else if (response.status === 409) {
+				// ✅ CORRECTION : Audition déjà soumise - recharger les données pour afficher le bon message
+				await loadAudition();
+				// Le message personnalisé sera affiché automatiquement grâce à audition.is_submitted = true
 			} else {
-				alert('Erreur lors de la soumission');
+				const errorData = await response.json().catch(() => null);
+				alert('Erreur lors de la soumission : ' + (errorData?.error || 'Erreur inconnue'));
 			}
 		} catch (err) {
-			alert('Erreur réseau');
+			console.error('Submit error:', err);
+			alert('Erreur réseau lors de la soumission');
 		} finally {
 			submitting = false;
 		}
@@ -322,7 +434,7 @@
 					<p class="text-gray-600 mt-2">Melomania - Plateforme collaborative des musiciens</p>
 				</div>
 				<div class="text-right">
-					{#if audition?.deadline}
+					{#if audition?.deadline && !audition?.is_submitted}
 						<p class="text-sm text-gray-500">Temps restant:</p>
 						<p class="text-lg font-semibold text-orange-600">{getTimeRemaining()}</p>
 					{/if}
@@ -350,80 +462,127 @@
 				</div>
 			</div>
 		{:else if audition}
-			<!-- Informations de l'audition -->
-			<div class="bg-white rounded-lg shadow-md p-6 mb-6">
-				<h2 class="text-xl font-semibold text-gray-900 mb-4">Informations sur votre audition</h2>
+			<!-- ✅ MESSAGE AMÉLIORÉ POUR AUDITION DÉJÀ SOUMISE -->
+			{#if audition.is_submitted}
+				<div class="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-8 text-center mb-6">
+					<div class="max-w-md mx-auto">
+						<div class="flex justify-center mb-4">
+							<div class="bg-green-100 rounded-full p-3">
+								<svg class="h-8 w-8 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+								</svg>
+							</div>
+						</div>
+						<h2 class="text-2xl font-bold text-gray-900 mb-2">
+							{audition.participant.contact.firstName} {audition.participant.contact.lastName}
+						</h2>
+						<h3 class="text-xl font-semibold text-green-800 mb-4">
+							Vous avez déjà soumis votre audition !
+						</h3>
+						<p class="text-gray-700 mb-4">
+							Votre audition a été soumise avec succès le <strong>{new Date(audition.submitted_at).toLocaleDateString('fr-FR', {
+							weekday: 'long',
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+							hour: '2-digit',
+							minute: '2-digit'
+						})}</strong>.
+						</p>
+						<div class="bg-white border border-green-200 rounded-lg p-4 mb-4">
+							<p class="text-green-800 font-medium text-lg">
+								Notre équipe vous recontactera au plus vite pour vous informer de votre candidature.
+							</p>
+						</div>
+						<div class="text-sm text-gray-600 space-y-1">
+							<p><strong>Fichiers soumis :</strong> {audition.files?.length || 0}</p>
+							<p><strong>Projet :</strong> {audition.project.name}</p>
+							<p><strong>Section :</strong> {audition.participant.section.name}</p>
+						</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-					<div>
-						<p class="text-sm text-gray-500">Candidat</p>
-						<p class="font-medium">{audition.participant.contact.firstName} {audition.participant.contact.lastName}</p>
+						{#if audition.candidate_notes}
+							<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-left">
+								<p class="text-sm font-medium text-blue-800 mb-1">Vos notes :</p>
+								<p class="text-sm text-blue-700">{audition.candidate_notes}</p>
+							</div>
+						{/if}
+
+						<!-- Affichage des fichiers soumis -->
+						{#if audition.files && audition.files.length > 0}
+							<div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+								<h4 class="text-sm font-semibold text-gray-800 mb-3">Fichiers soumis :</h4>
+								<div class="space-y-2">
+									{#each audition.files as auditionFile}
+										<div class="flex items-center justify-between text-sm">
+											<div class="text-left">
+												<p class="font-medium text-gray-700">{auditionFile.file.name}</p>
+												<p class="text-xs text-gray-500">{auditionFile.description}</p>
+											</div>
+											<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+												{auditionFile.file_type}
+											</span>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 					</div>
-					<div>
-						<p class="text-sm text-gray-500">Projet</p>
-						<p class="font-medium">{audition.project.name}</p>
-					</div>
-					<div>
-						<p class="text-sm text-gray-500">Section</p>
-						<p class="font-medium">{audition.participant.section.name}</p>
-					</div>
-					{#if audition.deadline}
+				</div>
+			{:else}
+				<!-- Informations de l'audition -->
+				<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+					<h2 class="text-xl font-semibold text-gray-900 mb-4">Informations sur votre audition</h2>
+
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 						<div>
-							<p class="text-sm text-gray-500">Date limite</p>
-							<p class="font-medium">{new Date(audition.deadline).toLocaleDateString('fr-FR', {
-								weekday: 'long',
-								year: 'numeric',
-								month: 'long',
-								day: 'numeric',
-								hour: '2-digit',
-								minute: '2-digit'
-							})}</p>
+							<p class="text-sm text-gray-500">Candidat</p>
+							<p class="font-medium">{audition.participant.contact.firstName} {audition.participant.contact.lastName}</p>
+						</div>
+						<div>
+							<p class="text-sm text-gray-500">Projet</p>
+							<p class="font-medium">{audition.project.name}</p>
+						</div>
+						<div>
+							<p class="text-sm text-gray-500">Section</p>
+							<p class="font-medium">{audition.participant.section.name}</p>
+						</div>
+						{#if audition.deadline}
+							<div>
+								<p class="text-sm text-gray-500">Date limite</p>
+								<p class="font-medium">{new Date(audition.deadline).toLocaleDateString('fr-FR', {
+									weekday: 'long',
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit'
+								})}</p>
+							</div>
+						{/if}
+					</div>
+
+					{#if audition.instructions}
+						<div class="mb-6">
+							<h3 class="text-lg font-medium text-gray-900 mb-2">Instructions</h3>
+							<div class="prose max-w-none text-gray-700">
+								{@html audition.instructions}
+							</div>
+						</div>
+					{/if}
+
+					{#if audition.required_files && audition.required_files.length > 0}
+						<div class="mb-6">
+							<h3 class="text-lg font-medium text-gray-900 mb-2">Fichiers requis</h3>
+							<ul class="list-disc list-inside text-gray-700">
+								{#each audition.required_files as file}
+									<li>{file}</li>
+								{/each}
+							</ul>
 						</div>
 					{/if}
 				</div>
 
-				{#if audition.instructions}
-					<div class="mb-6">
-						<h3 class="text-lg font-medium text-gray-900 mb-2">Instructions</h3>
-						<div class="prose max-w-none text-gray-700">
-							{@html audition.instructions}
-						</div>
-					</div>
-				{/if}
-
-				{#if audition.required_files && audition.required_files.length > 0}
-					<div class="mb-6">
-						<h3 class="text-lg font-medium text-gray-900 mb-2">Fichiers requis</h3>
-						<ul class="list-disc list-inside text-gray-700">
-							{#each audition.required_files as file}
-								<li>{file}</li>
-							{/each}
-						</ul>
-					</div>
-				{/if}
-
-				{#if audition.is_submitted}
-					<div class="bg-green-50 border border-green-200 rounded-lg p-4">
-						<div class="flex">
-							<div class="flex-shrink-0">
-								<svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-								</svg>
-							</div>
-							<div class="ml-3">
-								<h3 class="text-sm font-medium text-green-800">Audition soumise</h3>
-								<p class="mt-1 text-sm text-green-700">
-									Votre audition a été soumise le {new Date(audition.submitted_at).toLocaleDateString('fr-FR')}.
-									Merci pour votre participation !
-								</p>
-							</div>
-						</div>
-					</div>
-				{/if}
-			</div>
-
-			{#if !audition.is_submitted}
-				<!-- Upload de fichiers - SECTION CORRIGÉE -->
+				<!-- Upload de fichiers -->
 				<div class="bg-white rounded-lg shadow-md p-6 mb-6">
 					<h2 class="text-xl font-semibold text-gray-900 mb-4">Upload de fichiers</h2>
 
@@ -433,7 +592,6 @@
 							<select
 								bind:value={fileType}
 								on:change={() => {
-									// Reset file selection when changing type
 									resetFileSelection();
 								}}
 								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -461,14 +619,12 @@
 								disabled={uploading}
 							/>
 
-							<!-- Affichage des erreurs de validation -->
 							{#if fileValidationError}
 								<div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
 									⚠️ {fileValidationError}
 								</div>
 							{/if}
 
-							<!-- Informations sur le fichier sélectionné -->
 							{#if selectedFiles && selectedFiles.length > 0 && !fileValidationError}
 								<div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
 									✅ Fichier sélectionné: <strong>{selectedFiles[0].name}</strong>
@@ -494,7 +650,6 @@
 						</div>
 					</div>
 
-					<!-- Informations sur les types de fichiers acceptés -->
 					<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
 						<h4 class="text-sm font-medium text-blue-800 mb-2">Types de fichiers acceptés :</h4>
 						<div class="text-xs text-blue-700 space-y-1">
@@ -543,24 +698,22 @@
 						</div>
 					{/if}
 				</div>
-			{/if}
 
-			<!-- Fichiers uploadés -->
-			{#if audition.files && audition.files.length > 0}
-				<div class="bg-white rounded-lg shadow-md p-6 mb-6">
-					<h2 class="text-xl font-semibold text-gray-900 mb-4">Fichiers uploadés</h2>
+				<!-- Fichiers uploadés -->
+				{#if audition.files && audition.files.length > 0}
+					<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+						<h2 class="text-xl font-semibold text-gray-900 mb-4">Fichiers uploadés ({audition.files.length})</h2>
 
-					<div class="space-y-3">
-						{#each audition.files as auditionFile}
-							<div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-								<div class="flex-1">
-									<p class="font-medium text-gray-900">{auditionFile.file.name}</p>
-									<p class="text-sm text-gray-500">{auditionFile.description}</p>
-									<p class="text-xs text-gray-400">
-										{auditionFile.file_type} • Uploadé le {new Date(auditionFile.uploaded_at).toLocaleDateString('fr-FR')}
-									</p>
-								</div>
-								{#if !audition.is_submitted}
+						<div class="space-y-3">
+							{#each audition.files as auditionFile}
+								<div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+									<div class="flex-1">
+										<p class="font-medium text-gray-900">{auditionFile.file.name}</p>
+										<p class="text-sm text-gray-500">{auditionFile.description}</p>
+										<p class="text-xs text-gray-400">
+											{auditionFile.file_type} • Uploadé le {new Date(auditionFile.uploaded_at).toLocaleDateString('fr-FR')}
+										</p>
+									</div>
 									<button
 										on:click={() => deleteFile(auditionFile.id)}
 										class="text-red-600 hover:text-red-800 ml-4"
@@ -569,17 +722,15 @@
 											<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 112 0v6a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
 										</svg>
 									</button>
-								{/if}
-							</div>
-						{/each}
+								</div>
+							{/each}
+						</div>
 					</div>
-				</div>
-			{/if}
+				{/if}
 
-			{#if !audition.is_submitted}
 				<!-- Soumission finale -->
 				<div class="bg-white rounded-lg shadow-md p-6">
-					<h2 class="text-xl font-semibold text-gray-900 mb-4">Soumettre votre audition</h2>
+					<h2 class="text-xl font-semibold text-gray-900 mb-4">Finaliser votre audition</h2>
 
 					<div class="mb-4">
 						<label class="block text-sm font-medium text-gray-700 mb-2">Notes personnelles (optionnel)</label>
@@ -608,17 +759,37 @@
 						</div>
 					</div>
 
-					<button
-						on:click={submitAudition}
-						disabled={submitting || (audition.files && audition.files.length === 0)}
-						class="w-full bg-green-600 text-white px-4 py-3 rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{submitting ? 'Soumission en cours...' : 'Soumettre mon audition'}
-					</button>
+					<!-- Boutons d'action -->
+					<div class="flex flex-col sm:flex-row gap-3 justify-between">
+						<!-- Bouton Sauvegarder et quitter -->
+						<button
+							on:click={saveAndExit}
+							disabled={saving}
+							class="px-4 py-3 bg-gray-600 text-white rounded-md font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							{#if saving}
+								<div class="flex items-center justify-center">
+									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+									Sauvegarde...
+								</div>
+							{:else}
+								💾 Sauvegarder et quitter
+							{/if}
+						</button>
+
+						<!-- Bouton Soumettre -->
+						<button
+							on:click={submitAudition}
+							disabled={submitting || (audition.files && audition.files.length === 0)}
+							class="px-4 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-1 sm:flex-none"
+						>
+							{submitting ? 'Soumission en cours...' : '🎯 Soumettre définitivement mon audition'}
+						</button>
+					</div>
 
 					{#if audition.files && audition.files.length === 0}
-						<p class="text-sm text-gray-500 text-center mt-2">
-							Vous devez uploader au moins un fichier avant de pouvoir soumettre votre audition.
+						<p class="text-sm text-red-600 text-center mt-4 font-medium">
+							⚠️ Vous devez uploader au moins un fichier avant de pouvoir soumettre votre audition.
 						</p>
 					{/if}
 				</div>

@@ -13,6 +13,7 @@
 	function getActiveTab(path: string): string {
 		if (path.includes('/management/validation')) return 'validation';
 		if (path.includes('/management/auditions')) return 'auditions';
+		if (path.includes('/management/auditions')) return 'auditions';
 		if (path.includes('/management/participants')) return 'participants';
 		if (path.includes('/management/callsheets')) return 'callsheets';
 		if (path.includes('/management/attendance')) return 'attendance';
@@ -34,6 +35,7 @@
 			participants: `/projects/${projectId}/management/participants`,
 			callsheets: `/projects/${projectId}/management/callsheets`,
 			attendance: `/projects/${projectId}/management/attendance`,
+			auditions: `/projects/${projectId}/management/auditions`,
 			registration: `/projects/${projectId}/management/registration`,
 			mailing: `/projects/${projectId}/management/mailing`
 		};
