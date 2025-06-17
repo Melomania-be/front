@@ -45,10 +45,10 @@
 						<div class="mb-2 sm:mb-4 flex items-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-base">
 							<span class="text-purple-500 flex-shrink-0"><Calendar size={16} class="sm:w-[18px] sm:h-[18px]" /></span>
 							<DateShow
-									startTime={event.startDate}
-									endTime={event.endDate}
-									withTime
-									isRehearsal={event.type === 'rehearsal'}
+								startTime={event.startDate}
+								endTime={event.endDate}
+								withTime
+								isRehearsal={event.type === 'rehearsal'}
 							/>
 						</div>
 
@@ -73,8 +73,8 @@
 										{#if isLongComment(event.comment) && !expandedComments[index]}
 											<p class="mb-1 sm:mb-3 whitespace-pre-wrap break-words break-keep overflow-hidden">{truncateComment(event.comment)}</p>
 											<button
-													on:click={() => toggleComment(index)}
-													class="text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 font-medium text-xs sm:text-sm transition-colors duration-200"
+												on:click={() => toggleComment(index)}
+												class="text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 font-medium text-xs sm:text-sm transition-colors duration-200"
 											>
 												See more
 											</button>
@@ -82,8 +82,8 @@
 											<p class="whitespace-pre-wrap break-words break-keep overflow-hidden">{event.comment}</p>
 											{#if isLongComment(event.comment)}
 												<button
-														on:click={() => toggleComment(index)}
-														class="text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 font-medium text-xs sm:text-sm mt-1 sm:mt-3 transition-colors duration-200"
+													on:click={() => toggleComment(index)}
+													class="text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 font-medium text-xs sm:text-sm mt-1 sm:mt-3 transition-colors duration-200"
 												>
 													See less
 												</button>
