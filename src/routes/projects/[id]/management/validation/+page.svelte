@@ -6,6 +6,7 @@
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import type { Project } from '$lib/types/Project';
 	import { faRecordVinyl } from '@fortawesome/free-solid-svg-icons';
+	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
     export let data;
     let participants: Array<Participant>;
@@ -87,10 +88,25 @@
         }
     }
 
+    let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
+
 </script>
 
 <ProjectHeadDisplayer project={project} selectedTab={1}/>
-<div class="bg-[#E7E7E7] p-4">
+<div class="bg-[#E7E7E7] p-4 pb-20 min-h-screen">
 <div class="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#if participants && participants.length > 0}
@@ -221,4 +237,8 @@
         {/if}
     </div>
 </div>
+
+    {#if isMobile}
+	<ProjectPhoneDisplayer project={project} selectedTab={1}/>
+	{/if}
 </div>

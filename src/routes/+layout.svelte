@@ -140,6 +140,7 @@
         faGuitar,
         faSignOutAlt
     } from '@fortawesome/free-solid-svg-icons';
+	import { onMount } from 'svelte';
 
     export let data;
 
@@ -161,14 +162,29 @@
     function toggleSidebar() {
         showSidebar = !showSidebar;
     }
+
+    let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
 {#if data.connected}
-<div class="flex h-screen  bg-gray-100 dark:bg-gray-900">
+<div class="flex h-auto bg-gray-100 dark:bg-gray-900 border-2 {isMobile? "overflow-x-hidden" : "overflow-x-hidden"}">
     <!-- Sidebar -->
     <aside class={`fixed top-0 left-0 z-40 w-64 h-full transition-transform ${showSidebar ? '' : '-translate-x-full'} sm:translate-x-0 bg-gradient-to-t from-[#343CAD] to-[#6BB0C7] dark:bg-gray-800 border-r dark:border-gray-700`}>
         <div class="h-full overflow-y-auto px-3 py-4">
-            <h2 class="text-xl font-bold dark:text-gray-800  text-white mb-6 px-2">Melomania</h2>
+            <h2 class="text-xl font-bold dark:text-gray-800 text-white mb-6 px-2">Melomania</h2>
             <ul class="space-y-2">
                 {#each menu as item}
                     <li>
@@ -191,14 +207,14 @@
 
     <!-- Mobile backdrop to close sidebar -->
     {#if showSidebar}
-        <div 
+        <div
             class="fixed inset-0 z-30 bg-black bg-opacity-50 sm:hidden"
             on:click={toggleSidebar}
         ></div>
     {/if}
 
     <!-- Main content -->
-    <div class="bg-[#E7E7E7] flex-1 ml-0 sm:ml-64">
+    <div class="bg-white w-screen ml-0 sm:ml-64">
         <!-- Mobile toggle button -->
         <button 
             class="sm:hidden p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"

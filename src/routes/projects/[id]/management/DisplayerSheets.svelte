@@ -4,6 +4,7 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import Fa from 'svelte-fa';
 	import { faWarning } from '@fortawesome/free-solid-svg-icons';
+	import { onMount } from 'svelte';
 
 	export let project: Project;
 	export let participants: Participant[]
@@ -27,16 +28,30 @@
 	}
 
 	let popUpStats = false;
+
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
 {#if popUpStats}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-	<div class="bg-white p-6 rounded-xl shadow-xl w-2/3 h-auto max-h-[80%] text-center">
+	<div class="bg-white p-6 rounded-xl shadow-xl  h-auto max-h-[80%] text-center {isMobile ? "w-[90%]" : "w-2/3"}">
 		<h2 class="text-lg font-semibold mb-4">Statistics</h2>
 		<div class="mt-2">
-			<h3>Participants who have not seen the last callsheet :</h3>
 			<!-- Scrollable list with height -->
-			<div class="grid grid-cols-3 gap-2 max-h-[40vh] overflow-y-auto p-2">
+			<div class="grid  gap-2 max-h-[40vh] overflow-y-auto p-2 {isMobile ? "grid-cols-1" : "grid-cols-3"}">
 				{#each participants as participant}
 					<div class="text-sm border border-gray-400 rounded-full py-1 px-2 {participantsSeenCallsheet.find((p)=>p.id === participant.id) ? 'bg-red-200' : 'bg-green-200'}">
 						<a href="/projects/{project.id}/management/participants/{participant.id}">
@@ -48,7 +63,7 @@
 			</div>
 		</div>
 		<button
-			class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
+			class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
 			on:click={() => {
 				popUpStats = false;
 			}}
@@ -61,29 +76,29 @@
 
 
 <div class="w-full">
-	<div class="flex gap-6 w-full">
-			<div class="border-[#8C8C8C] rounded-[10px] border-2 p-4 bg-white rounded-lg w-full">
+	<div class="flex gap-6 w-full {isMobile ? "flex-col" : "flex-row"}">
+			<div class="border-[#8C8C8C] rounded-[10px] border-2 p-4 bg-white w-full">
 				<div class="flex mb-4">
 					<h1 class="font-bold text-lg">CALLSHEET</h1>
 				
-				<div class="ml-auto mr-0">
-					{#if project.callsheets && project.callsheets.length > 0}
-						<a
-							href="/projects/{project.id}/management/callsheets/{maxUpdateDate(project.callsheets)
-								.id}/creation"
-							class="text-white bg-[#6B9AD9] hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-							>Create a new callsheet from the last one</a
-						>
-					{:else}
-						<a
-							href="/projects/{project.id}/management/callsheets/creation"
-							class="text-white font-bold text-sm hover:bg-blue-700 bg-[#6B9AD9] p-2 rounded-[8px]"
-							>New callsheet</a
-						>
-					{/if}
+					<div class="ml-auto mr-0">
+						{#if project.callsheets && project.callsheets.length > 0}
+							<a
+								href="/projects/{project.id}/management/callsheets/{maxUpdateDate(project.callsheets)
+									.id}/creation"
+								class="text-white font-bold bg-[#6B9AD9] hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+								>New Callsheet</a
+							>
+						{:else}
+							<a
+								href="/projects/{project.id}/management/callsheets/creation"
+								class="text-white font-bold text-sm hover:bg-blue-700 bg-[#6B9AD9] p-2 rounded-[8px]"
+								>New callsheet</a
+							>
+						{/if}
+					</div>
 				</div>
-				</div>
-				<ul class="my-10 gap-2 grid grid-cols-2">
+				<ul class="my-10 gap-2 grid  {isMobile ? "grid-cols-1" : "grid-cols-2"}">
 						{#if project.callsheets}
 							{#each project.callsheets.reverse() as callsheets}
 								<li class="border-2 p-2 rounded-full border-gray-300 flex justify-center {maxUpdateDate(project.callsheets).id === callsheets.id ? "bg-blue-100" : ""}">
@@ -126,7 +141,7 @@
 				{/if}
 			</div>
 
-			<div class="border-[#8C8C8C] rounded-[10px] border-2 p-4 bg-white rounded-lg w-full">
+			<div class="border-[#8C8C8C] rounded-[10px] border-2 p-4 bg-white w-full">
 				<div class="flex items-center">
 						<h1 class="font-bold text-lg">REGISTRATION</h1>
 						{#if project.registration}

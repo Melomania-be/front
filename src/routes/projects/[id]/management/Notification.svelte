@@ -23,7 +23,7 @@
 	);
 </script>
 
-<div class="p-2 pl-4 pr-4">
+<div class="p-2 pl-4 pr-4 w-full">
 	<h3 class="text-lg font-bold text-[#E35656] uppercase">Information</h3>
 	<div
 		class="p-3 pl-8 w-full flex flex-wrap gap-2 justify-center"

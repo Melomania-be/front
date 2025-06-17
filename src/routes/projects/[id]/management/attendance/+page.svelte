@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import type { Project } from '$lib/types/Project';
+	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
 	export let data;
 
@@ -50,11 +51,26 @@
 		if (!concert.participants) return false;
 		return concert.participants?.filter((p) => p.id === participant.id).length > 0;
 	}
+
+    	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
-<div>
 <ProjectHeadDisplayer project={project} selectedTab={4}></ProjectHeadDisplayer>
-<div class="m-1 border">
+<div class="bg-[#E7E7E7] p-4 min-h-screen {isMobile? "pb-[80px]" : "" }">
+<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] pb-4">
     <div>
         <h2 class="text-lg font-semibold">Concerts</h2>
         {#if concerts && concerts.length > 0}
@@ -172,6 +188,9 @@
     </div>
 </div>
 </div>
+{#if isMobile}
+<ProjectPhoneDisplayer project={project} selectedTab={4}/>
+{/if}
 
 <style>
     .crossed {

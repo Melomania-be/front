@@ -9,6 +9,7 @@
 	import { onMount } from 'svelte';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import type { Project } from '$lib/types/Project';
+	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
 	export let data;
 
@@ -31,6 +32,15 @@
 	let uniqueUrl = `/projects/${data.id}/management/participants`;
 
 	let dataHolder: TableData<Participant>;
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -101,22 +111,29 @@
 			console.log('Participants :', dataHolder);
 		});
 	}
+
+
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
 </script>
 
 <ProjectHeadDisplayer {project} selectedTab={1} />
-<div class="bg-[#E7E7E7] p-4">
+<div class="bg-[#E7E7E7] p-4 min-h-screen pb-[80px]">
 	<div class="p-4 gap-4 flex flex-col">
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
             <h1 class="font-bold text-lg mb-2">NEW PARTICIPANTS</h1>
             {#if participantNotValidated}
-            <div class="flex items-center px-2">
-            <p class="flex gap-1.5"> You have <strong class="text-red-400">{participantNotValidated}</strong> {participantNotValidated === 1 ? "participant" : "participants"} waiting for validation</p>
-			<a
-				href="/projects/{data.id}/management/validation"
-				class="ml-auto inline-flex items-center px-3 py-2 text-sm font-semibold text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-			>
-				Review Participants
-			</a>
+            <div class="flex items-center  {isMobile ? "flex-col gap-2" : "px-2" }">
+				<p class="{isMobile ? "" : ""}"> You have <strong class="text-red-400 mx-1">{participantNotValidated}</strong> {participantNotValidated === 1 ? "participant" : "participants"} waiting for validation</p>
+				<a
+					href="/projects/{data.id}/management/validation"
+					class="ml-auto inline-flex items-center px-3 py-2 text-sm font-semibold text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				>
+					Review Participants
+				</a>
             </div>
             {:else if project}
                 <p>No new participants waiting for validation</p>
@@ -184,4 +201,8 @@
 			</SimpleFilterer>
 		</div>
 	</div>
+
+	{#if isMobile}
+	<ProjectPhoneDisplayer project={project} selectedTab={1}/>
+	{/if}
 </div>

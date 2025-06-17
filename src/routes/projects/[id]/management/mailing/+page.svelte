@@ -8,6 +8,7 @@
 	import { onMount, tick } from 'svelte';
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
+	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
 	let project: Project;
 	let folders : Array<Folder>
@@ -288,38 +289,42 @@
 		console.log("test");
 		updateIframeContentHtml();
 	}
+
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
 
 <ProjectHeadDisplayer {project} selectedTab={2} />
 
 <div
-	class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+	class="relative max-w-xxl bg-[#E7E7E7] shadow dark:bg-gray-800 dark:border-gray-700 p-4 pb-[80px]"
 >
-	<div
-		class="mb-5 font-bold tracking-tight text-gray-900 border-b-gray-200 shadow dark:text-white origin-center w-full flex justify-center"
-	>
-		<h1 class="text-3xl font-bold mb-2 p-3">Project Mailing</h1>
-	</div>
-	{#if project}
-		<div class="ml-5 w-full">
-			<h2 class="text-xl underline">Project : {project.name}</h2>
-		</div>
-	{/if}
-
 	<div class="grid-container">
-		<div class="col-span-1 m-5 border-2 rounded-lg border-red-400">
+		<div class="col-span-1 border-2 rounded-lg border-[#E35656] bg-white">
 			<div class="p-3">
-				<h2 class="m-2 text-lg">Important informations</h2>
-				<ul>
+				<h2 class="text-lg font-bold text-[#E35656] uppercase">Important information</h2>
+				<ul class="ml-4 mt-6 text-gray-500 mb-4">
 					<li>
-						Last recruitment email sent :
+						<strong>Last recruitment email sent :</strong>
 						{#if lastRecruitmentNotificationSent !== '' && lastRecruitmentNotificationSent !== null && lastRecruitmentNotificationSent !== undefined}
 							<DateShow startTime={lastRecruitmentNotificationSent.toString()} />
 						{:else}Never{/if}
 					</li>
 					<li>
-						Last callsheet notification sent :
+						<strong>Last callsheet notification sent :</strong>
 						{#if lastCallsheetNotificationSent !== '' && lastCallsheetNotificationSent !== null && lastCallsheetNotificationSent !== undefined}
 							<DateShow startTime={lastCallsheetNotificationSent.toString()} />
 						{:else}Never{/if}
@@ -343,7 +348,7 @@
 			<div class="">
 				<div class="text-sm">
 					<button
-						class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+						class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] rounded-lg  focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 						on:click={sendRecruitmentEmail}
 						disabled={isSendingRecruitmentEmail}
 					>
@@ -355,7 +360,7 @@
 				</div>
 				<div class="text-sm pt-8">
 					<button
-						class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+						class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] rounded-lg focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 						on:click={sendCallsheetNotification}
 						disabled={isSendingCallsheetNotification}
 					>
@@ -369,10 +374,11 @@
 		</div>
 	</div>
 
+	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mt-4">
 	{#if useTemplate === false}
-		<h2 class="mt-10 text-2xl font-bold mb-2 text-center underline">Unique mail</h2>
+		<h2 class="font-bold text-lg uppercase pb-4">Unique mail</h2>
 		<button
-			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+			class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 			on:click={() => (useTemplate = true)}>Use a template</button>
 		<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
 		<div class="grid-container ml-10 mb-10 pt-5">
@@ -441,9 +447,9 @@
 	{/if}
 
 	{#if useTemplate === true}
-		<h2 class="mt-10 text-2xl font-bold mb-2 p-3 text-center underline">Template mail</h2>
+		<h2 class="font-bold text-lg uppercase pb-4">Template mail</h2>
 		<button
-			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+			class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 			on:click={() => (useTemplate = false)}>Use unique mail</button>
 		<div class="grid-container ml-10 mb-10 pt-5">
 			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
@@ -474,7 +480,13 @@
 			</div>
 		</div>
 	{/if}
+	</div>
+	
 </div>
+{#if isMobile}
+<ProjectPhoneDisplayer project={project} selectedTab={2}/>
+{/if}
+
 
 <style>
 	.grid-container {
