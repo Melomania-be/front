@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import type { Project } from '$lib/types/Project';
+	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
 	export let data;
 
@@ -106,33 +107,58 @@
 		}
 		return callsheets[index];
 	}
+
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
 
 <ProjectHeadDisplayer {project} selectedTab={3} />
-<SimpleFilterer
-	showData
-	bind:data={dataHolder}
-	bind:meta
-	bind:options
-	bind:uniqueUrl
-	on:optionsUpdated={fetchData}
-></SimpleFilterer>
+<div class="flex flex-col bg-[#E7E7E7] p-4 gap-4 h-screen">
+	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+		<h2 class="font-bold text-lg uppercase">CALLSHEETS</h2>
+	
+		<SimpleFilterer
+			showData
+			bind:data={dataHolder}
+			bind:meta
+			bind:options
+			bind:uniqueUrl
+			on:optionsUpdated={fetchData}
+		></SimpleFilterer>
 
-<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-start">
-	<button
-		on:click={() => goto(`${urlFront}/creation`)}
-		class="w-full sm:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
-	>
-		Add a callsheet
-	</button>
-
-	{#if callsheets.length > 0}
-		<a
-			href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
-			class="w-full sm:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
+		<div class="flex gap-4">
+		<button
+			on:click={() => goto(`${urlFront}/creation`)}
+			class="w-full h-full sm:w-auto text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
 		>
-			Create a new callsheet from the last one
-		</a>
-	{/if}
+			New callsheet
+		</button>
+
+		{#if callsheets.length > 0}
+			<a
+				href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
+				class="w-full h-full sm:w-auto text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
+			>
+				New callsheet from the last one
+			</a>
+		{/if}
+		</div>
+	</div>
 </div>
+
+{#if isMobile}
+	<ProjectPhoneDisplayer project={project} selectedTab={3}/>
+{/if}

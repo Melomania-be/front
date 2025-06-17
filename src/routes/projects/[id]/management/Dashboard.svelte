@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DateShow from '$lib/components/DateShow.svelte';
 	import type { Participant } from '$lib/types/Participant';
+	import { onMount } from 'svelte';
 	import DisplayerEvents from './DisplayerEvents.svelte';
 	import DisplayerFolder from './DisplayerFolder.svelte';
 	import DisplayerPieces from './DisplayerPieces.svelte';
@@ -16,26 +17,47 @@
 	export let participantsNotValidated: Array<any>;
 	console.log("PROZAZEA" , participantsNotValidated)
 	export let participantsWithoutEmail: Array<any>;
+
+
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
-<div class="bg-[#E7E7E7] p-4">
-	<div class="flex flex-row items-center h-full">
-		<div class="bg-white border-2 border-[#E35656] rounded-[10px] w-[40%]">
+<div class="h-auto p-4 {isMobile ? "bg-[#E7E7E7] w-screen" : "bg-[#E7E7E7]"} border-2">
+	<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center">
+		<div class="bg-white border-2 border-[#E35656] rounded-[10px] 
+		{isMobile ? "w-full" : " w-[90%]"}
+		">
 			<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
 		</div>
-		<div class="flex w-[50%] mr-0 ml-auto text-white h-[100px] font-bold">
-			<div class="flex w-full gap-6 text-center">
+		<div class="flex text-white h-[100px] font-bold
+		{isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4 w-[70%]"}
+		">
+			<div class="flex w-full text-center {isMobile ? "gap-3" : "gap-6"}">
 				<div class="rounded-lg py-2 px-4 flex-1 h-full bg-[#6CB1C8]">
 					<p>PARTICIPANTS</p>
-					<p class="text-[45px] font-extrabold -mt-1">{project.participants.length}</p>
+					<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"}
+					">{project.participants.length}</p>
 				</div>
 				<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
 					<p>REHEARSALS</p>
-					<p class="text-[45px] font-extrabold -mt-1">{project.rehearsals.length}</p>
+					<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project.rehearsals.length}</p>
 				</div>
 				<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
 					<p>CONCERTS</p>
-					<p class="text-[45px] font-extrabold -mt-1">{project.concerts.length}</p>
+					<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project.concerts.length}</p>
 				</div>
 			</div>
 		</div>
@@ -47,19 +69,19 @@
 	</div>
 
 	<div
-			class="h-full w-2/5 mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+			class="h-full {isMobile ? "w-full" : "w-2/5"} mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
 		>
-		<div class="flex mt-4 mb-4 ml-4 flex flex-col">
+		<div class="flex p-4 flex-col w-full">
 			<div class="flex items-center">
 				<h1 class="font-bold text-lg">MANAGERS</h1>
-				<div class="ml-auto mr-4">
+				<div class="ml-auto mr-0">
 					<a
 						class="text-white font-bold text-sm bg-[#6B9AD9] p-2 rounded-[8px]"
 						href="/projects/{project.id}/management/modify">Edit</a
 					>
 				</div>
 			</div>
-			<div class="text-sm my-6 mr-4 grid grid-cols-2 gap-2">
+			<div class="text-sm my-6 grid grid-cols-2 gap-2">
 				{#if project.responsibles && project.responsibles.length === 0}
 					<p class="text-center">No project manager</p>
 				{:else}
@@ -75,7 +97,7 @@
 				{/if}
 			</div>
 		</div>
-		</div>
+	</div>
 
 	<div class="mt-4">
 		<DisplayerSection bind:project bind:participants participantsNotValidated={participantsNotValidated} />
@@ -91,7 +113,7 @@
 			/>
 		</div>
 	</div>
-	<div class="m-1 w-full md:w-1/2">
+	<div class="mt-4 w-full md:w-1/2">
 		<DisplayerPieces bind:project />
 	</div>
 </div>

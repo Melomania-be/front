@@ -9,6 +9,8 @@
 	import { onMount } from 'svelte';
 	import Dashboard from './Dashboard.svelte';
 	import ProjectHeadDisplayer from './ProjectHeadDisplayer.svelte';
+	import ProjectPhoneDisplayer from './ProjectPhoneDisplayer.svelte';
+	import { writable } from 'svelte/store';
 
 	export let data;
 
@@ -16,8 +18,6 @@
 	let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
 	let participantsNotValidated = data.participantsNotValidated;
 	let participantsWithoutEmail = data.participantsWithoutEmail;
-
-	let selectedTab = 0;
 
 
 	let allParticipants : Participant[] = [];
@@ -52,15 +52,33 @@
 
 		allParticipants = data.data;
 	}
+
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
-<div class="">
+<div class="w-auto {isMobile ? "pb-[50px]" : ""}">
 	<ProjectHeadDisplayer project={project} selectedTab={0}></ProjectHeadDisplayer>
 	<Dashboard
 		{project}
 		participants={allParticipants}
 		{participantsNotSeenCallsheet}
 		participantsNotValidated={participantsNotValidated}
-		{participantsWithoutEmail}
+		{participantsWithoutEmail }
 	/>
+	{#if isMobile}
+	<ProjectPhoneDisplayer project={project} selectedTab={0}/>
+	{/if}
 </div>
