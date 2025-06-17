@@ -4,7 +4,7 @@
 </script>
 
 <div class="mb-10">
-	<h2 class="text-2xl font-bold text-blue-900 dark:text-white underline mb-4">
+	<h2 class="text-2xl font-bold text-slate-500 dark:text-white text-center mb-4 mt-4">
 		Contact Information
 	</h2>
 	<p class="text-gray-800 dark:text-gray-400 mb-4">
