@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/auditions/+page.svelte - MOBILE-FRIENDLY ENGLISH VERSION -->
+<!-- src/routes/projects/[id]/management/auditions/+page.svelte - AVEC SUPPRESSION -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import DateShow from '$lib/components/DateShow.svelte';
@@ -14,6 +14,11 @@
 	let refreshInterval: any = null;
 	let isMobile = false;
 	let showMobileMenu = false;
+
+	// ✅ NOUVELLES VARIABLES pour la suppression
+	let showDeleteModal = false;
+	let auditionToDelete: any = null;
+	let isDeleting = false;
 
 	// Statistics from server
 	let auditionStats: any = {
@@ -172,6 +177,57 @@
 		showDetailsModal = false;
 		// Restore body scroll
 		document.body.style.overflow = '';
+	}
+
+	// ✅ NOUVELLES FONCTIONS pour la suppression
+	function openDeleteModal(audition: any) {
+		auditionToDelete = audition;
+		showDeleteModal = true;
+	}
+
+	function closeDeleteModal() {
+		auditionToDelete = null;
+		showDeleteModal = false;
+		isDeleting = false;
+	}
+
+	async function confirmDeleteAudition() {
+		if (!auditionToDelete) return;
+
+		isDeleting = true;
+
+		try {
+			// ✅ APPEL API DIRECT avec paramètres URL
+			const response = await fetch(`/api/projects/${data.id}/management/auditions?auditionId=${auditionToDelete.id}`, {
+				method: 'DELETE'
+			});
+
+			if (response.ok) {
+				const result = await response.json();
+				console.log('Audition deleted:', result);
+
+				// Recharger la liste des auditions
+				await loadAuditions();
+
+				// Fermer le modal
+				closeDeleteModal();
+
+				// Fermer le modal de détails si c'était la même audition
+				if (selectedAudition && selectedAudition.id === auditionToDelete.id) {
+					closeDetailsModal();
+				}
+
+				showNotification(`Audition deleted successfully (${result.deleted_files_count} file(s) removed)`);
+			} else {
+				const errorData = await response.json().catch(() => null);
+				alert(`Error deleting audition: ${errorData?.error || 'Unknown error'}`);
+			}
+		} catch (error) {
+			console.error('Error deleting audition:', error);
+			alert('Network error during deletion');
+		} finally {
+			isDeleting = false;
+		}
 	}
 
 	async function downloadFile(fileId: number, fileName: string) {
@@ -452,6 +508,14 @@
 								>
 									{audition.is_submitted ? '✅ Decide' : '⏳ Validate'}
 								</button>
+								<!-- ✅ NOUVEAU : Bouton suppression mobile -->
+								<button
+									on:click={() => openDeleteModal(audition)}
+									class="px-3 py-2 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+									title="Delete audition"
+								>
+									🗑️
+								</button>
 							</div>
 						</div>
 					{/each}
@@ -551,6 +615,14 @@
 											>
 												{audition.is_submitted ? '✅ Decide' : '⏳ Validate'}
 											</button>
+											<!-- ✅ NOUVEAU : Bouton suppression desktop -->
+											<button
+												on:click={() => openDeleteModal(audition)}
+												class="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
+												title="Delete audition"
+											>
+												🗑️ Delete
+											</button>
 										</div>
 									</td>
 								</tr>
@@ -605,14 +677,26 @@
 							<span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">✅ Submitted</span>
 						{/if}
 					</h3>
-					<button
-						on:click={closeDetailsModal}
-						class="text-gray-400 hover:text-gray-600 p-1"
-					>
-						<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-						</svg>
-					</button>
+					<div class="flex items-center space-x-2">
+						<!-- ✅ NOUVEAU : Bouton suppression dans le modal -->
+						<button
+							on:click={() => openDeleteModal(selectedAudition)}
+							class="text-red-600 hover:text-red-800 p-1"
+							title="Delete audition"
+						>
+							<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+						</button>
+						<button
+							on:click={closeDetailsModal}
+							class="text-gray-400 hover:text-gray-600 p-1"
+						>
+							<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -707,10 +791,6 @@
 												<svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
 													<path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" clip-rule="evenodd" />
 												</svg>
-											{:else if auditionFile.file_type === 'pdf'}
-												<svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-													<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-												</svg>
 											{:else}
 												<svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
 													<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
@@ -754,6 +834,92 @@
 						Close
 					</button>
 				</div>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- ✅ NOUVEAU : Modal de confirmation de suppression -->
+{#if showDeleteModal && auditionToDelete}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+		<div class="bg-white rounded-lg shadow-lg max-w-md w-full">
+			<div class="px-6 py-4 border-b border-gray-200">
+				<h3 class="text-lg font-medium text-gray-900">Confirm Audition Deletion</h3>
+			</div>
+
+			<div class="px-6 py-4">
+				<div class="flex items-center mb-4">
+					<div class="flex-shrink-0">
+						<svg class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.888-.833-2.598 0L5.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+						</svg>
+					</div>
+					<div class="ml-4">
+						<h4 class="text-lg font-medium text-gray-900">Delete Audition</h4>
+						<p class="text-sm text-gray-500">This action cannot be undone.</p>
+					</div>
+				</div>
+
+				<div class="bg-gray-50 p-4 rounded-lg mb-4">
+					<h5 class="font-medium text-gray-900 mb-2">Audition Details:</h5>
+					<p class="text-sm text-gray-700">
+						<strong>Candidate:</strong> {auditionToDelete.participant.contact.firstName} {auditionToDelete.participant.contact.lastName}
+					</p>
+					<p class="text-sm text-gray-700">
+						<strong>Section:</strong> {auditionToDelete.participant.section.name}
+					</p>
+					<p class="text-sm text-gray-700">
+						<strong>Status:</strong>
+						{#if auditionToDelete.is_submitted}
+							<span class="text-green-600">Submitted</span>
+						{:else}
+							<span class="text-yellow-600">In Progress</span>
+						{/if}
+					</p>
+					<p class="text-sm text-gray-700">
+						<strong>Files:</strong> {auditionToDelete.files ? auditionToDelete.files.length : 0}
+					</p>
+				</div>
+
+				<div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+					<div class="flex">
+						<svg class="h-5 w-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+						</svg>
+						<div class="ml-2">
+							<h6 class="text-sm font-medium text-red-800">This will permanently:</h6>
+							<ul class="text-sm text-red-700 list-disc list-inside mt-1">
+								<li>Delete all uploaded files ({auditionToDelete.files ? auditionToDelete.files.length : 0} file{auditionToDelete.files && auditionToDelete.files.length > 1 ? 's' : ''})</li>
+								<li>Remove the audition record</li>
+								<li>Reset the participant's audition status</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+				<button
+					on:click={closeDeleteModal}
+					class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+					disabled={isDeleting}
+				>
+					Cancel
+				</button>
+				<button
+					on:click={confirmDeleteAudition}
+					class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+					disabled={isDeleting}
+				>
+					{#if isDeleting}
+						<div class="flex items-center">
+							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+							Deleting...
+						</div>
+					{:else}
+						🗑️ Delete Audition
+					{/if}
+				</button>
 			</div>
 		</div>
 	</div>

@@ -1,4 +1,4 @@
-<!-- src/routes/audition/[token]/+page.svelte -->
+<!-- src/routes/audition/[token]/+page.svelte - VERSION CORRIGÉE -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
@@ -11,39 +11,105 @@
 	let uploading = false;
 	let submitting = false;
 	let candidateNotes = '';
-	let saving = false; // Nouvelle variable pour sauvegarder et quitter
+	let saving = false;
 
-	// Variables pour l'upload - CORRIGÉES
+	// Variables pour l'upload - CORRIGÉES avec restriction audio/vidéo
 	let selectedFiles: FileList | null = null;
-	let fileInput: HTMLInputElement; // Référence directe à l'input
-	let fileType = 'video';
+	let fileInput: HTMLInputElement;
+	let fileType = 'video'; // Par défaut vidéo
 	let fileDescription = '';
 	let uploadProgress = 0;
-	let fileValidationError = ''; // Pour afficher les erreurs de validation
+	let fileValidationError = '';
 
-	// ======= FONCTIONS CORRIGÉES =======
+	// ======= FONCTIONS DE FORMATAGE DE DATE CORRIGÉES =======
 
-	// Fonction pour valider le type de fichier côté client
+	function formatDateSafe(dateValue: any): string {
+		if (!dateValue) return 'Date non disponible';
+
+		try {
+			let date: Date;
+
+			// Si c'est déjà un objet Date
+			if (dateValue instanceof Date) {
+				date = dateValue;
+			}
+			// Si c'est une string ISO
+			else if (typeof dateValue === 'string') {
+				date = new Date(dateValue);
+			}
+			// Si c'est un timestamp
+			else if (typeof dateValue === 'number') {
+				date = new Date(dateValue);
+			}
+			// Sinon, essayer de convertir
+			else {
+				date = new Date(dateValue);
+			}
+
+			// Vérifier si la date est valide
+			if (isNaN(date.getTime())) {
+				console.error('Date invalide reçue:', dateValue);
+				return 'Date invalide';
+			}
+
+			return date.toLocaleDateString('fr-FR', {
+				weekday: 'long',
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+		} catch (error) {
+			console.error('Erreur formatage date:', error, 'pour valeur:', dateValue);
+			return 'Erreur de date';
+		}
+	}
+
+	function formatDateShort(dateValue: any): string {
+		if (!dateValue) return 'N/A';
+
+		try {
+			let date: Date;
+
+			if (dateValue instanceof Date) {
+				date = dateValue;
+			} else if (typeof dateValue === 'string') {
+				date = new Date(dateValue);
+			} else {
+				date = new Date(dateValue);
+			}
+
+			if (isNaN(date.getTime())) {
+				return 'Date invalide';
+			}
+
+			return date.toLocaleDateString('fr-FR');
+		} catch (error) {
+			console.error('Erreur formatage date courte:', error);
+			return 'Erreur';
+		}
+	}
+
+	// ======= FONCTIONS DE VALIDATION FICHIER - RESTRICTION AUDIO/VIDÉO =======
+
 	function isValidFileType(file, allowedTypes) {
 		const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
 		return allowedTypes.includes(fileExtension);
 	}
 
-	// Amélioration de la fonction getAcceptedTypes pour être plus précise
+	// RESTRICTION: Seulement audio et vidéo
 	function getAcceptedTypes() {
 		const typeMap = {
-			video: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm'],
-			audio: ['.mp3', '.wav', '.aac', '.flac', '.ogg', '.m4a'],
-			pdf: ['.pdf'],
-			image: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+			video: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm', '.m4v'],
+			audio: ['.mp3', '.wav', '.aac', '.flac', '.ogg', '.m4a', '.wma']
 		};
 
 		return typeMap[fileType] || [];
 	}
 
-	// Validation en temps réel du fichier sélectionné - CORRIGÉE
 	function handleFileSelection() {
-		fileValidationError = ''; // Reset des erreurs précédentes
+		fileValidationError = '';
 
 		if (!selectedFiles || selectedFiles.length === 0) {
 			return;
@@ -58,21 +124,20 @@
 			return;
 		}
 
-		// Vérifier la taille
-		const maxSize = 50 * 1024 * 1024; // 50MB
+		// Vérifier la taille (50MB max)
+		const maxSize = 50 * 1024 * 1024;
 		if (file.size > maxSize) {
 			fileValidationError = `Fichier trop volumineux: ${formatFileSize(file.size)}. Taille maximum: 50MB`;
 			return;
 		}
 
-		console.log('File selected and validated:', {
+		console.log('Fichier sélectionné et validé:', {
 			name: file.name,
 			size: formatFileSize(file.size),
 			type: file.type
 		});
 	}
 
-	// Fonction pour reset proprement la sélection de fichier
 	function resetFileSelection() {
 		selectedFiles = null;
 		fileDescription = '';
@@ -100,6 +165,13 @@
 					candidateNotes = audition.candidate_notes;
 				}
 
+				// Debug des données reçues
+				console.log('Données d\'audition chargées:', {
+					submitted_at: audition.submitted_at,
+					is_submitted: audition.is_submitted,
+					files_count: audition.files?.length || 0
+				});
+
 				loading = false;
 			} else if (response.status === 404) {
 				error = 'Audition non trouvée ou token invalide';
@@ -117,9 +189,8 @@
 		}
 	}
 
-	// ✅ FONCTION D'UPLOAD COMPLÈTEMENT CORRIGÉE AVEC URL FIXE
+	// ✅ FONCTION D'UPLOAD CORRIGÉE
 	async function uploadFile() {
-		// Vérifications préliminaires
 		if (!selectedFiles || selectedFiles.length === 0) {
 			alert('Veuillez sélectionner un fichier');
 			return;
@@ -130,7 +201,6 @@
 			return;
 		}
 
-		// Vérifier s'il y a une erreur de validation
 		if (fileValidationError) {
 			alert(`Erreur de validation: ${fileValidationError}`);
 			return;
@@ -145,7 +215,7 @@
 			return;
 		}
 
-		const maxSize = 50 * 1024 * 1024; // 50MB
+		const maxSize = 50 * 1024 * 1024;
 		if (file.size > maxSize) {
 			alert('Le fichier est trop volumineux. Taille maximum autorisée : 50MB');
 			return;
@@ -155,47 +225,31 @@
 		uploadProgress = 0;
 
 		try {
-			console.log('🚀 Starting file upload...');
-			console.log('📁 File details:', {
-				name: file.name,
-				size: file.size,
-				type: file.type,
-				fileType: fileType,
-				description: fileDescription.trim(),
-				sizeFormatted: formatFileSize(file.size)
-			});
+			console.log('🚀 Début upload fichier...');
 
 			const formData = new FormData();
 			formData.append('file', file);
 			formData.append('fileType', fileType);
 			formData.append('description', fileDescription.trim());
 
-			// ✅ AMÉLIORATION : Timeout plus long pour gros fichiers
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => {
-				console.log('⏰ Upload timeout after 10 minutes');
 				controller.abort();
 			}, 10 * 60 * 1000); // 10 minutes timeout
-
-			// ✅ CORRECT : URL avec /upload
-			const uploadUrl = `/api/audition/${data.token}/upload`;
-			console.log('📤 Uploading to:', uploadUrl);
 
 			let response;
 
 			try {
-				response = await fetch(uploadUrl, {
+				response = await fetch(`/api/audition/${data.token}/upload`, {
 					method: 'POST',
 					body: formData,
 					signal: controller.signal
 				});
 			} catch (fetchError) {
 				clearTimeout(timeoutId);
-
-				// ✅ SOLUTION DE FALLBACK : Si échec avec proxy, essayer URL directe
-				console.log('❌ Proxy failed, trying direct backend URL...');
+				// Essayer URL directe en cas d'échec
+				console.log('❌ Proxy échoué, essai URL directe...');
 				const directUrl = `http://localhost:3333/api/audition/${data.token}/upload`;
-				console.log('📤 Retry with direct URL:', directUrl);
 
 				const retryController = new AbortController();
 				const retryTimeoutId = setTimeout(() => {
@@ -217,14 +271,11 @@
 
 			clearTimeout(timeoutId);
 
-			console.log('📥 Upload response status:', response.status);
-			console.log('📋 Response headers:', response.headers.get('content-type'));
-
 			if (response.ok) {
 				const result = await response.json();
-				console.log('✅ Upload successful:', result);
+				console.log('✅ Upload réussi:', result);
 
-				// Recharger les données de l'audition pour afficher le nouveau fichier
+				// IMPORTANT: Recharger les données après upload réussi
 				await loadAudition();
 
 				// Reset form APRÈS succès
@@ -232,56 +283,29 @@
 
 				alert('Fichier uploadé avec succès !');
 			} else {
-				// ✅ AMÉLIORATION : Meilleure gestion d'erreurs
 				let errorMessage = `Échec de l'upload (Status: ${response.status})`;
 
 				try {
 					const contentType = response.headers.get('content-type');
-
 					if (contentType && contentType.includes('application/json')) {
 						const errorData = await response.json();
 						errorMessage = errorData.error || errorData.message || errorMessage;
-
-						if (errorData.details) {
-							console.error('❌ Server error details:', errorData.details);
-						}
-					} else {
-						const errorText = await response.text();
-						console.error('❌ Server response (text):', errorText.substring(0, 300));
-
-						// Messages d'erreur plus clairs selon le statut
-						if (response.status === 404) {
-							errorMessage = 'Route non trouvée. Vérifiez que le serveur backend fonctionne.';
-						} else if (response.status === 413) {
-							errorMessage = 'Fichier trop volumineux pour le serveur.';
-						} else if (response.status === 500) {
-							errorMessage = 'Erreur serveur. Vérifiez les logs du backend.';
-						} else if (response.status === 422) {
-							errorMessage = 'Données invalides. Vérifiez le type et la taille du fichier.';
-						}
 					}
 				} catch (parseError) {
-					console.error('❌ Error parsing response:', parseError);
+					console.error('Erreur parsing réponse:', parseError);
 				}
 
 				alert(`Erreur: ${errorMessage}`);
 			}
 		} catch (err) {
-			console.error('❌ Network error during upload:', err);
+			console.error('❌ Erreur réseau upload:', err);
 
 			let errorMessage = 'Erreur réseau lors de l\'upload.';
-
 			if (err.name === 'AbortError') {
-				errorMessage = 'Timeout: l\'upload a pris trop de temps. Essayez avec un fichier plus petit.';
-			} else if (err.message.includes('Failed to fetch')) {
-				errorMessage = 'Impossible de joindre le serveur. Vérifiez que le backend AdonisJS fonctionne sur le port 3333.';
-			} else if (err.message.includes('NetworkError')) {
-				errorMessage = 'Erreur réseau. Vérifiez votre connexion Internet.';
-			} else if (err.message.includes('ERR_CONNECTION_RESET')) {
-				errorMessage = 'Connexion interrompue. Le serveur pourrait avoir un problème avec les gros fichiers.';
+				errorMessage = 'Timeout: l\'upload a pris trop de temps.';
 			}
 
-			alert(`${errorMessage}\n\nDétails techniques dans la console (F12).`);
+			alert(errorMessage);
 		} finally {
 			uploading = false;
 			uploadProgress = 0;
@@ -309,12 +333,10 @@
 		}
 	}
 
-	// NOUVELLE FONCTION : Sauvegarder et quitter
 	async function saveAndExit() {
 		saving = true;
 
 		try {
-			// Sauvegarder les notes temporaires si il y en a
 			if (candidateNotes.trim()) {
 				const response = await fetch(`/api/audition/${data.token}/save-notes`, {
 					method: 'POST',
@@ -327,30 +349,28 @@
 				});
 
 				if (response.ok) {
-					alert('Vos notes ont été sauvegardées. Vous pouvez revenir plus tard pour continuer votre audition.');
+					alert('Vos notes ont été sauvegardées. Vous pouvez revenir plus tard.');
 				} else {
 					alert('Erreur lors de la sauvegarde des notes, mais vous pouvez quitter.');
 				}
 			} else {
-				alert('Session fermée. Vous pouvez revenir plus tard pour continuer votre audition.');
+				alert('Session fermée. Vous pouvez revenir plus tard.');
 			}
 
-			// Tenter de fermer la fenêtre (fonctionne si ouverte via window.open)
 			if (window.opener) {
 				window.close();
 			} else {
-				// Si on ne peut pas fermer, rediriger vers une page de confirmation
 				window.location.href = 'about:blank';
 			}
 		} catch (error) {
-			console.error('Error saving:', error);
-			alert('Erreur lors de la sauvegarde, mais vous pouvez quitter en fermant l\'onglet.');
+			console.error('Erreur sauvegarde:', error);
+			alert('Erreur lors de la sauvegarde.');
 		} finally {
 			saving = false;
 		}
 	}
 
-	// ✅ FONCTION SUBMITAUDITION CORRIGÉE
+	// ✅ FONCTION SUBMIT CORRIGÉE
 	async function submitAudition() {
 		if (!audition.files || audition.files.length === 0) {
 			alert('Vous devez uploader au moins un fichier avant de soumettre votre audition.');
@@ -375,18 +395,18 @@
 			});
 
 			if (response.ok) {
+				// IMPORTANT: Recharger complètement les données après soumission
 				await loadAudition();
-				// Le message de succès sera affiché automatiquement via la condition audition.is_submitted
+				// Le message de succès sera affiché automatiquement
 			} else if (response.status === 409) {
-				// ✅ CORRECTION : Audition déjà soumise - recharger les données pour afficher le bon message
+				// Audition déjà soumise
 				await loadAudition();
-				// Le message personnalisé sera affiché automatiquement grâce à audition.is_submitted = true
 			} else {
 				const errorData = await response.json().catch(() => null);
 				alert('Erreur lors de la soumission : ' + (errorData?.error || 'Erreur inconnue'));
 			}
 		} catch (err) {
-			console.error('Submit error:', err);
+			console.error('Erreur soumission:', err);
 			alert('Erreur réseau lors de la soumission');
 		} finally {
 			submitting = false;
@@ -418,6 +438,16 @@
 		if (hours > 0) return `${hours}h ${minutes}min`;
 		return `${minutes} minute(s)`;
 	}
+
+	// ✅ FONCTION D'AFFICHAGE SÉCURISÉ DES FICHIERS
+	function getFileDisplayInfo(auditionFile: any) {
+		return {
+			name: auditionFile?.file?.name || auditionFile?.name || 'Nom de fichier non disponible',
+			description: auditionFile?.description || 'Description non disponible',
+			fileType: auditionFile?.file_type || 'Type inconnu',
+			uploadedAt: auditionFile?.uploaded_at || auditionFile?.createdAt || null
+		};
+	}
 </script>
 
 <svelte:head>
@@ -432,6 +462,7 @@
 				<div>
 					<h1 class="text-3xl font-bold text-gray-900">Portail d'Audition</h1>
 					<p class="text-gray-600 mt-2">Melomania - Plateforme collaborative des musiciens</p>
+					<p class="text-sm text-blue-600 mt-1">🎵 Fichiers acceptés : Audio et Vidéo uniquement</p>
 				</div>
 				<div class="text-right">
 					{#if audition?.deadline && !audition?.is_submitted}
@@ -462,7 +493,7 @@
 				</div>
 			</div>
 		{:else if audition}
-			<!-- ✅ MESSAGE AMÉLIORÉ POUR AUDITION DÉJÀ SOUMISE -->
+			<!-- ✅ MESSAGE AMÉLIORÉ POUR AUDITION SOUMISE - FORMATAGE DATES CORRIGÉ -->
 			{#if audition.is_submitted}
 				<div class="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-8 text-center mb-6">
 					<div class="max-w-md mx-auto">
@@ -474,20 +505,13 @@
 							</div>
 						</div>
 						<h2 class="text-2xl font-bold text-gray-900 mb-2">
-							{audition.participant.contact.firstName} {audition.participant.contact.lastName}
+							{audition.participant?.contact?.firstName || 'Candidat'} {audition.participant?.contact?.lastName || ''}
 						</h2>
 						<h3 class="text-xl font-semibold text-green-800 mb-4">
 							Vous avez déjà soumis votre audition !
 						</h3>
 						<p class="text-gray-700 mb-4">
-							Votre audition a été soumise avec succès le <strong>{new Date(audition.submitted_at).toLocaleDateString('fr-FR', {
-							weekday: 'long',
-							year: 'numeric',
-							month: 'long',
-							day: 'numeric',
-							hour: '2-digit',
-							minute: '2-digit'
-						})}</strong>.
+							Votre audition a été soumise avec succès le <strong>{formatDateSafe(audition.submitted_at)}</strong>.
 						</p>
 						<div class="bg-white border border-green-200 rounded-lg p-4 mb-4">
 							<p class="text-green-800 font-medium text-lg">
@@ -496,8 +520,8 @@
 						</div>
 						<div class="text-sm text-gray-600 space-y-1">
 							<p><strong>Fichiers soumis :</strong> {audition.files?.length || 0}</p>
-							<p><strong>Projet :</strong> {audition.project.name}</p>
-							<p><strong>Section :</strong> {audition.participant.section.name}</p>
+							<p><strong>Projet :</strong> {audition.project?.name || 'Projet non spécifié'}</p>
+							<p><strong>Section :</strong> {audition.participant?.section?.name || 'Section non spécifiée'}</p>
 						</div>
 
 						{#if audition.candidate_notes}
@@ -507,19 +531,25 @@
 							</div>
 						{/if}
 
-						<!-- Affichage des fichiers soumis -->
+						<!-- ✅ AFFICHAGE SÉCURISÉ DES FICHIERS SOUMIS -->
 						{#if audition.files && audition.files.length > 0}
 							<div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
 								<h4 class="text-sm font-semibold text-gray-800 mb-3">Fichiers soumis :</h4>
 								<div class="space-y-2">
 									{#each audition.files as auditionFile}
+										{@const fileInfo = getFileDisplayInfo(auditionFile)}
 										<div class="flex items-center justify-between text-sm">
 											<div class="text-left">
-												<p class="font-medium text-gray-700">{auditionFile.file.name}</p>
-												<p class="text-xs text-gray-500">{auditionFile.description}</p>
+												<p class="font-medium text-gray-700">{fileInfo.name}</p>
+												<p class="text-xs text-gray-500">{fileInfo.description}</p>
+												{#if fileInfo.uploadedAt}
+													<p class="text-xs text-gray-400">
+														Uploadé le {formatDateShort(fileInfo.uploadedAt)}
+													</p>
+												{/if}
 											</div>
-											<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-												{auditionFile.file_type}
+											<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded capitalize">
+												{fileInfo.fileType}
 											</span>
 										</div>
 									{/each}
@@ -536,27 +566,22 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 						<div>
 							<p class="text-sm text-gray-500">Candidat</p>
-							<p class="font-medium">{audition.participant.contact.firstName} {audition.participant.contact.lastName}</p>
+							<p class="font-medium">
+								{audition.participant?.contact?.firstName || 'Prénom'} {audition.participant?.contact?.lastName || 'Nom'}
+							</p>
 						</div>
 						<div>
 							<p class="text-sm text-gray-500">Projet</p>
-							<p class="font-medium">{audition.project.name}</p>
+							<p class="font-medium">{audition.project?.name || 'Projet non spécifié'}</p>
 						</div>
 						<div>
 							<p class="text-sm text-gray-500">Section</p>
-							<p class="font-medium">{audition.participant.section.name}</p>
+							<p class="font-medium">{audition.participant?.section?.name || 'Section non spécifiée'}</p>
 						</div>
 						{#if audition.deadline}
 							<div>
 								<p class="text-sm text-gray-500">Date limite</p>
-								<p class="font-medium">{new Date(audition.deadline).toLocaleDateString('fr-FR', {
-									weekday: 'long',
-									year: 'numeric',
-									month: 'long',
-									day: 'numeric',
-									hour: '2-digit',
-									minute: '2-digit'
-								})}</p>
+								<p class="font-medium">{formatDateSafe(audition.deadline)}</p>
 							</div>
 						{/if}
 					</div>
@@ -582,9 +607,21 @@
 					{/if}
 				</div>
 
-				<!-- Upload de fichiers -->
+				<!-- ✅ UPLOAD DE FICHIERS - RESTRICTION AUDIO/VIDÉO -->
 				<div class="bg-white rounded-lg shadow-md p-6 mb-6">
-					<h2 class="text-xl font-semibold text-gray-900 mb-4">Upload de fichiers</h2>
+					<h2 class="text-xl font-semibold text-gray-900 mb-4">Upload de fichiers audio/vidéo</h2>
+
+					<!-- Alerte sur la restriction -->
+					<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+						<div class="flex items-center">
+							<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+							</svg>
+							<p class="text-sm text-blue-700">
+								<strong>Important :</strong> Seuls les fichiers audio et vidéo peuvent être uploadés pour cette audition.
+							</p>
+						</div>
+					</div>
 
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 						<div>
@@ -597,10 +634,8 @@
 								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 								disabled={uploading}
 							>
-								<option value="video">Vidéo (.mp4, .avi, .mov, etc.)</option>
-								<option value="audio">Audio (.mp3, .wav, .aac, etc.)</option>
-								<option value="pdf">PDF (.pdf)</option>
-								<option value="image">Image (.jpg, .png, .gif, etc.)</option>
+								<option value="video">🎬 Vidéo (.mp4, .avi, .mov, .mkv, etc.)</option>
+								<option value="audio">🎵 Audio (.mp3, .wav, .aac, .flac, etc.)</option>
 							</select>
 						</div>
 
@@ -650,13 +685,12 @@
 						</div>
 					</div>
 
+					<!-- ✅ TYPES ACCEPTÉS CORRIGÉS - AUDIO/VIDÉO SEULEMENT -->
 					<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
 						<h4 class="text-sm font-medium text-blue-800 mb-2">Types de fichiers acceptés :</h4>
 						<div class="text-xs text-blue-700 space-y-1">
-							<div><strong>Vidéo :</strong> MP4, AVI, MOV, WMV, FLV, MKV, WebM</div>
-							<div><strong>Audio :</strong> MP3, WAV, AAC, FLAC, OGG, M4A</div>
-							<div><strong>PDF :</strong> Documents PDF uniquement</div>
-							<div><strong>Image :</strong> JPG, PNG, GIF, BMP, WebP</div>
+							<div><strong>🎬 Vidéo :</strong> MP4, AVI, MOV, WMV, FLV, MKV, WebM, M4V</div>
+							<div><strong>🎵 Audio :</strong> MP3, WAV, AAC, FLAC, OGG, M4A, WMA</div>
 						</div>
 						<div class="text-xs text-blue-600 mt-2">
 							<strong>Taille maximum :</strong> 50MB par fichier
@@ -675,7 +709,7 @@
 									Upload en cours...
 								</div>
 							{:else}
-								Upload le fichier
+								📤 Upload le fichier
 							{/if}
 						</button>
 
@@ -699,20 +733,42 @@
 					{/if}
 				</div>
 
-				<!-- Fichiers uploadés -->
+				<!-- ✅ FICHIERS UPLOADÉS - AFFICHAGE SÉCURISÉ -->
 				{#if audition.files && audition.files.length > 0}
 					<div class="bg-white rounded-lg shadow-md p-6 mb-6">
 						<h2 class="text-xl font-semibold text-gray-900 mb-4">Fichiers uploadés ({audition.files.length})</h2>
 
 						<div class="space-y-3">
 							{#each audition.files as auditionFile}
+								{@const fileInfo = getFileDisplayInfo(auditionFile)}
 								<div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
 									<div class="flex-1">
-										<p class="font-medium text-gray-900">{auditionFile.file.name}</p>
-										<p class="text-sm text-gray-500">{auditionFile.description}</p>
-										<p class="text-xs text-gray-400">
-											{auditionFile.file_type} • Uploadé le {new Date(auditionFile.uploaded_at).toLocaleDateString('fr-FR')}
-										</p>
+										<div class="flex items-center space-x-2 mb-1">
+											<!-- Icône selon le type -->
+											{#if fileInfo.fileType === 'video'}
+												<svg class="h-5 w-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+													<path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+												</svg>
+											{:else if fileInfo.fileType === 'audio'}
+												<svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 010 1.414A4.98 4.98 0 0117 12a4.98 4.98 0 01-1.343 4.243 1 1 0 01-1.414-1.414A2.98 2.98 0 0015 12a2.98 2.98 0 00-.757-1.829 1 1 0 010-1.414z" clip-rule="evenodd" />
+												</svg>
+											{:else}
+												<svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+												</svg>
+											{/if}
+											<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded capitalize">
+												{fileInfo.fileType}
+											</span>
+										</div>
+										<p class="font-medium text-gray-900">{fileInfo.name}</p>
+										<p class="text-sm text-gray-500">{fileInfo.description}</p>
+										{#if fileInfo.uploadedAt}
+											<p class="text-xs text-gray-400">
+												Uploadé le {formatDateShort(fileInfo.uploadedAt)}
+											</p>
+										{/if}
 									</div>
 									<button
 										on:click={() => deleteFile(auditionFile.id)}
@@ -789,7 +845,7 @@
 
 					{#if audition.files && audition.files.length === 0}
 						<p class="text-sm text-red-600 text-center mt-4 font-medium">
-							⚠️ Vous devez uploader au moins un fichier avant de pouvoir soumettre votre audition.
+							⚠️ Vous devez uploader au moins un fichier audio ou vidéo avant de soumettre votre audition.
 						</p>
 					{/if}
 				</div>
