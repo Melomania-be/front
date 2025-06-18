@@ -36,9 +36,10 @@
 
 		if (response.ok) {
 			goto(`/projects/${projectId}/management/registration`);
-		} else {
-			alert('An error occured');
-		}
+		} 
+		//else {
+			//alert('An error occured');
+		//}
 	}
 
 	async function deleteregistration() {
