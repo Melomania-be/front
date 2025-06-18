@@ -714,7 +714,7 @@
 						<input
 							type="text"
 							bind:value={auditionRequiredFiles[index]}
-							placeholder="ex: Vidéo d'interprétation de la pièce X, CV, etc."
+							placeholder="ex: Vidéo d'interprétation de la pièce X, enregistrement audio, etc."
 							class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 							disabled={isRequestingAudition}
 						/>
@@ -738,16 +738,54 @@
 				</button>
 			</div>
 
+			<!-- ✅ SECTION MODIFIÉE : Date limite avec auto-calcul -->
 			<div class="mb-6">
 				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 					Date limite (optionnel)
 				</label>
+
+				<!-- ✅ NOUVEAU : Info sur la deadline automatique -->
+				<div class="mb-3 p-3 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+					<div class="flex items-center">
+						<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+						</svg>
+						<div class="text-sm text-blue-700 dark:text-blue-300">
+							<p class="font-medium">📅 Deadline automatique</p>
+							<p>Si vous ne définissez pas de date limite, elle sera automatiquement fixée à <strong>1 jour avant la première répétition</strong> du projet.</p>
+						</div>
+					</div>
+				</div>
+
 				<input
 					type="datetime-local"
 					bind:value={auditionDeadline}
 					class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 					disabled={isRequestingAudition}
+					placeholder="Laissez vide pour utiliser la deadline automatique"
 				/>
+
+				<!-- ✅ NOUVEAU : Aide contextuelle -->
+				<div class="text-xs text-gray-500 mt-1">
+					{#if auditionDeadline}
+						<span class="text-green-600">✅ Date limite personnalisée définie</span>
+					{:else}
+						<span class="text-blue-600">🤖 Deadline automatique : 1 jour avant la première répétition</span>
+					{/if}
+				</div>
+			</div>
+
+			<!-- ✅ NOUVEAU : Avertissement sur les types de fichiers -->
+			<div class="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+				<div class="flex items-center">
+					<svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+					</svg>
+					<div class="text-sm text-yellow-700 dark:text-yellow-300">
+						<p class="font-medium">🎬 🎵 Types de fichiers acceptés</p>
+						<p>Le candidat ne pourra uploader que des fichiers <strong>audio</strong> (MP3, WAV, etc.) ou <strong>vidéo</strong> (MP4, AVI, MOV, etc.).</p>
+					</div>
+				</div>
 			</div>
 
 			<div class="flex justify-end space-x-3">
