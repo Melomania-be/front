@@ -7,18 +7,22 @@
 	let selectProcess: string[] = [];
 	let selectOptions: string[] = [];
 
-	$: if (
+	if (
 		(form.type === 'select' || form.type === 'multiple') &&
-		form.text.split(':').length === 1
+		form.text.split(':').length >= 1
 	) {
 		selectProcess = form.text.split(':');
 		selectProcess.push('');
 		selectOptions = selectProcess[1].split(';');
 		selectChange();
+		console.log(selectProcess)
+		console.log(form)
 	}
+	
 
 	function selectChange() {
 		form.text = selectProcess[0] + ':' + selectOptions.join(';');
+		console.log(form.text);
 	}
 </script>
 

@@ -39,7 +39,7 @@
 </div>
 
 {#if registration.form}
-	{#each registration.form as form}
+	{#each registration.form.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as form}
 		<div class="grid grid-cols-1 gap-1 border my-1">
 			<RegistrationFormItemModifier bind:form bind:disabled />
 			<div
