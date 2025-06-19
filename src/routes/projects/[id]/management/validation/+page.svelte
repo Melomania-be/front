@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/validation/+page.svelte - Version améliorée -->
+<!-- src/routes/projects/[id]/management/validation/+page.svelte - Version complète -->
 <script lang="ts">
 	import AttendancePicker from '$lib/components/participant/AttendancePicker.svelte';
 	import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
@@ -6,7 +6,7 @@
 	import type { Concert } from '$lib/types/Concert.js';
 	import type { Rehearsal } from '$lib/types/Rehearsal.js';
 	import { onMount, onDestroy } from 'svelte';
-	import { goto } from '$app/navigation'; // Ajout pour navigation
+	import { goto } from '$app/navigation';
 
 	export let data;
 	let participants: Array<Participant>;
@@ -24,6 +24,13 @@
 	let auditionDeadline = '';
 	let isRequestingAudition = false;
 
+	// Variables pour la gestion des PDFs par section
+	let showPdfModal = false;
+	let availablePdfs: any[] = [];
+	let selectedPdfs: any[] = [];
+	let loadingPdfs = false;
+	let sendingPdfs = false;
+
 	// Variables for Quill
 	let quillContainer: HTMLElement;
 	let quillAuditionContainer: HTMLElement;
@@ -35,10 +42,41 @@
 	let allConcerts: Concert[] = [];
 	let allRehearsals: Rehearsal[] = [];
 
+	// Variables pour les statistiques
+	let auditionStats: any = {
+		total: 0,
+		submitted: 0,
+		pending: 0,
+		expired: 0,
+		totalFiles: 0,
+		totalPdfs: 0
+	};
+
+	// Auto-refresh
+	let refreshInterval: any = null;
+
 	onMount(async () => {
 		await loadParticipants();
 		await loadProjectData();
 		await loadQuill();
+		await loadAuditionStats();
+
+		// Auto-refresh des stats toutes les 2 minutes
+		refreshInterval = setInterval(async () => {
+			await loadAuditionStats();
+		}, 120000);
+	});
+
+	onDestroy(() => {
+		if (refreshInterval) {
+			clearInterval(refreshInterval);
+		}
+		if (quill) {
+			quill = null;
+		}
+		if (quillAudition) {
+			quillAudition = null;
+		}
 	});
 
 	async function loadParticipants() {
@@ -68,14 +106,24 @@
 		}
 	}
 
-	onDestroy(() => {
-		if (quill) {
-			quill = null;
+	async function loadAuditionStats() {
+		try {
+			const response = await fetch(`/api/projects/${data.id}/management/auditions`);
+			if (response.ok) {
+				const data = await response.json();
+				auditionStats = data.stats || {
+					total: 0,
+					submitted: 0,
+					pending: 0,
+					expired: 0,
+					totalFiles: 0,
+					totalPdfs: 0
+				};
+			}
+		} catch (error) {
+			console.error('Error loading audition stats:', error);
 		}
-		if (quillAudition) {
-			quillAudition = null;
-		}
-	});
+	}
 
 	async function loadQuill() {
 		try {
@@ -221,6 +269,9 @@
 				);
 				currentParticipant = null;
 				alert('Participant validé avec succès');
+
+				// Recharger les stats d'audition
+				await loadAuditionStats();
 			} else {
 				alert('Erreur lors de la validation');
 			}
@@ -302,6 +353,7 @@
 			if (response.ok) {
 				// Recharger les participants pour obtenir le statut mis à jour
 				await loadParticipants();
+				await loadAuditionStats();
 
 				// Mettre à jour le participant actuel
 				if (currentParticipant) {
@@ -312,7 +364,7 @@
 				}
 
 				closeAuditionModal();
-				alert('Demande d\'audition envoyée avec succès');
+				showNotification('Demande d\'audition envoyée avec succès ! Le candidat recevra les PDFs de sa section automatiquement.', 'success');
 			} else {
 				const errorText = await response.text();
 				console.error('Server response:', errorText);
@@ -398,7 +450,10 @@
 				);
 				currentParticipant = null;
 				closeRefusalModal();
-				alert('Email de refus envoyé et participant supprimé avec succès');
+				showNotification('Email de refus envoyé et participant supprimé avec succès', 'success');
+
+				// Recharger les stats
+				await loadAuditionStats();
 			} else {
 				alert('Email envoyé mais erreur lors de la suppression du participant');
 			}
@@ -423,374 +478,595 @@
 		}
 	}
 
-	// Nouvelle fonction pour aller à la page des auditions
+	// Nouvelles fonctions pour aller aux pages spécialisées
 	function goToAuditions() {
 		goto(`/projects/${data.id}/management/auditions`);
 	}
+
+	function goToPdfManagement() {
+		goto(`/projects/${data.id}/management/auditions/pdfs`);
+	}
+
+	// Fonction pour les notifications
+	function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
+		const notification = document.createElement('div');
+		const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+		notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm`;
+		notification.textContent = message;
+		document.body.appendChild(notification);
+
+		setTimeout(() => {
+			notification.remove();
+		}, 5000);
+	}
+
+	// Fonction pour obtenir le nombre de PDFs configurés
+	function getPdfCount(sectionId: number): number {
+		// Cette fonction pourrait être améliorée en chargeant les PDFs réels
+		// Pour l'instant, on retourne 0 car on n'a pas ces données ici
+		return 0;
+	}
+
+	// Auto-refresh des participants toutes les 30 secondes
+	let participantRefreshInterval: any = null;
+
+	onMount(() => {
+		participantRefreshInterval = setInterval(async () => {
+			await loadParticipants();
+		}, 30000);
+
+		return () => {
+			if (participantRefreshInterval) {
+				clearInterval(participantRefreshInterval);
+			}
+		};
+	});
 </script>
 
-<div class="m-4 p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-	<!-- En-tête avec boutons de navigation -->
-	<div class="flex justify-between items-center mb-6">
-		<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Validation des candidatures</h1>
-		<div class="flex gap-3">
-			<button
-				on:click={goToAuditions}
-				class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-			>
-				📋 Voir les auditions
-			</button>
-			<button
-				on:click={() => goto(`/projects/${data.id}/management`)}
-				class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-			>
-				Retour au projet
-			</button>
-		</div>
-	</div>
+<svelte:head>
+	<title>Validation des candidatures - Projet {data.id}</title>
+</svelte:head>
 
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-		{#if participants && participants.length > 0}
+<div class="min-h-screen bg-gray-50">
+	<!-- Header amélioré -->
+	<div class="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+		<div class="flex justify-between items-center">
 			<div>
-				<h2 class="text-2xl mb-4">Vous devez valider l'inscription de {participants.length} personne(s) :</h2>
-				<div class="overflow-x-auto">
-					<table class="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-						<thead class="bg-gray-50 dark:bg-gray-700">
-						<tr>
-							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Prénom</th>
-							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Nom</th>
-							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Section</th>
-							<th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b">Statut</th>
-							<th class="py-3 px-4 border-b"></th>
-						</tr>
-						</thead>
-						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-						{#each participants as participant}
-							<tr class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-									{participant.contact.firstName}
-								</td>
-								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-									{participant.contact.lastName}
-								</td>
-								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-									{participant.section.name}
-								</td>
-								<td class="py-3 px-4 border-b" on:click={() => (currentParticipant = participant)}>
-									{#if participant.audition_status && participant.audition_status !== 'none'}
-										{@const badge = getAuditionStatusBadge(participant.audition_status)}
-										{#if badge}
-                                            <span class="px-2 py-1 text-xs font-semibold rounded-full {badge.class}">
-                                                {badge.text}
-                                            </span>
-										{/if}
-									{:else}
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
-                                            En attente
-                                        </span>
-									{/if}
-								</td>
-								<td class="py-3 px-4 border-b text-right">
-									<button
-										class="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50"
-										on:click={() => (currentParticipant = participant)}
-										title="Voir les détails"
-									>
-										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-										</svg>
-									</button>
-								</td>
-							</tr>
-						{/each}
-						</tbody>
-					</table>
-				</div>
+				<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Validation des candidatures</h1>
+				<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+					Gérez les candidatures, demandez des auditions et suivez les soumissions
+				</p>
 			</div>
-		{:else}
-			<div class="text-center py-12">
-				<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-				</svg>
-				<h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun participant à valider</h3>
-				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Toutes les candidatures ont été traitées.</p>
-			</div>
-		{/if}
-
-		{#if currentParticipant}
-			<div class="relative border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
-				<div class={currentParticipant.contact.validated ? '' : 'opacity-50 pointer-events-none'}>
-					<h2 class="text-2xl text-center mb-4 text-gray-900 dark:text-white">Demande de participation :</h2>
-
-					<!-- Affichage du statut d'audition -->
-					{#if currentParticipant.audition_status && currentParticipant.audition_status !== 'none'}
-						{@const badge = getAuditionStatusBadge(currentParticipant.audition_status)}
-						{#if badge}
-							<div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
-								<div class="flex items-center justify-between">
-                                    <span class="px-2 py-1 text-sm font-semibold rounded-full {badge.class}">
-                                        {badge.text}
-                                    </span>
-									<button
-										on:click={goToAuditions}
-										class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-									>
-										Voir les auditions →
-									</button>
-								</div>
-								{#if currentParticipant.audition_deadline}
-									<p class="text-sm text-gray-600 dark:text-gray-300 mt-2">
-										Échéance : {new Date(currentParticipant.audition_deadline).toLocaleDateString('fr-FR')}
-									</p>
-								{/if}
-							</div>
-						{/if}
-					{/if}
-
-					<!-- Informations de contact -->
-					<div class="mb-6">
-						<h3 class="text-xl mb-3 text-gray-900 dark:text-white">Contact :</h3>
-						<div class="border p-4 rounded-lg bg-white dark:bg-gray-800 space-y-2">
-							<div class="flex">
-								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Nom :</span>
-								<span class="text-gray-900 dark:text-white">{currentParticipant.contact.firstName} {currentParticipant.contact.lastName}</span>
-							</div>
-							<div class="flex">
-								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Email :</span>
-								<a href="mailto:{currentParticipant.contact.email}" class="text-blue-500 hover:text-blue-700">{currentParticipant.contact.email}</a>
-							</div>
-							<div class="flex">
-								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Téléphone :</span>
-								<span class="text-gray-900 dark:text-white">{currentParticipant.contact.phone || 'Non renseigné'}</span>
-							</div>
-							<div class="flex">
-								<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Messenger :</span>
-								<span class="text-gray-900 dark:text-white">{currentParticipant.contact.messenger || 'Non renseigné'}</span>
-							</div>
-							{#if currentParticipant.contact.comments}
-								<div class="flex">
-									<span class="font-semibold text-gray-700 dark:text-gray-300 w-20">Commentaires :</span>
-									<span class="text-gray-900 dark:text-white">{currentParticipant.contact.comments}</span>
-								</div>
-							{/if}
-						</div>
-					</div>
-
-					<!-- Formulaire d'inscription -->
-					<div class="mb-6">
-						<h3 class="text-xl mb-3 text-gray-900 dark:text-white">Formulaire d'inscription :</h3>
-						<div class="border p-4 rounded-lg bg-white dark:bg-gray-800 space-y-4">
-							<div>
-								<span class="font-semibold text-gray-700 dark:text-gray-300">Section :</span>
-								<span class="text-gray-900 dark:text-white">{currentParticipant.section.name}</span>
-							</div>
-
-							{#if currentParticipant.answers.length > 0}
-								<div>
-									<span class="font-semibold text-gray-700 dark:text-gray-300">Réponses au formulaire :</span>
-									<div class="mt-2 space-y-2">
-										{#each currentParticipant.answers as answer}
-											{#if answer.form}
-												<RegistrationForm forms={[]} bind:answer disabled />
-											{/if}
-										{/each}
-									</div>
-								</div>
-							{/if}
-
-							<div>
-								<h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Concerts</h4>
-								<AttendancePicker
-									concertsOrRehearsals={allConcerts}
-									type="concert"
-									participants={[currentParticipant]}
-									disabled
-								/>
-							</div>
-
-							<div>
-								<h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Répétitions</h4>
-								<AttendancePicker
-									concertsOrRehearsals={allRehearsals}
-									type="rehearsal"
-									participants={[currentParticipant]}
-									disabled
-								/>
-							</div>
-						</div>
-					</div>
-
-					<!-- Boutons d'action -->
-					<div class="flex flex-wrap gap-3 justify-center">
-						<button
-							class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
-							on:click={validateParticipant}
-						>
-							✅ Valider et envoyer confirmation
-						</button>
-
-						<!-- Bouton d'audition -->
-						{#if !currentParticipant.audition_status || currentParticipant.audition_status === 'none'}
-							<button
-								class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
-								on:click={openAuditionModal}
-							>
-								🎭 Demander une audition
-							</button>
-						{:else}
-							<button
-								class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed"
-								disabled
-								title="Audition déjà demandée"
-							>
-								🎭 Audition {currentParticipant.audition_status === 'pending' ? 'en cours' : 'terminée'}
-							</button>
-						{/if}
-
-						<button
-							class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-							on:click={openRefusalModal}
-						>
-							❌ Refuser et supprimer
-						</button>
-					</div>
-				</div>
-
-				<!-- Overlay si contact non validé -->
-				{#if !currentParticipant.contact.validated}
-					<div class="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-95 p-4 rounded-lg flex items-center justify-center">
-						<div class="text-center">
-							<h3 class="text-xl mb-2 text-gray-900 dark:text-white">Vous devez d'abord valider cette personne !</h3>
-							<a href="/contacts/validation" class="text-blue-500 hover:text-blue-700 font-medium">
-								→ Page de validation des contacts
-							</a>
+			<div class="flex gap-3">
+				<!-- Statistiques rapides auditions -->
+				{#if auditionStats.total > 0}
+					<div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2">
+						<div class="flex items-center space-x-2 text-sm">
+							<span class="font-medium text-purple-900">🎭 Auditions:</span>
+							<span class="text-purple-700">{auditionStats.submitted} soumises</span>
+							<span class="text-purple-600">{auditionStats.pending} en cours</span>
 						</div>
 					</div>
 				{/if}
+
+				<button
+					on:click={goToPdfManagement}
+					class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+				>
+					📚 Gérer PDFs par section
+				</button>
+
+				<button
+					on:click={goToAuditions}
+					class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+				>
+					🎭 Voir les auditions
+					{#if auditionStats.submitted > 0}
+						<span class="ml-1 px-2 py-1 bg-purple-800 text-xs rounded-full">
+							{auditionStats.submitted}
+						</span>
+					{/if}
+				</button>
+
+				<button
+					on:click={() => goto(`/projects/${data.id}/management`)}
+					class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+				>
+					← Retour au projet
+				</button>
 			</div>
-		{:else}
-			<div class="border p-8 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
-				<svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-				</svg>
-				<h3 class="text-xl text-gray-900 dark:text-white">Aucun participant sélectionné</h3>
-				<p class="text-gray-600 dark:text-gray-400 mt-2">Cliquez sur un participant dans la liste pour voir ses détails</p>
+		</div>
+	</div>
+
+	<div class="p-6">
+		<!-- Alerte pour les auditions en cours -->
+		{#if auditionStats.submitted > 0}
+			<div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center">
+						<span class="text-2xl mr-3">🎉</span>
+						<div>
+							<h3 class="font-bold text-green-900">
+								{auditionStats.submitted} audition{auditionStats.submitted > 1 ? 's ont été soumises' : ' a été soumise'} !
+							</h3>
+							<p class="text-sm text-green-700">
+								Vous pouvez maintenant les évaluer et prendre des décisions.
+							</p>
+						</div>
+					</div>
+					<button
+						on:click={goToAuditions}
+						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+					>
+						Évaluer maintenant
+					</button>
+				</div>
 			</div>
 		{/if}
+
+		<!-- Alerte pour configurer les PDFs -->
+		{#if auditionStats.total > 0 && auditionStats.totalPdfs === 0}
+			<div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center">
+						<span class="text-2xl mr-3">📚</span>
+						<div>
+							<h3 class="font-bold text-yellow-900">Aucun PDF configuré pour les auditions</h3>
+							<p class="text-sm text-yellow-700">
+								Ajoutez des partitions et exercices pour que les candidats sachent quoi jouer.
+							</p>
+						</div>
+					</div>
+					<button
+						on:click={goToPdfManagement}
+						class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+					>
+						Configurer PDFs
+					</button>
+				</div>
+			</div>
+		{/if}
+
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			<!-- Liste des participants -->
+			<div class="bg-white rounded-lg shadow border border-gray-200">
+				<div class="px-6 py-4 border-b border-gray-200">
+					<div class="flex justify-between items-center">
+						<h2 class="text-xl font-semibold text-gray-900">
+							Candidatures en attente
+							{#if participants && participants.length > 0}
+								<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+									{participants.length}
+								</span>
+							{/if}
+						</h2>
+						<button
+							on:click={loadParticipants}
+							class="text-blue-600 hover:text-blue-800 p-1"
+							title="Actualiser"
+						>
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+							</svg>
+						</button>
+					</div>
+				</div>
+
+				{#if participants && participants.length > 0}
+					<div class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+						{#each participants as participant}
+							<div
+								class="p-4 hover:bg-gray-50 cursor-pointer transition-colors {currentParticipant?.id === participant.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}"
+								on:click={() => (currentParticipant = participant)}
+							>
+								<div class="flex justify-between items-start">
+									<div class="flex-1">
+										<h3 class="font-medium text-gray-900">
+											{participant.contact.firstName} {participant.contact.lastName}
+										</h3>
+										<p class="text-sm text-gray-600">{participant.contact.email}</p>
+										<p class="text-sm text-blue-600 font-medium">{participant.section.name}</p>
+
+										<!-- Statut d'audition -->
+										{#if participant.audition_status && participant.audition_status !== 'none'}
+											{@const badge = getAuditionStatusBadge(participant.audition_status)}
+											{#if badge}
+												<span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full {badge.class} mt-1">
+													{badge.text}
+												</span>
+											{/if}
+											{#if participant.audition_deadline}
+												<p class="text-xs text-gray-500 mt-1">
+													Échéance: {new Date(participant.audition_deadline).toLocaleDateString('fr-FR')}
+												</p>
+											{/if}
+										{/if}
+									</div>
+									<div class="flex items-center space-x-2">
+										{#if participant.audition_status === 'completed'}
+											<span class="text-green-500" title="Audition terminée">
+												<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+												</svg>
+											</span>
+										{:else if participant.audition_status === 'pending'}
+											<span class="text-yellow-500" title="Audition en cours">
+												<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+												</svg>
+											</span>
+										{/if}
+										<button
+											class="text-blue-500 hover:text-blue-700 p-1"
+											on:click|stopPropagation={() => (currentParticipant = participant)}
+											title="Voir les détails"
+										>
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+											</svg>
+										</button>
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<div class="text-center py-12">
+						<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						</svg>
+						<h3 class="mt-2 text-sm font-medium text-gray-900">Aucune candidature en attente</h3>
+						<p class="mt-1 text-sm text-gray-500">Toutes les candidatures ont été traitées.</p>
+					</div>
+				{/if}
+			</div>
+
+			<!-- Détails du participant sélectionné -->
+			<div class="bg-white rounded-lg shadow border border-gray-200">
+				{#if currentParticipant}
+					<div class="px-6 py-4 border-b border-gray-200">
+						<h2 class="text-xl font-semibold text-gray-900">
+							Candidature de {currentParticipant.contact.firstName} {currentParticipant.contact.lastName}
+						</h2>
+					</div>
+
+					<div class="p-6 space-y-6">
+						<!-- Overlay si contact non validé -->
+						{#if !currentParticipant.contact.validated}
+							<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+								<div class="flex items-center">
+									<svg class="h-5 w-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+										<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+									</svg>
+									<div>
+										<h3 class="text-red-800 font-medium">Contact non validé</h3>
+										<p class="text-red-700 text-sm">
+											Vous devez d'abord valider cette personne dans la page de validation des contacts.
+										</p>
+										<a href="/contacts/validation" class="text-red-600 hover:text-red-800 text-sm font-medium underline">
+											→ Aller à la validation des contacts
+										</a>
+									</div>
+								</div>
+							</div>
+						{/if}
+
+						<!-- Statut d'audition actuel -->
+						{#if currentParticipant.audition_status && currentParticipant.audition_status !== 'none'}
+							{@const badge = getAuditionStatusBadge(currentParticipant.audition_status)}
+							{#if badge}
+								<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center">
+											<span class="px-3 py-1 text-sm font-semibold rounded-full {badge.class}">
+												{badge.text}
+											</span>
+											{#if currentParticipant.audition_deadline}
+												<span class="ml-3 text-sm text-gray-600">
+													Échéance: {new Date(currentParticipant.audition_deadline).toLocaleDateString('fr-FR', {
+													year: 'numeric',
+													month: 'long',
+													day: 'numeric',
+													hour: '2-digit',
+													minute: '2-digit'
+												})}
+												</span>
+											{/if}
+										</div>
+										<button
+											on:click={goToAuditions}
+											class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+										>
+											Voir l'audition →
+										</button>
+									</div>
+									{#if currentParticipant.audition_status === 'completed'}
+										<p class="text-sm text-green-600 mt-2 font-medium">
+											✅ L'audition a été soumise ! Vous pouvez maintenant l'évaluer.
+										</p>
+									{:else if currentParticipant.audition_status === 'pending'}
+										<p class="text-sm text-yellow-600 mt-2">
+											⏳ L'audition est en cours. Le candidat peut télécharger les PDFs de sa section et uploader ses enregistrements.
+										</p>
+									{/if}
+								</div>
+							{/if}
+						{/if}
+
+						<!-- Informations de contact -->
+						<div>
+							<h3 class="text-lg font-medium text-gray-900 mb-3">Informations de contact</h3>
+							<div class="bg-gray-50 rounded-lg p-4 space-y-2">
+								<div class="grid grid-cols-2 gap-4">
+									<div>
+										<span class="text-sm font-medium text-gray-700">Nom complet:</span>
+										<p class="text-gray-900">{currentParticipant.contact.firstName} {currentParticipant.contact.lastName}</p>
+									</div>
+									<div>
+										<span class="text-sm font-medium text-gray-700">Email:</span>
+										<a href="mailto:{currentParticipant.contact.email}" class="text-blue-600 hover:text-blue-800">
+											{currentParticipant.contact.email}
+										</a>
+									</div>
+									<div>
+										<span class="text-sm font-medium text-gray-700">Téléphone:</span>
+										<p class="text-gray-900">{currentParticipant.contact.phone || 'Non renseigné'}</p>
+									</div>
+									<div>
+										<span class="text-sm font-medium text-gray-700">Messenger:</span>
+										<p class="text-gray-900">{currentParticipant.contact.messenger || 'Non renseigné'}</p>
+									</div>
+								</div>
+								{#if currentParticipant.contact.comments}
+									<div>
+										<span class="text-sm font-medium text-gray-700">Commentaires:</span>
+										<p class="text-gray-900 mt-1">{currentParticipant.contact.comments}</p>
+									</div>
+								{/if}
+							</div>
+						</div>
+
+						<!-- Section et formulaire -->
+						<div>
+							<h3 class="text-lg font-medium text-gray-900 mb-3">Candidature</h3>
+							<div class="bg-gray-50 rounded-lg p-4 space-y-4">
+								<div>
+									<span class="text-sm font-medium text-gray-700">Section demandée:</span>
+									<p class="text-gray-900 font-medium">{currentParticipant.section.name}</p>
+								</div>
+
+								{#if currentParticipant.answers.length > 0}
+									<div>
+										<span class="text-sm font-medium text-gray-700">Réponses au formulaire:</span>
+										<div class="mt-2 space-y-2">
+											{#each currentParticipant.answers as answer}
+												{#if answer.form}
+													<RegistrationForm forms={[]} bind:answer disabled />
+												{/if}
+											{/each}
+										</div>
+									</div>
+								{/if}
+
+								<!-- Disponibilités concerts -->
+								<div>
+									<h4 class="text-sm font-medium text-gray-700 mb-2">Disponibilités - Concerts</h4>
+									<AttendancePicker
+										concertsOrRehearsals={allConcerts}
+										type="concert"
+										participants={[currentParticipant]}
+										disabled
+									/>
+								</div>
+
+								<!-- Disponibilités répétitions -->
+								<div>
+									<h4 class="text-sm font-medium text-gray-700 mb-2">Disponibilités - Répétitions</h4>
+									<AttendancePicker
+										concertsOrRehearsals={allRehearsals}
+										type="rehearsal"
+										participants={[currentParticipant]}
+										disabled
+									/>
+								</div>
+							</div>
+						</div>
+
+						<!-- Actions -->
+						<div class="border-t border-gray-200 pt-6">
+							<div class="flex flex-wrap gap-3">
+								<!-- Validation -->
+								<button
+									class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+									on:click={validateParticipant}
+									disabled={!currentParticipant.contact.validated}
+								>
+									✅ Valider et envoyer confirmation
+								</button>
+
+								<!-- Audition -->
+								{#if !currentParticipant.audition_status || currentParticipant.audition_status === 'none'}
+									<button
+										class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+										on:click={openAuditionModal}
+										disabled={!currentParticipant.contact.validated}
+									>
+										🎭 Demander une audition
+									</button>
+								{:else}
+									<button
+										class="flex-1 bg-gray-400 text-white font-medium py-3 px-4 rounded-lg cursor-not-allowed"
+										disabled
+										title="Audition déjà demandée"
+									>
+										🎭 Audition {currentParticipant.audition_status === 'pending' ? 'en cours' : 'terminée'}
+									</button>
+								{/if}
+
+								<!-- Refus -->
+								<button
+									class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+									on:click={openRefusalModal}
+								>
+									❌ Refuser
+								</button>
+							</div>
+
+							{#if !currentParticipant.contact.validated}
+								<p class="text-sm text-red-600 mt-2 text-center">
+									⚠️ Le contact doit être validé avant toute action
+								</p>
+							{/if}
+						</div>
+					</div>
+				{:else}
+					<div class="p-12 text-center">
+						<svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+						</svg>
+						<h3 class="text-lg font-medium text-gray-900">Aucune candidature sélectionnée</h3>
+						<p class="text-gray-600 mt-1">Cliquez sur une candidature dans la liste pour voir ses détails</p>
+					</div>
+				{/if}
+			</div>
+		</div>
 	</div>
 </div>
 
 <!-- Modal d'audition -->
 {#if showAuditionModal}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-		<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-			<h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-				🎭 Demander une audition
-			</h2>
-			<p class="mb-4 text-gray-700 dark:text-gray-300">
-				Vous allez demander une audition à <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
-			</p>
-
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-					Instructions pour le candidat
-				</label>
-				<div
-					bind:this={quillAuditionContainer}
-					class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRequestingAudition ? 'opacity-50 pointer-events-none' : ''}"
-					style="font-family: inherit;"
-				></div>
-				{#if !quillLoaded}
-					<div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
-				{/if}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+		<div class="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+			<div class="px-6 py-4 border-b border-gray-200">
+				<h2 class="text-xl font-bold text-gray-900">
+					🎭 Demander une audition
+				</h2>
+				<p class="text-gray-700 mt-1">
+					Vous allez demander une audition à <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>
+					(section: <strong>{currentParticipant?.section.name}</strong>).
+				</p>
 			</div>
 
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-					Fichiers/matériels requis
-				</label>
-				{#each auditionRequiredFiles as file, index}
-					<div class="flex mb-2">
-						<input
-							type="text"
-							bind:value={auditionRequiredFiles[index]}
-							placeholder="ex: Vidéo d'interprétation de la pièce X, enregistrement audio, etc."
-							class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-							disabled={isRequestingAudition}
-						/>
-						<button
-							type="button"
-							on:click={() => removeRequiredFile(index)}
-							class="px-3 py-2 bg-red-500 text-white rounded-r-md hover:bg-red-600 disabled:opacity-50"
-							disabled={auditionRequiredFiles.length === 1 || isRequestingAudition}
-						>
-							Supprimer
-						</button>
-					</div>
-				{/each}
-				<button
-					type="button"
-					on:click={addRequiredFile}
-					class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-					disabled={isRequestingAudition}
-				>
-					Ajouter un fichier requis
-				</button>
-			</div>
-
-			<!-- ✅ SECTION MODIFIÉE : Date limite avec auto-calcul -->
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-					Date limite (optionnel)
-				</label>
-
-				<!-- ✅ NOUVEAU : Info sur la deadline automatique -->
-				<div class="mb-3 p-3 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+			<div class="px-6 py-4 space-y-6">
+				<!-- Informations importantes -->
+				<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 					<div class="flex items-center">
 						<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
 						</svg>
-						<div class="text-sm text-blue-700 dark:text-blue-300">
-							<p class="font-medium">📅 Deadline automatique</p>
-							<p>Si vous ne définissez pas de date limite, elle sera automatiquement fixée à <strong>1 jour avant la première répétition</strong> du projet.</p>
+						<div class="text-sm text-blue-700">
+							<p class="font-medium">📚 PDFs automatiques</p>
+							<p>Le candidat recevra automatiquement tous les PDFs configurés pour sa section. Il pourra les télécharger depuis son portail d'audition.</p>
 						</div>
 					</div>
 				</div>
 
-				<input
-					type="datetime-local"
-					bind:value={auditionDeadline}
-					class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-					disabled={isRequestingAudition}
-					placeholder="Laissez vide pour utiliser la deadline automatique"
-				/>
-
-				<!-- ✅ NOUVEAU : Aide contextuelle -->
-				<div class="text-xs text-gray-500 mt-1">
-					{#if auditionDeadline}
-						<span class="text-green-600">✅ Date limite personnalisée définie</span>
-					{:else}
-						<span class="text-blue-600">🤖 Deadline automatique : 1 jour avant la première répétition</span>
+				<!-- Instructions pour le candidat -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Instructions personnalisées pour le candidat
+					</label>
+					<div
+						bind:this={quillAuditionContainer}
+						class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRequestingAudition ? 'opacity-50 pointer-events-none' : ''}"
+						style="font-family: inherit;"
+					></div>
+					{#if !quillLoaded}
+						<div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
 					{/if}
+					<p class="text-xs text-gray-500 mt-2">
+						Décrivez les instructions spécifiques, le style demandé, les détails techniques, etc.
+					</p>
 				</div>
-			</div>
 
-			<!-- ✅ NOUVEAU : Avertissement sur les types de fichiers -->
-			<div class="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-				<div class="flex items-center">
-					<svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-					</svg>
-					<div class="text-sm text-yellow-700 dark:text-yellow-300">
-						<p class="font-medium">🎬 🎵 Types de fichiers acceptés</p>
-						<p>Le candidat ne pourra uploader que des fichiers <strong>audio</strong> (MP3, WAV, etc.) ou <strong>vidéo</strong> (MP4, AVI, MOV, etc.).</p>
+				<!-- Fichiers/matériels requis -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Matériels/fichiers spécifiques requis (optionnel)
+					</label>
+					{#each auditionRequiredFiles as file, index}
+						<div class="flex mb-2">
+							<input
+								type="text"
+								bind:value={auditionRequiredFiles[index]}
+								placeholder="ex: Enregistrement de la pièce X, improvisation de 2 minutes, etc."
+								class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+								disabled={isRequestingAudition}
+							/>
+							<button
+								type="button"
+								on:click={() => removeRequiredFile(index)}
+								class="px-3 py-2 bg-red-500 text-white rounded-r-md hover:bg-red-600 disabled:opacity-50"
+								disabled={auditionRequiredFiles.length === 1 || isRequestingAudition}
+							>
+								Supprimer
+							</button>
+						</div>
+					{/each}
+					<button
+						type="button"
+						on:click={addRequiredFile}
+						class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+						disabled={isRequestingAudition}
+					>
+						Ajouter un fichier requis
+					</button>
+				</div>
+
+				<!-- Date limite avec auto-calcul -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Date limite (optionnel)
+					</label>
+
+					<!-- Info sur la deadline automatique -->
+					<div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+						<div class="flex items-center">
+							<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+							</svg>
+							<div class="text-sm text-blue-700">
+								<p class="font-medium">📅 Deadline automatique</p>
+								<p>Si vous ne définissez pas de date limite, elle sera automatiquement fixée à <strong>1 jour avant la première répétition</strong> du projet.</p>
+							</div>
+						</div>
+					</div>
+
+					<input
+						type="datetime-local"
+						bind:value={auditionDeadline}
+						class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						disabled={isRequestingAudition}
+						placeholder="Laissez vide pour utiliser la deadline automatique"
+					/>
+
+					<!-- Aide contextuelle -->
+					<div class="text-xs text-gray-500 mt-1">
+						{#if auditionDeadline}
+							<span class="text-green-600">✅ Date limite personnalisée définie</span>
+						{:else}
+							<span class="text-blue-600">🤖 Deadline automatique : 1 jour avant la première répétition</span>
+						{/if}
+					</div>
+				</div>
+
+				<!-- Avertissement sur les types de fichiers -->
+				<div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+					<div class="flex items-center">
+						<svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+						</svg>
+						<div class="text-sm text-yellow-700">
+							<p class="font-medium">🎬 🎵 Types de fichiers acceptés</p>
+							<p>Le candidat ne pourra uploader que des fichiers <strong>audio</strong> (MP3, WAV, etc.) ou <strong>vidéo</strong> (MP4, AVI, MOV, etc.).</p>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="flex justify-end space-x-3">
+			<div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
 				<button
-					class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+					class="px-4 py-2 text-gray-500 hover:text-gray-700"
 					on:click={closeAuditionModal}
 					disabled={isRequestingAudition}
 				>
@@ -810,35 +1086,40 @@
 
 <!-- Modal de refus -->
 {#if showRefusalModal}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-		<div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-			<h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-				Refuser la participation
-			</h2>
-			<p class="mb-4 text-gray-700 dark:text-gray-300">
-				Vous allez refuser la participation de <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
-			</p>
-			<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-				Un email de refus sera automatiquement envoyé au participant. Vous pouvez ajouter un message personnalisé ci-dessous (optionnel).
-			</p>
-
-			<div class="mb-6">
-				<label for="refusal-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-					Message personnalisé (optionnel)
-				</label>
-				<div
-					bind:this={quillContainer}
-					class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRefusing ? 'opacity-50 pointer-events-none' : ''}"
-					style="font-family: inherit;"
-				></div>
-				{#if !quillLoaded}
-					<div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
-				{/if}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+		<div class="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+			<div class="px-6 py-4 border-b border-gray-200">
+				<h2 class="text-xl font-bold text-gray-900">
+					Refuser la participation
+				</h2>
 			</div>
 
-			<div class="flex justify-end space-x-3">
+			<div class="px-6 py-4 space-y-4">
+				<p class="text-gray-700">
+					Vous allez refuser la participation de <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong>.
+				</p>
+				<p class="text-sm text-gray-600">
+					Un email de refus sera automatiquement envoyé au participant. Vous pouvez ajouter un message personnalisé ci-dessous (optionnel).
+				</p>
+
+				<div>
+					<label for="refusal-message" class="block text-sm font-medium text-gray-700 mb-2">
+						Message personnalisé (optionnel)
+					</label>
+					<div
+						bind:this={quillContainer}
+						class="bg-white border border-gray-300 rounded-lg min-h-[200px] {isRefusing ? 'opacity-50 pointer-events-none' : ''}"
+						style="font-family: inherit;"
+					></div>
+					{#if !quillLoaded}
+						<div class="text-sm text-gray-500 mt-2">Chargement de l'éditeur...</div>
+					{/if}
+				</div>
+			</div>
+
+			<div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
 				<button
-					class="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+					class="px-4 py-2 text-gray-500 hover:text-gray-700"
 					on:click={closeRefusalModal}
 					disabled={isRefusing}
 				>
@@ -915,5 +1196,17 @@
 
     :global(.dark .ql-picker-item:hover) {
         background-color: #374151 !important;
+    }
+
+    /* Transitions et animations */
+    .transition-colors {
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 1024px) {
+        .grid.lg\\:grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

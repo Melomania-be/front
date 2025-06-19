@@ -7,6 +7,8 @@ export const POST: RequestHandler = async ({ params, cookies, fetch, request }) 
 	try {
 		const body = await request.json()
 
+		console.log('Frontend: Bulk sending PDFs to section', body.section_id, 'for project', params.id)
+
 		const response = await fetch(`${API_URL}/projects/${params.id}/management/auditions/bulk-send-pdfs`, {
 			method: 'POST',
 			headers: {
@@ -16,7 +18,17 @@ export const POST: RequestHandler = async ({ params, cookies, fetch, request }) 
 			body: JSON.stringify(body)
 		})
 
-		return response
+		// Log de la réponse pour debug
+		const responseText = await response.text()
+		console.log('Backend response status:', response.status)
+		console.log('Backend response:', responseText)
+
+		return new Response(responseText, {
+			status: response.status,
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
 	} catch (error) {
 		console.error('Error bulk sending PDFs:', error)
 		return new Response(JSON.stringify({

@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/auditions/+page.svelte - AVEC SUPPRESSION -->
+<!-- src/routes/projects/[id]/management/auditions/+page.svelte - Version améliorée -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import DateShow from '$lib/components/DateShow.svelte';
@@ -15,7 +15,7 @@
 	let isMobile = false;
 	let showMobileMenu = false;
 
-	// ✅ NOUVELLES VARIABLES pour la suppression
+	// Variables pour la suppression
 	let showDeleteModal = false;
 	let auditionToDelete: any = null;
 	let isDeleting = false;
@@ -29,18 +29,18 @@
 		totalFiles: 0
 	};
 
-	// ✅ DATE FORMATTING UTILITIES (English)
+	// Variables pour la gestion des PDFs
+	let sectionsWithPdfs: any[] = [];
+
+	// Fonctions de formatage de date (comme dans l'original)
 	function formatDate(dateString) {
 		if (!dateString) return 'Unknown date';
-
 		try {
 			const date = new Date(dateString);
-
 			if (isNaN(date.getTime())) {
 				console.error('Invalid date:', dateString);
 				return 'Invalid date';
 			}
-
 			return date.toLocaleDateString('en-GB', {
 				year: 'numeric',
 				month: 'long',
@@ -56,14 +56,11 @@
 
 	function formatDateShort(dateString) {
 		if (!dateString) return 'N/A';
-
 		try {
 			const date = new Date(dateString);
-
 			if (isNaN(date.getTime())) {
 				return 'Invalid';
 			}
-
 			return date.toLocaleDateString('en-GB');
 		} catch (error) {
 			console.error('Error formatting short date:', error, dateString);
@@ -71,27 +68,22 @@
 		}
 	}
 
-	// ✅ MOBILE DETECTION
 	onMount(async () => {
-		// Check if mobile
 		isMobile = window.innerWidth < 768;
-
-		// Listen for resize
 		const handleResize = () => {
 			isMobile = window.innerWidth < 768;
 		};
 		window.addEventListener('resize', handleResize);
 
 		await loadAuditions();
+		await loadSectionPdfs(); // ✅ Nouveau : charger les PDFs
 
-		// Auto-refresh every 30 seconds
 		if (autoRefresh) {
 			refreshInterval = setInterval(async () => {
-				await loadAuditions(true); // silent refresh
+				await loadAuditions(true);
 			}, 30000);
 		}
 
-		// Cleanup
 		return () => {
 			if (refreshInterval) {
 				clearInterval(refreshInterval);
@@ -110,7 +102,6 @@
 			if (response.ok) {
 				const responseData = await response.json();
 
-				// Compare with previous data to detect changes
 				if (auditions.length > 0 && !silent) {
 					const newSubmissions = responseData.auditions.filter(newAud =>
 						newAud.is_submitted &&
@@ -142,6 +133,19 @@
 		}
 	}
 
+	// ✅ NOUVELLE FONCTION : Charger les PDFs par section
+	async function loadSectionPdfs() {
+		try {
+			const response = await fetch(`/api/projects/${data.id}/management/auditions/section-pdfs`);
+			if (response.ok) {
+				const data = await response.json();
+				sectionsWithPdfs = data.sections || [];
+			}
+		} catch (error) {
+			console.error('Error loading section PDFs:', error);
+		}
+	}
+
 	function showNotification(message: string) {
 		const notification = document.createElement('div');
 		notification.className = `fixed ${isMobile ? 'top-2 left-2 right-2' : 'top-4 right-4'} bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 text-sm`;
@@ -166,7 +170,6 @@
 	function openDetailsModal(audition: any) {
 		selectedAudition = audition;
 		showDetailsModal = true;
-		// Prevent body scroll on mobile
 		if (isMobile) {
 			document.body.style.overflow = 'hidden';
 		}
@@ -175,11 +178,9 @@
 	function closeDetailsModal() {
 		selectedAudition = null;
 		showDetailsModal = false;
-		// Restore body scroll
 		document.body.style.overflow = '';
 	}
 
-	// ✅ NOUVELLES FONCTIONS pour la suppression
 	function openDeleteModal(audition: any) {
 		auditionToDelete = audition;
 		showDeleteModal = true;
@@ -197,7 +198,6 @@
 		isDeleting = true;
 
 		try {
-			// ✅ APPEL API DIRECT avec paramètres URL
 			const response = await fetch(`/api/projects/${data.id}/management/auditions?auditionId=${auditionToDelete.id}`, {
 				method: 'DELETE'
 			});
@@ -206,13 +206,9 @@
 				const result = await response.json();
 				console.log('Audition deleted:', result);
 
-				// Recharger la liste des auditions
 				await loadAuditions();
-
-				// Fermer le modal
 				closeDeleteModal();
 
-				// Fermer le modal de détails si c'était la même audition
 				if (selectedAudition && selectedAudition.id === auditionToDelete.id) {
 					closeDetailsModal();
 				}
@@ -283,6 +279,15 @@
 	function toggleMobileMenu() {
 		showMobileMenu = !showMobileMenu;
 	}
+
+	// ✅ NOUVELLES FONCTIONS de navigation
+	function goToPdfManagement() {
+		goto(`/projects/${data.id}/management/auditions/pdfs`);
+	}
+
+	function getTotalPdfCount() {
+		return sectionsWithPdfs.reduce((sum, section) => sum + section.pdfs.length, 0);
+	}
 </script>
 
 <div class="min-h-screen bg-gray-50">
@@ -324,6 +329,14 @@
 						{/if}
 					</button>
 
+					<!-- ✅ NOUVEAU bouton mobile pour PDFs -->
+					<button
+						on:click={() => { goToPdfManagement(); toggleMobileMenu(); }}
+						class="w-full px-3 py-2 bg-purple-600 text-white rounded-lg text-sm"
+					>
+						📚 Gérer PDFs par section
+					</button>
+
 					<button
 						on:click={() => { toggleAutoRefresh(); toggleMobileMenu(); }}
 						class="w-full px-3 py-2 {autoRefresh ? 'bg-green-600' : 'bg-gray-600'} text-white rounded-lg text-sm"
@@ -351,6 +364,19 @@
 					</p>
 				</div>
 				<div class="flex gap-3">
+					<!-- ✅ NOUVEAU bouton pour la gestion des PDFs -->
+					<button
+						on:click={goToPdfManagement}
+						class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+					>
+						📚 Gérer PDFs par section
+						{#if getTotalPdfCount() > 0}
+							<span class="ml-1 px-2 py-1 bg-purple-800 text-xs rounded-full">
+								{getTotalPdfCount()}
+							</span>
+						{/if}
+					</button>
+
 					<button
 						on:click={() => loadAuditions()}
 						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -375,7 +401,7 @@
 
 					<button
 						on:click={() => goto(`/projects/${data.id}/management/validation`)}
-						class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+						class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
 					>
 						Back to Validation
 					</button>
@@ -392,14 +418,79 @@
 				<span class="ml-4 text-gray-600">Loading auditions...</span>
 			</div>
 		{:else if auditions.length === 0}
+			<!-- ✅ SECTION AMÉLIORÉE : État vide avec lien vers la gestion des PDFs -->
 			<div class="text-center py-12">
 				<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 				</svg>
 				<h3 class="mt-2 text-sm font-medium text-gray-900">No auditions</h3>
 				<p class="mt-1 text-sm text-gray-500">No auditions have been requested for this project.</p>
+
+				<!-- ✅ NOUVEAU : Liens vers les actions -->
+				<div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+					<button
+						on:click={() => goto(`/projects/${data.id}/management/validation`)}
+						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+					>
+						🎯 Request auditions from participants
+					</button>
+					<button
+						on:click={goToPdfManagement}
+						class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+					>
+						📚 Prepare PDFs for auditions
+					</button>
+				</div>
 			</div>
 		{:else}
+			<!-- ✅ SECTION AMÉLIORÉE : Alert pour préparer les PDFs -->
+			{#if sectionsWithPdfs.length === 0 || getTotalPdfCount() === 0}
+				<div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+					<div class="flex items-center">
+						<svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+						</svg>
+						<div class="flex-1">
+							<h4 class="text-yellow-800 font-medium">📚 Aucun PDF configuré pour les auditions</h4>
+							<p class="text-yellow-700 text-sm mt-1">
+								Les candidats pourront uniquement envoyer des fichiers audio/vidéo. Ajoutez des PDFs pour leur donner des partitions à jouer.
+							</p>
+						</div>
+						<button
+							on:click={goToPdfManagement}
+							class="ml-4 px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700"
+						>
+							Configurer PDFs
+						</button>
+					</div>
+				</div>
+			{:else}
+				<!-- ✅ NOUVELLE SECTION : Résumé des PDFs configurés -->
+				<div class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center">
+							<svg class="h-5 w-5 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+							</svg>
+							<div>
+								<h4 class="text-purple-800 font-medium">📚 PDFs configurés par section</h4>
+								<p class="text-purple-700 text-sm">
+									{getTotalPdfCount()} PDF{getTotalPdfCount() > 1 ? 's' : ''} disponible{getTotalPdfCount() > 1 ? 's' : ''}
+									pour {sectionsWithPdfs.filter(s => s.pdfs.length > 0).length} section{sectionsWithPdfs.filter(s => s.pdfs.length > 0).length > 1 ? 's' : ''}
+								</p>
+							</div>
+						</div>
+						<button
+							on:click={goToPdfManagement}
+							class="px-4 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+						>
+							Gérer PDFs
+						</button>
+					</div>
+				</div>
+			{/if}
+
+			<!-- Le reste du contenu reste identique... -->
 			<!-- Statistics Cards -->
 			<div class="grid grid-cols-2 {isMobile ? 'gap-2 mb-4' : 'md:grid-cols-5 gap-4 mb-6'}">
 				<div class="bg-blue-50 p-3 rounded-lg">
@@ -475,11 +566,15 @@
 									{audition.files ? audition.files.length : 0}
 								</div>
 								<div>
+									<span class="font-medium">PDFs:</span>
+									{audition.pdfs ? audition.pdfs.length : 0}
+								</div>
+								<div>
 									<span class="font-medium">Created:</span>
 									{formatDateShort(audition.createdAt)}
 								</div>
 								{#if audition.deadline}
-									<div class="col-span-2">
+									<div>
 										<span class="font-medium">Deadline:</span>
 										{formatDateShort(audition.deadline)}
 										{#if !audition.is_submitted && new Date(audition.deadline) < new Date()}
@@ -508,7 +603,6 @@
 								>
 									{audition.is_submitted ? '✅ Decide' : '⏳ Validate'}
 								</button>
-								<!-- ✅ NOUVEAU : Bouton suppression mobile -->
 								<button
 									on:click={() => openDeleteModal(audition)}
 									class="px-3 py-2 text-xs bg-red-600 text-white rounded hover:bg-red-700"
@@ -540,7 +634,7 @@
 									Deadline
 								</th>
 								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-									Files
+									Files/PDFs
 								</th>
 								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 									Created
@@ -592,10 +686,15 @@
 										{/if}
 									</td>
 									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-										<div class="flex items-center">
+										<div class="flex items-center space-x-2">
 											<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
 												{audition.files ? audition.files.length : 0} file{audition.files && audition.files.length > 1 ? 's' : ''}
 											</span>
+											{#if audition.pdfs && audition.pdfs.length > 0}
+												<span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
+													{audition.pdfs.length} PDF{audition.pdfs.length > 1 ? 's' : ''}
+												</span>
+											{/if}
 										</div>
 									</td>
 									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -615,7 +714,6 @@
 											>
 												{audition.is_submitted ? '✅ Decide' : '⏳ Validate'}
 											</button>
-											<!-- ✅ NOUVEAU : Bouton suppression desktop -->
 											<button
 												on:click={() => openDeleteModal(audition)}
 												class="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
@@ -643,6 +741,7 @@
 							<li>• {auditionStats.submitted} submitted and ready to evaluate</li>
 							<li>• {auditionStats.pending} still in progress</li>
 							<li>• {auditionStats.totalFiles} file{auditionStats.totalFiles > 1 ? 's' : ''} received in total</li>
+							<li>• {auditionStats.totalPdfs} PDF{auditionStats.totalPdfs > 1 ? 's' : ''} distributed to candidates</li>
 						</ul>
 					</div>
 					<div>
@@ -656,6 +755,9 @@
 							{/if}
 							{#if auditionStats.pending > 0}
 								<li class="text-yellow-600">⏳ {auditionStats.pending} audition{auditionStats.pending > 1 ? 's' : ''} pending</li>
+							{/if}
+							{#if getTotalPdfCount() === 0}
+								<li class="text-purple-600">📚 Consider adding PDFs for candidates to play</li>
 							{/if}
 						</ul>
 					</div>
@@ -678,7 +780,6 @@
 						{/if}
 					</h3>
 					<div class="flex items-center space-x-2">
-						<!-- ✅ NOUVEAU : Bouton suppression dans le modal -->
 						<button
 							on:click={() => openDeleteModal(selectedAudition)}
 							class="text-red-600 hover:text-red-800 p-1"
@@ -758,6 +859,32 @@
 					</div>
 				{/if}
 
+				<!-- ✅ NOUVELLE SECTION : PDFs fournis -->
+				{#if selectedAudition.pdfs && selectedAudition.pdfs.length > 0}
+					<div class="mb-6">
+						<h4 class="text-sm font-medium text-gray-500 mb-2">📚 PDFs Provided to Candidate ({selectedAudition.pdfs.length})</h4>
+						<div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+							<div class="grid grid-cols-1 {isMobile ? '' : 'md:grid-cols-2'} gap-3">
+								{#each selectedAudition.pdfs as pdf}
+									<div class="flex items-center justify-between p-2 bg-white border border-purple-200 rounded">
+										<div>
+											<p class="font-medium text-purple-900 text-sm">{pdf.title}</p>
+											{#if pdf.description}
+												<p class="text-xs text-purple-700">{pdf.description}</p>
+											{/if}
+											<p class="text-xs text-gray-500">{pdf.file.name}</p>
+										</div>
+										<span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">PDF</span>
+									</div>
+								{/each}
+							</div>
+							<p class="text-xs text-purple-700 mt-2">
+								✅ The candidate can download these PDFs and should play them in their audition recordings.
+							</p>
+						</div>
+					</div>
+				{/if}
+
 				<!-- Candidate Notes -->
 				{#if selectedAudition.candidate_notes}
 					<div class="mb-6">
@@ -771,7 +898,7 @@
 				<!-- Uploaded Files -->
 				<div class="mb-6">
 					<h4 class="text-sm font-medium text-gray-500 mb-2">
-						Uploaded Files ({selectedAudition.files ? selectedAudition.files.length : 0})
+						🎵 Uploaded Performance Files ({selectedAudition.files ? selectedAudition.files.length : 0})
 						{#if selectedAudition.is_submitted}
 							<span class="ml-2 text-green-600 font-medium">✅ Audition Complete</span>
 						{/if}
@@ -815,7 +942,12 @@
 							{/each}
 						</div>
 					{:else}
-						<p class="text-sm text-gray-500 italic">No files uploaded</p>
+						<p class="text-sm text-gray-500 italic">No performance files uploaded yet</p>
+						{#if selectedAudition.pdfs && selectedAudition.pdfs.length > 0}
+							<div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+								💡 The candidate should download the PDFs above, practice the pieces, and upload their performance recordings.
+							</div>
+						{/if}
 					{/if}
 				</div>
 
@@ -839,7 +971,7 @@
 	</div>
 {/if}
 
-<!-- ✅ NOUVEAU : Modal de confirmation de suppression -->
+<!-- Delete Confirmation Modal -->
 {#if showDeleteModal && auditionToDelete}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 		<div class="bg-white rounded-lg shadow-lg max-w-md w-full">
@@ -879,6 +1011,9 @@
 					<p class="text-sm text-gray-700">
 						<strong>Files:</strong> {auditionToDelete.files ? auditionToDelete.files.length : 0}
 					</p>
+					<p class="text-sm text-gray-700">
+						<strong>PDFs:</strong> {auditionToDelete.pdfs ? auditionToDelete.pdfs.length : 0}
+					</p>
 				</div>
 
 				<div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
@@ -890,6 +1025,7 @@
 							<h6 class="text-sm font-medium text-red-800">This will permanently:</h6>
 							<ul class="text-sm text-red-700 list-disc list-inside mt-1">
 								<li>Delete all uploaded files ({auditionToDelete.files ? auditionToDelete.files.length : 0} file{auditionToDelete.files && auditionToDelete.files.length > 1 ? 's' : ''})</li>
+								<li>Remove PDF associations (documents will remain available for other auditions)</li>
 								<li>Remove the audition record</li>
 								<li>Reset the participant's audition status</li>
 							</ul>
