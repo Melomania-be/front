@@ -1,4 +1,4 @@
-<!-- src/routes/audition/[token]/+page.svelte - VERSION CORRIGÉE -->
+<!-- src/routes/audition/[token]/+page.svelte - VERSION CORRIGÉE AVEC PDFS -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
@@ -20,6 +20,10 @@
 	let fileDescription = '';
 	let uploadProgress = 0;
 	let fileValidationError = '';
+
+	// ✅ NOUVELLES VARIABLES pour les PDFs
+	let pdfFiles: any[] = [];
+	let loadingPdfs = false;
 
 	// ======= FONCTIONS DE FORMATAGE DE DATE CORRIGÉES =======
 
@@ -147,10 +151,40 @@
 		}
 	}
 
+	// ✅ NOUVELLES FONCTIONS POUR LES PDFS
+
+	async function loadPdfs() {
+		loadingPdfs = true;
+		try {
+			const response = await fetch(`/api/audition/${data.token}/pdfs`);
+			if (response.ok) {
+				pdfFiles = await response.json();
+				console.log('PDFs chargés:', pdfFiles);
+			} else {
+				console.error('Erreur lors du chargement des PDFs');
+			}
+		} catch (error) {
+			console.error('Erreur réseau lors du chargement des PDFs:', error);
+		} finally {
+			loadingPdfs = false;
+		}
+	}
+
+	function downloadPdf(pdfId: number, fileName: string) {
+		const downloadUrl = `/api/audition/${data.token}/pdf/${pdfId}/download`;
+		const link = document.createElement('a');
+		link.href = downloadUrl;
+		link.download = fileName;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
+
 	// ======= FONCTIONS EXISTANTES =======
 
 	onMount(async () => {
 		await loadAudition();
+		await loadPdfs(); // ✅ Charger les PDFs aussi
 	});
 
 	async function loadAudition() {
@@ -165,11 +199,17 @@
 					candidateNotes = audition.candidate_notes;
 				}
 
+				// ✅ NOUVEAU : Récupérer les PDFs depuis les données d'audition
+				if (audition.pdfs) {
+					pdfFiles = audition.pdfs;
+				}
+
 				// Debug des données reçues
 				console.log('Données d\'audition chargées:', {
 					submitted_at: audition.submitted_at,
 					is_submitted: audition.is_submitted,
-					files_count: audition.files?.length || 0
+					files_count: audition.files?.length || 0,
+					pdfs_count: audition.pdfs?.length || 0
 				});
 
 				loading = false;
@@ -559,6 +599,58 @@
 					</div>
 				</div>
 			{:else}
+				<!-- ✅ NOUVEAU : Affichage des PDFs disponibles -->
+				{#if pdfFiles && pdfFiles.length > 0}
+					<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+						<h2 class="text-xl font-semibold text-gray-900 mb-4">📚 Partitions et documents requis</h2>
+
+						<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+							<div class="flex items-center">
+								<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+								</svg>
+								<p class="text-sm text-blue-700">
+									<strong>Documents pour votre audition :</strong> Téléchargez et étudiez les partitions ci-dessous. Vous devrez ensuite uploader votre interprétation audio ou vidéo.
+								</p>
+							</div>
+						</div>
+
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{#each pdfFiles as pdf}
+								<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+									<div class="flex items-start justify-between">
+										<div class="flex-1">
+											<div class="flex items-center mb-2">
+												<svg class="h-5 w-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+												</svg>
+												<h3 class="text-sm font-semibold text-gray-900">{pdf.title}</h3>
+											</div>
+											{#if pdf.description}
+												<p class="text-xs text-gray-600 mb-2">{pdf.description}</p>
+											{/if}
+											<p class="text-xs text-gray-500">Section : {pdf.section}</p>
+										</div>
+										<button
+											on:click={() => downloadPdf(pdf.id, pdf.file.name)}
+											class="ml-3 px-3 py-2 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+										>
+											📥 Télécharger
+										</button>
+									</div>
+								</div>
+							{/each}
+						</div>
+
+						{#if loadingPdfs}
+							<div class="text-center py-4">
+								<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+								<p class="text-sm text-gray-600 mt-2">Chargement des documents...</p>
+							</div>
+						{/if}
+					</div>
+				{/if}
+
 				<!-- Informations de l'audition -->
 				<div class="bg-white rounded-lg shadow-md p-6 mb-6">
 					<h2 class="text-xl font-semibold text-gray-900 mb-4">Informations sur votre audition</h2>
