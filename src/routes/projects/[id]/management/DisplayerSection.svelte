@@ -12,7 +12,6 @@
   export let participants : Participant[];
   export let participantsNotValidated : Array<any>;
 
-  console.log("PARTICPANTS ZEZEZ ", participantsNotValidated);
 
   const map = new Map<number, number>();
 
@@ -22,7 +21,6 @@
     for (const section of project.sectionGroup?.sections) {
       sectionSizeMap.set(section.id, section.size);
     }
-    console.log("Size map" , sectionSizeMap)
 
     for (const section of project.sectionGroup?.sections) {
       map.set(section.id, 0);
@@ -32,7 +30,6 @@
       const current = map.get(p.sectionId) ?? 0;
       map.set(p.sectionId, current + 1);
     }
-    console.log("map" , map)
   }
   
 

@@ -37,8 +37,6 @@
 		for (const e of project.concerts) {
 			commentMapConcert[e.id] = false;
 		}
-		console.log(commentMapConcert);
-		console.log(commentMapRehearsal);
 	}
 
 	let isMobile = false;
@@ -73,6 +71,7 @@
 		<div class="p-4 rounded-lg dark:bg-gray-800 w-full">
 			<ul class="flex flex-col gap-2">
 				{#if !isMobile}
+					{#if eventsToDisplay.length > 0}
 					<!-- {#each project.rehearsals as rehearsal} -->
 					<table class="border-separate border-spacing-y-2 m-2">
 						<thead>
@@ -155,6 +154,9 @@
 							{/each}
 						</tbody>
 					</table>
+					{:else}
+						<tr><td class="px-10 text-sm py-4" colspan="5">No events found</td></tr>
+					{/if}
 				{/if}
 				{#if isMobile}
 					{#if eventsToDisplay.length > 0}
@@ -206,7 +208,7 @@
 							</div>
 						{/each}
 					{:else}
-						<tr><td class="px-6 py-4 border border-gray-300" colspan="5">No events found</td></tr>
+						<tr><td class="px-6 text-sm py-4" colspan="5">No events found</td></tr>
 					{/if}
 				{/if}
 				{#if eventList.length > 4}

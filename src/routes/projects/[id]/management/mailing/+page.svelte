@@ -34,6 +34,8 @@
 
 	$: id = $page.params.id;
 
+	
+
 	onMount(async () => {
 		console.log('onMount');
 		console.log('id', id);

@@ -39,10 +39,13 @@
 		"@fortawesome/free-solid-svg-icons": "^6.5.2",
 		"@iconify/svelte": "^5.0.0",
 		"flowbite-svelte": "^0.46.14",
+		"quill": "^2.0.3",
 		"smelte": "^1.1.8",
 		"sortablejs": "^1.15.3",
 		"svelte-fa": "^4.0.2",
 		"svelte-materialify": "^0.3.11",
+		"svelte-quill": "^1.2.0",
+		"svelte-quilljs": "^1.0.1",
 		"svelte-waypoint": "^0.1.4",
 		"sweetalert2": "^11.12.0"
 	}

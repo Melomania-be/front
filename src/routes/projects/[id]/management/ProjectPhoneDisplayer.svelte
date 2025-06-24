@@ -5,7 +5,7 @@
 	import DateShow from '$lib/components/DateShow.svelte';
 	import { onMount } from 'svelte';
 	import Fa from 'svelte-fa';
-	import { faCalendarCheck, faDiagramProject, faEnvelope, faSheetPlastic, faUsers } from '@fortawesome/free-solid-svg-icons';
+	import { faCalendarCheck, faDiagramProject, faEnvelope, faMusic, faSheetPlastic, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 	export let project : any;
 	
@@ -16,6 +16,7 @@
 	let projectUrl: string;
     let callsheetUrl : string;
 	let attendanceUrl : string;
+	let auditionUrl : string;
 	
 	let participantNotValidated : number = 0;
 
@@ -26,6 +27,7 @@
 		projectUrl = `/projects/${project.id}/management`;
         callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
+		auditionUrl = `/projects/${project.id}/management/auditions`;
 
 		if(project?.participants){
         for(const p of project.participants){
@@ -37,26 +39,34 @@
 	}
 
 	let isMobile = false;
+	let screenDirection : "horizontal" | "vertical" = "vertical";
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
 	};
 
+	const checkDirection = () => {
+	screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+	};
+
 	onMount(() => {
 		checkMobile();
+		checkDirection();
 		window.addEventListener('resize', checkMobile);
+		window.addEventListener('resize', checkDirection);
 
 		return () => {
 			window.removeEventListener('resize', checkMobile);
+			window.removeEventListener('resize', checkDirection);
 		};
 	});
 </script>
 
-<div class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_#E7E7E7] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl">
+<div class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_rgba(0,0,0,0.1)] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl">
 {#if isMobile}
 	{#if project}
 	<!--Tabs-->
-	<div class="ml-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
+	<div class="ml-3 w-full text-lg text-gray-400 font-semibold flex mr-3">
 		<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(projectUrl)}>
             <div class="{selectedTab === 0 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
                 <Fa icon={faDiagramProject} class="text-[16px]" style="color: {selectedTab === 0 ? "white;" : "#8C8C8C;" }"/>
@@ -87,9 +97,14 @@
             <Fa icon={faCalendarCheck} class="text-[16px]" style="color: {selectedTab === 4 ? "white;" : "#8C8C8C;" }" />
 			</div>
         </button>
+		<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(auditionUrl)}>
+			<div class="{selectedTab === 5 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
+            <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
+			</div>
+        </button>
 	</div>
 	{:else}
-	<div class="ml-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
+	<div class="ml-3 w-full text-lg text-gray-400 font-semibold flex mr-3">
 		<button class="flex-1 flex p-3 justify-center items-center">
             <div class="{selectedTab === 0 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
                 <Fa icon={faDiagramProject} class="text-[16px]" style="color: {selectedTab === 0 ? "white;" : "#8C8C8C;" }"/>
@@ -118,6 +133,11 @@
 		<button class="flex-1 flex p-3 justify-center items-center">
 			<div class="{selectedTab === 4 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
             <Fa icon={faCalendarCheck} class="text-[16px]" style="color: {selectedTab === 4 ? "white;" : "#8C8C8C;" }" />
+			</div>
+        </button>
+		<button class="flex-1 flex p-3 justify-center items-center">
+			<div class="{selectedTab === 5 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
+            <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
 			</div>
         </button>
 	</div>
