@@ -11,7 +11,6 @@
 	export let participantsSeenCallsheet: Array<Participant>;
 	export let participantsNotValidated: Array<Participant>;
 
-	console.log("PARTIC SEE : " , participants)
 
 	let mode: 'callsheets' | 'registration' = 'callsheets';
 
@@ -99,7 +98,7 @@
 					</div>
 				</div>
 				<ul class="my-10 gap-2 grid  {isMobile ? "grid-cols-1" : "grid-cols-2"}">
-						{#if project.callsheets}
+						{#if project.callsheets && project.callsheets.length > 0}
 							{#each project.callsheets.reverse() as callsheets}
 								<li class="border-2 p-2 rounded-full border-gray-300 flex justify-center {maxUpdateDate(project.callsheets).id === callsheets.id ? "bg-blue-100" : ""}">
 									<div class="flex items-center justify-between">
@@ -115,7 +114,7 @@
 								</li>
 							{/each}
 						{:else}
-							<li class="text-sm">No callsheet</li>
+							<li class="text-sm px-10">No callsheet</li>
 						{/if}
 					</ul>
 				{#if project.participants && project.participants.length > 0}

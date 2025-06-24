@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { Form } from '$lib/types/Form';
+	import { faCircleRight, faTrash } from '@fortawesome/free-solid-svg-icons';
+	import Fa from 'svelte-fa';
 
 	export let disabled;
 	export let form: Form;
@@ -28,7 +30,7 @@
 
 {#if form.type === 'text' || form.type === 'checkbox'}
 	<input
-		class="border border-gray-100 flex-1"
+		class="border bg-blue-200 rounded-lg font-semibold p-1 px-4 text-black border-gray-100 flex-1"
 		type="text"
 		placeholder="Form"
 		bind:value={form.text}
@@ -36,7 +38,7 @@
 	/>
 {:else if form.type === 'select'}
 	<input
-		class="border border-gray-100 flex-1"
+		class="border bg-blue-200 font-semibold rounded-lg p-1 px-4 text-black border-gray-100 flex-1"
 		type="text"
 		placeholder="Form"
 		bind:value={selectProcess[0]}
@@ -45,9 +47,10 @@
 	/>
 	<div>
 		{#each selectOptions ?? [] as option}
-			<div class="flex">
+			<div class="ml-2 flex items-center gap-2">
+				<Fa icon={faCircleRight} style="color: #6B9AD9;" />
 				<input
-					class="border border-gray-100 flex-1"
+					class="border border-gray-100 flex-1 whitespace-nowrap"
 					type="text"
 					placeholder="Option"
 					bind:value={option}
@@ -63,13 +66,12 @@
 						form = form;
 					}}
 				>
-					<span class="icon-[tabler--trash]" style="width: 1.2rem; height: 1.2rem; color: black;"
-					></span>
+					<Fa icon={faTrash} style="color: #6B9AD9;" />
 				</button>
 			</div>
 		{/each}
 		<button
-			class="m-1 flex items-center justify-center"
+			class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semibold px-2 text-sm "
 			on:click={() => {
 				selectOptions.push('');
 				selectOptions = selectOptions;
@@ -78,12 +80,12 @@
 			}}
 			{disabled}
 		>
-			<span class="icon-[tabler--plus]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
+			Add Option
 		</button>
 	</div>
 {:else if form.type === 'multiple'}
 	<input
-		class="border border-gray-100 flex-1"
+		class="border bg-blue-200 rounded-full px-2 text-black border-gray-100 flex-1"
 		type="text"
 		placeholder="Form"
 		bind:value={selectProcess[0]}
@@ -94,7 +96,7 @@
 		{#each selectOptions ?? [] as option}
 			<div class="flex">
 				<input
-					class="border border-gray-100 flex-1"
+					class="border border-gray-400 flex-1"
 					type="text"
 					placeholder="Option"
 					bind:value={option}
@@ -110,13 +112,12 @@
 						form = form;
 					}}
 				>
-					<span class="icon-[tabler--trash]" style="width: 1.2rem; height: 1.2rem; color: black;"
-					></span>
+					<Fa icon={faTrash} style="color: #6B9AD9;" />
 				</button>
 			</div>
 		{/each}
 		<button
-			class="m-1 flex items-center justify-center"
+			class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semi-bold px-2 text-sm"
 			on:click={() => {
 				selectOptions.push('');
 				selectOptions = selectOptions;
@@ -125,7 +126,7 @@
 			}}
 			{disabled}
 		>
-			<span class="icon-[tabler--plus]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
+			Add Option
 		</button>
 	</div>
 {/if}

@@ -1,8 +1,21 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { Registration } from '$lib/types/Registration';
+	import Fa from 'svelte-fa';
+	import RichTextEditor from '../callsheet/RichTextEditor.svelte';
 	import RegistrationFormModifier from './RegistrationFormModifier.svelte';
 	import RegistrationShow from './RegistrationShow.svelte';
+	import {
+		faChevronDown,
+		faChevronUp,
+		faPenToSquare,
+		faTrash,
+		faTrashCan,
+		type IconDefinition
+	} from '@fortawesome/free-solid-svg-icons';
+
+	import { slide } from 'svelte/transition';
+	import { tick } from 'svelte';
 
 	export let registration: Registration;
 	export let projectId: number;
@@ -36,9 +49,9 @@
 
 		if (response.ok) {
 			goto(`/projects/${projectId}/management/registration`);
-		} 
+		}
 		//else {
-			//alert('An error occured');
+		//alert('An error occured');
 		//}
 	}
 
@@ -53,119 +66,171 @@
 			alert('An error occured');
 		}
 	}
+
+	let displayInfo: boolean = false;
+	let chevronInfo: IconDefinition = faChevronDown;
+
+	let displayForm: boolean = false;
+	let chevronForm: IconDefinition = faChevronDown;
 </script>
 
-<div class="grid grid-cols-2 bg-[#E7E7E7]">
-<div class="grid grid-cols-2 bg-[#E7E7E7]">
+<div class="grid grid-cols-2 bg-[#E7E7E7] min-h-screen p-4">
 	{#if registration}
 		<div
-			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+			class="m-1 relative max-w-xxl bg-white border-2 border-gray-400 p-4 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
 		>
-			{#if mode === 'modify'}
-				<div class="absolute top-0 right-0 p-1">
-					<button
-						on:click={() => (allowModification = !allowModification)}
-						class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-					>
-						{#if !allowModification}
-							<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"
-							></span>
-						{:else}
-							Stop editing
-						{/if}
-					</button>
-				</div>
-			{/if}
-
-			<div class="m-1">
-				<h1 class="text-2xl font-bold">Registration</h1>
+			<div class=" flex items-center">
 				{#if registration.id}
-					<div>
-						<a class="text-blue-600" href="/registration/{projectId}"
-							><h2 class="text-lg">Link to registration sheet</h2></a
-						>
-					</div>
-				{/if}
-				{#if allowModification}
 					<button
-						class="bg-rose-500 text-white p-2 rounded m-1"
-						on:click={() => {
-							registration.contents.push({
-								title: '',
-								text: '',
-								registration_id: 0,
-								id: null,
-								createdAt: new Date(),
-								updatedAt: new Date()
-							});
-							registration = registration;
-						}}
+						class="text-white font-semibold bg-[#6b9ad9] p-1 px-3 rounded-lg"
+						on:click={() => goto(`/registration/${projectId}`)}>Link to registration sheet</button
 					>
-						Add content
-					</button>
 				{/if}
-				<div>
-					{#if registration.contents && registration.contents.length > 0}
-						{#each registration.contents as content}<div class="grid grid-cols-1 gap-1">
-								<div class="flex items-center justify-center">
-									<input
-										class="border border-gray-100 flex-1
-                                    "
-										type="text"
-										placeholder="Title"
-										bind:value={content.title}
-										disabled={!allowModification}
-									/>
-									{#if allowModification}
-										<button
-											class="m-1 flex items-center justify-center"
-											on:click={() => {
-												registration.contents = registration.contents.filter(
-													(c) => c.title !== content.title || c.text !== content.text
-												);
-												registration = registration;
-											}}
-										>
-											<span
-												class="icon-[tabler--trash]"
-												style="width: 1.2rem; height: 1.2rem; color: black;"
-											></span>
-										</button>
-									{/if}
-								</div>
-								<textarea
-									class="border border-gray-100"
-									placeholder="Html content"
-									bind:value={content.text}
-									disabled={!allowModification}
-								></textarea>
-							</div>
-						{/each}
-					{/if}
-				</div>
-
-				<RegistrationFormModifier disabled={!allowModification} bind:registration />
-
-				{#if allowModification}
-					<div>
+				{#if mode === 'modify'}
+					<div class="mr-0 ml-auto">
 						<button
-							on:click={saveregistration}
-							class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+							on:click={() => (allowModification = !allowModification)}
+							class="text-white dark:text-gray-400 hover:bg-[#4f7cb7] dark:hover:text-gray-300 ml-auto bg-[#6B9AD9] p-1.5 rounded-md font-semibold items-center"
 						>
-							Save
+							{#if !allowModification}
+								<Fa icon={faPenToSquare} class="text-[20px]" style="color: white" />
+							{:else}
+								<span class="text-sm">Stop editing</span>
+							{/if}
 						</button>
-						{#if mode == 'modify'}
-							<button
-								on:click={deleteregistration}
-								class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-							>
-								Delete
-							</button>
-						{/if}
 					</div>
 				{/if}
 			</div>
+
+			<div class="m-1  min-h-[90%]">
+				<h1 class="text-2xl font-bold text-center uppercase mb-4">Registration Editor</h1>
+				<div class="bg-gray-200 p-4 rounded-xl">
+					<div class="flex items-center gap-4">
+						<h4 class="font-bold text-lg mb-4 uppercase">INFORMATION</h4>
+						<button
+							class="mb-4"
+							on:click={() => {
+								displayInfo = !displayInfo;
+								if (chevronInfo === faChevronDown) {
+									chevronInfo = faChevronUp;
+								} else {
+									chevronInfo = faChevronDown;
+								}
+							}}
+						>
+							<Fa icon={chevronInfo} style="color : black" />
+						</button>
+					</div>
+					{#if displayInfo}
+						<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+							{#if allowModification}
+								<button
+									class="bg-red-400 text-white p-2 rounded m-1 mb-4 font-semibold"
+									on:click={() => {
+										registration.contents.push({
+											title: '',
+											text: '',
+											registration_id: 0,
+											id: null,
+											createdAt: new Date(),
+											updatedAt: new Date()
+										});
+										registration = registration;
+									}}
+								>
+									Add content
+								</button>
+							{/if}
+							<div>
+								{#if registration.contents && registration.contents.length > 0}
+									{#each registration.contents as content}
+										<div
+											class="grid grid-cols-1 gap-2 bg-white border-2 border-gray-400 rounded-xl p-2 mb-4"
+										>
+											<div class="flex items-center justify-center">
+												<input
+													class=" flex-1 text-lg font-semibold rounded-lg bg-blue-200 pl-4"
+													type="text"
+													placeholder="Title"
+													bind:value={content.title}
+													disabled={!allowModification}
+												/>
+												{#if allowModification}
+													<button
+														class="m-1 ml-4 flex items-center justify-center"
+														on:click={() => {
+															registration.contents = registration.contents.filter(
+																(c) => c.title !== content.title || c.text !== content.text
+															);
+															registration = registration;
+														}}
+													>
+														<Fa icon={faTrash} class="text-[16px]" style="color: #6b9ad9" />
+													</button>
+												{/if}
+											</div>
+											{#if allowModification}
+												<div class=" {allowModification ? '' : 'hidden'} h-auto mb-12">
+													<RichTextEditor
+														value={content.text}
+														onChange={(v) => (content.text = v)}
+													/>
+												</div>
+											{:else}
+												<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
+											{/if}
+										</div>
+									{/each}
+								{/if}
+							</div>
+						</div>
+					{/if}
+				</div>
+
+				<div class="bg-gray-200 p-4 rounded-xl mt-8">
+					<div class="flex items-center gap-4">
+						<h4 class="font-bold text-lg mb-4 uppercase">FORM</h4>
+						<button
+							class="mb-4"
+							on:click={() => {
+								displayForm = !displayForm;
+								if (chevronForm === faChevronDown) {
+									chevronForm = faChevronUp;
+								} else {
+									chevronForm = faChevronDown;
+								}
+							}}
+						>
+							<Fa icon={chevronForm} style="color : black" />
+						</button>
+					</div>
+					{#if displayForm}
+						<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+							<RegistrationFormModifier disabled={!allowModification} bind:registration />
+						</div>
+					{/if}
+				</div>
+			</div>
+			<div class="flex justify-center w-full gap-4 mt-4">
+				{#if allowModification}
+					<button
+						on:click={saveregistration}
+						class="hover:bg-[#4f7cb7] bg-[#6B9AD9] text-white font-bold py-2 px-4 rounded flex-1"
+					>
+						Save
+					</button>
+					{#if mode == 'modify'}
+						<button
+							on:click={deleteregistration}
+							class="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded flex-1"
+						>
+							Delete
+						</button>
+					{/if}
+				{/if}
+			</div>
 		</div>
+
 		<div class="">
 			<RegistrationShow bind:registration {projectId} registrationModifierMode={true} />
 		</div>

@@ -15,14 +15,15 @@
 	export let participants: Participant[];
 	export let participantsNotSeenCallsheet: Array<any>;
 	export let participantsNotValidated: Array<any>;
-	console.log("PROZAZEA" , participantsNotValidated)
 	export let participantsWithoutEmail: Array<any>;
 
 
 	let isMobile = false;
+	let windowWidth : number;
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
+		windowWidth = window.innerWidth;
 	};
 
 	onMount(() => {
@@ -36,14 +37,14 @@
 </script>
 
 <div class="h-auto p-4 {isMobile ? "bg-[#E7E7E7] w-screen" : "bg-[#E7E7E7]"} border-2">
-	<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center">
+	<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center w-full">
 		<div class="bg-white border-2 border-[#E35656] rounded-[10px] 
 		{isMobile ? "w-full" : " w-[90%]"}
 		">
 			<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
 		</div>
 		<div class="flex text-white h-[100px] font-bold
-		{isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4 w-[70%]"}
+		{isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4"}
 		">
 			<div class="flex w-full text-center {isMobile ? "gap-3" : "gap-6"}">
 				<div class="rounded-lg py-2 px-4 flex-1 h-full bg-[#6CB1C8]">

@@ -136,7 +136,7 @@
 				</a>
             </div>
             {:else if project}
-                <p>No new participants waiting for validation</p>
+                <p class="px-10">No new participants waiting for validation</p>
             {/if}
 		</div>
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">

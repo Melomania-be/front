@@ -20,6 +20,20 @@
 	import TimePicker from '../TimePicker.svelte';
 
 	import { onMount, afterUpdate } from 'svelte';
+	import Fa from 'svelte-fa';
+	import {
+		faChevronCircleDown,
+		faChevronDown,
+		faChevronLeft,
+		faChevronUp,
+		faPenToSquare,
+		faTrash,
+		faUser,
+		faUsers,
+		type IconDefinition
+	} from '@fortawesome/free-solid-svg-icons';
+	import { slide } from 'svelte/transition';
+	import { tick } from 'svelte';
 
 	export let project: Project;
 	export let pieces: Array<Piece>;
@@ -30,79 +44,92 @@
 
 	let allowModification = mode === 'modify' ? false : true;
 
-    let initialSelectedPieces = [...project.pieces];
-    let initialAllPieces = pieces ? pieces.filter(piece => !project.pieces.some(p => p.id === piece.id)): [];
+	let initialSelectedPieces = [...project.pieces];
+	let initialAllPieces = pieces
+		? pieces.filter((piece) => !project.pieces.some((p) => p.id === piece.id))
+		: [];
 
-    let selectedPieces: Piece[] = [...initialSelectedPieces];
-    let allPieces: Piece[] = [...initialAllPieces];
-    let allPiecesContainer: HTMLElement;
-    let selectedPiecesContainer: HTMLElement;
+	let selectedPieces: Piece[] = [...initialSelectedPieces];
+	let allPieces: Piece[] = [...initialAllPieces];
+	let allPiecesContainer: HTMLElement;
+	let selectedPiecesContainer: HTMLElement;
 
 	let allPiecesSortable: any;
-    let selectedPiecesSortable: any;
+	let selectedPiecesSortable: any;
 
-    function initializeSortable() {
-        allPiecesSortable = Sortable.create(allPiecesContainer, {
-            group: {
-                name: 'pieces',
-                put: true,
-                pull: true
-            },
-            animation: 200,
-            sort: false,
-            onAdd: (evt: any) => {
-                const item = selectedPieces[evt.oldIndex as number];
-                allPieces.splice(evt.newIndex as number, 0, item);
-                console.log('allPieces: ', allPieces);
-            },
-            onRemove: (evt: any) => {
-                allPieces.splice(evt.oldIndex as number, 1);
-                console.log('allPieces: ', allPieces);
-            }
-        });
+	let initialized = false;
 
-        selectedPiecesSortable = Sortable.create(selectedPiecesContainer, {
-            group: {
-                name: 'pieces',
-                put: true,
-                pull: true
-            },
-            animation: 200,
-            onAdd: (evt: any) => {
-                const item = allPieces[evt.oldIndex as number];
-                selectedPieces.splice(evt.newIndex as number, 0, item);
-                console.log('selectedPieces: ', selectedPieces);
-            },
-            onRemove: (evt: any) => {
-                selectedPieces.splice(evt.oldIndex as number, 1);
-                console.log('selectedPieces: ', selectedPieces);
-            },
-            onUpdate: (evt: any) => {
-                const item = selectedPieces[evt.oldIndex as number];
-                selectedPieces.splice(evt.oldIndex as number, 1);
-                selectedPieces.splice(evt.newIndex as number, 0, item);
-                console.log('selectedPieces: ', selectedPieces);
-            }
-        });
-    }
+	$: if (displayProjectPieces && !initialized) {
+		initSortableWhenReady();
+	}
 
-    function toggleSortable() {
-        if (allPiecesSortable) {
-            allPiecesSortable.option('disabled', !allowModification);
-        }
-        if (selectedPiecesSortable) {
-            selectedPiecesSortable.option('disabled', !allowModification);
-        }
-    }
+	async function initSortableWhenReady() {
+		await tick(); // attend que allPiecesContainer soit bindé dans le DOM
 
-    onMount(() => {
-        initializeSortable();
-        toggleSortable();
-    });
+		if (allPiecesContainer && selectedPiecesContainer) {
+			initializeSortable();
+			toggleSortable();
+			initialized = true;
+		}
+	}
 
-    afterUpdate(() => {
-        toggleSortable();
-    });
+	function initializeSortable() {
+		allPiecesSortable = Sortable.create(allPiecesContainer, {
+			group: {
+				name: 'pieces',
+				put: true,
+				pull: true
+			},
+			animation: 200,
+			sort: false,
+			onAdd: (evt: any) => {
+				const item = selectedPieces[evt.oldIndex as number];
+				allPieces.splice(evt.newIndex as number, 0, item);
+				console.log('allPieces: ', allPieces);
+			},
+			onRemove: (evt: any) => {
+				allPieces.splice(evt.oldIndex as number, 1);
+				console.log('allPieces: ', allPieces);
+			}
+		});
+
+		selectedPiecesSortable = Sortable.create(selectedPiecesContainer, {
+			group: {
+				name: 'pieces',
+				put: true,
+				pull: true
+			},
+			animation: 200,
+			onAdd: (evt: any) => {
+				const item = allPieces[evt.oldIndex as number];
+				selectedPieces.splice(evt.newIndex as number, 0, item);
+				console.log('selectedPieces: ', selectedPieces);
+			},
+			onRemove: (evt: any) => {
+				selectedPieces.splice(evt.oldIndex as number, 1);
+				console.log('selectedPieces: ', selectedPieces);
+			},
+			onUpdate: (evt: any) => {
+				const item = selectedPieces[evt.oldIndex as number];
+				selectedPieces.splice(evt.oldIndex as number, 1);
+				selectedPieces.splice(evt.newIndex as number, 0, item);
+				console.log('selectedPieces: ', selectedPieces);
+			}
+		});
+	}
+
+	function toggleSortable() {
+		if (allPiecesSortable) {
+			allPiecesSortable.option('disabled', !allowModification);
+		}
+		if (selectedPiecesSortable) {
+			selectedPiecesSortable.option('disabled', !allowModification);
+		}
+	}
+
+	afterUpdate(() => {
+		toggleSortable();
+	});
 
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
 		project.rehearsals = project.rehearsals.filter((rehearsal) => rehearsal !== delRehearsal);
@@ -115,14 +142,28 @@
 	function addConcertDate() {
 		project.concerts = [
 			...project.concerts,
-			{ id: null, startDate: new Date(), endDate: new Date(), place: '', comment: '', project_id: null }
+			{
+				id: null,
+				startDate: new Date(),
+				endDate: new Date(),
+				place: '',
+				comment: '',
+				project_id: null
+			}
 		];
 	}
 
 	function addRehearsalDate() {
 		project.rehearsals = [
 			...project.rehearsals,
-			{ id: null, startDate: new Date(), endDate: new Date(), comment: '', place: '', project_id: null }
+			{
+				id: null,
+				startDate: new Date(),
+				endDate: new Date(),
+				comment: '',
+				place: '',
+				project_id: null
+			}
 		];
 	}
 
@@ -163,7 +204,7 @@
 
 		if (response.ok) {
 			const data = await response.json();
-			goto(`/projects/${data.id}/management`);
+			popUpSave = true;
 		} else {
 			if (response.status === StatusCodesClientError.UNPROCESSABLE_ENTITY) {
 				let error = await response.json();
@@ -236,410 +277,633 @@
 	}
 
 	$: if (browser) allowModification && fetchData();
+	console.log('project Name', project.sectionGroup);
+
+	let displayProjectInfo = false;
+	let chevronProjectInfo: IconDefinition = faChevronDown;
+
+	let displayProjectPieces = false;
+	let chevronPieces: IconDefinition = faChevronDown;
+
+	let displayEvents = false;
+	let chevronEvents: IconDefinition = faChevronDown;
+
+	let displayManagers = false;
+	let chevronManagers: IconDefinition = faChevronDown;
+
+	let popUpSave = false;
 </script>
 
-<div
-	class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
->
-	{#if mode === 'modify'}
-		<div class="absolute top-0 right-0 p-1">
+{#if popUpSave}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div
+			class="bg-white p-6 rounded-xl shadow-xl w-[50%] text-center flex flex-col items-center justify-center
+		"
+		>
+			<h2 class="text-lg font-semibold mb-2">Changes saved successfully</h2>
 			<button
-				on:click={() => (allowModification = !allowModification)}
-				class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				on:click={() => {
+					popUpSave = false;
+					allowModification = false;
+				}}>OK</button
 			>
-				{#if !allowModification}
-					<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"
-					></span>
-				{:else}
-					Stop editing
-				{/if}
-			</button>
-		</div>
-	{/if}
-
-	<div class="p-5">
-		<div class="w-full mb-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-			<input
-				class="ml-1 mt-1 w-full"
-				bind:value={project.name}
-				placeholder="Project name"
-				disabled={!allowModification}
-			/>
-		</div>
-
-		<h3 class="w-full text-center m-1 bg-slate-200">Project informations</h3>
-
-		<h4 class="text-lg">Section Group</h4>
-		<div class="m-1 border">
-			{#if allowModification}
-				<a href="/sectionGroups"
-					><button class="border border-blue-700 p-1 hover:bg-slate-200 rounded-full">
-						Manage section groups
-					</button></a
-				>
-			{/if}
-
-			{#if !allowModification}
-				{#if project.sectionGroup}
-					<p>{project.sectionGroup.name}</p>
-					<div class="border">
-						Composed of :
-						{#if project.sectionGroup.sections}
-							{#each project.sectionGroup.sections as section}
-								<div class="m-1 text-nowrap">{section.name} - {section.size}</div>
-							{/each}
-						{/if}
-					</div>
-				{:else}
-					<p>No section group</p>
-				{/if}
-			{:else}
-				<select class="flex w-1/2" bind:value={project.sectionGroup}>
-					<option value={null}>None</option>
-					{#if sectionGroups}
-						{#each sectionGroups as sectionGroup}
-							<option value={sectionGroup}>{sectionGroup.name}</option>
-						{/each}
-					{/if}
-				</select>
-
-				{#if project.sectionGroup?.sections}
-					<p>
-						Composed of :
-						{project.sectionGroup.sections.map((section) => section.name).join(', ')}.
-					</p>
-				{/if}
-			{/if}
-		</div>
-
-		<h4 class="text-lg">Pieces</h4>
-		<div class="container flex flex-col md:flex-row md:gap-4">
-			<div class="flex-1">
-				<h4 class="text-lg sticky top-0 bg-white">Available pieces</h4>
-				{#if allPieces.length === 0}
-					<p>No pieces available</p>
-				{:else}
-					<section bind:this={allPiecesContainer} class="list p-1  min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
-						{#each allPieces as piece}
-							<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
-								{piece.name} - {piece.composer.shortName}
-							</div>
-						{/each}
-					</section>
-				{/if}
-			</div>
-		
-			<div class="flex-1 mt-4 md:mt-0">
-				<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
-				<section bind:this={selectedPiecesContainer} class="list p-1  min-h-[300px] max-h-[300px] border border-black overflow-y-auto">
-					{#each project.pieces as piece}
-						<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
-							{piece.name} - {piece.composer.shortName}
-						</div>
-					{/each}
-				</section>
-			</div>
-		</div>
-
-		<h4 class="text-lg">Folder</h4>
-		<div class="m-1">
-			<select class="flex w-1/2" bind:value={project.folder}>
-				<option value={null}>None</option>
-				{#if folders}
-					{#each folders as folder}
-						<option value={folder}>{folder.name}</option>
-					{/each}
-				{/if}
-			</select>
-		</div>
-
-		<h4 class="text-lg">Rehearsals</h4>
-		<div class="m-1 border">
-			{#if !allowModification}
-				<div class="overflow-x-auto">
-					<table class="table-auto max-w-min min-w-max">
-						<thead>
-							<tr>
-								<th class="px-3 py-1">Date</th>
-								<th class="px-3 py-1">Place</th>
-								<th class="px-3 py-1">Comment</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#if project.rehearsals && project.rehearsals.length}
-								{#each project.rehearsals as rehearsal}
-									<tr class="rehearsal-entry">
-										<td class="px-3 py-1">
-											<DateShow startTime={rehearsal.startDate} endTime={rehearsal.endDate} withTime isRehearsal/>
-										</td>
-										<td class="px-3 py-1">{rehearsal.place}</td>
-										<td class="px-3 py-1 max-w-xs">{rehearsal.comment}</td>
-									</tr>
-								{/each}
-							{:else}
-								<tr><td colspan="3" class="text-center px-3 py-1">No rehearsal</td></tr>
-							{/if}
-						</tbody>
-					</table>
-				</div>
-			{:else}
-				<div class="overflow-x-auto">
-					<table class="table-auto max-w-min min-w-max">
-						<thead>
-							<tr>
-								<th class="px-3 py-1">Start Date</th>
-								<th class="px-3 py-1">End Date</th>
-								<th class="px-3 py-1">Place</th>
-								<th class="px-3 py-1">Comment</th>
-								<th class="px-3 py-1">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each project.rehearsals as rehearsal}
-								<tr class="rehearsal-entry">
-									<td class="px-3 py-1">
-										<DatePicker bind:date={rehearsal.startDate} />
-										<TimePicker bind:date={rehearsal.startDate} />
-									</td>
-									<td class="px-3 py-1">
-										<DatePicker bind:date={rehearsal.endDate} />
-										<TimePicker bind:date={rehearsal.endDate} />
-									</td>
-									<td class="px-3 py-1">
-										<input
-											class="p-1 w-full border-solid border-2 border-gray-200"
-											bind:value={rehearsal.place}
-											placeholder="enter a rehearsal place"
-											type="text"
-										/>
-									</td>
-									<td class="px-3 py-1">
-										<textarea
-											class="p-1 w-full"
-											bind:value={rehearsal.comment}
-											placeholder="enter a comment if needed"
-											rows="2"
-											cols="50"
-										></textarea>
-									</td>
-									<td class="px-3 py-1">
-										<button
-											class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
-											on:click={() => removeRehearsalDate(rehearsal)}>Remove
-										</button>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-				<button
-					class="bg-blue-700 text-sm px-2 py-1 m-2 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center mt-2"
-					on:click={addRehearsalDate}>Add Rehearsal Date
-				</button>
-			{/if}
-		</div>
-
-		<h4 class="text-lg">Concerts</h4>
-		<div class="m-1 border">
-			{#if !allowModification}
-			<div class="overflow-x-auto">
-				<table class="table-auto max-w-min min-w-max">
-					<thead>
-						<tr>
-							<th class="px-3 py-1">Date</th>
-							<th class="px-3 py-1">Place</th>
-							<th class="px-3 py-1">Comment</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#if project.concerts && project.concerts.length}
-							{#each project.concerts as concert}
-								<tr class="concert-entry">
-									<td class="px-3 py-1">
-										<DateShow startTime={concert.startDate} endTime={concert.endDate} withTime />
-									</td>
-									<td class="px-3 py-1">{concert.place}</td>
-									<td class="px-3 py-1 whitespace-normal">{concert.comment}</td>
-								</tr>
-							{/each}
-						{:else}
-							<tr><td colspan="3" class="text-center px-3 py-1">No concert</td></tr>
-						{/if}
-					</tbody>
-				</table>
-			</div>
-			{:else}
-				<div class="overflow-x-auto">
-					<table class="table-auto max-w-min min-w-max">
-						<thead>
-							<tr>
-								<th class="px-3 py-1">Start Date</th>
-								<th class="px-3 py-1">End Date</th>
-								<th class="px-3 py-1">Place</th>
-								<th class="px-3 py-1">Comment</th>
-								<th class="px-3 py-1">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each project.concerts as concert}
-								<tr class="concert-entry">
-									<td class="px-3 py-1">
-										<DatePicker bind:date={concert.startDate} />
-										<TimePicker bind:date={concert.startDate} />
-									</td>
-									<td class="px-3 py-1">
-										<DatePicker bind:date={concert.endDate} />
-										<TimePicker bind:date={concert.endDate} />
-									</td>
-									<td class="px-3 py-1">
-										<input
-											class="p-1 w-full border-solid border-2 border-gray-200"
-											bind:value={concert.place}
-											placeholder="enter a concert place"
-											type="text"
-										/>
-									</td>
-									<td class="px-3 py-1">
-										<textarea
-											class="p-1 w-full"
-											bind:value={concert.comment}
-											placeholder="enter a comment if needed"
-											rows="2"
-											cols="50"
-										></textarea>
-									</td>
-									<td class="px-3 py-1">
-										<button
-											class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
-											on:click={() => removeConcertDate(concert)}>Remove
-										</button>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-				<button
-					class="bg-blue-700 text-sm px-2 py-1 m-2 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center mt-2"
-					on:click={addConcertDate}>Add Concert Date
-				</button>
-			{/if}
-		</div>
-
-		<h3 class="w-full text-center m-1 bg-slate-200">Project managers for this project</h3>
-		<div class="m-1">
-			{#if !allowModification}
-				{#if project.responsibles && project.responsibles.length}
-					{#each project.responsibles as responsible}
-						<p>{responsible.firstName} {responsible.lastName}</p>
-					{/each}
-				{:else}
-					<p class="text-center">No project manager</p>
-				{/if}
-			{:else if project.responsibles}
-				{#each project.responsibles as responsible}
-					<div>
-						{responsible.firstName}
-						{responsible.lastName}
-						<button
-							class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
-							on:click={() =>
-								(project.responsibles = project.responsibles.filter(
-									(contact) => contact !== responsible
-								))}>Remove</button
-						>
-					</div>
-				{/each}
-				<button
-					class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
-					on:click={() => {
-						project.responsibles = [
-							...project.responsibles,
-							...contacts.filter((contact) => {
-								if (project.responsibles.find((responsible) => responsible.id === contact.id))
-									return false;
-								return contact.selected;
-							})
-						];
-					}}>Add project manager</button
-				>
-
-				<SimpleFilterer
-					bind:data={dataHolder}
-					showData={false}
-					editable={false}
-					on:optionsUpdated={() => fetchData()}
-					bind:options
-					bind:meta
-				>
-					<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-						{#if contacts}
-							{#each contacts as contact}
-								<div class="flex items-center p-4 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800">
-									<input
-										bind:checked={contact.selected}
-										id="bordered-checkbox-${contact.id}"
-										type="checkbox"
-										name="bordered-checkbox"
-										class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-									/>
-									<label
-										for="bordered-checkbox-${contact.id}"
-										class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-									>
-										{contact.firstName} {contact.lastName}
-									</label>
-								</div>
-							{/each}
-						{/if}
-					</div>
-				</SimpleFilterer>
-			{/if}
 		</div>
 	</div>
+{/if}
 
-	{#if allowModification}
-		<div>
-			<button
-				on:click={saveProject}
-				class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-			>
-				Save
-			</button>
-			{#if mode == 'modify'}
-				<button
-					on:click={deleteProject}
-					class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-				>
-					Delete
-				</button>
-			{/if}
+<div
+	class="max-w-xxl min-h-screen bg-[#E7E7E7] p-4 pt-2 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+>
+	<div class="flex mb-2">
+		<div
+			class="bg-[#6b9ad9] text-white font-semibold justify-center flex items-center gap-2 rounded-lg px-6 m-2"
+		>
+			<Fa icon={faChevronLeft} class="text-[14px]" style="color: white;" />
+			<a href={`/projects/${project.id}/management`}>Back</a>
 		</div>
-	{/if}
+		{#if mode === 'modify'}
+			<div class=" flex w-full p-2 mr-0 ml-auto">
+				<button
+					on:click={() => (allowModification = !allowModification)}
+					class="text-white dark:text-gray-400 hover:bg-[#4f7cb7] dark:hover:text-gray-300 ml-auto bg-[#6B9AD9] p-1.5 rounded-md font-semibold"
+				>
+					<div class="h-[20px] items-center flex justify-center {allowModification ? 'px-2' : ''}">
+						{#if !allowModification}
+							<Fa icon={faPenToSquare} class="text-[20px]" style="color: white;" />
+						{:else}
+							Stop editing
+						{/if}
+						<div></div>
+					</div></button
+				>
+			</div>
+		{/if}
+	</div>
+	<div class="">
+		<div class="p-5">
+			<div class="bg-white border-2 border-gray-500 rounded-lg p-4">
+				<div class="flex items-center gap-4">
+					<h1 class="font-bold text-lg mb-4">PROJECT INFORMATION</h1>
+					<button
+						class="mb-4"
+						on:click={() => {
+							displayProjectInfo = !displayProjectInfo;
+							if (chevronProjectInfo === faChevronDown) {
+								chevronProjectInfo = faChevronUp;
+							} else {
+								chevronProjectInfo = faChevronDown;
+							}
+						}}
+					>
+						<Fa icon={chevronProjectInfo} style="color : black" />
+					</button>
+				</div>
+				{#if displayProjectInfo}
+					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+						<div class="flex flex-col ml-4 w-1/2">
+							<div
+								class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
+										{!project.name ? 'text-red-500 placeholder-red-400' : ''}"
+								style="width: fit-content;"
+							>
+								Project Title
+							</div>
+							<input
+								class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none {!allowModification
+									? 'pointer-events-none'
+									: ''} 
+										{!project.name ? 'border-red-500 placeholder-red-400' : ''}"
+								bind:value={project.name}
+								placeholder="First name"
+								required
+							/>
+							{#if project.name === ''}
+								<div class="text-red-500 text-right text-xs ml-10 mr-2 mt-1">
+									Project title is required
+								</div>
+							{/if}
+						</div>
+						<div>
+							<div class="flex h-16 ml-4 w-full mt-4">
+								<div class="flex flex-col w-1/2">
+									<div
+										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500 flex"
+										style="width: fit-content;"
+									>
+										Section
+									</div>
+
+									{#if !allowModification}
+										<div
+											class="p-3 border-2 border-gray-500 z-10 rounded-xl focus:outline-none flex"
+										>
+											{project.sectionGroup ? project.sectionGroup.name : 'None'}
+										</div>
+									{:else}
+										<select
+											class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none"
+											bind:value={project.sectionGroup}
+										>
+											<option value={null}>None</option>
+
+											{#each sectionGroups as sectionGroup}
+												<option value={sectionGroup}>{sectionGroup.name}</option>
+											{/each}
+										</select>
+									{/if}
+								</div>
+								<div class="flex mr-4 ml-auto">
+									<a
+										href="/sectionGroups"
+										class="bg-[#6b9ad9] my-3 ml-auto mr-0 px-4 text-white pointer-events-auto hover:bg-[#4f7cb7] font-semibold justify-center flex items-center gap-2 rounded-lg"
+										><button> Manage section groups </button></a
+									>
+								</div>
+							</div>
+							{#if project.sectionGroup}
+								<p class="ml-4 uppercase mt-3 font-semibold">Composed of</p>
+								<div class="grid grid-cols-8 text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4">
+									{#each project.sectionGroup.sections as section}
+										<div
+											class="flex flex-col border-2 border-gray-400 rounded-full text-gray-500 p-1"
+										>
+											<p class="text-nowrap font-bold">{section.name}</p>
+											<p class="text-nowrap items-center flex justify-center gap-2 font-semibold">
+												<Fa icon={faUsers} style="color : #6b9ad9" />
+												{section.size}
+											</p>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+
+			<div
+				class="bg-white border-2 border-gray-500 rounded-lg p-4 mt-8"
+				class:bg-red-500={displayProjectPieces}
+			>
+				<div class="flex items-center gap-4">
+					<h4 class="font-bold text-lg mb-4 uppercase">Pieces & Folder</h4>
+					<button
+						class="mb-4"
+						on:click={() => {
+							displayProjectPieces = !displayProjectPieces;
+							if (chevronPieces === faChevronDown) {
+								chevronPieces = faChevronUp;
+							} else {
+								chevronPieces = faChevronDown;
+							}
+						}}
+					>
+						<Fa icon={chevronPieces} style="color : black" />
+					</button>
+				</div>
+				{#if displayProjectPieces}
+					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+						<div class="flex gap-4">
+							<div class="flex-1">
+								<h4 class="text-lg top-0 bg-white">Available pieces</h4>
+								{#if allPieces.length === 0}
+									<p>No pieces available</p>
+								{:else}
+									<section
+										bind:this={allPiecesContainer}
+										class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
+									>
+										{#each allPieces as piece}
+											<div
+												class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab"
+											>
+												{piece.name} - {piece.composer.shortName}
+											</div>
+										{/each}
+									</section>
+								{/if}
+							</div>
+							<div class="flex-1 mt-4 md:mt-0">
+								<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
+								<section
+									bind:this={selectedPiecesContainer}
+									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
+								>
+									{#each project.pieces as piece}
+										<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
+											{piece.name} - {piece.composer.shortName}
+										</div>
+									{/each}
+								</section>
+							</div>
+						</div>
+						<div class="pb-4 pt-4">
+							{#if allowModification}
+								<div class="flex flex-col h-16 w-1/2">
+									<div
+										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
+										style="width: fit-content;"
+									>
+										Section*
+									</div>
+
+									<select
+										class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none"
+										bind:value={project.folder}
+									>
+										<option value={null}>None</option>
+
+										{#each folders as folder}
+											<option value={folder}>{folder.name}</option>
+										{/each}
+									</select>
+								</div>
+							{:else}
+								<div class="flex flex-col w-1/2">
+									<div
+										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500 flex"
+										style="width: fit-content;"
+									>
+										Folder
+									</div>
+
+									<div class="p-3 border-2 border-gray-500 z-10 rounded-xl focus:outline-none flex">
+										{project.folder ? project.folder.name : 'None'}
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+
+			<div class="bg-white border-2 border-gray-500 rounded-lg p-4 mt-8">
+				<div class="flex items-center gap-4">
+					<h4 class="font-bold text-lg mb-4 uppercase">Events</h4>
+					<button
+						class="mb-4"
+						on:click={() => {
+							displayEvents = !displayEvents;
+							if (chevronEvents === faChevronDown) {
+								chevronEvents = faChevronUp;
+							} else {
+								chevronEvents = faChevronDown;
+							}
+						}}
+					>
+						<Fa icon={chevronEvents} style="color : black" />
+					</button>
+				</div>
+
+				{#if displayEvents}
+					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+						<h4 class="text-lg p-1 font-semibold text-gray-500">Rehearsals</h4>
+						<div class="p-1">
+							{#if !allowModification}
+								<div class="overflow-x-auto">
+									<table class="table-auto max-w-min min-w-max">
+										<thead>
+											<tr>
+												<th class="px-3 py-1">Date</th>
+												<th class="px-3 py-1">Place</th>
+												<th class="px-3 py-1">Comment</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#if project.rehearsals && project.rehearsals.length}
+												{#each project.rehearsals as rehearsal}
+													<tr class="rehearsal-entry">
+														<td class="px-3 py-1">
+															<DateShow
+																startTime={rehearsal.startDate}
+																endTime={rehearsal.endDate}
+																withTime
+																isRehearsal
+															/>
+														</td>
+														<td class="px-3 py-1">{rehearsal.place}</td>
+														<td class="px-3 py-1 max-w-xs">{rehearsal.comment}</td>
+													</tr>
+												{/each}
+											{:else}
+												<tr><td colspan="3" class="text-center px-3 py-1">No rehearsal</td></tr>
+											{/if}
+										</tbody>
+									</table>
+								</div>
+							{:else}
+								<div class="overflow-x-auto">
+									<table class="table-auto max-w-min min-w-max">
+										<thead>
+											<tr>
+												<th class="px-3 py-1">Start Date</th>
+												<th class="px-3 py-1">End Date</th>
+												<th class="px-3 py-1">Place</th>
+												<th class="px-3 py-1">Comment</th>
+												<th class="px-3 py-1">Actions</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#each project.rehearsals as rehearsal}
+												<tr class="rehearsal-entry">
+													<td class="px-3 py-1">
+														<DatePicker bind:date={rehearsal.startDate} />
+														<TimePicker bind:date={rehearsal.startDate} />
+													</td>
+													<td class="px-3 py-1">
+														<DatePicker bind:date={rehearsal.endDate} />
+														<TimePicker bind:date={rehearsal.endDate} />
+													</td>
+													<td class="px-3 py-1">
+														<input
+															class="p-1 w-full border-solid border-2 border-gray-200"
+															bind:value={rehearsal.place}
+															placeholder="enter a rehearsal place"
+															type="text"
+														/>
+													</td>
+													<td class="px-3 py-1">
+														<textarea
+															class="p-1 w-full"
+															bind:value={rehearsal.comment}
+															placeholder="enter a comment if needed"
+															rows="2"
+															cols="50"
+														></textarea>
+													</td>
+													<td class="px-3 py-1">
+														<button
+															class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
+															on:click={() => removeRehearsalDate(rehearsal)}
+															>Remove
+														</button>
+													</td>
+												</tr>
+											{/each}
+										</tbody>
+									</table>
+								</div>
+								<button
+									class="hover:bg-[#4f7cb7] bg-[#6B9AD9] font-semibold text-sm px-2 py-1 m-2 rounded-lg text-white focus:outline-none focus:ring-4 focus:ring-blue-300 text-center mt-2"
+									on:click={addRehearsalDate}
+									>Add Rehearsal
+								</button>
+							{/if}
+						</div>
+
+						<h4 class="text-lg p-1 font-semibold text-gray-500">Concerts</h4>
+						<div class="p-1">
+							{#if !allowModification}
+								<div class="overflow-x-auto">
+									<table class="table-auto max-w-min min-w-max">
+										<thead>
+											<tr>
+												<th class="px-3 py-1">Date</th>
+												<th class="px-3 py-1">Place</th>
+												<th class="px-3 py-1">Comment</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#if project.concerts && project.concerts.length}
+												{#each project.concerts as concert}
+													<tr class="concert-entry">
+														<td class="px-3 py-1">
+															<DateShow
+																startTime={concert.startDate}
+																endTime={concert.endDate}
+																withTime
+															/>
+														</td>
+														<td class="px-3 py-1">{concert.place}</td>
+														<td class="px-3 py-1 whitespace-normal">{concert.comment}</td>
+													</tr>
+												{/each}
+											{:else}
+												<tr><td colspan="3" class="text-center px-3 py-1">No concert</td></tr>
+											{/if}
+										</tbody>
+									</table>
+								</div>
+							{:else}
+								<div class="overflow-x-auto">
+									<table class="table-auto max-w-min min-w-max">
+										<thead>
+											<tr>
+												<th class="px-3 py-1">Start Date</th>
+												<th class="px-3 py-1">End Date</th>
+												<th class="px-3 py-1">Place</th>
+												<th class="px-3 py-1">Comment</th>
+												<th class="px-3 py-1">Actions</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#each project.concerts as concert}
+												<tr class="concert-entry">
+													<td class="px-3 py-1">
+														<DatePicker bind:date={concert.startDate} />
+														<TimePicker bind:date={concert.startDate} />
+													</td>
+													<td class="px-3 py-1">
+														<DatePicker bind:date={concert.endDate} />
+														<TimePicker bind:date={concert.endDate} />
+													</td>
+													<td class="px-3 py-1">
+														<input
+															class="p-1 w-full border-solid border-2 border-gray-200"
+															bind:value={concert.place}
+															placeholder="enter a concert place"
+															type="text"
+														/>
+													</td>
+													<td class="px-3 py-1">
+														<textarea
+															class="p-1 w-full"
+															bind:value={concert.comment}
+															placeholder="enter a comment if needed"
+															rows="2"
+															cols="50"
+														></textarea>
+													</td>
+													<td class="px-3 py-1">
+														<button
+															class="bg-red-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
+															on:click={() => removeConcertDate(concert)}
+															>Remove
+														</button>
+													</td>
+												</tr>
+											{/each}
+										</tbody>
+									</table>
+								</div>
+								<button
+									class="hover:bg-[#4f7cb7] bg-[#6B9AD9] font-semibold text-sm px-2 py-1 m-2 rounded-lg text-white focus:outline-none focus:ring-4 focus:ring-blue-300 text-center mt-2"
+									on:click={addConcertDate}
+									>Add Concert
+								</button>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+
+			<div class="bg-white border-2 border-gray-500 rounded-lg p-4 mt-8">
+				<div class="flex items-center gap-4">
+					<h4 class="font-bold text-lg mb-4 uppercase">managers</h4>
+					<button
+						class="mb-4"
+						on:click={() => {
+							displayManagers = !displayManagers;
+							if (chevronManagers === faChevronDown) {
+								chevronManagers = faChevronUp;
+							} else {
+								chevronManagers = faChevronDown;
+							}
+						}}
+					>
+						<Fa icon={chevronManagers} style="color : black" />
+					</button>
+				</div>
+
+				{#if displayManagers}
+					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+						<div class="p-1 w-full">
+							<div class="text-sm py-6 grid grid-cols-5 gap-4">
+								{#if project.responsibles && project.responsibles.length === 0}
+									<p class="text-center">No project manager</p>
+								{:else}
+									{#each project.responsibles as responsible}
+										<div
+											class="pl-4 border-2 border-gray-400 text-sm flex items-center gap-3 rounded-full p-2"
+										>
+											<Fa icon={faUser} class="text-[16px]" style="color: #6B9AD9;" />
+											<div class="flex flex-col w-full">
+												<p class="overflow-hidden text-gray-500 font-semibold text-md">
+													{responsible.firstName}
+													{responsible.lastName}
+												</p>
+											</div>
+											{#if allowModification}
+												<button
+													class="bg-red-400 hover:bg-red-500 text-sm px-2 py-1 rounded-lg text-white focus:outline-none focus:ring-4 focus:ring-red-300 text-center"
+													on:click={() =>
+														(project.responsibles = project.responsibles.filter(
+															(contact) => contact !== responsible
+														))}><Fa icon={faTrash} style="color: white;" /></button
+												>
+											{/if}
+										</div>
+									{/each}
+									
+								{/if}
+							</div>
+							{#if allowModification}
+										<div class="w-full">
+											<button
+												class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
+												on:click={() => {
+													project.responsibles = [
+														...project.responsibles,
+														...contacts.filter((contact) => {
+															if (
+																project.responsibles.find(
+																	(responsible) => responsible.id === contact.id
+																)
+															)
+																return false;
+															return contact.selected;
+														})
+													];
+												}}>Add project manager</button
+											>
+
+											<SimpleFilterer
+												bind:data={dataHolder}
+												showData={false}
+												editable={false}
+												on:optionsUpdated={() => fetchData()}
+												bind:options
+												bind:meta
+											>
+												<div
+													class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
+												>
+													{#if contacts}
+														{#each contacts as contact}
+															<div
+																class="flex items-center p-4 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800"
+															>
+																<input
+																	bind:checked={contact.selected}
+																	id="bordered-checkbox-${contact.id}"
+																	type="checkbox"
+																	name="bordered-checkbox"
+																	class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+																/>
+																<label
+																	for="bordered-checkbox-${contact.id}"
+																	class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+																>
+																	{contact.firstName}
+																	{contact.lastName}
+																</label>
+															</div>
+														{/each}
+													{/if}
+												</div>
+											</SimpleFilterer>
+										</div>
+									{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+
+		{#if allowModification}
+			<div class="p-4 flex gap-4">
+				<button
+					on:click={saveProject}
+					class="hover:bg-[#4f7cb7] bg-[#6B9AD9] text-white font-bold py-2 px-4 rounded-lg"
+				>
+					Save
+				</button>
+				{#if mode == 'modify'}
+					<button
+						on:click={deleteProject}
+						class="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg"
+					>
+						Delete
+					</button>
+				{/if}
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
 	.table-auto {
-	  border-collapse: collapse;
-	  width: 100%;
+		border-collapse: collapse;
+		width: 100%;
 	}
-	.table-auto th, .table-auto td {
-	  border: 1px solid #ddd;
-	  padding: 8px;
+	.table-auto th,
+	.table-auto td {
+		border: 1px solid #ddd;
+		padding: 8px;
 	}
 	.table-auto th {
-	  background-color: #f2f2f2;
-	  text-align: left;
+		background-color: #f2f2f2;
+		text-align: left;
 	}
 	.table-auto tr:nth-child(even) {
-	  background-color: #f9f9f9;
+		background-color: #f9f9f9;
 	}
 	.table-auto tr:hover {
-	  background-color: #ddd;
+		background-color: #ddd;
 	}
 
-    .item:active {
-        cursor: grabbing;
-    }
+	.item:active {
+		cursor: grabbing;
+	}
 </style>

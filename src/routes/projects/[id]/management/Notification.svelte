@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Participant } from '$lib/types/Participant';
 	import type { Project } from '$lib/types/Project';
+	import { onMount } from 'svelte';
 
 	export let participantsWithoutEmail: Array<Participant>;
 	export let participantsNotValidated: Array<Participant>;
@@ -21,7 +22,202 @@
 		|| (!project.callsheets || project.callsheets?.length === 0 )
 		|| !project.registration
 	);
+
+	
+
+	let isMobile = false;
+	let windowWidth : number;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+		windowWidth = window.innerWidth;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
+
+	let showPhonePopUpManager = false;
+	let showPhonePopUpRehearsal = false;
+	let showPhonePopUpConcert = false;
+	let showPhonePopUpCallsheet = false;
+	let showPhonePopUpSection = false;
+	let showPhonePopUpRegistration = false;
 </script>
+
+
+{#if showPhonePopUpManager}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">NO MANAGER</h2>
+			<div class="text-gray-500 flex flex-col py-4">
+				Please add at least one person to be in charge of the project. This person will have its
+				contact informations displayed for this project.
+			</div>
+			<div class="flex gap-6 w-full">
+				<button 
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpManager = false;
+					}}>Close</button
+				>
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpManager = false;
+					}}>Add Manager</a
+				>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showPhonePopUpRehearsal}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">NO REHEARSAL</h2>
+			<div class="text-gray-500 flex flex-col py-4">
+				Please add at least one rehearsal to the project. This will allow participants to know
+				when they have to be present.
+			</div>
+			<div class="flex gap-6 w-full">
+				<button 
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpRehearsal = false;
+					}}>Close</button
+				>
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpRehearsal = false;
+					}}>Add Rehearsal</a
+				>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showPhonePopUpConcert}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">NO CONCERT</h2>
+			<div class="text-gray-500 flex flex-col py-4">
+				Please add at least one concert to the project. This will allow participants to know when
+						they have to be present.
+			</div>
+			<div class="flex gap-6 w-full">
+				<button 
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpConcert = false;
+					}}>Close</button
+				>
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpConcert = false;
+					}}>Add Concert</a
+				>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showPhonePopUpCallsheet}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">NO CALLSHEET</h2>
+			<div class="text-gray-500 flex flex-col py-4">
+				Please add at least one callsheet to the project. This will allow participants to have
+				informations about this project when needed.
+			</div>
+			<div class="flex gap-6 w-full">
+				<button 
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpCallsheet = false;
+					}}>Close</button
+				>
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpCallsheet = false;
+					}}>Add Callsheet</a
+				>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showPhonePopUpSection}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">NO SECTION</h2>
+			<div class="text-gray-500 flex flex-col py-4">
+				Please add at least one section to the section group. This will allow participants to know
+				in which section they are.
+			</div>
+			<div class="flex gap-6 w-full">
+				<button 
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpSection = false;
+					}}>Close</button
+				>
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpSection = false;
+					}}>Add Section</a
+				>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showPhonePopUpRegistration}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		">
+			<h2 class="text-lg font-bold mb-2">NO REGISTRATION</h2>
+			<div class="text-gray-500 flex flex-col py-4">
+				Please add a registration to the project. With this you will allow people to register to
+				this project if they have the link.
+			</div>
+			<div class="flex gap-6 w-full">
+				<button 
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold"
+					on:click={() => {
+						showPhonePopUpRegistration = false;
+					}}>Close</button
+				>
+				<a
+					href="/projects/{project.id}/management/modify"
+					class="mt-4 px-2 py-2 bg-[#6b9ad9] text-white rounded flex-1 font-semibold text-sm"
+					on:click={() => {
+						showPhonePopUpRegistration = false;
+					}}>Add Registration</a
+				>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <div class="p-2 pl-4 pr-4 w-full">
 	<h3 class="text-lg font-bold text-[#E35656] uppercase">Information</h3>
@@ -49,19 +245,28 @@
 		-->
 		{#if informationDisplayed}
 			{#if !project.responsibles || project.responsibles.length === 0}
+				{#if !isMobile}
 				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 					href="/projects/{project.id}/management/modify"
 					on:mouseenter={() => managerDetails = true}
 					on:mouseleave={() => managerDetails = false}
 					>
 					<span>No Manager</span>
+					
 					<div class="tooltip font-s pointer-events-none {managerDetails ? 'visible' : ''}">
 						Please add at least one person to be in charge of the project. This person will have its
 						contact informations displayed for this project.
 					</div>
+					
 				</a>
+				{:else}
+				<button class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+				on:click={()=>showPhonePopUpManager = true}
+				><span>No Manager</span></button>
+				{/if}
 			{/if}
 			{#if project.rehearsals.length === 0}
+				{#if !isMobile}
 				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 					href="/projects/{project.id}/management/modify"
 					on:mouseenter={() => rehearsalDetails = true}
@@ -73,8 +278,14 @@
 						when they have to be present.
 					</div>
 				</a>
+				{:else}
+					<button class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					on:click={()=>showPhonePopUpRehearsal = true}
+					><span>No Rehearsal</span></button>
+				{/if}
 			{/if}
 			{#if project.concerts.length === 0}
+				{#if !isMobile}
 				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 					href="/projects/{project.id}/management/modify"
 					on:mouseenter={() => concertDetails = true}
@@ -86,8 +297,14 @@
 						they have to be present.
 					</div>
 				</a>
+				{:else}
+					<button class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					on:click={()=>showPhonePopUpConcert = true}
+					><span>No Concert</span></button>
+				{/if}
 			{/if}
 			{#if project.sectionGroup?.sections.length === 0}
+				{#if !isMobile}
 				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 					href="/sectionGroups"
 					on:mouseenter={() => sectionGroupDetails = true}
@@ -99,8 +316,14 @@
 						in which section they are.
 					</div>
 				</a>
+				{:else}
+					<button class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					on:click={()=>showPhonePopUpSection = true}
+					><span>No Section</span></button>
+				{/if}
 			{/if}
 			{#if !project.callsheets || project.callsheets?.length === 0}
+				{#if !isMobile}
 				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 					href="/projects/{project.id}/management/callsheets"
 					on:mouseenter={() => callsheetDetails = true}
@@ -112,8 +335,14 @@
 						informations about this project when needed.
 					</div>
 				</a>
+				{:else}
+					<button class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					on:click={()=>showPhonePopUpCallsheet = true}
+					><span>No Callsheet</span></button>
+				{/if}
 			{/if}
 			{#if !project.registration}
+				{#if !isMobile}
 				<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 					href="/projects/{project.id}/management/registration"
 					on:mouseenter={() => registrationDetails = true}
@@ -125,6 +354,11 @@
 						this project if they have the link.
 					</div>
 				</a>
+				{:else}
+					<button class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
+					on:click={()=>showPhonePopUpRegistration = true}
+					><span>No Registration</span></button>
+				{/if}
 			{/if}
 		{:else}
 			<p class="mb-4 text-gray-500 uppercase">No information</p>

@@ -164,25 +164,39 @@
     }
 
     let isMobile = false;
+	let screenDirection : "horizontal" | "vertical" = "vertical";
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
 	};
 
+	const checkDirection = () => {
+        screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+        if(!isMobile){
+            showSidebar = true;
+        }
+        if(isMobile && screenDirection === "horizontal" ){
+            showSidebar = false;
+        }
+	};
+
 	onMount(() => {
 		checkMobile();
+		checkDirection();
 		window.addEventListener('resize', checkMobile);
+		window.addEventListener('resize', checkDirection);
 
 		return () => {
 			window.removeEventListener('resize', checkMobile);
+			window.removeEventListener('resize', checkDirection);
 		};
 	});
 </script>
 
 {#if data.connected}
-<div class="flex h-auto bg-gray-100 dark:bg-gray-900 border-2 {isMobile? "overflow-x-hidden" : "overflow-x-hidden"}">
+<div class="flex h-auto bg-gray-100 dark:bg-gray-900 {isMobile? "overflow-x-hidden" : "overflow-x-hidden"}">
     <!-- Sidebar -->
-    <aside class={`fixed top-0 left-0 z-40 w-64 h-full transition-transform ${showSidebar ? '' : '-translate-x-full'} sm:translate-x-0 bg-gradient-to-t from-[#343CAD] to-[#6BB0C7] dark:bg-gray-800 border-r dark:border-gray-700`}>
+    <aside class={`fixed top-0 left-0 z-40 w-64 h-full transition-transform ${screenDirection === "horizontal" ? '' : '-translate-x-full'} ${showSidebar ? 'translate-x-0' : '-translate-x-full'} bg-gradient-to-t from-[#343CAD] to-[#6BB0C7] dark:bg-gray-800 border-r dark:border-gray-700`}>
         <div class="h-full overflow-y-auto px-3 py-4">
             <h2 class="text-xl font-bold dark:text-gray-800 text-white mb-6 px-2">Melomania</h2>
             <ul class="space-y-2">
@@ -190,6 +204,7 @@
                     <li>
                         <a 
                             href={item.href}
+                            on:click={()=>{if (isMobile){showSidebar=false}}}
                             class="flex items-center p-2 text-white font-medium dark:text-gray-300 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-all"
                             class:bg-blue-600={currentPath === item.href}
                             class:dark:bg-blue-700={currentPath === item.href}
@@ -208,16 +223,16 @@
     <!-- Mobile backdrop to close sidebar -->
     {#if showSidebar}
         <div
-            class="fixed inset-0 z-30 bg-black bg-opacity-50 sm:hidden"
+            class="fixed inset-0 z-30 bg-black bg-opacity-50 {!isMobile ? "hidden" : "" }"
             on:click={toggleSidebar}
         ></div>
     {/if}
 
     <!-- Main content -->
-    <div class="bg-white w-screen ml-0 sm:ml-64">
+    <div class="bg-white w-screen ml-0 {!isMobile ? "ml-64" : "" }">
         <!-- Mobile toggle button -->
         <button 
-            class="sm:hidden p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            class="{!isMobile ? "hidden" : ""} p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
             on:click={toggleSidebar}
         >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

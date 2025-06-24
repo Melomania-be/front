@@ -66,7 +66,7 @@
 	})
 </script>
 
-<div class="grid grid-cols-1 place-items-center p-2">
+<div class="grid grid-cols-1 place-items-center p-2 w-full">
 	<div class={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} w-full mt-2`}>
 		<div class="relative {!paginatorTop ? 'col-span-2' : ''} {isMobile ? 'mb-2' : ''}">
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
