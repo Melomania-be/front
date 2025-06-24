@@ -59,7 +59,7 @@
 
 	let hidden5 = true;
 	let transitionParams = {
-		x: -320,
+		x: 320,
 		duration: 200,
 		easing: sineIn
 	};
@@ -67,7 +67,7 @@
 
 <Drawer
 	class="absolute z-10 w-[320px] sm:w-1/3"
-	placement="left"
+	placement="right"
 	transitionType="fly"
 	{transitionParams}
 	bind:hidden={hidden5}
