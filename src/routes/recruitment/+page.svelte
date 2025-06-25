@@ -55,6 +55,8 @@
   let isEditing = false;
   let editForm: Partial<Recruitment> = {};
   let daysThreshold = 14;
+  const SIMILARITY_THRESHOLD = 2;
+  let isRecalculating = false;
 
   // New variable declaration for the datetime-local input binding
   let checkStatusDateTime: string | null = null;
@@ -154,21 +156,76 @@
   });
 }
 
-  // --- CRUD & Status Check ---
 
-  async function fetchRecruitment() {
-    try {
-      const res = await fetch('/api/recruitment');
-      if (res.ok) {
-        recruitment = await res.json();
-        sortTable(sortColumn);
-      } else {
-        toast.error('Failed to refresh recruitment data.');
-      }
-    } catch {
-      toast.error('Could not load recruitment data.');
+
+// --- Utility Functions ---
+
+// NEW: Levenshtein Distance function to check for similarity
+function getLevenshteinDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const matrix = Array(b.length + 1)
+    .fill(null)
+    .map(() => Array(a.length + 1).fill(null));
+
+  for (let i = 0; i <= a.length; i++) {
+    matrix[0][i] = i;
+  }
+
+  for (let j = 0; j <= b.length; j++) {
+    matrix[j][0] = j;
+  }
+
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // deletion
+        matrix[j - 1][i] + 1, // insertion
+        matrix[j - 1][i - 1] + substitutionCost // substitution
+      );
     }
   }
+
+  return matrix[b.length][a.length];
+}
+
+
+
+  // --- CRUD & Status Check ---
+
+  // async function fetchRecruitment() {
+  //   try {
+  //     const res = await fetch('/api/recruitment');
+  //     if (res.ok) {
+  //       recruitment = await res.json();
+  //       sortTable(sortColumn);
+  //     } else {
+  //       toast.error('Failed to refresh recruitment data.');
+  //     }
+  //   } catch {
+  //     toast.error('Could not load recruitment data.');
+  //   }
+  // }
+
+async function fetchRecruitment(shouldSort = true) { 
+  try {
+    const res = await fetch('/api/recruitment');
+    if (res.ok) {
+      recruitment = await res.json();
+      
+      // Only sort if the shouldSort parameter is true
+      if (shouldSort) {
+        sortTable(sortColumn);
+      }
+    } else {
+      toast.error('Failed to refresh recruitment data.');
+    }
+  } catch {
+    toast.error('Could not load recruitment data.');
+  }
+}
 
   async function fetchUsers() {
     try {
@@ -213,53 +270,143 @@
     }
   }
 
-  async function saveRecruit() {
-    if (
-      !editForm.firstName?.trim() ||
-      !editForm.lastName?.trim() ||
-      editForm.sectionGroupId === undefined ||
-      editForm.contactedBy === undefined ||
-      !editForm.status
-    ) {
-      toast.error('Please fill all required fields.');
-      return;
+// with similarity check
+async function saveRecruit() {
+  if (
+    !editForm.firstName?.trim() ||
+    !editForm.lastName?.trim() ||
+    editForm.sectionGroupId === undefined ||
+    editForm.contactedBy === undefined ||
+    !editForm.status
+  ) {
+    toast.error('Please fill all required fields.');
+    return;
+  }
+
+  // --- NEW: Duplicate and Similarity Check ---
+  if (!isEditing) { // Only run this check when creating a new recruit
+    const newFirstName = editForm.firstName.trim().toLowerCase();
+    const newLastName = editForm.lastName.trim().toLowerCase();
+    const newFullName = `${newFirstName} ${newLastName}`;
+
+    const exactMatches: Recruitment[] = [];
+    const similarMatches: Recruitment[] = [];
+
+    for (const r of recruitment) {
+      const existingFullName = `${r.firstName.toLowerCase()} ${r.lastName.toLowerCase()}`;
+      
+      if (existingFullName === newFullName) {
+        exactMatches.push(r);
+        continue; // It's an exact match, no need to check for similarity
+      }
+      
+      const distance = getLevenshteinDistance(newFullName, existingFullName);
+      if (distance > 0 && distance <= SIMILARITY_THRESHOLD) {
+        similarMatches.push(r);
+      }
     }
 
-    const payload = {
-      firstName: editForm.firstName.trim(),
-      lastName: editForm.lastName.trim(),
-      sectionGroupId: editForm.sectionGroupId,
-      contactDate: editForm.contactDate,
-      contactedBy: editForm.contactedBy,
-      status: editForm.status,
-      comment: editForm.comment ?? null
-    };
-
-    try {
-      let res: Response;
-      if (isEditing && editForm.id) {
-        res = await fetch(`/api/recruitment/${editForm.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        toast.success('Recruitment updated successfully.');
-      } else {
-        res = await fetch('/api/recruitment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        toast.success('Recruitment added successfully.');
+    if (exactMatches.length > 0) {
+      if (!confirm(`A recruit with the exact name "${editForm.firstName} ${editForm.lastName}" already exists. Are you sure you want to add another?`)) {
+        return; // Stop execution if the user clicks "Cancel"
       }
-      if (!res.ok) throw new Error(await res.text());
-      await fetchRecruitment();
-      closeModal();
-    } catch (err) {
-      console.error('Error saving recruit:', err);
-      toast.error('Failed to save recruit.');
+    } else if (similarMatches.length > 0) {
+      const similarNames = similarMatches.map(r => `${r.firstName} ${r.lastName}`).join(', ');
+      if (!confirm(`This name is very similar to existing recruits: ${similarNames}.\n\nThis could be a typo. Do you want to continue anyway?`)) {
+        return; // Stop execution if the user clicks "Cancel"
+      }
     }
   }
+  // --- End of New Check ---
+
+
+  const payload = {
+    firstName: editForm.firstName.trim(),
+    lastName: editForm.lastName.trim(),
+    sectionGroupId: editForm.sectionGroupId,
+    contactDate: editForm.contactDate,
+    contactedBy: editForm.contactedBy,
+    status: editForm.status,
+    comment: editForm.comment ?? null
+  };
+
+  try {
+    let res: Response;
+    if (isEditing && editForm.id) {
+      // The check is skipped for editing
+      res = await fetch(`/api/recruitment/${editForm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      toast.success('Recruitment updated successfully.');
+    } else {
+      // This path is taken after the check passes for new recruits
+      res = await fetch('/api/recruitment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      toast.success('Recruitment added successfully.');
+    }
+    if (!res.ok) throw new Error(await res.text());
+    await fetchRecruitment();
+    closeModal();
+  } catch (err) {
+    console.error('Error saving recruit:', err);
+    toast.error('Failed to save recruit.');
+  }
+}
+
+
+  // without similarity check
+  // async function saveRecruit() {
+  //   if (
+  //     !editForm.firstName?.trim() ||
+  //     !editForm.lastName?.trim() ||
+  //     editForm.sectionGroupId === undefined ||
+  //     editForm.contactedBy === undefined ||
+  //     !editForm.status
+  //   ) {
+  //     toast.error('Please fill all required fields.');
+  //     return;
+  //   }
+
+  //   const payload = {
+  //     firstName: editForm.firstName.trim(),
+  //     lastName: editForm.lastName.trim(),
+  //     sectionGroupId: editForm.sectionGroupId,
+  //     contactDate: editForm.contactDate,
+  //     contactedBy: editForm.contactedBy,
+  //     status: editForm.status,
+  //     comment: editForm.comment ?? null
+  //   };
+
+  //   try {
+  //     let res: Response;
+  //     if (isEditing && editForm.id) {
+  //       res = await fetch(`/api/recruitment/${editForm.id}`, {
+  //         method: 'PUT',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify(payload)
+  //       });
+  //       toast.success('Recruitment updated successfully.');
+  //     } else {
+  //       res = await fetch('/api/recruitment', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify(payload)
+  //       });
+  //       toast.success('Recruitment added successfully.');
+  //     }
+  //     if (!res.ok) throw new Error(await res.text());
+  //     await fetchRecruitment();
+  //     closeModal();
+  //   } catch (err) {
+  //     console.error('Error saving recruit:', err);
+  //     toast.error('Failed to save recruit.');
+  //   }
+  // }
 
   async function deleteRecruit(id: number) {
     if (!confirm('Are you sure you want to delete this recruit?')) return;
@@ -329,6 +476,69 @@
     }
   }
 
+// async function updateStatuses() {
+//   try {
+//     console.log('Current daysThreshold value:', daysThreshold);
+//     const res = await fetch('/api/recruitment/check-status', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify({ daysThreshold })
+//     });
+
+//     const result = await res.json();
+
+//     if (!res.ok) {
+//       throw new Error(result.message || 'Status update failed');
+//     }
+
+//     toast.success(result.message || 'Statuses updated successfully.');
+//   } catch (error) {
+//     toast.error(error.message || 'An error occurred while updating statuses.');
+//     console.error(error);
+//   }
+// }
+
+async function updateStatuses() {
+  isRecalculating = true;
+  try {
+    const numericThreshold = Number(daysThreshold);
+    if (isNaN(numericThreshold) || numericThreshold <= 0) {
+      toast.error('Please enter a valid number of days.');
+      return;
+    }
+
+    const res = await fetch('/api/recruitment/check-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ daysThreshold: numericThreshold })
+    });
+
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.message || 'Status update failed');
+    }
+
+    toast.success(result.message || 'Statuses updated successfully.');
+    
+    // Call fetchRecruitment and pass false to prevent sorting
+    await fetchRecruitment(false); 
+
+  } catch (error) {
+  let errorMessage = 'An error occurred while updating statuses.';
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  }
+  toast.error(errorMessage);
+  console.error(error); // You can still log the original error object
+} finally {
+  isRecalculating = false; 
+}
+}
+  
   function registerRecruit(firstName: string, lastName: string) {
     checkAndUpdateStatus(firstName, lastName, 'register');
   }
@@ -345,7 +555,51 @@
   });
 </script>
 
-<div class="mb-4 p-4 border rounded-lg bg-yellow-50 flex flex-wrap items-center space-x-4">
+<div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
+    <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-grow">
+            <h3 class="font-semibold text-gray-900">Automatic Status Update</h3>
+            <p class="text-sm text-gray-600">
+                This action will update any recruit from 'Awaiting Response' to 'To Be Contacted' if the contact date is older than the specified delay.
+            </p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <input
+                type="number"
+                id="threshold-v2"
+                bind:value={daysThreshold}
+                min="1"
+                max="365"
+                disabled={isRecalculating}
+                class=" px-4 py-2  block w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
+                aria-label="Status change delay in days"
+            />
+            <span class="text-sm text-gray-700">Days</span>
+        </div>
+
+        <button
+            on:click={updateStatuses}
+            disabled={isRecalculating}
+            class="inline-flex items-center justify-center px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:bg-blue-400 disabled:cursor-wait"
+        >
+            {#if isRecalculating}
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            {:else}
+                <!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="-ml-1 mr-2 h-5 w-5">
+                    <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.562a.75.75 0 001.5 0v-2.433l.311.312a7 7 0 0011.764-3.138.75.75 0 00-1.449-.396zM2.066 8.575a.75.75 0 00-1.449.396A7 7 0 008.92 15.99l.311-.312v2.433a.75.75 0 001.5 0V13.5a.75.75 0 00-.75-.75H5.438a.75.75 0 000 1.5h2.433l-.311-.312a5.5 5.5 0 01-5.5-5.5z" clip-rule="evenodd" />
+                </svg> -->
+                Recalculate Statuses
+            {/if}
+        </button>
+    </div>
+</div>
+
+<!-- <div class="mb-4 p-4 border rounded-lg bg-yellow-50 flex flex-wrap items-center space-x-4">
   <label
     for="thresholdInput"
     class="text-sm font-medium text-gray-700 whitespace-nowrap"
@@ -366,7 +620,7 @@
   >
     Run Status Check Now
   </button>
-</div>
+</div> -->
 
 <div class="container mx-auto p-4 font-inter antialiased">
 

@@ -18,11 +18,15 @@ export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
 		body: JSON.stringify(data)
 	});
 
+	// if (!res.ok) {
+	// 	const errorResponseClone = res.clone(); // Clone for debugging
+	// 	console.error(`Backend check-status error (${res.status}):`, await errorResponseClone.text());
+	// }
 	if (!res.ok) {
-		const errorResponseClone = res.clone(); // Clone for debugging
-		console.error(`Backend check-status error (${res.status}):`, await errorResponseClone.text());
+		const errorText = await res.text();
+		console.error(`Backend check-status error (${res.status}):`, errorText);
+		return new Response(errorText, { status: res.status });
 	}
-
 	return res;
 };
 
