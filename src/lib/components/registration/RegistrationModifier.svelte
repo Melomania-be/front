@@ -7,6 +7,7 @@
 	import RegistrationShow from './RegistrationShow.svelte';
 	import {
 		faChevronDown,
+		faChevronLeft,
 		faChevronUp,
 		faPenToSquare,
 		faTrash,
@@ -15,15 +16,17 @@
 	} from '@fortawesome/free-solid-svg-icons';
 
 	import { slide } from 'svelte/transition';
-	import { tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	export let registration: Registration;
 	export let projectId: number;
 	export let mode: 'modify' | 'create';
 
+
 	let allowModification = mode === 'modify' ? false : true;
 
 	async function saveregistration() {
+		console.log(registration.form)
 		const tmpRegistration = {
 			content: registration.contents.map((c) => {
 				return {
@@ -39,6 +42,7 @@
 				};
 			})
 		};
+		console.log(tmpRegistration)
 		const response = await fetch(`/api/projects/${projectId}/management/registration`, {
 			method: 'POST',
 			headers: {
@@ -48,11 +52,10 @@
 		});
 
 		if (response.ok) {
-			goto(`/projects/${projectId}/management/registration`);
+			popUpSave = true;
+		} else {
+			alert('An error occured');
 		}
-		//else {
-		//alert('An error occured');
-		//}
 	}
 
 	async function deleteregistration() {
@@ -72,9 +75,62 @@
 
 	let displayForm: boolean = false;
 	let chevronForm: IconDefinition = faChevronDown;
+
+	let popUpSave: boolean = false;
+
+	let isMobile = false;
+	let screenDirection : "horizontal" | "vertical" = "vertical";
+	let windowWidth : number;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	const checkDirection = () => {
+        screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+	};
+
+	onMount(() => {
+		checkMobile();
+		checkDirection();
+		window.addEventListener('resize', checkMobile);
+		window.addEventListener('resize', checkDirection);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+			window.removeEventListener('resize', checkDirection);
+		};
+	});
 </script>
 
-<div class="grid grid-cols-2 bg-[#E7E7E7] min-h-screen p-4">
+{#if popUpSave}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div
+			class="bg-white p-6 rounded-xl shadow-xl w-[50%] text-center flex flex-col items-center justify-center
+		"
+		>
+			<h2 class="text-lg font-semibold mb-2">Changes saved successfully</h2>
+			<button
+				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
+				on:click={() => {
+					popUpSave = false;
+					allowModification = false;
+					goto(`/projects/${projectId}/management/registration`);
+				}}>OK</button
+			>
+		</div>
+	</div>
+{/if}
+
+<div class="bg-[#E7E7E7] px-6 py-4">
+	<div
+		class="bg-[#6b9ad9] hover:bg-[#4f7cb7] text-white font-semibold justify-center flex items-center gap-2 rounded-lg py-1 w-[100px]"
+	>
+		<Fa icon={faChevronLeft} class="text-[14px]" style="color: white;" />
+		<a href={`/projects/${projectId}/management`}>Back</a>
+	</div>
+</div>
+<div class="grid {isMobile ? "grid-cols-1" : "grid-cols-2"} bg-[#E7E7E7] min-h-screen pt-2 p-4">
 	{#if registration}
 		<div
 			class="m-1 relative max-w-xxl bg-white border-2 border-gray-400 p-4 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
@@ -102,7 +158,7 @@
 				{/if}
 			</div>
 
-			<div class="m-1  min-h-[90%]">
+			<div class="m-1 min-h-[90%]">
 				<h1 class="text-2xl font-bold text-center uppercase mb-4">Registration Editor</h1>
 				<div class="bg-gray-200 p-4 rounded-xl">
 					<div class="flex items-center gap-4">
@@ -136,6 +192,7 @@
 											updatedAt: new Date()
 										});
 										registration = registration;
+										
 									}}
 								>
 									Add content

@@ -85,11 +85,9 @@
 			onAdd: (evt: any) => {
 				const item = selectedPieces[evt.oldIndex as number];
 				allPieces.splice(evt.newIndex as number, 0, item);
-				console.log('allPieces: ', allPieces);
 			},
 			onRemove: (evt: any) => {
 				allPieces.splice(evt.oldIndex as number, 1);
-				console.log('allPieces: ', allPieces);
 			}
 		});
 
@@ -103,17 +101,14 @@
 			onAdd: (evt: any) => {
 				const item = allPieces[evt.oldIndex as number];
 				selectedPieces.splice(evt.newIndex as number, 0, item);
-				console.log('selectedPieces: ', selectedPieces);
 			},
 			onRemove: (evt: any) => {
 				selectedPieces.splice(evt.oldIndex as number, 1);
-				console.log('selectedPieces: ', selectedPieces);
 			},
 			onUpdate: (evt: any) => {
 				const item = selectedPieces[evt.oldIndex as number];
 				selectedPieces.splice(evt.oldIndex as number, 1);
 				selectedPieces.splice(evt.newIndex as number, 0, item);
-				console.log('selectedPieces: ', selectedPieces);
 			}
 		});
 	}
@@ -277,7 +272,6 @@
 	}
 
 	$: if (browser) allowModification && fetchData();
-	console.log('project Name', project.sectionGroup);
 
 	let displayProjectInfo = false;
 	let chevronProjectInfo: IconDefinition = faChevronDown;
@@ -292,15 +286,39 @@
 	let chevronManagers: IconDefinition = faChevronDown;
 
 	let popUpSave = false;
+
+	let isMobile = false;
+	let screenDirection : "horizontal" | "vertical" = "vertical";
+	let windowWidth : number;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	const checkDirection = () => {
+        screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+	};
+
+	onMount(() => {
+		checkMobile();
+		checkDirection();
+		window.addEventListener('resize', checkMobile);
+		window.addEventListener('resize', checkDirection);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+			window.removeEventListener('resize', checkDirection);
+		};
+	});
 </script>
 
 {#if popUpSave}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 ">
 		<div
-			class="bg-white p-6 rounded-xl shadow-xl w-[50%] text-center flex flex-col items-center justify-center
+			class="bg-white p-6 rounded-xl shadow-xl  text-center flex flex-col items-center justify-center {isMobile ? "h-[20%] w-[80%]" : "h-[20%] w-[20%]"}
 		"
 		>
-			<h2 class="text-lg font-semibold mb-2">Changes saved successfully</h2>
+			<h2 class="text-xl text-gray-500 font-bold mb-10">Changes saved successfully</h2>
 			<button
 				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
@@ -313,17 +331,17 @@
 {/if}
 
 <div
-	class="max-w-xxl min-h-screen bg-[#E7E7E7] p-4 pt-2 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+	class="max-w-xxl min-h-screen bg-[#E7E7E7] p-4 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
 >
 	<div class="flex mb-2">
 		<div
-			class="bg-[#6b9ad9] text-white font-semibold justify-center flex items-center gap-2 rounded-lg px-6 m-2"
+			class="bg-[#6b9ad9] text-white font-semibold justify-center flex items-center gap-2 rounded-lg px-6"
 		>
 			<Fa icon={faChevronLeft} class="text-[14px]" style="color: white;" />
 			<a href={`/projects/${project.id}/management`}>Back</a>
 		</div>
 		{#if mode === 'modify'}
-			<div class=" flex w-full p-2 mr-0 ml-auto">
+			<div class=" flex w-full p-1 mr-0 ml-auto">
 				<button
 					on:click={() => (allowModification = !allowModification)}
 					class="text-white dark:text-gray-400 hover:bg-[#4f7cb7] dark:hover:text-gray-300 ml-auto bg-[#6B9AD9] p-1.5 rounded-md font-semibold"
@@ -341,7 +359,7 @@
 		{/if}
 	</div>
 	<div class="">
-		<div class="p-5">
+		<div class="pt-4">
 			<div class="bg-white border-2 border-gray-500 rounded-lg p-4">
 				<div class="flex items-center gap-4">
 					<h1 class="font-bold text-lg mb-4">PROJECT INFORMATION</h1>
@@ -361,7 +379,7 @@
 				</div>
 				{#if displayProjectInfo}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
-						<div class="flex flex-col ml-4 w-1/2">
+						<div class="flex flex-col ml-4 {isMobile ? "mr-4" : "w-1/2"}">
 							<div
 								class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
 										{!project.name ? 'text-red-500 placeholder-red-400' : ''}"
@@ -385,8 +403,8 @@
 							{/if}
 						</div>
 						<div>
-							<div class="flex h-16 ml-4 w-full mt-4">
-								<div class="flex flex-col w-1/2">
+							<div class="flex  ml-4 w-full mt-4 {isMobile ? "flex-col" : "h-16"}">
+								<div class="flex flex-col {isMobile ? "mr-8" : "w-1/2"}">
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500 flex"
 										style="width: fit-content;"
@@ -416,14 +434,15 @@
 								<div class="flex mr-4 ml-auto">
 									<a
 										href="/sectionGroups"
-										class="bg-[#6b9ad9] my-3 ml-auto mr-0 px-4 text-white pointer-events-auto hover:bg-[#4f7cb7] font-semibold justify-center flex items-center gap-2 rounded-lg"
+										class="bg-[#6b9ad9] my-3 ml-auto mr-0 px-4 text-white pointer-events-auto hover:bg-[#4f7cb7] font-semibold justify-center flex items-center gap-2 rounded-lg
+										{isMobile ? "p-1" : ""}"
 										><button> Manage section groups </button></a
 									>
 								</div>
 							</div>
 							{#if project.sectionGroup}
 								<p class="ml-4 uppercase mt-3 font-semibold">Composed of</p>
-								<div class="grid grid-cols-8 text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4">
+								<div class="grid  text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4 {isMobile ? "grid-cols-2" : "grid-cols-8"}">
 									{#each project.sectionGroup.sections as section}
 										<div
 											class="flex flex-col border-2 border-gray-400 rounded-full text-gray-500 p-1"
@@ -464,9 +483,9 @@
 				</div>
 				{#if displayProjectPieces}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
-						<div class="flex gap-4">
-							<div class="flex-1">
-								<h4 class="text-lg top-0 bg-white">Available pieces</h4>
+						<div class="flex gap-4 items-end">
+							<div class="flex-1 ">
+								<h4 class="text-lg top-0 text-center bg-white">Available <br> pieces</h4>
 								{#if allPieces.length === 0}
 									<p>No pieces available</p>
 								{:else}
@@ -500,12 +519,12 @@
 						</div>
 						<div class="pb-4 pt-4">
 							{#if allowModification}
-								<div class="flex flex-col h-16 w-1/2">
+								<div class="flex flex-col h-16 {isMobile ? "" : "w-1/2"}">
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
 										style="width: fit-content;"
 									>
-										Section*
+										Folder
 									</div>
 
 									<select
@@ -520,7 +539,7 @@
 									</select>
 								</div>
 							{:else}
-								<div class="flex flex-col w-1/2">
+								<div class="flex flex-col {isMobile ? "" : "w-1/2"}">
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500 flex"
 										style="width: fit-content;"
@@ -769,7 +788,7 @@
 				{#if displayManagers}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
 						<div class="p-1 w-full">
-							<div class="text-sm py-6 grid grid-cols-5 gap-4">
+							<div class="text-sm py-6 grid  gap-4 {isMobile ? "" : "grid-cols-5"}">
 								{#if project.responsibles && project.responsibles.length === 0}
 									<p class="text-center">No project manager</p>
 								{:else}
@@ -862,17 +881,17 @@
 		</div>
 
 		{#if allowModification}
-			<div class="p-4 flex gap-4">
+			<div class=" pt-4 flex gap-4 {isMobile ? "" : "w-1/4"}">
 				<button
 					on:click={saveProject}
-					class="hover:bg-[#4f7cb7] bg-[#6B9AD9] text-white font-bold py-2 px-4 rounded-lg"
+					class="hover:bg-[#4f7cb7] bg-[#6B9AD9] text-white font-bold p-2 rounded-lg flex-1"
 				>
 					Save
 				</button>
 				{#if mode == 'modify'}
 					<button
 						on:click={deleteProject}
-						class="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg"
+						class="bg-red-400 hover:bg-red-500 text-white font-bold p-2 flex-1 rounded-lg"
 					>
 						Delete
 					</button>

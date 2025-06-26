@@ -1,27 +1,18 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
-    export let content: string;
-    let rawValue = content;
-    const dispatch = createEventDispatcher();
+	import RichTextEditor from '$lib/components/callsheet/RichTextEditor.svelte';
+	import { createEventDispatcher } from 'svelte';
+	export let content: string;
 
-    $: rawValue = content;
+	const dispatch = createEventDispatcher();
 
-    function handleInput(event: Event) {
-        const target = event.target as HTMLTextAreaElement;
-        if (target) {
-            rawValue = target.value;
-            dispatch('input', rawValue);
-        }
-    }
+	function handleChange(newValue: string) {
+		// Met à jour la prop liée
+		content = newValue;
+		// Notifie les parents (permet `on:input`)
+		dispatch('input', newValue);
+	}
 </script>
 
-<div>
-    <textarea
-        id="message"
-        rows="20"
-        class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        placeholder="Write your html here..."
-        bind:value={rawValue}
-        on:input={handleInput}
-    ></textarea>
+<div class="h-[300px] mb-10">
+<RichTextEditor value={content} onChange={handleChange} />
 </div>
