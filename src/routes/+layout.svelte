@@ -165,9 +165,10 @@
 
     let isMobile = false;
 	let screenDirection : "horizontal" | "vertical" = "vertical";
+   
 
 	const checkMobile = () => {
-		isMobile = window.innerWidth <= 1000;
+		isMobile = window.innerWidth <= 1320;
 	};
 
 	const checkDirection = () => {

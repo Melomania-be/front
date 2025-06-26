@@ -37,8 +37,6 @@
 	
 
 	onMount(async () => {
-		console.log('onMount');
-		console.log('id', id);
 
 		const projectRes = await fetch(`/api/projects/${id}`);
 		if (projectRes.ok) {
@@ -47,13 +45,10 @@
 			console.error('Error fetching project data');
 		}
 
-		console.log('project', project);
-
 		const resFolders = await fetch('/api/folders');
 		const dataFolders = await resFolders.json();
 		folders = dataFolders;
 
-		console.log(folders);
 
 		const res = await fetch('/api/templates');
 		const data = await res.json();
@@ -63,11 +58,8 @@
 
 		if (mailRes.ok) {
 			const mailData = await mailRes.json();
-			console.log('mailData', mailData);
 			lastRecruitmentNotificationSent = mailData.lastRecruitmentNotificationSent;
 			lastCallsheetNotificationSent = mailData.lastCallsheetNotificationSent;
-			console.log('lastRecommendationNotificationSent', lastRecruitmentNotificationSent);
-			console.log('lastCallsheetNotificationSent', lastCallsheetNotificationSent);
 		} else {
 			console.error('Error fetching mailing data');
 		}
@@ -167,7 +159,6 @@
 			return;
 		}
 		isSendingCallsheetNotification = true;
-		console.log('Sends Callsheet Notification to all participants');
 
 		const data = {
 			projectId: id
@@ -207,7 +198,6 @@
 	}
 
 	async function sendMail(){
-		console.log('Send mail');
 		let confirmSend = confirm(
 			`Are you sure you want to send this unique mail to the participants?`
 		);
@@ -288,7 +278,6 @@
     }
 
 	$: if (html) {
-		console.log("test");
 		updateIframeContentHtml();
 	}
 

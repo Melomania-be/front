@@ -41,6 +41,7 @@
 
 	let isMobile = false;
 	let screenDirection : "horizontal" | "vertical" = "vertical";
+	 let windowWidth : number;
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;

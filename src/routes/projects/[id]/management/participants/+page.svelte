@@ -73,12 +73,10 @@
 		});
 
 		if (!response.ok) {
-			console.error('Failed to fetch project');
 			return;
 		}
 
 		project = await response.json();
-		//console.log("DATA : " , project )
 	}
 
 	async function fetchData() {
@@ -98,7 +96,6 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			console.log('Réponse brute API participants :', data);
 
 			participants = data.data;
 			meta = data.meta;
@@ -108,7 +105,6 @@
 				columns: ['id', 'updatedAt', 'lastActivity'],
 				notOrderedColumns: []
 			};
-			console.log('Participants :', dataHolder);
 		});
 	}
 

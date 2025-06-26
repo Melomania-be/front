@@ -50,13 +50,14 @@
 			<div class="ml-2 flex items-center gap-2">
 				<Fa icon={faCircleRight} style="color: #6B9AD9;" />
 				<input
-					class="border border-gray-100 flex-1 whitespace-nowrap"
+					class="border border-gray-100 flex-1 mr-2"
 					type="text"
 					placeholder="Option"
 					bind:value={option}
 					on:change={selectChange}
 					{disabled}
 				/>
+				{#if !disabled}
 				<button
 					class="m-1 flex items-center justify-center"
 					on:click={() => {
@@ -68,8 +69,10 @@
 				>
 					<Fa icon={faTrash} style="color: #6B9AD9;" />
 				</button>
+				{/if}
 			</div>
 		{/each}
+		{#if !disabled}
 		<button
 			class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semibold px-2 text-sm "
 			on:click={() => {
@@ -82,10 +85,11 @@
 		>
 			Add Option
 		</button>
+		{/if}
 	</div>
 {:else if form.type === 'multiple'}
 	<input
-		class="border bg-blue-200 rounded-full px-2 text-black border-gray-100 flex-1"
+		class="border bg-blue-200 font-semibold rounded-lg p-1 px-4 text-black border-gray-100 flex-1"
 		type="text"
 		placeholder="Form"
 		bind:value={selectProcess[0]}
@@ -94,15 +98,18 @@
 	/>
 	<div>
 		{#each selectOptions ?? [] as option}
-			<div class="flex">
+			
+			<div class="ml-2 flex items-center gap-2">
+				<Fa icon={faCircleRight} style="color: #6B9AD9;" />
 				<input
-					class="border border-gray-400 flex-1"
+					class="flex-1"
 					type="text"
 					placeholder="Option"
 					bind:value={option}
 					on:change={selectChange}
 					{disabled}
 				/>
+				{#if !disabled}
 				<button
 					class="m-1 flex items-center justify-center"
 					on:click={() => {
@@ -114,19 +121,22 @@
 				>
 					<Fa icon={faTrash} style="color: #6B9AD9;" />
 				</button>
+				{/if}
 			</div>
 		{/each}
-		<button
-			class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semi-bold px-2 text-sm"
-			on:click={() => {
-				selectOptions.push('');
-				selectOptions = selectOptions;
-				selectChange();
-				form = form;
-			}}
-			{disabled}
-		>
-			Add Option
-		</button>
+		{#if !disabled}
+			<button
+				class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semi-bold px-2 text-sm font-semibold"
+				on:click={() => {
+					selectOptions.push('');
+					selectOptions = selectOptions;
+					selectChange();
+					form = form;
+				}}
+				{disabled}
+			>
+				Add Option
+			</button>
+		{/if}
 	</div>
 {/if}

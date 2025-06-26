@@ -27,10 +27,7 @@
 					text: '',
 					type: formType,
 					registration_id: 0,
-					id:
-						registration.form.length > 0
-							? Math.max(...registration.form.map((f) => f.id ?? 0)) + 1
-							: 1
+					id: null
 				});
 				registration = registration;
 			}}
@@ -41,7 +38,7 @@
 </div>
 
 {#if registration.form}
-	{#each registration.form.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as form}
+	{#each registration.form.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as form}
 		<div class="flex flex-col border-2 gap-2 border-gray-400 rounded-xl p-2 bg-white my-4">
 			<RegistrationFormItemModifier bind:form bind:disabled />
 			<div
