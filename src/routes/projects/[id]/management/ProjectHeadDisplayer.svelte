@@ -105,7 +105,7 @@
 				</div>
 			</div>
 		</button>
-		<button class="flex items-center gap-2 p-3 {selectedTab === 2 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(maillingUrl)}>
+		<button class="flex items-center gap-2 p-3 {selectedTab === 2 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => {if (project?.id) goto(maillingUrl);} }>
 			<Fa icon={faEnvelope} class="text-[16px]" style="color: {selectedTab === 2 ? "#6B9AD9;" : " #9ca3af;" }"/>
 			Mailling
 		</button>

@@ -33,37 +33,45 @@
 	let useTemplate = false;
 
 	$: id = $page.params.id;
-
 	
+	$: if (id) {
+		(async () => {
+			
+			try {
+				const projectRes = await fetch(`/api/projects/${id}`);
+				if (projectRes.ok) {
+					project = await projectRes.json();
+				} else {
+					console.error('Error fetching project data');
+				}
 
-	onMount(async () => {
+				const resFolders = await fetch('/api/folders');
+				if (resFolders.ok) {
+					folders = await resFolders.json();
+				} else {
+					console.error('Error fetching folders');
+				}
 
-		const projectRes = await fetch(`/api/projects/${id}`);
-		if (projectRes.ok) {
-			project = await projectRes.json();
-		} else {
-			console.error('Error fetching project data');
-		}
+				const res = await fetch('/api/templates');
+				if (res.ok) {
+					templates = await res.json();
+				} else {
+					console.error('Error fetching templates');
+				}
 
-		const resFolders = await fetch('/api/folders');
-		const dataFolders = await resFolders.json();
-		folders = dataFolders;
-
-
-		const res = await fetch('/api/templates');
-		const data = await res.json();
-		templates = data;
-
-		const mailRes = await fetch(`/api/projects/${id}/management/mailing`);
-
-		if (mailRes.ok) {
-			const mailData = await mailRes.json();
-			lastRecruitmentNotificationSent = mailData.lastRecruitmentNotificationSent;
-			lastCallsheetNotificationSent = mailData.lastCallsheetNotificationSent;
-		} else {
-			console.error('Error fetching mailing data');
-		}
-	});
+				const mailRes = await fetch(`/api/projects/${id}/management/mailing`);
+				if (mailRes.ok) {
+					const mailData = await mailRes.json();
+					lastRecruitmentNotificationSent = mailData.lastRecruitmentNotificationSent;
+					lastCallsheetNotificationSent = mailData.lastCallsheetNotificationSent;
+				} else {
+					console.error('Error fetching mailing data');
+				}
+			} catch (err) {
+				console.error('Fetch error:', err);
+			}
+		})();
+	}
 
 	async function updateIframeContent() {
         await tick(); // Wait for iframe to load
@@ -300,6 +308,7 @@
 
 <ProjectHeadDisplayer {project} selectedTab={2} />
 
+{#if project}
 <div
 	class="relative max-w-xxl bg-[#E7E7E7] shadow dark:bg-gray-800 dark:border-gray-700 p-4 pb-[80px]"
 >
@@ -472,8 +481,9 @@
 		</div>
 	{/if}
 	</div>
-	
 </div>
+{/if}
+
 {#if isMobile}
 <ProjectPhoneDisplayer project={project} selectedTab={2}/>
 {/if}

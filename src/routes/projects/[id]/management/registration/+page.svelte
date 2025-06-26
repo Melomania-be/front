@@ -18,7 +18,6 @@
 		if (registrationResponse.ok) {
 			const data = await registrationResponse.json();
 
-			console.log(data);
 
 			registration = {
 				id: data.id,
@@ -27,7 +26,6 @@
 				form: data.form
 			};
 
-			console.log("registration",registration);
 		} else {
 			const projectResponse = await fetch(`/api/projects/${projectId}`, {
 				method: 'GET'
@@ -42,7 +40,6 @@
 					contents: [],
 					form: []
 				};
-				console.log("registration",registration)
 			} else {
 				alert('An error occured');
 			}

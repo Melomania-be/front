@@ -10,7 +10,7 @@
     export let callsheet: Callsheet;
 </script>
 
-<div class="relative w-full py-6 bg-white rounded-lg dark:bg-gray-800 px-4 sm:px-6 lg:px-8">
+<div class="relative w-full py-6 bg-[#E7E7E7] rounded-lg dark:bg-gray-800 px-4 sm:px-6 lg:px-8">
     {#if callsheet}
         <div class="flex flex-col gap-10">
             <!-- Image de couverture avec hauteur augmentée pour grands écrans -->

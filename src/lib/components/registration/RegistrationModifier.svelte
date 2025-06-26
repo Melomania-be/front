@@ -26,7 +26,6 @@
 	let allowModification = mode === 'modify' ? false : true;
 
 	async function saveregistration() {
-		console.log(registration.form)
 		const tmpRegistration = {
 			content: registration.contents.map((c) => {
 				return {
@@ -42,7 +41,6 @@
 				};
 			})
 		};
-		console.log(tmpRegistration)
 		const response = await fetch(`/api/projects/${projectId}/management/registration`, {
 			method: 'POST',
 			headers: {

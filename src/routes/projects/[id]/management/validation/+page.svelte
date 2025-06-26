@@ -14,6 +14,10 @@
     let participants: Array<Participant>;
     let currentParticipant: Participant | null;
 
+    let allConcerts: Concert[] = [];
+    let allRehearsals: Rehearsal[] = [];
+    let isLoadingAttendance = true; // État pour le chargement
+
     let project : Project | undefined;
 
     async function fetchProject() {
@@ -37,6 +41,24 @@
         const responseParticipants = await fetch(`/api/projects/${data.id}/management/validation`);
         if (responseParticipants.ok) {
             participants = await responseParticipants.json();
+        }
+
+        // Charger TOUTES les dates du projet
+        try {
+            const responseAttendance = await fetch(`/api/projects/${data.id}/management/attendance`);
+            if (responseAttendance.ok) {
+                const attendanceData = await responseAttendance.json();
+                allConcerts = attendanceData.concerts || [];
+                allRehearsals = attendanceData.rehearsals || [];
+                console.log('Concerts chargés:', allConcerts);
+                console.log('Répétitions chargées:', allRehearsals);
+            } else {
+                console.error('Erreur lors du chargement des données d\'attendance');
+            }
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+        } finally {
+            isLoadingAttendance = false;
         }
 
         fetchProject();

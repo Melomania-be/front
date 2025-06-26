@@ -48,7 +48,7 @@
 		{:else if form.type === 'select' && form.text.split(':').length > 1}
 			<div class="bg-gray-200 rounded-lg px-3 p-2 flex gap-2 flex-col">
 				<label class="text-sm font-semibold text-gray-600" for="form-{form.id}">{form.text.split(':')[0]}</label>
-				<select class="rounded border-2 border-gray-400 w-full" id="form-{form.id}" bind:value={answer.text} {disabled}>
+				<select class="rounded border-2 border-gray-400 w-full whitespace-nowrap" id="form-{form.id}" bind:value={answer.text} {disabled}>
 					{#each form.text.split(':')[1].split(';') as option}
 						<option value={option}>{option}</option>
 					{/each}

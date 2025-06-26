@@ -23,7 +23,6 @@
 	export let projectId: number;
 	export let registrationModifierMode : boolean;
 
-	console.log("mode" , registrationModifierMode);
 
 	type ParticipantsCountBySection = {
 		section_id: number;
@@ -48,7 +47,6 @@
 		}
 
 		const data : ParticipantsCountBySection[] = await response.json();
-		console.log('Participants récupérés:', data);
 
 		participants = data;
 	}
@@ -62,7 +60,6 @@
 	};
 
 	onMount(() => {
-		console.log("ismobile?",isMobile)
 		checkMobile();
 		window.addEventListener('resize', checkMobile);
 
@@ -149,9 +146,7 @@
 
 	function handleTextInput(event: Event, id: number, type: 'concert' | 'rehearsal') {
 		const inputElement = event.target as HTMLInputElement;
-		console.log(id);
 		if (type === 'concert') {
-			console.log(newContact.concerts);
 			if (newContact.concerts.some((concert) => concert.id === id)) {
 				newContact.concerts = updateComment(newContact.concerts, id, inputElement.value);
 			}
@@ -189,7 +184,6 @@
 		}
 
 		if (hasError) {
-			console.log("ERROR")
 			return;
 		}
 
@@ -213,7 +207,6 @@
 			})
 		};
 
-		console.log('Data to send:', data);
 
 		const response = await fetch(`/api/registrations/${projectId}`, {
 			method: 'PUT',
@@ -224,7 +217,7 @@
 		});
 
 		const responseText = await response.text();
-		console.log('Server response:', responseText);
+		
 
 		if (response.status >= 400 && response.status < 500) {
 			const jsonResponse = JSON.parse(responseText);
@@ -374,15 +367,13 @@
 	</div>
 {/if}
 
-<div class="h-auto w-[100%]">
+
 <div class="h-auto w-[100%]">
 	{#if registration}
-		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-black" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
-		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-black" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
+		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-gray-500 text-center" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
 			Registration to the project : {registration.project?.name || 'No project name available'}
 		</h1>
 		<div class="h-auto pb-6 flex justify-center">
-			<div class="bg-white w-[80%] rounded-xl h-auto registration-content">
 			<div class="bg-white w-[80%] rounded-xl h-auto registration-content">
 				<div class="form-head h-auto">
 					<div class="my-2 { !isMobile ? "font-bold" : "font-medium"}" >
