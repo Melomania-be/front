@@ -60,6 +60,8 @@
 
   // New variable declaration for the datetime-local input binding
   let checkStatusDateTime: string | null = null;
+ let selectedRecruitments: Set<number> = new Set();
+
 
   const statuses: RecruitmentStatus[] = [
     'awaiting response',
@@ -191,6 +193,157 @@ function getLevenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
+ /**
+     * Toggles the selection of a single recruitment record.
+     * @param id The ID of the recruitment record.
+     */
+    function toggleRecruitmentSelection(id: number) {
+        if (selectedRecruitments.has(id)) {
+            selectedRecruitments.delete(id);
+        } else {
+            selectedRecruitments.add(id);
+        }
+        // Important: Update the set reference to trigger Svelte reactivity
+        selectedRecruitments = selectedRecruitments;
+    }
+
+
+    /**
+     * Toggles selection of all currently displayed recruitment records.
+     */
+    function toggleAllRecruitmentsSelection() {
+        if (selectedRecruitments.size === recruitment.length && recruitment.length > 0) {
+            // If all are selected, deselect all
+            selectedRecruitments.clear();
+        } else {
+            // If not all are selected, select all
+            selectedRecruitments.clear(); // Clear first to avoid duplicates if partial selection
+            recruitment.forEach(r => selectedRecruitments.add(r.id));
+        }
+        // Important: Update the set reference to trigger Svelte reactivity
+        selectedRecruitments = selectedRecruitments;
+    }
+
+
+    /**
+     * Checks if all currently displayed recruitment records are selected.
+     * Used for the "select all" checkbox state.
+     */
+    function areAllRecruitmentsSelected(): boolean {
+        if (recruitment.length === 0) return false;
+        return selectedRecruitments.size === recruitment.length;
+    }
+
+
+  /**
+     * Copies selected recruitment data to the clipboard in a CSV format suitable for Excel.
+     */
+      /**
+     * Copies selected recruitment data to the clipboard in an HTML table format suitable for Excel.
+     */
+    async function copySelectedToExcel() {
+        if (selectedRecruitments.size === 0) {
+            toast.error('Please select at least one row to copy.');
+            return;
+        }
+
+        const selectedData = recruitment.filter(r => selectedRecruitments.has(r.id));
+
+        // Define the columns and their display names for the HTML table, in desired order
+        const columnsToCopy = [
+            { key: 'firstName', header: 'First Name' },
+            { key: 'lastName', header: 'Last Name' },
+            { key: 'sectionGroup', header: 'Section Group', getValue: (r: Recruitment) => r.sectionGroup?.name ?? `ID:${r.sectionGroupId}` },
+            { key: 'contactDate', header: 'Contact Date', getValue: (r: Recruitment) => formatDate(r.contactDate) },
+            { key: 'contactedBy', header: 'Contacted By', getValue: (r: Recruitment) => r.user?.fullName ?? `ID:${r.contactedBy}` },
+            { key: 'status', header: 'Status' },
+            { key: 'comment', header: 'Comment' },
+            // { key: 'statusUpdatedAt', header: 'Status Updated At', getValue: (r: Recruitment) => formatDate(r.statusUpdatedAt) },
+            { key: 'createdAt', header: 'Created At', getValue: (r: Recruitment) => formatDate(r.createdAt) },
+            { key: 'updatedAt', header: 'Updated At', getValue: (r: Recruitment) => formatDate(r.updatedAt) },
+        ];
+
+        let htmlTableContent = '<table><thead><tr>';
+        let csvContent = "\uFEFF"; // BOM for plain text fallback
+
+        // --- Build Header Row (HTML & CSV) ---
+        htmlTableContent += columnsToCopy.map(col => `<th>${escapeHtml(col.header)}</th>`).join('');
+        csvContent += columnsToCopy.map(col => `"${col.header.replace(/"/g, '""')}"`).join(',') + "\n"; // CSV header
+
+        htmlTableContent += '</tr></thead><tbody>';
+
+        // --- Build Data Rows (HTML & CSV) ---
+        selectedData.forEach(r => {
+            htmlTableContent += '<tr>';
+            const csvRowCells: string[] = [];
+
+            columnsToCopy.forEach(col => {
+                let value: any;
+                if (col.getValue) {
+                    value = col.getValue(r);
+                } else {
+                    value = r[col.key as keyof Recruitment];
+                }
+
+                if (value === null || value === undefined) {
+                    value = "";
+                }
+                const stringValue = String(value);
+
+                // For HTML: escape content to prevent breaking the HTML structure
+                htmlTableContent += `<td>${escapeHtml(stringValue)}</td>`;
+
+                // For CSV: escape quotes and enclose in quotes if necessary (or always)
+                const escapedCsvValue = stringValue.replace(/"/g, '""');
+                csvRowCells.push(`"${escapedCsvValue}"`);
+            });
+            htmlTableContent += '</tr>';
+            csvContent += csvRowCells.join(',') + "\n"; // CSV data row
+        });
+
+        htmlTableContent += '</tbody></table>';
+
+        try {
+            // Write both HTML and Plain Text formats to the clipboard
+            const htmlBlob = new Blob([htmlTableContent], { type: 'text/html' });
+            const textBlob = new Blob([csvContent], { type: 'text/plain' });
+
+            // Check for navigator.clipboard.write API support
+            if (navigator.clipboard && typeof navigator.clipboard.write === 'function') {
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': htmlBlob,
+                        'text/plain': textBlob,
+                    })
+                ]);
+                toast.success(`Copied ${selectedData.length} row(s) to clipboard (HTML & Text).`);
+            } else {
+                // Fallback for older browsers (only plain text)
+                await navigator.clipboard.writeText(csvContent);
+                toast.success(`Copied ${selectedData.length} row(s) to clipboard (Plain Text fallback).`);
+            }
+
+            // Optional: Deselect rows after copying
+            selectedRecruitments.clear();
+            selectedRecruitments = selectedRecruitments; // Trigger Svelte reactivity
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            toast.error('Failed to copy data to clipboard. Please check browser permissions or use a modern browser.');
+        }
+    }
+
+    /**
+     * Helper function to escape HTML entities for clipboard content.
+     * Prevents issues if cell data contains HTML characters.
+     */
+    function escapeHtml(unsafe: string): string {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;"); // Use &#039; for single quotes
+    }
 
 
   // --- CRUD & Status Check ---
@@ -552,6 +705,9 @@ async function updateStatuses() {
   onMount(async () => {
     await Promise.all([fetchRecruitment(), fetchUsers(), fetchSectionGroups()]);
     if (browser) await performStatusCheck('automatic');
+
+     selectedRecruitments.clear();
+      selectedRecruitments = selectedRecruitments;
   });
 </script>
 
@@ -642,6 +798,14 @@ async function updateStatuses() {
     >
       Add New Recruit
     </button>
+
+     <button
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+            on:click={copySelectedToExcel}
+            disabled={selectedRecruitments.size === 0}
+        >
+            Copy Selected to Excel ({selectedRecruitments.size})
+        </button>
   </div>
 
   <!-- Recruitment table -->
@@ -649,6 +813,15 @@ async function updateStatuses() {
     <table class="min-w-full bg-white border border-gray-200">
       <thead class="bg-gray-100">
         <tr>
+           <th class="px-4 py-3 text-left">
+                        <input
+                            type="checkbox"
+                            class="form-checkbox h-4 w-4 text-blue-600 rounded"
+                            on:change={toggleAllRecruitmentsSelection}
+                            checked={areAllRecruitmentsSelected()}
+                            disabled={recruitment.length === 0}
+                        />
+                    </th>
           {#each columns as column (column)}
             <th
               class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
@@ -677,6 +850,14 @@ async function updateStatuses() {
       <tbody class="divide-y divide-gray-200">
         {#each recruitment as r (r.id)}
           <tr class="hover:bg-gray-50 transition duration-100 ease-in-out">
+             <td class="px-4 py-2">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-4 w-4 text-blue-600 rounded"
+                                on:change={() => toggleRecruitmentSelection(r.id)}
+                                checked={selectedRecruitments.has(r.id)}
+                            />
+                        </td>
             <td class="px-4 py-2 text-sm text-gray-800">{r.firstName}</td>
             <td class="px-4 py-2 text-sm text-gray-800">{r.lastName}</td>
             <td class="px-4 py-2 text-sm text-gray-800">
@@ -841,3 +1022,40 @@ async function updateStatuses() {
     </div>
   {/if}
 </div>
+
+
+<style>
+    :global(body) {
+        @apply bg-gray-50;
+    }
+    /* Custom styles for form-checkbox from Tailwind Forms if not directly imported/configured */
+    .form-checkbox {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        display: inline-block;
+        height: 1rem;
+        width: 1rem;
+        border-width: 1px;
+        border-color: #d1d5db; /* gray-300 */
+        background-color: #fff;
+        border-radius: 0.25rem; /* rounded */
+        vertical-align: middle;
+        position: relative;
+    }
+
+    .form-checkbox:checked {
+        background-color: #2563eb; /* blue-600 */
+        border-color: #2563eb; /* blue-600 */
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .form-checkbox:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 3px rgba(100, 150, 255, 0.45); /* blue-500 with opacity */
+    }
+</style>
