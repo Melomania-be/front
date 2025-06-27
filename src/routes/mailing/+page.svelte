@@ -12,6 +12,8 @@
 	import type { Project } from '$lib/types/Project';
 	import type { Folder } from '$lib/types/Folder';
 
+	let htmlMode = true;
+
 	let selectedList: CustomList | null = null as CustomList | null;
 	let folders: Array<Folder> = [];
 	let selectedFolder: Folder;
@@ -51,7 +53,7 @@
 		content: '',
 		is_default: false,
 		createdAt: '',
-		updatedAt: '',
+		updatedAt: ''
 	};
 	let uniqueSubject = '';
 
@@ -103,13 +105,13 @@
 		templates = data;
 
 		const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 		fetchData();
 
 		await fetchProjects();
@@ -220,12 +222,12 @@
 	}
 
 	function editTemplate() {
-        return useTemplate ? selectedTemplate : unique_html;
-    }
+		return useTemplate ? selectedTemplate : unique_html;
+	}
 
 	async function updateIframeContent() {
 		if (typeof window !== 'undefined') {
-			await tick() // Wait for iframe to first load
+			await tick(); // Wait for iframe to first load
 
 			const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
 			if (iframe && iframe.contentWindow) {
@@ -256,8 +258,8 @@
 					doc.close();
 				}
 
-				const contentHeight = doc.body.scrollHeight + 50
-				iframe.style.height = contentHeight + "px"
+				const contentHeight = doc.body.scrollHeight + 50;
+				iframe.style.height = contentHeight + 'px';
 			}
 		}
 	}
@@ -274,8 +276,8 @@
 		if (!useTemplate) {
 			unique_html.content = event.detail;
 		}
-        updateIframeContent();
-    }
+		updateIframeContent();
+	}
 </script>
 
 <div
@@ -350,12 +352,21 @@
 			class="ml-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 			on:click={() => (useTemplate = true)}>Use a template</button
 		>
-		
+
 		<div class="ml-10 mb-10 pt-5 grid grid-cols-2 gap-10 grid-container">
 			<div
 				class="col-span-1 border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
 			>
-				<h2 class="text-xl font-bold mb-4">Write your email</h2>
+				<div class="flex mb-4">
+					<h2 class="text-xl font-bold mb-4">Write your email</h2>
+					<select
+						bind:value={htmlMode}
+						class="ml-auto mr-0 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm px-5 py-1 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+					>
+						<option value={true}>Text Editor</option>
+						<option value={false}>HTML Insertion</option>
+					</select>
+				</div>
 				<div>
 					<p>
 						To add an image, select a folder and click on the name of the image you want to add. You
@@ -366,7 +377,7 @@
 					<br />
 					{#if folders && folders.length > 0}
 						<p>
-							Select your folder: 
+							Select your folder:
 							<select bind:value={selectedFolder}>
 								{#each folders as folder}
 									<option value={folder}>{folder.name}</option>
@@ -404,7 +415,12 @@
 					placeholder="Email Subject"
 					class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 				/>
-				<HtmlEditor bind:content={unique_html.content} on:input={handleEditorInput} />
+				{#if htmlMode}
+					<HtmlEditor bind:content={unique_html.content} on:input={handleEditorInput} />
+				{:else}
+					<textarea class="border-2 rounded-lg w-full h-" bind:value={unique_html.content}
+					></textarea>
+				{/if}
 				<button
 					class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
 					on:click={sendMail}>Send</button
@@ -489,7 +505,7 @@
 						<h1>{selectedTemplate.name}</h1>
 					</div>
 					<div class="m-2 border border-gray-500 rounded">
-						<iframe title="preview" id="preview-iframe" class="w-full h-full border-0" />
+						{@html unique_html.content}
 					</div>
 				{:else}
 					<p>Please select a template to see its content</p>
@@ -500,39 +516,41 @@
 </div>
 
 <style>
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin: 0 auto;
-    }
+	.grid-container {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+		margin: 0 auto;
+	}
 
-    /* Responsive design for smaller screens */
-    @media (max-width: 1050px) {
-        .grid-container {
-            grid-template-columns: 1fr;
-            margin: 0.5rem;
-        }
-    }
+	/* Responsive design for smaller screens */
+	@media (max-width: 1050px) {
+		.grid-container {
+			grid-template-columns: 1fr;
+			margin: 0.5rem;
+		}
+	}
 
-    /* Adjust button and text alignment for smaller screens */
-    @media (max-width: 768px) {
-        h2 {
-            text-align: center;
-        }
-        button {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-    }
+	/* Adjust button and text alignment for smaller screens */
+	@media (max-width: 768px) {
+		h2 {
+			text-align: center;
+		}
+		button {
+			width: 100%;
+			margin-bottom: 10px;
+		}
+	}
 
-    /* Additional adjustments for very small screens */
-    @media (max-width: 480px) {
-        .grid-container {
-            gap: 5px;
-        }
-        input, select, button {
-            width: 100%;
-        }
-    }
+	/* Additional adjustments for very small screens */
+	@media (max-width: 480px) {
+		.grid-container {
+			gap: 5px;
+		}
+		input,
+		select,
+		button {
+			width: 100%;
+		}
+	}
 </style>

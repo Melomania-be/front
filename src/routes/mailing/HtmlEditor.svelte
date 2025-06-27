@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RichTextEditor from '$lib/components/callsheet/RichTextEditor.svelte';
 	import { createEventDispatcher } from 'svelte';
+	
 	export let content: string;
 
 	const dispatch = createEventDispatcher();
@@ -11,6 +12,7 @@
 		// Notifie les parents (permet `on:input`)
 		dispatch('input', newValue);
 	}
+	
 </script>
 
 <div class="h-[300px] mb-10">
