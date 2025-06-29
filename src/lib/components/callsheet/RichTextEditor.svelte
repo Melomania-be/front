@@ -57,6 +57,7 @@
 			// Mise à jour du contenu
 			quill.on('text-change', () => {
 				onChange(quill.root.innerHTML);
+				console.log(value)
 			});
 
 			// === Bouton personnalisé Google Maps ===

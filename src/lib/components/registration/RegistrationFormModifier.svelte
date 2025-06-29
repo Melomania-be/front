@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Registration } from '$lib/types/Registration';
+	import { faTrash } from '@fortawesome/free-solid-svg-icons';
 	import RegistrationFormItemModifier from './RegistrationFormItemModifier.svelte';
+	import Fa from 'svelte-fa';
 
 	export let registration: Registration;
 	export let disabled: boolean;
@@ -9,26 +11,23 @@
 	let formType = 'text';
 </script>
 
-<h1 class="text-2xl font-bold">Form</h1>
+
 <div>
 	{#if !disabled}
-		<select class="border border-gray-100" bind:value={formType} {disabled}>
+		<select class="border-2 rounded-lg border-gray-400" bind:value={formType} {disabled}>
 			{#each formTypes as types}
 				<option value={types}>{types}</option>
 			{/each}
 		</select>
 
 		<button
-			class="bg-rose-500 text-white p-2 rounded m-1"
+			class="bg-red-400 text-white p-2 rounded m-1 font-semibold"
 			on:click={() => {
 				registration.form.push({
 					text: '',
 					type: formType,
 					registration_id: 0,
-					id:
-						registration.form.length > 0
-							? Math.max(...registration.form.map((f) => f.id ?? 0)) + 1
-							: 1
+					id: null
 				});
 				registration = registration;
 			}}
@@ -39,13 +38,13 @@
 </div>
 
 {#if registration.form}
-	{#each registration.form as form}
-		<div class="grid grid-cols-1 gap-1 border my-1">
+	{#each registration.form.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as form}
+		<div class="flex flex-col border-2 gap-2 border-gray-400 rounded-xl p-2 bg-white my-4">
 			<RegistrationFormItemModifier bind:form bind:disabled />
 			<div
-				class="flex"
+				class="flex ml-auto mr-0 mb-1"
 			>
-				<select class="border border-gray-100" bind:value={form.type} {disabled}>
+				<select class="border-2 border-gray-400 rounded-lg text-gray-500" bind:value={form.type} {disabled}>
 					{#each formTypes as types}
 						<option value={types}>{types}</option>
 					{/each}
@@ -53,14 +52,13 @@
 
 				{#if !disabled}
 					<button
-						class="m-1 flex items-center justify-center"
+						class="m-1 flex items-center justify-center bg-red-400 rounded-md p-1"
 						on:click={() => {
 							registration.form = registration.form.filter((f) => f.text !== form.text);
 							registration = registration;
 						}}
 					>
-						<span class="icon-[tabler--trash]" style="width: 1.2rem; height: 1.2rem; color: black;"
-						></span>
+						<Fa icon={faTrash} class="text-[16px]" style="color: white;" />
 					</button>
 				{/if}
 			</div>

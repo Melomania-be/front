@@ -5,15 +5,14 @@
 	export let withDate: boolean = true;
 	export let isRehearsal: boolean = false;
 
-	console.log(endTime);
+
 	let usableStartTime = new Date(startTime);
-	console.log('start', usableStartTime);
+
 	let usableEndTime = endTime
 		? new Date(endTime)
 		: new Date(
 				usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000)
 			);
-	console.log('end', usableEndTime);
 
 	const dateOptions: Intl.DateTimeFormatOptions = {
 		weekday: 'long',

@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import type { Registration } from '$lib/types/Registration';
 	import RegistrationModifier from '$lib/components/registration/RegistrationModifier.svelte';
+	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 
 	let registration: Registration;
 	let projectId: number;
@@ -17,7 +18,6 @@
 		if (registrationResponse.ok) {
 			const data = await registrationResponse.json();
 
-			console.log(data);
 
 			registration = {
 				id: data.id,
@@ -26,7 +26,6 @@
 				form: data.form
 			};
 
-			console.log(registration);
 		} else {
 			const projectResponse = await fetch(`/api/projects/${projectId}`, {
 				method: 'GET'
@@ -46,6 +45,8 @@
 			}
 		}
 	});
+	
 </script>
+
 
 <RegistrationModifier bind:registration {projectId} mode="modify" />

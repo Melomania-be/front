@@ -5,13 +5,36 @@
     import type { Concert } from '$lib/types/Concert.js';
     import type { Rehearsal } from '$lib/types/Rehearsal.js';
     import { onMount } from 'svelte';
+	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
+	import type { Project } from '$lib/types/Project';
+	import { faRecordVinyl } from '@fortawesome/free-solid-svg-icons';
+	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
     export let data;
     let participants: Array<Participant>;
     let currentParticipant: Participant | null;
+
     let allConcerts: Concert[] = [];
     let allRehearsals: Rehearsal[] = [];
     let isLoadingAttendance = true; // État pour le chargement
+
+    let project : Project | undefined;
+
+    async function fetchProject() {
+		if (!data?.id) return;
+
+		const response = await fetch(`/api/projects/${data.id}`, {
+			method: 'GET'
+		});
+
+		if (!response.ok) {
+			console.error('Failed to fetch project');
+			return;
+		}
+
+		project = await response.json();
+		console.log("DATA : " , project )
+	}
 
     onMount(async () => {
         // Charger les participants
@@ -37,6 +60,8 @@
         } finally {
             isLoadingAttendance = false;
         }
+
+        fetchProject();
     });
 
     async function deleteParticipant() {
@@ -86,9 +111,27 @@
             currentParticipant = null;
         }
     }
+
+    let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
+
 </script>
 
-<div class="m-4 p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+<ProjectHeadDisplayer project={project} selectedTab={1}/>
+<div class="bg-[#E7E7E7] p-4 pb-20 min-h-screen">
+<div class="p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#if participants && participants.length > 0}
             <div>
@@ -242,4 +285,9 @@
             </div>
         {/if}
     </div>
+</div>
+
+    {#if isMobile}
+	<ProjectPhoneDisplayer project={project} selectedTab={1}/>
+	{/if}
 </div>

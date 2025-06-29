@@ -18,8 +18,6 @@
 		if (registrationResponse.ok) {
 			const data = await registrationResponse.json();
 
-			console.log(data);
-
 			registration = {
 				id: data.id,
 				project: data.project,
@@ -27,7 +25,6 @@
 				form: data.form
 			};
 
-			console.log(registration);
 		} else {
 			alert('No registration form found');
 		}
