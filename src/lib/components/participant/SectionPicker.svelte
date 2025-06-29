@@ -12,8 +12,6 @@
 			participant.section = sections.filter((section) => section.id === participant.section!.id)[0];
 		}
 	}
-
-	$: console.log(participant);
 </script>
 
 {#if sections.length > 0}
