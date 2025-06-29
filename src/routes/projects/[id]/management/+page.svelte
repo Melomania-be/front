@@ -14,17 +14,18 @@
 
 	export let data;
 
-	let project = data.data[0];
-	let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
-	let participantsNotValidated = data.participantsNotValidated;
-	let participantsWithoutEmail = data.participantsWithoutEmail;
-
+	// Ajout de vérifications de sécurité
+	let project = data?.data?.[0] || null;
+	let participantsNotSeenCallsheet = data?.participantsNotSeenCallsheet || [];
+	let participantsNotValidated = data?.participantsNotValidated || [];
+	let participantsWithoutEmail = data?.participantsWithoutEmail || [];
 
 	let allParticipants : Participant[] = [];
 
-	let urlSvelteApi = `/api/projects/${project.id}/management/participants`;
-	let urlFront = `/projects/${project.id}/management/participants`;
-	let uniqueUrl = `/projects/${project.id}/management/participants`;
+	// Vérifications conditionnelles
+	let urlSvelteApi = project ? `/api/projects/${project.id}/management/participants` : '';
+	let urlFront = project ? `/projects/${project.id}/management/participants` : '';
+	let uniqueUrl = project ? `/projects/${project.id}/management/participants` : '';
 
 	let options: any = {
 		filter: '',
@@ -35,50 +36,82 @@
 	};
 
 	onMount(async () => {
-		await fetchData();
+		if (project) {
+			await fetchData();
+		}
 	});
 
 	async function fetchData() {
-		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
-		optionInUrls += '&filter=' + options.filter;
-		optionInUrls += '&orderBy=' + options.orderBy;
-		optionInUrls += '&order=' + options.order;
+		if (!project || !project.id) return;
 
-		const response = await fetch(`${urlSvelteApi}${optionInUrls}`, {
-			method: 'GET'
-		});
+		try {
+			let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
+			optionInUrls += '&filter=' + options.filter;
+			optionInUrls += '&orderBy=' + options.orderBy;
+			optionInUrls += '&order=' + options.order;
 
-		const data = await response.json();
+			const response = await fetch(`${urlSvelteApi}${optionInUrls}`, {
+				method: 'GET'
+			});
 
-		allParticipants = data.data;
+			if (response.ok) {
+				const responseData = await response.json();
+				allParticipants = responseData?.data || [];
+			}
+		} catch (error) {
+			console.error('Error fetching participants:', error);
+			allParticipants = [];
+		}
 	}
 
 	let isMobile = false;
 
 	const checkMobile = () => {
-		isMobile = window.innerWidth <= 1000;
+		if (browser) {
+			isMobile = window.innerWidth <= 1000;
+		}
 	};
 
 	onMount(() => {
 		checkMobile();
-		window.addEventListener('resize', checkMobile);
+		if (browser) {
+			window.addEventListener('resize', checkMobile);
+		}
 
 		return () => {
-			window.removeEventListener('resize', checkMobile);
+			if (browser) {
+				window.removeEventListener('resize', checkMobile);
+			}
 		};
 	});
+
+	// Réactivité pour mettre à jour les URLs quand project change
+	$: if (project?.id) {
+		urlSvelteApi = `/api/projects/${project.id}/management/participants`;
+		urlFront = `/projects/${project.id}/management/participants`;
+		uniqueUrl = `/projects/${project.id}/management/participants`;
+	}
 </script>
 
-<div class="w-auto {isMobile ? "pb-[50px]" : ""}">
-	<ProjectHeadDisplayer project={project} selectedTab={0}></ProjectHeadDisplayer>
+{#if project}
+	<div class="w-auto {isMobile ? "pb-[50px]" : ""}">
+	<ProjectHeadDisplayer {project} selectedTab={0}></ProjectHeadDisplayer>
 	<Dashboard
 		{project}
 		participants={allParticipants}
 		{participantsNotSeenCallsheet}
-		participantsNotValidated={participantsNotValidated}
-		{participantsWithoutEmail }
+		{participantsNotValidated}
+		{participantsWithoutEmail}
 	/>
 	{#if isMobile}
-	<ProjectPhoneDisplayer project={project} selectedTab={0}/>
+		<ProjectPhoneDisplayer {project} selectedTab={0}/>
 	{/if}
-</div>
+	</div>
+{:else}
+	<div class="flex justify-center items-center h-64 bg-gray-100">
+		<div class="text-center">
+			<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
+			<p class="text-gray-600 text-lg">Loading project...</p>
+		</div>
+	</div>
+{/if}
