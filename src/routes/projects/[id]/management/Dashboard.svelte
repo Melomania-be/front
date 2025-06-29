@@ -10,94 +10,106 @@
 	import Notification from './Notification.svelte';
 	import {faUser} from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
+	import { browser } from '$app/environment';
 
 	export let project: any;
-	export let participants: Participant[];
-	export let participantsNotSeenCallsheet: Array<any>;
-	export let participantsNotValidated: Array<any>;
-	export let participantsWithoutEmail: Array<any>;
-
+	export let participants: Participant[] = [];
+	export let participantsNotSeenCallsheet: Array<any> = [];
+	export let participantsNotValidated: Array<any> = [];
+	export let participantsWithoutEmail: Array<any> = [];
 
 	let isMobile = false;
 	let windowWidth : number;
 
 	const checkMobile = () => {
-		isMobile = window.innerWidth <= 1000;
-		windowWidth = window.innerWidth;
+		if (browser) {
+			isMobile = window.innerWidth <= 1000;
+			windowWidth = window.innerWidth;
+		}
 	};
 
 	onMount(() => {
 		checkMobile();
-		window.addEventListener('resize', checkMobile);
+		if (browser) {
+			window.addEventListener('resize', checkMobile);
+		}
 
 		return () => {
-			window.removeEventListener('resize', checkMobile);
+			if (browser) {
+				window.removeEventListener('resize', checkMobile);
+			}
 		};
 	});
 </script>
 
-<div class="h-auto p-4 {isMobile ? "bg-[#E7E7E7] w-screen" : "bg-[#E7E7E7]"} border-2">
+{#if project}
+	<div class="h-auto p-4 {isMobile ? "bg-[#E7E7E7] w-screen" : "bg-[#E7E7E7]"} border-2">
 	<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center w-full">
-		<div class="bg-white border-2 border-[#E35656] rounded-[10px] 
+		<div class="bg-white border-2 border-[#E35656] rounded-[10px]
 		{isMobile ? "w-full" : " w-[90%]"}
 		">
 			<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
-		</div>
-		<div class="flex text-white h-[100px] font-bold
+	</div>
+	<div class="flex text-white h-[100px] font-bold
 		{isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4"}
 		">
 			<div class="flex w-full text-center {isMobile ? "gap-3" : "gap-6"}">
 				<div class="rounded-lg py-2 px-4 flex-1 h-full bg-[#6CB1C8]">
-					<p>PARTICIPANTS</p>
-					<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"}
-					">{project.participants.length}</p>
-				</div>
-				<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
-					<p>REHEARSALS</p>
-					<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project.rehearsals.length}</p>
-				</div>
-				<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
-					<p>CONCERTS</p>
-					<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project.concerts.length}</p>
-				</div>
-			</div>
-		</div>
+	<p>PARTICIPANTS</p>
+	<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"}
+					">{project?.participants?.length || 0}</p>
+</div>
+	<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
+		<p>REHEARSALS</p>
+		<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project?.rehearsals?.length || 0}</p>
+	</div>
+	<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
+		<p>CONCERTS</p>
+		<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project?.concerts?.length || 0}</p>
+	</div>
+	</div>
+	</div>
 	</div>
 
-
-	<div class="flex w-[100%] flex-col md:flex-row gap-6 mt-4">	
+	<div class="flex w-[100%] flex-col md:flex-row gap-6 mt-4">
 		<DisplayerEvents bind:project />
 	</div>
 
 	<div
-			class="h-full {isMobile ? "w-full" : "w-2/5"} mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+		class="h-full {isMobile ? "w-full" : "w-2/5"} mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
 		>
 		<div class="flex p-4 flex-col w-full">
-			<div class="flex items-center">
-				<h1 class="font-bold text-lg">MANAGERS</h1>
-				<div class="ml-auto mr-0">
-					<a
-						class="text-white font-bold text-sm bg-[#6B9AD9] p-2 rounded-[8px]"
-						href="/projects/{project.id}/management/modify">Edit</a
-					>
-				</div>
-			</div>
-			<div class="text-sm my-6 grid grid-cols-2 gap-2">
-				{#if project.responsibles && project.responsibles.length === 0}
-					<p class="text-center">No project manager</p>
-				{:else}
-					{#each project.responsibles as responsible}
-						<a href="/contacts/{responsible.id}" class="pl-4 border-[1.5px] border-[#B6B6B6] text-sm flex items-center gap-3 rounded-full p-1 hover:bg-blue-100">
-							<Fa icon={faUser} class="text-[16px]" style="color: #6B9AD9;" />
-							<div class="flex flex-col w-full">
-							<p class="truncate overflow-hidden whitespace-nowrap max-w-[80px]">{responsible.firstName}</p>
-							<p class="truncate overflow-hidden whitespace-nowrap max-w-[90%]">{responsible.lastName}</p>
-							</div>
-						</a>
-					{/each}
-				{/if}
-			</div>
+	<div class="flex items-center">
+		<h1 class="font-bold text-lg">MANAGERS</h1>
+		<div class="ml-auto mr-0">
+			{#if project?.id}
+				<a
+					class="text-white font-bold text-sm bg-[#6B9AD9] p-2 rounded-[8px]"
+					href="/projects/{project.id}/management/modify">Edit</a
+				>
+			{:else}
+				<span class="text-gray-400 font-bold text-sm bg-gray-300 p-2 rounded-[8px] cursor-not-allowed">Edit</span>
+			{/if}
 		</div>
+	</div>
+	<div class="text-sm my-6 grid grid-cols-2 gap-2">
+		{#if !project?.responsibles || project.responsibles.length === 0}
+			<p class="text-center col-span-2">No project manager</p>
+		{:else}
+			{#each project.responsibles as responsible}
+				{#if responsible}
+					<a href="/contacts/{responsible.id || '#'}" class="pl-4 border-[1.5px] border-[#B6B6B6] text-sm flex items-center gap-3 rounded-full p-1 hover:bg-blue-100">
+						<Fa icon={faUser} class="text-[16px]" style="color: #6B9AD9;" />
+						<div class="flex flex-col w-full">
+							<p class="truncate overflow-hidden whitespace-nowrap max-w-[80px]">{responsible.firstName || 'Unknown'}</p>
+							<p class="truncate overflow-hidden whitespace-nowrap max-w-[90%]">{responsible.lastName || 'Name'}</p>
+						</div>
+					</a>
+				{/if}
+			{/each}
+		{/if}
+	</div>
+</div>
 	</div>
 
 	<div class="mt-4">
@@ -117,94 +129,12 @@
 	<div class="mt-4 w-full md:w-1/2">
 		<DisplayerPieces bind:project />
 	</div>
-</div>
-
-
-<!--
-
-	<div class="flex flex-col md:flex-row">
-		<div
-			class="flex-col space-y-1 w-full md:w-5/12 m-1 p-6 bg-white border border-black rounded-tl-lg shadow dark:bg-gray-800 dark:border-gray-700"
-		>
-			<div class="text-sm">
-				Created at: <DateShow startTime={project.createdAt} />
-			</div>
-			<div class="text-sm">
-				Updated at: <DateShow startTime={project.updatedAt} />
-			</div>
-			<div class="text-sm">
-				Project managers:
-				{#if project.responsibles && project.responsibles.length === 0}
-					No project manager
-				{:else}
-					{#each project.responsibles as responsible}
-						<a href="/contacts/{responsible.id}" class="rounded-full bg-slate-100 p-1"
-							>{responsible.firstName} {responsible.lastName}</a
-						>
-					{/each}
-				{/if}
-			</div>
-			<div class="grid grid-cols-2 gap-1">
-				<a
-					href="/projects/{project.id}/management/modify"
-					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>
-					Modify project infos
-				</a>
-				<a
-					href="/projects/{project.id}/management/participants"
-					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>
-					Participants
-				</a>
-				<a
-					href="/projects/{project.id}/management/attendance"
-					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>
-					See attendance
-				</a>
-				<a
-					href="/projects/{project.id}/management/mailing"
-					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>
-					Mail manager
-				</a>
-				<a
-					href="/projects/{project.id}/management/callsheets"
-					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>
-					See all callsheets
-				</a>
-				<a
-					href="/projects/{project.id}/management/validation"
-					class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>
-					New participant validation
-				</a>
-			</div>
-		</div>
-
-		<div class="m-1 w-full md:w-7/12">
-			<DisplayerPieces bind:project />
+	</div>
+{:else}
+	<div class="flex justify-center items-center h-64 bg-gray-100">
+		<div class="text-center">
+			<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+			<p class="text-gray-600">Loading dashboard...</p>
 		</div>
 	</div>
-
-	<div class="flex flex-col md:flex-row">
-		<div class="m-1 w-full md:w-1/2">
-			<DisplayerSheets
-				bind:project
-				bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
-				bind:participantsNotValidated
-			/>
-		</div>
-		<div class="m-1 w-full md:w-1/2">
-			<DisplayerEvents bind:project />
-		</div>
-	</div>
-
-	<div class="flex flex-col md:flex-row">
-		<div class="m-1 w-full md:w-1/2">
-			<DisplayerFolder bind:project />
-		</div>
-	</div>
--->
+{/if}
