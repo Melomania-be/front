@@ -1,4 +1,4 @@
-<!-- ... autres imports inchangés ... -->
+<!-- Version améliorée sans position absolute -->
 <script lang="ts">
     import type { Callsheet } from '$lib/types/Callsheet';
     import ProgramSection from './ProgramSection.svelte';
@@ -10,23 +10,26 @@
     export let callsheet: Callsheet;
 </script>
 
-<div class="relative w-full py-6 bg-[#E7E7E7] rounded-lg dark:bg-gray-800 px-4 sm:px-6 lg:px-8">
+<div class="relative w-full py-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 rounded-lg px-4 sm:px-6 lg:px-8">
     {#if callsheet}
         <div class="flex flex-col gap-10">
-            <!-- Image de couverture avec hauteur augmentée pour grands écrans -->
-            <div class="relative w-full h-[200px] sm:h-[280px] md:h-[350px] lg:h-[400px] xl:h-[450px]">
-                <img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
+            <!-- Section avec image et contenu superposé -->
+            <div class="relative">
+                <!-- Image de couverture -->
+                <div class="w-full h-[200px] sm:h-[280px] md:h-[350px] lg:h-[400px] xl:h-[450px]">
+                    <img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
 
-                <!-- Titre superposé responsive -->
-                <div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
-                    <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
-                        CALLSHEET - {callsheet.project.name}
-                    </h1>
+                    <!-- Titre superposé -->
+                    <div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
+                        <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
+                            CALLSHEET - {callsheet.project.name}
+                        </h1>
+                    </div>
                 </div>
 
-                <!-- Conteneur blanc responsive avec position ajustée pour grands écrans -->
-                <div class="absolute top-[120px] sm:top-[160px] md:top-[200px] lg:top-[240px] xl:top-[280px] left-1/2 transform -translate-x-1/2 w-full px-2">
-                    <div class="bg-white dark:bg-gray-900 shadow-md rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto">
+                <!-- Conteneur blanc qui chevauche l'image -->
+                <div class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10">
+                    <div class="content-container bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm">
                         <!-- Program Section -->
                         <div class="mb-4 sm:mb-6">
                             <ProgramSection {callsheet} />
@@ -76,4 +79,34 @@
             object-position: center;
         }
     }
+
+    /* Animation subtile pour le conteneur */
+    .content-container {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Alternatives de couleurs - décommentez celle que vous préférez */
+
+    /* Option 1: Dégradé océan */
+    /* .bg-ocean { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); } */
+
+    /* Option 2: Dégradé sunset */
+    /* .bg-sunset { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); } */
+
+    /* Option 3: Dégradé nature */
+    /* .bg-nature { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); } */
+
+    /* Option 4: Dégradé élégant */
+    /* .bg-elegant { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); } */
 </style>
