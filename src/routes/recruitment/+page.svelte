@@ -3,16 +3,16 @@
 <script context="module" lang="ts">
   // --- Type Definitions ---
 
-  export type RecruitmentStatus =
+ export type RecruitmentStatus =
+    | 'not yet contacted' // ADDED
     | 'awaiting response'
     | 'interested'
     | 'participating'
     | 'registered'
     | 'not available'
-    | 'to be contacted'
+    | 'to follow up'      // Changed from 'to be contacted'
     | 'cancelled'
-    | 'other'
-    | 'withdrawn';
+    | 'other';
 
   export interface LookupUser {
     id: number;
@@ -29,14 +29,16 @@
     firstName: string;
     lastName: string;
     sectionGroupId: number;
-    contactDate: string;
-    contactedBy: number;
+    // --- MODIFIED: contactDate can be string OR null ---
+    contactDate: string | null;
+    // --- MODIFIED: contactedBy can be number OR null ---
+    contactedBy: number | null;
     status: RecruitmentStatus;
     comment: string | null;
-    createdAt: string;
-    updatedAt: string;
-    sectionGroup?: LookupSectionGroup;
-    user?: LookupUser;
+    createdAt: string; // ISO string from backend DateTime
+    updatedAt: string; // ISO string from backend DateTime
+    sectionGroup?: LookupSectionGroup; // Optional, as it might not always be preloaded
+    user?: LookupUser;                 // Optional, as it might not always be preloaded or contactedBy is null
   }
 </script>
 
@@ -64,15 +66,15 @@
 
 
   const statuses: RecruitmentStatus[] = [
+   'not yet contacted', // ADDED
     'awaiting response',
     'interested',
     'participating',
     'registered',
     'not available',
-    'to be contacted',
+    'to follow up',      // CHANGED from 'to be contacted'
     'cancelled',
     'other',
-    'withdrawn'
   ];
 
   const columns: (keyof Recruitment)[] = [
@@ -106,57 +108,138 @@
     return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
   }
 
-  function sortTable(column: keyof Recruitment) {
-  if (sortColumn === column) {
-    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortColumn = column;
-    sortDirection = 'asc';
+//   function sortTable(column: keyof Recruitment) {
+//   if (sortColumn === column) {
+//     sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+//   } else {
+//     sortColumn = column;
+//     sortDirection = 'asc';
+//   }
+
+//   recruitment = [...recruitment].sort((a, b) => {
+//     let aVal: string | number | Date 
+//     let bVal: string | number | Date 
+
+//     switch (column) {
+//       case 'contactDate':
+//         aVal = a.contactDate ? new Date(a.contactDate) : new Date(0);
+//         bVal = b.contactDate ? new Date(b.contactDate) : new Date(0);
+//         break;
+
+//       case 'sectionGroupId':
+//         // Sort by sectionGroup name if available, else by id number
+//         aVal = a.sectionGroup?.name?.toLowerCase() ?? a.sectionGroupId;
+//         bVal = b.sectionGroup?.name?.toLowerCase() ?? b.sectionGroupId;
+//         break;
+
+//       case 'contactedBy':
+//         // Sort by user fullName if available, else by contactedBy id
+//         aVal = a.user?.fullName?.toLowerCase() ?? a.contactedBy;
+//         bVal = b.user?.fullName?.toLowerCase() ?? b.contactedBy;
+//         break;
+
+//       default:
+//         // For other columns, convert to lowercase string to compare
+//         aVal = (a[column] ?? '').toString().toLowerCase();
+//         bVal = (b[column] ?? '').toString().toLowerCase();
+//     }
+
+//     // Now compare aVal and bVal depending on their type
+//     if (aVal instanceof Date && bVal instanceof Date) {
+//       return sortDirection === 'asc' ? aVal.getTime() - bVal.getTime() : bVal.getTime() - aVal.getTime();
+//     }
+
+//     if (typeof aVal === 'number' && typeof bVal === 'number') {
+//       return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+//     }
+
+//     // Default string comparison
+//     return sortDirection === 'asc'
+//       ? String(aVal).localeCompare(String(bVal))
+//       : String(bVal).localeCompare(String(aVal));
+//   });
+// }
+
+
+function sortTable(column: keyof Recruitment) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = column;
+      sortDirection = 'asc';
+    }
+
+    recruitment = [...recruitment].sort((a, b) => {
+      let aVal: string | number | Date; // Ensure this type is always met
+      let bVal: string | number | Date; // Ensure this type is always met
+
+      switch (column) {
+        case 'contactDate':
+          // Convert null dates to a very early date (Epoch) for consistent sorting.
+          // This ensures null dates sort predictably (e.g., always at the beginning).
+          aVal = a.contactDate ? new Date(a.contactDate) : new Date(0);
+          bVal = b.contactDate ? new Date(b.contactDate) : new Date(0);
+          break;
+
+        case 'sectionGroupId':
+          // Prefer sorting by sectionGroup name if available.
+          // If sectionGroup or its name is null/undefined, use sectionGroupId.
+          // If sectionGroupId is also null, use -1 to ensure consistent numerical sorting (e.g., at the start).
+          if (a.sectionGroup?.name) {
+            aVal = a.sectionGroup.name.toLowerCase();
+          } else {
+            // Fallback to sectionGroupId. If it's null, use -1.
+            aVal = a.sectionGroupId ?? -1;
+          }
+
+          if (b.sectionGroup?.name) {
+            bVal = b.sectionGroup.name.toLowerCase();
+          } else {
+            bVal = b.sectionGroupId ?? -1;
+          }
+          break;
+
+        case 'contactedBy':
+          // Prefer sorting by user fullName if available.
+          // If user or fullName is null/undefined, use contactedBy ID.
+          // If contactedBy is also null, use -1 to ensure consistent numerical sorting (e.g., at the start).
+          if (a.user?.fullName) {
+            aVal = a.user.fullName.toLowerCase();
+          } else {
+            // Fallback to contactedBy ID. If it's null, use -1.
+            aVal = a.contactedBy ?? -1;
+          }
+
+          if (b.user?.fullName) {
+            bVal = b.user.fullName.toLowerCase();
+          } else {
+            bVal = b.contactedBy ?? -1;
+          }
+          break;
+
+        default:
+          // For other columns, convert to lowercase string to compare.
+          // Ensure null/undefined values become empty strings for consistent alphabetical sorting.
+          aVal = (a[column] ?? '').toString().toLowerCase();
+          bVal = (b[column] ?? '').toString().toLowerCase();
+          break;
+      }
+
+      // Now compare aVal and bVal depending on their determined type
+      if (aVal instanceof Date && bVal instanceof Date) {
+        return sortDirection === 'asc' ? aVal.getTime() - bVal.getTime() : bVal.getTime() - aVal.getTime();
+      }
+
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      // Default string comparison for all other cases
+      return sortDirection === 'asc'
+        ? String(aVal).localeCompare(String(bVal))
+        : String(bVal).localeCompare(String(aVal));
+    });
   }
-
-  recruitment = [...recruitment].sort((a, b) => {
-    let aVal: string | number | Date | undefined;
-    let bVal: string | number | Date | undefined;
-
-    switch (column) {
-      case 'contactDate':
-        aVal = a.contactDate ? new Date(a.contactDate) : new Date(0);
-        bVal = b.contactDate ? new Date(b.contactDate) : new Date(0);
-        break;
-
-      case 'sectionGroupId':
-        // Sort by sectionGroup name if available, else by id number
-        aVal = a.sectionGroup?.name?.toLowerCase() ?? a.sectionGroupId;
-        bVal = b.sectionGroup?.name?.toLowerCase() ?? b.sectionGroupId;
-        break;
-
-      case 'contactedBy':
-        // Sort by user fullName if available, else by contactedBy id
-        aVal = a.user?.fullName?.toLowerCase() ?? a.contactedBy;
-        bVal = b.user?.fullName?.toLowerCase() ?? b.contactedBy;
-        break;
-
-      default:
-        // For other columns, convert to lowercase string to compare
-        aVal = (a[column] ?? '').toString().toLowerCase();
-        bVal = (b[column] ?? '').toString().toLowerCase();
-    }
-
-    // Now compare aVal and bVal depending on their type
-    if (aVal instanceof Date && bVal instanceof Date) {
-      return sortDirection === 'asc' ? aVal.getTime() - bVal.getTime() : bVal.getTime() - aVal.getTime();
-    }
-
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-    }
-
-    // Default string comparison
-    return sortDirection === 'asc'
-      ? String(aVal).localeCompare(String(bVal))
-      : String(bVal).localeCompare(String(aVal));
-  });
-}
 
 
 
@@ -424,92 +507,250 @@ async function fetchRecruitment(shouldSort = true) {
   }
 
 // with similarity check
+// async function saveRecruit() {
+//   if (
+//     !editForm.firstName?.trim() ||
+//     !editForm.lastName?.trim() ||
+//     editForm.sectionGroupId === undefined ||
+//     editForm.contactedBy === undefined ||
+//     !editForm.status
+//   ) {
+//     toast.error('Please fill all required fields.');
+//     return;
+//   }
+
+//   // --- NEW: Duplicate and Similarity Check ---
+//   if (!isEditing) { // Only run this check when creating a new recruit
+//     const newFirstName = editForm.firstName.trim().toLowerCase();
+//     const newLastName = editForm.lastName.trim().toLowerCase();
+//     const newFullName = `${newFirstName} ${newLastName}`;
+
+//     const exactMatches: Recruitment[] = [];
+//     const similarMatches: Recruitment[] = [];
+
+//     for (const r of recruitment) {
+//       const existingFullName = `${r.firstName.toLowerCase()} ${r.lastName.toLowerCase()}`;
+      
+//       if (existingFullName === newFullName) {
+//         exactMatches.push(r);
+//         continue; // It's an exact match, no need to check for similarity
+//       }
+      
+//       const distance = getLevenshteinDistance(newFullName, existingFullName);
+//       if (distance > 0 && distance <= SIMILARITY_THRESHOLD) {
+//         similarMatches.push(r);
+//       }
+//     }
+
+//     if (exactMatches.length > 0) {
+//       if (!confirm(`A recruit with the exact name "${editForm.firstName} ${editForm.lastName}" already exists. Are you sure you want to add another?`)) {
+//         return; // Stop execution if the user clicks "Cancel"
+//       }
+//     } else if (similarMatches.length > 0) {
+//       const similarNames = similarMatches.map(r => `${r.firstName} ${r.lastName}`).join(', ');
+//       if (!confirm(`This name is very similar to existing recruits: ${similarNames}.\n\nThis could be a typo. Do you want to continue anyway?`)) {
+//         return; // Stop execution if the user clicks "Cancel"
+//       }
+//     }
+//   }
+//   // --- End of New Check ---
+
+
+//   const payload = {
+//     firstName: editForm.firstName.trim(),
+//     lastName: editForm.lastName.trim(),
+//     sectionGroupId: editForm.sectionGroupId,
+//     contactDate: editForm.contactDate,
+//     contactedBy: editForm.contactedBy,
+//     status: editForm.status,
+//     comment: editForm.comment ?? null
+//   };
+
+//   try {
+//     let res: Response;
+//     if (isEditing && editForm.id) {
+//       // The check is skipped for editing
+//       res = await fetch(`/api/recruitment/${editForm.id}`, {
+//         method: 'PUT',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify(payload)
+//       });
+//       toast.success('Recruitment updated successfully.');
+//     } else {
+//       // This path is taken after the check passes for new recruits
+//       res = await fetch('/api/recruitment', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify(payload)
+//       });
+//       toast.success('Recruitment added successfully.');
+//     }
+//     if (!res.ok) throw new Error(await res.text());
+//     await fetchRecruitment();
+//     closeModal();
+//   } catch (err) {
+//     console.error('Error saving recruit:', err);
+//     toast.error('Failed to save recruit.');
+//   }
+// }
+
+
 async function saveRecruit() {
-  if (
-    !editForm.firstName?.trim() ||
-    !editForm.lastName?.trim() ||
-    editForm.sectionGroupId === undefined ||
-    editForm.contactedBy === undefined ||
-    !editForm.status
-  ) {
-    toast.error('Please fill all required fields.');
-    return;
-  }
-
-  // --- NEW: Duplicate and Similarity Check ---
-  if (!isEditing) { // Only run this check when creating a new recruit
-    const newFirstName = editForm.firstName.trim().toLowerCase();
-    const newLastName = editForm.lastName.trim().toLowerCase();
-    const newFullName = `${newFirstName} ${newLastName}`;
-
-    const exactMatches: Recruitment[] = [];
-    const similarMatches: Recruitment[] = [];
-
-    for (const r of recruitment) {
-      const existingFullName = `${r.firstName.toLowerCase()} ${r.lastName.toLowerCase()}`;
-      
-      if (existingFullName === newFullName) {
-        exactMatches.push(r);
-        continue; // It's an exact match, no need to check for similarity
-      }
-      
-      const distance = getLevenshteinDistance(newFullName, existingFullName);
-      if (distance > 0 && distance <= SIMILARITY_THRESHOLD) {
-        similarMatches.push(r);
-      }
+    // --- MODIFIED VALIDATION: Handles 'contactedBy' conditionally ---
+    if (
+      !editForm.firstName?.trim() ||
+      !editForm.lastName?.trim() ||
+      editForm.sectionGroupId === undefined ||
+      !editForm.status // Status is always required
+    ) {
+      toast.error('Please fill all required fields: First Name, Last Name, Section Group, Status.');
+      return;
     }
 
-    if (exactMatches.length > 0) {
-      if (!confirm(`A recruit with the exact name "${editForm.firstName} ${editForm.lastName}" already exists. Are you sure you want to add another?`)) {
-        return; // Stop execution if the user clicks "Cancel"
+    // Conditional check for contactedBy based on status
+    if (editForm.status !== 'not yet contacted' && (editForm.contactedBy === undefined || editForm.contactedBy === null)) {
+        toast.error('Contacted By is required when status is not "not yet contacted".');
+        return;
+    }
+    // --- END MODIFIED VALIDATION ---
+
+
+    // --- Duplicate and Similarity Check (existing, no changes here) ---
+    if (!isEditing) {
+      const newFirstName = editForm.firstName.trim().toLowerCase();
+      const newLastName = editForm.lastName.trim().toLowerCase();
+      const newFullName = `${newFirstName} ${newLastName}`;
+
+      const exactMatches: Recruitment[] = [];
+      const similarMatches: Recruitment[] = [];
+
+      for (const r of recruitment) {
+        const existingFullName = `${r.firstName.toLowerCase()} ${r.lastName.toLowerCase()}`;
+        if (existingFullName === newFullName) {
+          exactMatches.push(r);
+          continue;
+        }
+        const distance = getLevenshteinDistance(newFullName, existingFullName);
+        if (distance > 0 && distance <= SIMILARITY_THRESHOLD) {
+          similarMatches.push(r);
+        }
       }
-    } else if (similarMatches.length > 0) {
-      const similarNames = similarMatches.map(r => `${r.firstName} ${r.lastName}`).join(', ');
-      if (!confirm(`This name is very similar to existing recruits: ${similarNames}.\n\nThis could be a typo. Do you want to continue anyway?`)) {
-        return; // Stop execution if the user clicks "Cancel"
+
+      if (exactMatches.length > 0) {
+        if (!confirm(`A recruit with the exact name "${editForm.firstName} ${editForm.lastName}" already exists. Are you sure you want to add another?`)) {
+          return;
+        }
+      } else if (similarMatches.length > 0) {
+        const similarNames = similarMatches.map(r => `${r.firstName} ${r.lastName}`).join(', ');
+        if (!confirm(`This name is very similar to existing recruits: ${similarNames}.\n\nThis could be a typo. Do you want to continue anyway?`)) {
+          return;
+        }
       }
     }
-  }
-  // --- End of New Check ---
+    // --- End Duplicate and Similarity Check ---
 
 
-  const payload = {
-    firstName: editForm.firstName.trim(),
-    lastName: editForm.lastName.trim(),
-    sectionGroupId: editForm.sectionGroupId,
-    contactDate: editForm.contactDate,
-    contactedBy: editForm.contactedBy,
-    status: editForm.status,
-    comment: editForm.comment ?? null
-  };
+    // --- MODIFIED PAYLOAD CONSTRUCTION ---
+    let contactDateToSend: string | null = null;
+    let contactedByToSend: number | null = null;
 
-  try {
-    let res: Response;
-    if (isEditing && editForm.id) {
-      // The check is skipped for editing
-      res = await fetch(`/api/recruitment/${editForm.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      toast.success('Recruitment updated successfully.');
+    if (editForm.status === 'not yet contacted') {
+      // If status is 'not yet contacted', contactDate and contactedBy must be null in payload.
+      // This is because the backend expects null for this status.
+      contactDateToSend = null;
+      contactedByToSend = null;
     } else {
-      // This path is taken after the check passes for new recruits
-      res = await fetch('/api/recruitment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      toast.success('Recruitment added successfully.');
+      // For other statuses:
+      // contactDate: Use the provided date string from the form.
+      // If it's empty from the form (e.g., user cleared it), convert it to null.
+      // If it's a valid date string, keep it.
+      contactDateToSend = editForm.contactDate && editForm.contactDate.trim() !== ''
+                            ? editForm.contactDate
+                            : null;
+
+      // contactedBy: Use the provided number from the form.
+      // It's already number | null | undefined from editForm, so just nullish coalesce to null if undefined.
+      contactedByToSend = editForm.contactedBy ?? null;
     }
-    if (!res.ok) throw new Error(await res.text());
-    await fetchRecruitment();
-    closeModal();
-  } catch (err) {
-    console.error('Error saving recruit:', err);
-    toast.error('Failed to save recruit.');
+
+    const payload = {
+      firstName: editForm.firstName.trim(),
+      lastName: editForm.lastName.trim(),
+      sectionGroupId: editForm.sectionGroupId,
+      status: editForm.status,
+      comment: editForm.comment ?? null,
+      // --- Use the conditionally determined values ---
+      contactDate: contactDateToSend,
+      contactedBy: contactedByToSend,
+    };
+    // --- END MODIFIED PAYLOAD CONSTRUCTION ---
+
+
+    try {
+      let res: Response;
+      if (isEditing && editForm.id) {
+        res = await fetch(`/api/recruitment/${editForm.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        toast.success('Recruitment updated successfully.');
+      } else {
+        res = await fetch('/api/recruitment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        toast.success('Recruitment added successfully.');
+      }
+      if (!res.ok) {
+        const errorText = await res.text(); // Get error text from response
+        console.error('Backend save error:', errorText);
+        throw new Error(errorText); // Throw it to be caught by the outer catch
+      }
+      await fetchRecruitment();
+      closeModal();
+    } catch (err: unknown) { // Explicitly type err as unknown for clarity, though it's default
+      console.error('Error saving recruit:', err);
+
+      // --- FIX APPLIED HERE: Type Narrowing for 'err' ---
+      let errorMessage = 'Failed to save recruit: An unexpected error occurred.';
+
+      if (err instanceof Error) { // Check if it's an Error object
+        try {
+          const errorParsed = JSON.parse(err.message);
+          if (errorParsed.message) {
+            errorMessage = errorParsed.message;
+          } else if (errorParsed.errors && Array.isArray(errorParsed.errors) && errorParsed.errors.length > 0) {
+            // For VineJS detailed errors like { message: "Validation failed", errors: [...] }
+            errorMessage = errorParsed.message || 'Validation failed. See console for details.';
+            // You might want to display specific field errors here if needed
+            // e.g., toast.error(errorParsed.errors[0].message);
+          } else {
+            errorMessage = `Failed to save recruit: ${err.message}`;
+          }
+        } catch {
+          // If err.message is not valid JSON, use it as a plain string
+          errorMessage = `Failed to save recruit: ${err.message}`;
+        }
+      } else if (typeof err === 'string') { // Check if it's a plain string error
+        try {
+          const errorParsed = JSON.parse(err); // Try parsing the string itself
+          if (errorParsed.message) {
+              errorMessage = errorParsed.message;
+          } else if (errorParsed.errors && Array.isArray(errorParsed.errors) && errorParsed.errors.length > 0) {
+              errorMessage = errorParsed.message || 'Validation failed. See console for details.';
+          } else {
+              errorMessage = `Failed to save recruit: ${err}`;
+          }
+        } catch {
+          errorMessage = `Failed to save recruit: ${err}`; // Use plain string if not JSON
+        }
+      }
+
+      toast.error(errorMessage);
+    }
   }
-}
 
 
   // without similarity check
@@ -574,35 +815,95 @@ async function saveRecruit() {
     }
   }
 
-  function openAddModal() {
+  // function openAddModal() {
+  //   isEditing = false;
+  //   editForm = {
+  //     firstName: '',
+  //     lastName: '',
+  //     sectionGroupId: sectionGroups[0]?.id,
+  //     contactDate: new Date().toISOString().slice(0, 10),
+  //     contactedBy: users[0]?.id,
+  //     status: 'awaiting response',
+  //     comment: null
+  //   };
+  //   showModal = true;
+  // }
+
+function openAddModal() {
     isEditing = false;
     editForm = {
       firstName: '',
       lastName: '',
-      sectionGroupId: sectionGroups[0]?.id,
-      contactDate: new Date().toISOString().slice(0, 10),
-      contactedBy: users[0]?.id,
-      status: 'awaiting response',
-      comment: null
+      sectionGroupId: sectionGroups.length > 0 ? sectionGroups[0].id : undefined,
+      contactDate: null, // Default to null for 'not yet contacted'
+      contactedBy: null, // Default to null for 'not yet contacted'
+      status: 'not yet contacted', // NEW DEFAULT STATUS
+      comment: null,
     };
     showModal = true;
   }
 
-  function openEditModal(r: Recruitment) {
+  // function openEditModal(r: Recruitment) {
+  //   isEditing = true;
+  //   editForm = {
+  //     ...r,
+  //     contactDate: r.contactDate.slice(0, 10)
+  //   };
+  //   showModal = true;
+  // }
+
+   function openEditModal(r: Recruitment) {
     isEditing = true;
     editForm = {
       ...r,
-      contactDate: r.contactDate.slice(0, 10)
+      // If contactDate is null, ensure input value is empty string for type="date"
+      // Otherwise, slice to get YYYY-MM-DD for the input
+      contactDate: r.contactDate ? new Date(r.contactDate).toISOString().slice(0, 10) : null // Keep as null if null from backend
     };
     showModal = true;
   }
 
+
+  // function closeModal() {
+  //   showModal = false;
+  //   editForm = {};
+  // }
+
   function closeModal() {
     showModal = false;
-    editForm = {};
+    selectedRecruitments.clear(); // Clear selection when modal closes
+    selectedRecruitments = selectedRecruitments; // Trigger reactivity
   }
 
-  async function checkAndUpdateStatus(firstName: string, lastName: string, action: 'register' | 'withdraw') {
+  // async function checkAndUpdateStatus(firstName: string, lastName: string, action: 'register' | 'withdraw') {
+  //   const recruit = recruitment.find(
+  //     (r) =>
+  //       r.firstName.toLowerCase() === firstName.toLowerCase() &&
+  //       r.lastName.toLowerCase() === lastName.toLowerCase()
+  //   );
+  //   if (!recruit) {
+  //     toast.error(`${firstName} ${lastName} not found.`);
+  //     return;
+  //   }
+  //   if (!confirm(`Confirm ${action} for ${firstName} ${lastName}?`)) return;
+
+  //   try {
+  //     const res = await fetch(`/api/recruitment/${recruit.id}`, {
+  //       method: 'PUT',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ status: action === 'register' ? 'registered' : 'withdrawn' })
+  //     });
+  //     if (!res.ok) throw new Error(await res.text());
+  //     toast.success(`Recruit ${action}ed.`);
+  //     await fetchRecruitment();
+  //   } catch (err) {
+  //     console.error(`${action} error:`, err);
+  //     toast.error(`Failed to ${action} recruit.`);
+  //   }
+  // }
+
+
+   async function checkAndUpdateStatus(firstName: string, lastName: string, action: 'register' | 'withdraw') {
     const recruit = recruitment.find(
       (r) =>
         r.firstName.toLowerCase() === firstName.toLowerCase() &&
@@ -615,17 +916,61 @@ async function saveRecruit() {
     if (!confirm(`Confirm ${action} for ${firstName} ${lastName}?`)) return;
 
     try {
+      // newStatus will explicitly be 'registered' or 'cancelled'
+      const newStatus: RecruitmentStatus = action === 'register' ? 'registered' : 'cancelled';
+      const oldStatus: RecruitmentStatus = recruit.status;
+
+      let contactDatePayload: string | null = null;
+      let contactedByPayload: number | null = null;
+
+      // --- SIMPLIFIED LOGIC FOR THIS FUNCTION'S SPECIFIC TRANSITIONS ---
+      if (oldStatus === 'not yet contacted') {
+        // If old status was 'not yet contacted' and we're moving to 'registered'/'cancelled'
+        // Then set contactDate to now.
+        contactDatePayload = getLocalDatetimeString(new Date()).slice(0, 10);
+        // For contactedBy, if it was null, try to assign a default or existing.
+        // For simplicity here, we'll keep the existing if it's there, otherwise null.
+        // In a real app, you might want to force selection of 'contactedBy' when registering.
+        contactedByPayload = recruit.contactedBy || null; // Will send null if currently null
+      } else {
+        // If old status was NOT 'not yet contacted', just retain current date/contactedBy.
+        // This function does not otherwise modify these fields for other status changes.
+        contactDatePayload = recruit.contactDate;
+        contactedByPayload = recruit.contactedBy;
+      }
+      // --- END SIMPLIFIED LOGIC ---
+
       const res = await fetch(`/api/recruitment/${recruit.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: action === 'register' ? 'registered' : 'withdrawn' })
+        body: JSON.stringify({
+          status: newStatus,
+          contactDate: contactDatePayload,
+          contactedBy: contactedByPayload
+        })
       });
-      if (!res.ok) throw new Error(await res.text());
-      toast.success(`Recruit ${action}ed.`);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Backend ${action} error (${res.status}):`, errorText);
+        throw new Error(errorText);
+      }
+      toast.success(`Recruit ${action}ed. Status changed to '${newStatus}'.`);
       await fetchRecruitment();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`${action} error:`, err);
-      toast.error(`Failed to ${action} recruit.`);
+      let errorMessage = `Failed to ${action} recruit.`;
+      if (err instanceof Error) {
+        try {
+          const errorParsed = JSON.parse(err.message);
+          errorMessage = errorParsed.message || errorMessage;
+        } catch {
+          errorMessage = err.message;
+        }
+      } else if (typeof err === 'string') {
+          errorMessage = err;
+      }
+      toast.error(errorMessage);
     }
   }
 
@@ -680,17 +1025,25 @@ async function updateStatuses() {
     // Call fetchRecruitment and pass false to prevent sorting
     await fetchRecruitment(false); 
 
-  } catch (error) {
-  let errorMessage = 'An error occurred while updating statuses.';
-  if (error instanceof Error) {
-    errorMessage = error.message;
+  } catch (error: unknown) { // Use unknown for safety
+      let errorMessage = 'An error occurred while updating statuses.';
+      if (error instanceof Error) {
+        try {
+            const errorParsed = JSON.parse(error.message);
+            errorMessage = errorParsed.message || errorMessage;
+        } catch {
+            errorMessage = error.message;
+        }
+      } else if (typeof error === 'string') {
+          errorMessage = error;
+      }
+      toast.error(errorMessage);
+      console.error(error);
+    } finally {
+      isRecalculating = false;
+    }
   }
-  toast.error(errorMessage);
-  console.error(error); // You can still log the original error object
-} finally {
-  isRecalculating = false; 
-}
-}
+
   
   function registerRecruit(firstName: string, lastName: string) {
     checkAndUpdateStatus(firstName, lastName, 'register');
@@ -711,15 +1064,16 @@ async function updateStatuses() {
   });
 </script>
 
+
 <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
     <div class="flex flex-wrap items-center gap-4">
         <div class="flex-grow">
             <h3 class="font-semibold text-gray-900">Automatic Status Update</h3>
             <p class="text-sm text-gray-600">
-                This action will update any recruit from 'Awaiting Response' to 'To Be Contacted' if the contact date is older than the specified delay.
+                This action will update any recruit from 'Awaiting Response' to 'To Follow Up' if the contact date is older than the specified delay.
             </p>
         </div>
-        
+
         <div class="flex items-center gap-2">
             <input
                 type="number"
@@ -728,7 +1082,7 @@ async function updateStatuses() {
                 min="1"
                 max="365"
                 disabled={isRecalculating}
-                class=" px-4 py-2  block w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
+                class=" px-4 py-2  block w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
                 aria-label="Status change delay in days"
             />
             <span class="text-sm text-gray-700">Days</span>
@@ -746,74 +1100,35 @@ async function updateStatuses() {
                 </svg>
                 Processing...
             {:else}
-                <!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="-ml-1 mr-2 h-5 w-5">
-                    <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.562a.75.75 0 001.5 0v-2.433l.311.312a7 7 0 0011.764-3.138.75.75 0 00-1.449-.396zM2.066 8.575a.75.75 0 00-1.449.396A7 7 0 008.92 15.99l.311-.312v2.433a.75.75 0 001.5 0V13.5a.75.75 0 00-.75-.75H5.438a.75.75 0 000 1.5h2.433l-.311-.312a5.5 5.5 0 01-5.5-5.5z" clip-rule="evenodd" />
-                </svg> -->
                 Recalculate Statuses
             {/if}
         </button>
     </div>
 </div>
 
-<!-- <div class="mb-4 p-4 border rounded-lg bg-yellow-50 flex flex-wrap items-center space-x-4">
-  <label
-    for="thresholdInput"
-    class="text-sm font-medium text-gray-700 whitespace-nowrap"
-  >
-    Change status to <strong>"To Be Contacted"</strong> if <strong>"Awaiting Response"</strong> and contact is older than:
-  </label>
-  <input
-    id="thresholdInput"
-    type="number"
-    min="1"
-    bind:value={daysThreshold}
-    class="w-20 border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-  />
-  <span class="text-sm text-gray-700">days</span>
-  <button
-    class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
-    on:click={() => performStatusCheck('manual')}
-  >
-    Run Status Check Now
-  </button>
-</div> -->
-
 <div class="container mx-auto p-4 font-inter antialiased">
+    <div class="mb-4">
+        <button
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+            on:click={openAddModal}
+        >
+            Add New Recruit
+        </button>
 
- 
-
-  <!-- {#if checkStatusDateTime}
-    <p class="text-sm text-gray-500 mb-4">
-      Next automatic check scheduled for:
-      <strong>{new Date(checkStatusDateTime).toLocaleString()}</strong>
-    </p>
-  {/if} -->
-
-
-  <!-- Add new recruit button -->
-  <div class="mb-4">
-    <button
-      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
-      on:click={openAddModal}
-    >
-      Add New Recruit
-    </button>
-
-     <button
+        <button
             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
             on:click={copySelectedToExcel}
             disabled={selectedRecruitments.size === 0}
         >
             Copy Selected to Excel ({selectedRecruitments.size})
         </button>
-  </div>
+    </div>
 
-  <!-- Recruitment table -->
-  <div class="overflow-x-auto rounded-lg shadow-md">
-    <table class="min-w-full bg-white border border-gray-200">
-      <thead class="bg-gray-100">
-        <tr>
-           <th class="px-4 py-3 text-left">
+    <div class="overflow-x-auto rounded-lg shadow-md">
+        <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-3 text-left">
                         <input
                             type="checkbox"
                             class="form-checkbox h-4 w-4 text-blue-600 rounded"
@@ -822,35 +1137,35 @@ async function updateStatuses() {
                             disabled={recruitment.length === 0}
                         />
                     </th>
-          {#each columns as column (column)}
-            <th
-              class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
-              on:click={() => sortTable(column)}
-            >
-              {column === 'sectionGroupId'
-                ? 'Section Group'
-                : column === 'contactDate'
-                ? 'Contact Date'
-                : column === 'contactedBy'
-                ? 'Contacted By'
-                : column.charAt(0).toUpperCase() +
-                  column.slice(1).replace(/([A-Z])/g, ' $1')}
-              {#if sortColumn === column}
-                <span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-              {/if}
-            </th>
-          {/each}
-          <th
-            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
-          >
-            Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200">
-        {#each recruitment as r (r.id)}
-          <tr class="hover:bg-gray-50 transition duration-100 ease-in-out">
-             <td class="px-4 py-2">
+                    {#each columns as column (column)}
+                        <th
+                            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                            on:click={() => sortTable(column)}
+                        >
+                            {column === 'sectionGroupId'
+                                ? 'Section Group'
+                                : column === 'contactDate'
+                                ? 'Contact Date'
+                                : column === 'contactedBy'
+                                ? 'Contacted By'
+                                : column.charAt(0).toUpperCase() +
+                                  column.slice(1).replace(/([A-Z])/g, ' $1')}
+                            {#if sortColumn === column}
+                                <span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                            {/if}
+                        </th>
+                    {/each}
+                    <th
+                        class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                    >
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {#each recruitment as r (r.id)}
+                    <tr class="hover:bg-gray-50 transition duration-100 ease-in-out">
+                        <td class="px-4 py-2">
                             <input
                                 type="checkbox"
                                 class="form-checkbox h-4 w-4 text-blue-600 rounded"
@@ -858,171 +1173,179 @@ async function updateStatuses() {
                                 checked={selectedRecruitments.has(r.id)}
                             />
                         </td>
-            <td class="px-4 py-2 text-sm text-gray-800">{r.firstName}</td>
-            <td class="px-4 py-2 text-sm text-gray-800">{r.lastName}</td>
-            <td class="px-4 py-2 text-sm text-gray-800">
-              {r.sectionGroup?.name ?? `ID: ${r.sectionGroupId}`}
-            </td>
-            <td class="px-4 py-2 text-sm text-gray-800">{formatDate(r.contactDate)}</td>
-            <td class="px-4 py-2 text-sm text-gray-800">
-              {r.user?.fullName ?? `ID: ${r.contactedBy}`}
-            </td>
-            <td class="px-4 py-2 text-sm text-gray-800">{r.status}</td>
-            <td class="px-4 py-2 text-sm text-gray-800">{r.comment ?? 'N/A'}</td>
-            <td class="px-4 py-2 text-sm flex space-x-2">
-              <button
-                class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out"
-                on:click={() => openEditModal(r)}
-              >
-                Edit
-              </button>
-              <button
-                class="text-red-600 hover:text-red-800 transition duration-150 ease-in-out"
-                on:click={() => deleteRecruit(r.id)}
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Modal for Add/Edit Recruit -->
-  {#if showModal}
-    <div
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    >
-      <div
-        class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full transform transition-all duration-300 scale-100 opacity-100"
-      >
-        <h2 class="text-2xl font-bold mb-4 text-gray-800">
-          {isEditing ? 'Edit Recruit' : 'Add Recruit'}
-        </h2>
-
-        <div class="grid grid-cols-1 gap-4">
-          <div class="flex flex-col sm:flex-row gap-4">
-            <div class="flex-1">
-              <label
-                class="block text-sm font-semibold text-gray-700 mb-1"
-                >First Name <span class="text-red-500">*</span></label
-              >
-              <input
-                type="text"
-                bind:value={editForm.firstName}
-                class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-              />
-            </div>
-            <div class="flex-1">
-              <label
-                class="block text-sm font-semibold text-gray-700 mb-1"
-                >Last Name <span class="text-red-500">*</span></label
-              >
-              <input
-                type="text"
-                bind:value={editForm.lastName}
-                class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-semibold text-gray-700 mb-1"
-              >Section Group <span class="text-red-500">*</span></label
-            >
-            <select
-              bind:value={editForm.sectionGroupId}
-              class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            >
-              {#if editForm.sectionGroupId === undefined || sectionGroups.length === 0}
-                <option value="" disabled>Select a section group</option>
-              {/if}
-              {#each sectionGroups as sg (sg.id)}
-                <option value={sg.id}>{sg.name}</option>
-              {/each}
-            </select>
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-semibold text-gray-700 mb-1"
-              >Contact Date <span class="text-red-500">*</span></label
-            >
-            <input
-              type="date"
-              bind:value={editForm.contactDate}
-              class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            />
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-semibold text-gray-700 mb-1"
-              >Contacted By <span class="text-red-500">*</span></label
-            >
-            <select
-              bind:value={editForm.contactedBy}
-              class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            >
-              {#if editForm.contactedBy === undefined || users.length === 0}
-                <option value="" disabled>Select a user</option>
-              {/if}
-              {#each users as user (user.id)}
-                <option value={user.id}>{user.fullName ?? `User #${user.id}`}</option>
-              {/each}
-            </select>
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-semibold text-gray-700 mb-1"
-              >Status <span class="text-red-500">*</span></label
-            >
-            <select
-              bind:value={editForm.status}
-              class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            >
-              {#each statuses as s}
-                <option value={s}>{s}</option>
-              {/each}
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-              Comment
-            </label>
-            <textarea
-              rows="3"
-              bind:value={editForm.comment}
-              class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            ></textarea>
-          </div>
-
-          <div class="flex justify-end space-x-2 pt-4">
-            <button
-              class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
-              on:click={closeModal}
-              type="button"
-            >
-              Cancel
-            </button>
-            <button
-              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
-              on:click={saveRecruit}
-              type="button"
-            >
-              {isEditing ? 'Save Changes' : 'Add Recruit'}
-            </button>
-          </div>
-        </div>
-      </div>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.firstName}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.lastName}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">
+                            {r.sectionGroup?.name ?? `ID: ${r.sectionGroupId}`}
+                        </td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{formatDate(r.contactDate)}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">
+                            {r.user?.fullName ?? (r.contactedBy === null ? 'N/A' : `ID: ${r.contactedBy}`)} </td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.status}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.comment ?? 'N/A'}</td>
+                        <td class="px-4 py-2 text-sm flex space-x-2">
+                            <button
+                                class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out"
+                                on:click={() => openEditModal(r)}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                class="text-red-600 hover:text-red-800 transition duration-150 ease-in-out"
+                                on:click={() => deleteRecruit(r.id)}
+                            >
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
     </div>
-  {/if}
-</div>
 
+    {#if showModal}
+        <div
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        >
+            <div
+                class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full transform transition-all duration-300 scale-100 opacity-100"
+            >
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                    {isEditing ? 'Edit Recruit' : 'Add Recruit'}
+                </h2>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <label
+                                class="block text-sm font-semibold text-gray-700 mb-1"
+                                >First Name <span class="text-red-500">*</span></label
+                            >
+                            <input
+                                type="text"
+                                bind:value={editForm.firstName}
+                                class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <label
+                                class="block text-sm font-semibold text-gray-700 mb-1"
+                                >Last Name <span class="text-red-500">*</span></label
+                            >
+                            <input
+                                type="text"
+                                bind:value={editForm.lastName}
+                                class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-1"
+                            >Section Group <span class="text-red-500">*</span></label
+                        >
+                        <select
+                            bind:value={editForm.sectionGroupId}
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                        >
+                            {#if editForm.sectionGroupId === undefined || sectionGroups.length === 0}
+                                <option value="" disabled>Select a section group</option>
+                            {/if}
+                            {#each sectionGroups as sg (sg.id)}
+                                <option value={sg.id}>{sg.name}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-1"
+                            >Contact Date
+                            {#if editForm.status !== 'not yet contacted'}
+                                <span class="text-red-500">*</span>
+                            {/if}
+                            </label
+                        >
+                        <input
+                            type="date"
+                            bind:value={editForm.contactDate}
+                            disabled={editForm.status === 'not yet contacted'} class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-1"
+                            >Contacted By
+                            {#if editForm.status !== 'not yet contacted'}
+                                <span class="text-red-500">*</span>
+                            {/if}
+                            </label
+                        >
+                        <select
+                            bind:value={editForm.contactedBy}
+                            disabled={editForm.status === 'not yet contacted'} class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                        >
+                            {#if editForm.contactedBy === undefined || editForm.contactedBy === null || users.length === 0}
+                                <option value={null} disabled={editForm.status !== 'not yet contacted'}>
+                                  Select a user (or N/A for 'not yet contacted')
+                                </option>
+                            {/if}
+                            {#each users as user (user.id)}
+                                <option value={user.id}>{user.fullName ?? `User #${user.id}`}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-1"
+                            >Status <span class="text-red-500">*</span></label
+                        >
+                        <select
+                            bind:value={editForm.status}
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                        >
+                            {#each statuses as s}
+                                <option value={s}>{s}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Comment
+                        </label>
+                        <textarea
+                            rows="3"
+                            bind:value={editForm.comment}
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            placeholder="Add any additional comments here..."
+                        ></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-2 pt-4">
+                        <button
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                            on:click={closeModal}
+                            type="button"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+                            on:click={saveRecruit}
+                            type="button"
+                        >
+                            {isEditing ? 'Save Changes' : 'Add Recruit'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
+</div>
 
 <style>
     :global(body) {
