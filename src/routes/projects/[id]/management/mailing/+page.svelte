@@ -9,6 +9,7 @@
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
+	import { text } from '@sveltejs/kit';
 
 	let project: Project;
 	let folders : Array<Folder>
@@ -31,6 +32,8 @@
 	let isSendingCallsheetNotification = false;
 
 	let useTemplate = false;
+
+	let htmlMode = true;
 
 	$: id = $page.params.id;
 	
@@ -383,7 +386,14 @@
 		<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
 		<div class="grid-container ml-10 mb-10 pt-5">
 			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
-				<h2 class="text-xl font-bold mb-4">Write your email</h2>
+				<div class="flex mb-4">
+					<h2 class="text-xl font-bold mb-4">Write your email</h2>
+						<select bind:value={htmlMode}
+						class="ml-auto mr-0 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm px-5 py-1 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+						<option value={true}>Text Editor</option>
+						<option value={false}>HTML Insertion</option>
+					</select>
+				</div>
 				<div>
 					<p>
 						To add an image select a folder and click on the name of the image you want to add. You
@@ -432,7 +442,11 @@
 					placeholder="Email Subject"
 					class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 				/>
-				<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
+				{#if htmlMode}
+					<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
+				{:else}
+					<textarea class="border-2 rounded-lg w-full h-" bind:value={html}></textarea>
+				{/if}
 				<button
 					class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
 					on:click={sendMail}>Send</button>
@@ -440,7 +454,7 @@
 			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
 				<h2 class="text-xl font-bold mb-4">Preview</h2>
 				<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-					<iframe id="preview-iframe2" title="Email Preview" class="w-full h-full border-0"></iframe>
+					{@html html}
 				</div>
 			</div>
 		</div>

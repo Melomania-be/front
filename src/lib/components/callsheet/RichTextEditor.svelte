@@ -26,12 +26,12 @@
 						['clean']
 					]
 				},
-				placeholder: 'Écrivez ici...'
+				placeholder: 'Whrite here...'
 			});
 
 			// Remplit l'éditeur avec la valeur initiale
 			quill.root.innerHTML = value;
-
+			console.log(value)
 			// Ajout image locale
 			quill.getModule('toolbar').addHandler('image', () => {
 				const input = document.createElement('input');

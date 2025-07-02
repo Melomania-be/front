@@ -1,5 +1,10 @@
 <script lang="ts">
 	import Condition from '$lib/components/Condition.svelte';
+	import type { Instrument } from '$lib/types/Instrument';
+	import { faMessage, faSearch, faSliders, faXmark } from '@fortawesome/free-solid-svg-icons';
+	import { Button } from 'flowbite-svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import Fa from 'svelte-fa';
 
 	export let columns: { [key: string]: string[] };
 	export let options: {
@@ -14,6 +19,11 @@
 	export let operations: string[];
 	export let typesOfWhere: string[];
 
+	export let filterLevel: string[];
+
+	let instruments: Instrument[] = [];
+	let instrumentFamily: string[];
+
 	const filter = {
 		relation: '',
 		column: '',
@@ -24,17 +34,44 @@
 	function addCondition(depth1: any) {
 		const tmpFilter = { ...filter };
 		tmpFilter.relation = 'self';
-		tmpFilter.column = 'id';
+		tmpFilter.column = 'first_name';
 		tmpFilter.operation = '=';
-		tmpFilter.filter = '1';
+		tmpFilter.filter = 'Pierre';
 
 		depth1.filtersDepth2.push(tmpFilter);
 		options = options;
 	}
 
+	function updateSearchBar(value: string) {
+		
+		if (value) {
+			const orTerms = value.split(/\s+/).filter(Boolean);
+			options.filters.filtersDepth1 = [
+				{
+					type: 'or',
+					filtersDepth2: orTerms.map(term => [
+					{ relation: 'self', column: 'email', operation: 'like', filter: `%${term}%` },
+					{ relation: 'self', column: 'first_name', operation: 'like', filter: `%${term}%` },
+					{ relation: 'self', column: 'last_name', operation: 'like', filter: `%${term}%` },
+					{ relation: 'self', column: 'messenger', operation: 'like', filter: `%${term}%` }
+					]).flat()
+				}
+			];
+		} else {
+			options.filters.filtersDepth1 = [
+				{
+					type: 'or',
+					filtersDepth2: []
+				}
+			];
+		}
+		options = options;
+		console.log(quickSearch);
+	}
+
 	function addSubCondition() {
 		options.filters.filtersDepth1.push({
-			type: 'and',
+			type: 'or',
 			filtersDepth2: []
 		});
 		options = options;
@@ -45,11 +82,262 @@
 			(item: any) => item !== depth1
 		);
 	}
+
+	onMount(async () => {
+		// Récupérer les instruments déjà sélectionnés dans les filtres (s'ils existent)
+		const filtersGroup = options.filters.filtersDepth1[1];
+
+		if (filtersGroup) {
+			selectedInstrumentIds = new Set(
+				filtersGroup.filtersDepth2
+					.filter((f) => f.relation === 'instruments' && f.column === 'id')
+					.map((f) => Number(f.filter))
+			);
+		}
+
+		// Puis récupérer les instruments via fetch
+		fetchInstruments().then((data) => {
+			instruments = data;
+		});
+		
+
+	});
+
+	async function fetchInstruments() {
+		try {
+			const response = await fetch('/api/instruments');
+
+			if (!response.ok) {
+				throw new Error(`Erreur ${response.status} : ${response.statusText}`);
+			}
+
+			const instruments : Instrument[] = await response.json();
+			console.log(instruments)
+			instrumentFamily = [...new Set(instruments.map(i => i.family))];
+			return instruments;
+		} catch (error) {
+			console.error('Erreur lors de la récupération des instruments :', error);
+			return [];
+		}
+	}
+
+	let quickSearch = '';
+
+	//let levelFilter = ["Amateur - Low" , "Amateur - Medium" , "Amateur - High" , "Student" , "Professional" , "High-level Professional"];
+
+	const levels = [
+    "Low",
+    "Medium",
+    "High",
+    "Student",
+    "Professional",
+    "High-level\nProfessional"
+  ]
+
+	function updateLevelFilter(level : string , checked : boolean){
+		if(checked){
+			filterLevel.push(level);
+		}
+		else{
+			const newFilter = filterLevel.filter(l => l !== level)
+			filterLevel = newFilter;
+		}
+	}
+	
+	let popUpFilter = false;
+
+	// Stocke les ID cochés (en string ou number)
+	let selectedInstrumentIds: Set<number> = new Set();
+	let selectedFamilyIds: Set<string> = new Set();
+
+	function updateFamilyFilter(family : string, checked: boolean) {
+		if (checked) {
+			selectedFamilyIds.add(family);
+		} else {
+			selectedFamilyIds.delete(family);
+		}
+		// Met à jour le groupe de filtres
+		if (!options.filters.filtersDepth1[1]) {
+			addSubCondition();
+		}
+		const filtersGroup = options.filters.filtersDepth1[1];
+
+		// Supprime les anciens filtres d'instruments
+		filtersGroup.filtersDepth2 = filtersGroup.filtersDepth2.filter(
+			(f) => !(f.relation === 'instruments' && f.column === 'family')
+		);
+
+		// Ajoute les filtres actuels
+		for (const family of selectedFamilyIds) {
+			filtersGroup.filtersDepth2.push({
+				relation: 'instruments',
+				column: 'family',
+				operation: 'like',
+				filter: family // ou .toString() selon ton backend
+			});
+		}
+
+		// Déclenche la mise à jour Svelte
+		options = { ...options };
+		console.log("options",options);
+	}
+	
+	// Fonction pour mettre à jour les filtres des instruments
+	function toggleInstrumentFilter(id: number, checked: boolean) {
+		if (checked) {
+			selectedInstrumentIds.add(id);
+		} else {
+			selectedInstrumentIds.delete(id);
+		}
+
+		// Met à jour le groupe de filtres
+		if (!options.filters.filtersDepth1[1]) {
+			addSubCondition();
+		}
+		const filtersGroup = options.filters.filtersDepth1[1];
+
+		// Supprime les anciens filtres d'instruments
+		filtersGroup.filtersDepth2 = filtersGroup.filtersDepth2.filter(
+			(f) => !(f.relation === 'instruments' && f.column === 'id')
+		);
+
+		// Ajoute les filtres actuels
+		for (const instrumentId of selectedInstrumentIds) {
+			filtersGroup.filtersDepth2.push({
+				relation: 'instruments',
+				column: 'id',
+				operation: '=',
+				filter: instrumentId.toString() // ou .toString() selon ton backend
+			});
+		}
+
+		// Déclenche la mise à jour Svelte
+		options = { ...options };
+		console.log("options",options);
+	}
+
+	const dispatch = createEventDispatcher();
+
+	function triggerSearch() {
+		dispatch('optionsUpdated');
+	}
 </script>
 
+{#if popUpFilter}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 pl-64">
+		<div class="bg-white pb-4 rounded-xl shadow-xl w-[50%] h-[50%] text-gray-600">
+			<div class='flex items-center'>
+				<h2 class="text-xl font-semibold my-4 ml-6 uppercase">Filter</h2>
+				<button class="ml-auto mr-6" on:click={()=>popUpFilter = false}><Fa icon={faXmark} class="text-[22px]" style="color: #6b7280;" /></button>
+			</div>
+			<div class="px-6 h-[80%] w-auto overflow-y-scroll">
+				<h2 class="text-md font-bold mb-4 text-xl">Instruments</h2>
+				<div class="grid grid-cols-[1fr_1fr_1fr] mb-6 px-4">
+					{#each instruments as instrument}
+						<div>
+							<input
+								id={String(instrument.id)}
+								checked={selectedInstrumentIds.has(instrument.id)}
+								type="checkbox"
+								class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+								on:change={(e) => toggleInstrumentFilter(instrument.id, e.target.checked)}
+							/>
+							{instrument.name}
+						</div>
+					{/each}
+				</div>
+				<h2 class="text-md font-bold mb-2 text-xl">Family</h2>
+				<div class="grid grid-cols-[1fr_1fr_1fr] mb-6 px-4">
+					{#each instrumentFamily as family}
+					<div>
+							<input
+								id={family}
+								checked={selectedFamilyIds.has(family)}
+								type="checkbox"
+								class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+								on:change={(e) => updateFamilyFilter(family , e.target.checked)}
+							/>
+							{family}
+					</div>
+					{/each}
+				</div>
+				<h2 class="text-md font-bold mb-2 text-xl">Level</h2>
+				<div class="grid items-center justify-center grid-cols-6">
+					{#each levels as level}
+					<div class="flex justify-center">
+							<input
+								id={level}
+								checked={filterLevel.some(l => l === level)}
+								type="checkbox"
+								class="w-5 h-5 rounded-full text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+								on:change={(e) => updateLevelFilter(level , e.target.checked)}
+							/>
+					</div>
+					{/each}
+				</div>
+				
+				<div class="grid items-center justify-center grid-cols-6">
+					{#each levels as level}
+							<p class="p-1 text-center h-14">{level}</p>
+					{/each}
+				</div>
+			
+			</div>
+			<div class="flex pr-6 bg-white border-t py-2 rounded-b-xl border-gray-300">
+				<button
+					class="w-[20%] px-4 py-2 my-2 rounded-full hover:underline font-semibold"
+					on:click={() => {
+						popUpFilter = false;
+						deleteGroup(options.filters.filtersDepth1[1]);
+						filterLevel = levels;
+						selectedInstrumentIds.clear();
+						triggerSearch();
+						console.log(options);
+					}}>Reset Filter</button
+				>
+				<Button
+					on:click={() => {triggerSearch() ; popUpFilter = false;}}
+					class="w-[30%] px-4 py-2 my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
+				>
+					Search
+				</Button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 {#if columns}
-	<div class="w-full border rounded p-0.5">
-		{#each options.filters.filtersDepth1 as depth1}
+	<div class="w-full rounded p-0.5">
+		<div class="flex mb-4">
+			<div class="flex border-2 border-gray-400 p-3 rounded-2xl items-center w-[90%]">
+				<input class="w-full focus:outline-none"
+					on:change={() => {updateSearchBar(quickSearch); triggerSearch()}}
+					type="text"
+					placeholder="Search..."
+					bind:value={quickSearch}
+				/>
+				<button class="ml-auto mr-2" on:click={()=>popUpFilter = false}><Fa icon={faXmark} class="text-[18px]" style="color: #6b7280;" /></button>
+			</div>
+			<div class="flex justify-center items-center">
+				<Button
+					on:click={triggerSearch}
+					class="bg-[#6B9AD9] hover:bg-[#4f7cb7] text-white font-medium ml-8 w-[100px] rounded-2xl gap-2 text-sm px-4 dark:bg-blue-600 dark:hover:bg-blue-700"
+				>
+					<Fa icon={faSearch} class="text-[18px]" style="color: white;" />
+					Search
+				</Button>
+			</div>
+		</div>
+		<button
+			on:click={() => (popUpFilter = true)}
+			class="flex items-center border-2 border-gray-400 p-1 gap-2 rounded-full px-4"
+			class:bg-blue-200={selectedInstrumentIds.size > 0}
+  			class:bg-white={selectedInstrumentIds.size === 0}
+		>
+			<p class="text-gray-500 font-semibold">Filter</p>
+			<Fa icon={faSliders} class="text-[16px]" style="color: #6b7280;" />
+		</button>
+		{#each options.filters.filtersDepth1.slice(1) as depth1}
 			<div class="flex items-center">
 				{#if depth1 !== options.filters.filtersDepth1[0]}
 					<div>
@@ -100,5 +388,6 @@
 				on:click={addSubCondition}>+</button
 			>
 		</div>
+		
 	</div>
 {/if}

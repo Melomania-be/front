@@ -70,6 +70,7 @@
 	}
 </script>
 
+<div class="bg-[#E7E7E7] ">
 <AdvancedFilterer
 	bind:columns
 	bind:meta
@@ -79,3 +80,4 @@
 	on:optionsUpdated={() => fetchData()}
 	showData
 />
+</div>
