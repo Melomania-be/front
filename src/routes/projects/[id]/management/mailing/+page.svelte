@@ -9,6 +9,7 @@
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
+	import { text } from '@sveltejs/kit';
 
 	let project: Project;
 	let html = '';
@@ -28,6 +29,8 @@
 	let isSendingCallsheetNotification = false;
 
 	let useTemplate = false;
+
+	let htmlMode = true;
 
 	$: id = $page.params.id;
 
@@ -369,40 +372,88 @@
 			</div>
 		</div>
 
-		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mt-4">
-			{#if useTemplate === false}
-				<h2 class="font-bold text-lg uppercase pb-4">Unique mail</h2>
-				<button
-					class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-					on:click={() => (useTemplate = true)}>Use a template</button>
-				<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
-
-				<div class="ml-10 mb-10 pt-5 grid grid-cols-1 lg:grid-cols-2 gap-10">
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
-						<h2 class="text-xl font-bold mb-4">Write your email</h2>
-
-						<input
-							type="text"
-							bind:value={uniqueSubject}
-							placeholder="Email Subject"
-							class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-						/>
-
-						<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
-
-						<button
-							class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-							on:click={sendMail}>Send</button>
-					</div>
-
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
-						<h2 class="text-xl font-bold mb-4">Preview</h2>
-						<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
-							<iframe title="preview" id="preview-iframe2" class="w-full h-full border-0" />
-						</div>
-					</div>
+	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mt-4">
+	{#if useTemplate === false}
+		<h2 class="font-bold text-lg uppercase pb-4">Unique mail</h2>
+		<button
+			class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+			on:click={() => (useTemplate = true)}>Use a template</button>
+		<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
+		<div class="grid-container ml-10 mb-10 pt-5">
+			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+				<div class="flex mb-4">
+					<h2 class="text-xl font-bold mb-4">Write your email</h2>
+						<select bind:value={htmlMode}
+						class="ml-auto mr-0 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm px-5 py-1 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+						<option value={true}>Text Editor</option>
+						<option value={false}>HTML Insertion</option>
+					</select>
 				</div>
-			{/if}
+				<div>
+					<p>
+						To add an image select a folder and click on the name of the image you want to add. You
+						can now paste the appropriate line in the html below.<br />
+						The image cannot appear in the preview but will be sent in the mail.
+					</p>
+					<br />
+					{#if folders && folders.length > 0}
+						<p>
+							Select your folder : 
+							<select bind:value={selectedFolder}>
+								{#each folders as folder}
+									<option value={folder}>{folder.name}</option>
+								{/each}
+							</select>
+						</p>
+					{:else}
+						<p>No folders found</p>
+					{/if}
+				</div>
+				{#if selectedFolder && selectedFolder.files && selectedFolder.files.length > 0}
+					<div>
+						<p>Images in the folder :</p>
+						{#each selectedFolder.files as file}
+							{#if file.type === 'image'}
+								<button
+									class="text-blue-900 cursor-pointer"
+									on:click={() => {
+										addImages(file);
+										const imageEmbedCode = OutputSrc;
+										navigator.clipboard.writeText(imageEmbedCode);
+										alert('Image link copied to clipboard');
+									}}
+								>
+									{file.name}
+								</button>
+								<br />
+							{/if}
+						{/each}
+						<br />
+					</div>
+				{/if}
+				<input
+					type="text"
+					bind:value={uniqueSubject}
+					placeholder="Email Subject"
+					class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+				/>
+				{#if htmlMode}
+					<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
+				{:else}
+					<textarea class="border-2 rounded-lg w-full h-" bind:value={html}></textarea>
+				{/if}
+				<button
+					class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+					on:click={sendMail}>Send</button>
+			</div>
+			<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+				<h2 class="text-xl font-bold mb-4">Preview</h2>
+				<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
+					{@html html}
+				</div>
+			</div>
+		</div>
+	{/if}
 
 			{#if useTemplate === true}
 				<h2 class="font-bold text-lg uppercase pb-4">Template mail</h2>
