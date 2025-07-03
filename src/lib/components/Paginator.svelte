@@ -41,6 +41,10 @@
 	export let possibleLimits: number[] = [5, 10, 20, 50, 100, 250, 1000, 5000];
 
 	export let orientation: 'horizontal' | 'vertical' = 'horizontal';
+
+	$ : if(meta){
+		console.log("meta" , meta)
+	}
 </script>
 
 {#if meta}

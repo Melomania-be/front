@@ -4,7 +4,6 @@ import { API_URL } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 	const data = await request.json();
-
 	const res = await fetch(`${API_URL}/contact`, {
 		method: 'POST',
 		headers: {
@@ -23,6 +22,5 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 			authorization: `${await getToken(cookies)}`
 		}
 	});
-
 	return res;
 };
