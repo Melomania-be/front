@@ -1,9 +1,11 @@
 <script lang="ts" generics="DataType extends GenericDataType">
+	import { familyToEmoji, familyToStyle } from './contact/StylesFunctions';
+
 	import { DataTable } from 'smelte';
 
 	import Fa from 'svelte-fa';
 
-	import { faGear, faListCheck, faSliders } from '@fortawesome/free-solid-svg-icons';
+	import { faGear, faListCheck, faM, faSliders } from '@fortawesome/free-solid-svg-icons';
 
 	import { createEventDispatcher } from 'svelte';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
@@ -43,14 +45,15 @@
 	export let uniqueUrl: string = '';
 	export let columns: { [key: string]: string[] };
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
-	export let filterLevel: string[] = [
-		'Low',
-		'Medium',
-		'High',
+	export let filterLevel: string[] = []
+	/*export let filterLevel: string[] = [
+		'Amateur - low level',
+		'Amateur - medium',
+		'Amateur - high level',
 		'Student',
 		'Professional',
-		'High-level\nProfessional'
-	];
+		'High level professional'
+	];*/
 
 	let columnDisplayer: { [key: string]: boolean } = {
 		id : true,
@@ -61,6 +64,7 @@
 		phone : false,
 		comments : true,
 		instruments : true,
+		projects : false,
 		action : true
 	};
 
@@ -72,14 +76,17 @@
 	let typesOfWhere = ['and', 'or'];
 	let selectedData: GenericDataType | null = null;
 
+	let instrumentFamily: string[] = [];
+
 	const dispatch = createEventDispatcher();
 	function changePage(newPage: number) {
 		options.page = newPage;
 		dispatch('optionsUpdated');
 	}
-
 	let showColumList = false;
+
 </script>
+
 
 <!-- 🔍 Filtre toujours visible -->
 <div class="bg-gray-100 dark:bg-gray-800 w-full px-4 py-3 rounded-lg shadow-md mb-4">
@@ -90,6 +97,7 @@
 		bind:operations
 		bind:typesOfWhere
 		bind:filterLevel
+		bind:instrumentFamily
 		on:optionsUpdated={() => dispatch('optionsUpdated')}
 	/>
 </div>
@@ -99,9 +107,20 @@
 	class="grid grid-cols-1 place-items-center p-2 border-2 border-gray-400 rounded-xl m-4 bg-white"
 >
 	<div class="w-full relative">
-		<button on:click={() => (showColumList = !showColumList)} class="flex ml-auto mr-2 mt-2 mb-2">
-			<Fa icon={faListCheck} class="text-[22px]" style="color: #6b7280;" />
-		</button>
+		<div class="flex items-center ml-2">
+			<div class="flex gap-2">
+				{#if instrumentFamily.length !== 0 }
+				<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center">Legend : 
+					{#each instrumentFamily as family}
+						<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
+					{/each}
+				</p>
+				{/if}
+			</div>
+			<button on:click={() => (showColumList = !showColumList)} class="flex ml-auto mr-2 mt-2 mb-2">
+				<Fa icon={faListCheck} class="text-[22px]" style="color: #6b7280;" />
+			</button>
+		</div>
 		{#if showColumList}
 		
 			<div class="absolute right-0 h-auto w-auto mt-0 bg-white rounded-lg border-gray-400 border-2 p-4 z-20">

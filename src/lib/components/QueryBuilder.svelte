@@ -5,6 +5,7 @@
 	import { Button } from 'flowbite-svelte';
 	import { createEventDispatcher, onMount } from 'svelte';
 	import Fa from 'svelte-fa';
+	import { familyToEmoji, familyToStyle, levelSimplificator, levelToStyle } from './contact/StylesFunctions';
 
 	export let columns: { [key: string]: string[] };
 	export let options: {
@@ -20,9 +21,10 @@
 	export let typesOfWhere: string[];
 
 	export let filterLevel: string[];
+	export let instrumentFamily: string[];
 
 	let instruments: Instrument[] = [];
-	let instrumentFamily: string[];
+	
 
 	const filter = {
 		relation: '',
@@ -69,9 +71,9 @@
 		console.log(quickSearch);
 	}
 
-	function addSubCondition() {
+	function addSubCondition(type : string) {
 		options.filters.filtersDepth1.push({
-			type: 'or',
+			type,
 			filtersDepth2: []
 		});
 		options = options;
@@ -126,12 +128,12 @@
 	//let levelFilter = ["Amateur - Low" , "Amateur - Medium" , "Amateur - High" , "Student" , "Professional" , "High-level Professional"];
 
 	const levels = [
-    "Low",
-    "Medium",
-    "High",
+    'Amateur - low level',
+	'Amateur - medium',
+    "Amateur - high level",
     "Student",
     "Professional",
-    "High-level\nProfessional"
+    "High level professional"
   ]
 
 	function updateLevelFilter(level : string , checked : boolean){
@@ -142,6 +144,8 @@
 			const newFilter = filterLevel.filter(l => l !== level)
 			filterLevel = newFilter;
 		}
+		console.log(filterLevel)
+
 	}
 	
 	let popUpFilter = false;
@@ -149,6 +153,56 @@
 	// Stocke les ID cochés (en string ou number)
 	let selectedInstrumentIds: Set<number> = new Set();
 	let selectedFamilyIds: Set<string> = new Set();
+	let projectIds : string = "";
+	let projectName : string = "";
+
+	function updateProjectsIdFilter(projectIds : string){
+		const projects = projectIds.split(",")
+
+		if (!options.filters.filtersDepth1[1]) {
+			addSubCondition('and');
+		}
+
+		const filtersGroup = options.filters.filtersDepth1[1];
+
+		filtersGroup.filtersDepth2 = filtersGroup.filtersDepth2.filter(
+			(f) => !(f.relation === 'participants' && f.column === 'project_id')
+		);
+
+		if(projectIds !== ""){
+		// Ajoute les filtres actuels
+		for (const project of projects) {
+			filtersGroup.filtersDepth2.push({
+				relation: 'participants',
+				column: 'project_id',
+				operation: '=',
+				filter: project
+			});
+		}
+		}
+
+	}
+
+	function updateProjectNameFilter(){
+		if (!options.filters.filtersDepth1[1]) {
+			addSubCondition('and');
+		}
+		const filtersGroup = options.filters.filtersDepth1[1];
+
+		filtersGroup.filtersDepth2 = filtersGroup.filtersDepth2.filter(
+			(f) => !(f.relation === 'projects' && f.column === 'name')
+		);
+
+		if(projectName !== ""){
+			filtersGroup.filtersDepth2.push({
+				relation: 'projects',
+				column: 'name',
+				operation: 'like',
+				filter: projectName
+			});
+		}
+
+	}
 
 	function updateFamilyFilter(family : string, checked: boolean) {
 		if (checked) {
@@ -158,7 +212,7 @@
 		}
 		// Met à jour le groupe de filtres
 		if (!options.filters.filtersDepth1[1]) {
-			addSubCondition();
+			addSubCondition('or');
 		}
 		const filtersGroup = options.filters.filtersDepth1[1];
 
@@ -192,7 +246,7 @@
 
 		// Met à jour le groupe de filtres
 		if (!options.filters.filtersDepth1[1]) {
-			addSubCondition();
+			addSubCondition('or');
 		}
 		const filtersGroup = options.filters.filtersDepth1[1];
 
@@ -219,22 +273,27 @@
 	const dispatch = createEventDispatcher();
 
 	function triggerSearch() {
+		updateProjectsIdFilter(projectIds)
+		updateProjectNameFilter();
+		console.log(filter)
 		dispatch('optionsUpdated');
 	}
+
+
 </script>
 
 {#if popUpFilter}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 pl-64">
-		<div class="bg-white pb-4 rounded-xl shadow-xl w-[50%] h-[50%] text-gray-600">
+		<div class="bg-white pb-4 rounded-xl shadow-xl w-[60%] h-[50%] text-gray-600">
 			<div class='flex items-center'>
-				<h2 class="text-xl font-semibold my-4 ml-6 uppercase">Filter</h2>
-				<button class="ml-auto mr-6" on:click={()=>popUpFilter = false}><Fa icon={faXmark} class="text-[22px]" style="color: #6b7280;" /></button>
+				<h2 class="text-xl font-bold my-4 ml-6 uppercase text-gray-400">Filter</h2>
+				<button class="ml-auto mr-6" on:click={()=>{popUpFilter = false; document.body.style.overflow = '';}}><Fa icon={faXmark} class="text-[22px]" style="color: #6b7280;" /></button>
 			</div>
 			<div class="px-6 h-[80%] w-auto overflow-y-scroll">
 				<h2 class="text-md font-bold mb-4 text-xl">Instruments</h2>
 				<div class="grid grid-cols-[1fr_1fr_1fr] mb-6 px-4">
 					{#each instruments as instrument}
-						<div>
+						<div class="flex gap-2 items-center">
 							<input
 								id={String(instrument.id)}
 								checked={selectedInstrumentIds.has(instrument.id)}
@@ -242,14 +301,14 @@
 								class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 								on:change={(e) => toggleInstrumentFilter(instrument.id, e.target.checked)}
 							/>
-							{instrument.name}
+							<p>{instrument.name}</p>
 						</div>
 					{/each}
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Family</h2>
-				<div class="grid grid-cols-[1fr_1fr_1fr] mb-6 px-4">
+				<div class="grid gap-2 grid-cols-[1fr_1fr_1fr] mb-6 px-4">
 					{#each instrumentFamily as family}
-					<div>
+					<div class="flex items-center gap-2">
 							<input
 								id={family}
 								checked={selectedFamilyIds.has(family)}
@@ -257,31 +316,33 @@
 								class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 								on:change={(e) => updateFamilyFilter(family , e.target.checked)}
 							/>
-							{family}
+							<p class="{familyToStyle(family)} font-semibold rounded-lg p-1 px-2"> {familyToEmoji(family)} {family}</p>
 					</div>
 					{/each}
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Level</h2>
-				<div class="grid items-center justify-center grid-cols-6">
+				<div class="grid items-center grid-cols-3 mb-6 px-4 gap-2">
 					{#each levels as level}
-					<div class="flex justify-center">
+					<div class="flex items-center gap-2">
 							<input
 								id={level}
 								checked={filterLevel.some(l => l === level)}
 								type="checkbox"
-								class="w-5 h-5 rounded-full text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+								class="w-4 h-4 rounded-full text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 								on:change={(e) => updateLevelFilter(level , e.target.checked)}
 							/>
+							<p class="{levelToStyle(level)} border-2 p-1 rounded-lg font-semibold px-2">{level}</p>
 					</div>
 					{/each}
 				</div>
-				
-				<div class="grid items-center justify-center grid-cols-6">
-					{#each levels as level}
-							<p class="p-1 text-center h-14">{level}</p>
-					{/each}
+				<h2 class="text-md font-bold mb-2 text-xl">Project</h2>
+				<div class="px-4 flex mb-6">
+					<p class="font-semibold text-gray-500 mr-2">By Id :</p>
+					<input type="text" bind:value={projectIds} class="border-2 rounded-lg border-gray-300 pl-2" />
+
+					<p class="font-semibold text-gray-500 mr-2 ml-4">By Name :</p>
+					<input type="text" bind:value={projectName} class="border-2 rounded-lg border-gray-300 pl-2" />
 				</div>
-			
 			</div>
 			<div class="flex pr-6 bg-white border-t py-2 rounded-b-xl border-gray-300">
 				<button
@@ -289,14 +350,18 @@
 					on:click={() => {
 						popUpFilter = false;
 						deleteGroup(options.filters.filtersDepth1[1]);
-						filterLevel = levels;
+						filterLevel = [];
+						selectedFamilyIds.clear();
 						selectedInstrumentIds.clear();
+						projectIds = "";
+						projectName = "";
 						triggerSearch();
+						document.body.style.overflow = '';
 						console.log(options);
 					}}>Reset Filter</button
 				>
 				<Button
-					on:click={() => {triggerSearch() ; popUpFilter = false;}}
+					on:click={() => {triggerSearch() ; popUpFilter = false; document.body.style.overflow = '';}}
 					class="w-[30%] px-4 py-2 my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
 				>
 					Search
@@ -316,7 +381,7 @@
 					placeholder="Search..."
 					bind:value={quickSearch}
 				/>
-				<button class="ml-auto mr-2" on:click={()=>popUpFilter = false}><Fa icon={faXmark} class="text-[18px]" style="color: #6b7280;" /></button>
+				<button class="ml-auto mr-2" on:click={()=>{popUpFilter = false; quickSearch = "",updateSearchBar(quickSearch)}}><Fa icon={faXmark} class="text-[18px]" style="color: #6b7280;" /></button>
 			</div>
 			<div class="flex justify-center items-center">
 				<Button
@@ -329,7 +394,10 @@
 			</div>
 		</div>
 		<button
-			on:click={() => (popUpFilter = true)}
+			on:click={() => {
+				popUpFilter = true;
+				document.body.style.overflow = 'hidden';
+				}}
 			class="flex items-center border-2 border-gray-400 p-1 gap-2 rounded-full px-4"
 			class:bg-blue-200={selectedInstrumentIds.size > 0}
   			class:bg-white={selectedInstrumentIds.size === 0}
@@ -385,7 +453,7 @@
 			{/if}
 			<button
 				class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-				on:click={addSubCondition}>+</button
+				>+</button
 			>
 		</div>
 		

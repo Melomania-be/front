@@ -230,7 +230,7 @@
     {/if}
 
     <!-- Main content -->
-    <div class="bg-white w-screen ml-0 {!isMobile ? "ml-64" : "" }">
+    <div class="bg-white w-screen ml-0 {!isMobile ? "pl-64" : "" }">
         <!-- Mobile toggle button -->
         <button 
             class="{!isMobile ? "hidden" : ""} p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
