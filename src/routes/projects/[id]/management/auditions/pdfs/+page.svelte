@@ -1,10 +1,14 @@
-<!-- src/routes/projects/[id]/management/auditions/pdfs/+page.svelte - English Version -->
+<!-- src/routes/projects/[id]/management/auditions/pdfs/+page.svelte - VERSION AVEC DESIGN UNIFORME -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import ProjectHeadDisplayer from '../../ProjectHeadDisplayer.svelte';
+	import ProjectPhoneDisplayer from '../../ProjectPhoneDisplayer.svelte';
 
 	export let data;
 
+	let project: any = undefined;
 	let sections: any[] = [];
 	let loading = true;
 	let selectedSection: any = null;
@@ -27,10 +31,48 @@
 	let totalSections = 0;
 	let totalAuditions = 0;
 
+	let isMobile = false;
+
+	const checkMobile = () => {
+		if (browser) {
+			isMobile = window.innerWidth <= 1000;
+		}
+	};
+
+	onMount(() => {
+		checkMobile();
+		if (browser) {
+			window.addEventListener('resize', checkMobile);
+		}
+
+		return () => {
+			if (browser) {
+				window.removeEventListener('resize', checkMobile);
+			}
+		};
+	});
+
 	onMount(async () => {
 		console.log('Project ID from data:', data.id);
-		await loadSectionPdfs();
+		await Promise.all([
+			fetchProject(),
+			loadSectionPdfs()
+		]);
 	});
+
+	async function fetchProject() {
+		if (!data?.id) return;
+
+		const response = await fetch(`/api/projects/${data.id}`, {
+			method: 'GET'
+		});
+
+		if (!response.ok) {
+			console.error('Failed to fetch project');
+			return;
+		}
+		project = await response.json();
+	}
 
 	async function loadSectionPdfs() {
 		loading = true;
@@ -268,205 +310,229 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gray-50">
-	<!-- Header -->
-	<div class="bg-white border-b border-gray-200 px-6 py-4">
-		<div class="flex justify-between items-center">
-			<div>
-				<h1 class="text-3xl font-bold text-gray-900">PDF Management by Section</h1>
-				<p class="text-sm text-gray-600 mt-1">
-					Manage documents to distribute to candidates according to their section
-				</p>
-				<!-- Debug info -->
-				{#if data?.id}
-					<p class="text-xs text-green-600 mt-1">✅ Project ID: {data.id}</p>
-				{:else}
-					<p class="text-xs text-red-600 mt-1">❌ No project ID found</p>
-				{/if}
-			</div>
-			<div class="flex gap-3">
-				<button
-					on:click={() => loadSectionPdfs()}
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-					disabled={loading}
-				>
-					{#if loading}
-						<div class="flex items-center">
-							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-							Refreshing...
-						</div>
-					{:else}
-						🔄 Refresh
-					{/if}
-				</button>
-				<button
-					on:click={goBack}
-					class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-				>
-					← Back to Auditions
-				</button>
-			</div>
-		</div>
-	</div>
+<svelte:head>
+	<title>PDF Management - Project {data.id}</title>
+</svelte:head>
 
-	<!-- Main Content -->
-	<div class="p-6">
+<ProjectHeadDisplayer {project} selectedTab={5} />
+
+<!-- ✅ NOUVEAU DESIGN : Utilisation du même style que les autres pages -->
+<div class="bg-[#E7E7E7] p-4 min-h-screen pb-[80px]">
+	<div class="p-4 gap-4 flex flex-col">
+
 		{#if !data?.id}
-			<div class="text-center py-12">
-				<div class="text-red-500">
-					<svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-					</svg>
-					<h3 class="text-lg font-medium text-red-900">Loading Error</h3>
-					<p class="text-sm text-red-600">Project ID not available. Please check that you are on the correct page.</p>
+			<!-- Error state -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<div class="text-center py-12">
+					<div class="text-red-500">
+						<svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+						</svg>
+						<h3 class="text-lg font-medium text-red-900">Loading Error</h3>
+						<p class="text-sm text-red-600">Project ID not available. Please check that you are on the correct page.</p>
+					</div>
 				</div>
 			</div>
 		{:else if loading}
-			<div class="flex justify-center items-center py-12">
-				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-				<span class="ml-4 text-gray-600">Loading PDFs...</span>
+			<!-- Loading state -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<div class="flex justify-center items-center py-12">
+					<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+					<span class="ml-4 text-gray-600">Loading PDFs...</span>
+				</div>
 			</div>
 		{:else}
-			<!-- Statistics Cards -->
-			<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-				<div class="bg-blue-50 p-4 rounded-lg">
-					<div class="text-2xl font-bold text-blue-600">{totalSections}</div>
-					<div class="text-sm text-blue-600">Sections</div>
-				</div>
-				<div class="bg-green-50 p-4 rounded-lg">
-					<div class="text-2xl font-bold text-green-600">{totalPdfs}</div>
-					<div class="text-sm text-green-600">Unique PDFs</div>
-				</div>
-				<div class="bg-purple-50 p-4 rounded-lg">
-					<div class="text-2xl font-bold text-purple-600">{totalAuditions}</div>
-					<div class="text-sm text-purple-600">Active Auditions</div>
-				</div>
-				<div class="bg-yellow-50 p-4 rounded-lg">
-					<div class="text-2xl font-bold text-yellow-600">
-						{sections.reduce((sum, s) => sum + s.pdfs.length, 0)}
+
+			<!-- Header Actions -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
+					<div>
+						<h1 class="font-bold text-lg">PDF MANAGEMENT BY SECTION</h1>
+						<p class="text-sm text-gray-600 mt-1">
+							Manage documents to distribute to candidates according to their section
+						</p>
+						<!-- Debug info -->
+						{#if data?.id}
+							<p class="text-xs text-green-600 mt-1">✅ Project ID: {data.id}</p>
+						{:else}
+							<p class="text-xs text-red-600 mt-1">❌ No project ID found</p>
+						{/if}
 					</div>
-					<div class="text-sm text-yellow-600">Total Associations</div>
+					<div class="flex gap-3">
+						<button
+							on:click={() => loadSectionPdfs()}
+							class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold"
+							disabled={loading}
+						>
+							{#if loading}
+								<div class="flex items-center">
+									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+									Refreshing...
+								</div>
+							{:else}
+								🔄 Refresh
+							{/if}
+						</button>
+						<button
+							on:click={goBack}
+							class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 font-semibold"
+						>
+							← Back to Auditions
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Statistics Cards -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<h1 class="font-bold text-lg mb-4">OVERVIEW</h1>
+				<div class="grid grid-cols-2 {isMobile ? 'gap-2' : 'md:grid-cols-4 gap-4'}">
+					<div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+						<div class="text-2xl font-bold text-blue-600">{totalSections}</div>
+						<div class="text-sm text-blue-600">Sections</div>
+					</div>
+					<div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+						<div class="text-2xl font-bold text-green-600">{totalPdfs}</div>
+						<div class="text-sm text-green-600">Unique PDFs</div>
+					</div>
+					<div class="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+						<div class="text-2xl font-bold text-purple-600">{totalAuditions}</div>
+						<div class="text-sm text-purple-600">Active Auditions</div>
+					</div>
+					<div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+						<div class="text-2xl font-bold text-yellow-600">
+							{sections.reduce((sum, s) => sum + s.pdfs.length, 0)}
+						</div>
+						<div class="text-sm text-yellow-600">Total Associations</div>
+					</div>
 				</div>
 			</div>
 
 			<!-- Instructions -->
-			<div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-				<div class="flex items-center">
-					<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-					</svg>
-					<div class="text-sm text-blue-700">
-						<p class="font-medium">📚 How it works</p>
-						<p>
-							1. <strong>Upload</strong> PDFs for each section
-							• 2. <strong>Bulk send</strong> PDFs to all auditions in a section
-							• 3. Candidates can <strong>download</strong> and play the pieces
-							• 4. They will send back their <strong>audio/video recordings</strong>
-						</p>
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<h1 class="font-bold text-lg mb-3">HOW IT WORKS</h1>
+				<div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+					<div class="flex items-center">
+						<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+						</svg>
+						<div class="text-sm text-blue-700">
+							<p class="font-medium">📚 Process Overview</p>
+							<p>
+								1. <strong>Upload</strong> PDFs for each section
+								• 2. <strong>Bulk send</strong> PDFs to all auditions in a section
+								• 3. Candidates can <strong>download</strong> and play the pieces
+								• 4. They will send back their <strong>audio/video recordings</strong>
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Sections List -->
 			{#if sections.length === 0}
-				<div class="text-center py-12">
-					<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-					</svg>
-					<h3 class="mt-2 text-sm font-medium text-gray-900">No sections found</h3>
-					<p class="mt-1 text-sm text-gray-500">Make sure the project has configured sections.</p>
+				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+					<div class="text-center py-12">
+						<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						</svg>
+						<h3 class="mt-2 text-sm font-medium text-gray-900">No sections found</h3>
+						<p class="mt-1 text-sm text-gray-500">Make sure the project has configured sections.</p>
+					</div>
 				</div>
 			{:else}
-				<div class="space-y-6">
-					{#each sections as section}
-						<div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-							<!-- Section Header -->
-							<div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-								<div class="flex justify-between items-center">
-									<div>
-										<h3 class="text-lg font-medium text-gray-900">{section.section_name}</h3>
-										<div class="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-											<span class="flex items-center">
-												<span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
-												{section.auditions_count} active audition{section.auditions_count > 1 ? 's' : ''}
-											</span>
-											<span class="flex items-center">
-												<span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-												{section.pdfs.length} PDF{section.pdfs.length > 1 ? 's' : ''}
-											</span>
-										</div>
-									</div>
-									<div class="flex space-x-2">
-										<button
-											on:click={() => openUploadModal(section)}
-											class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-										>
-											📄 Add PDF
-										</button>
-										{#if section.pdfs.length > 0}
-											<button
-												on:click={() => openSendModal(section)}
-												class="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-												disabled={section.auditions_count === 0}
-											>
-												📤 Bulk Send
-											</button>
-										{/if}
+				{#each sections as section}
+					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden">
+						<!-- Section Header -->
+						<div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+							<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
+								<div>
+									<h3 class="text-lg font-bold text-gray-900">{section.section_name}</h3>
+									<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center space-x-4'} text-sm text-gray-600 mt-1">
+										<span class="flex items-center">
+											<span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+											{section.auditions_count} active audition{section.auditions_count > 1 ? 's' : ''}
+										</span>
+										<span class="flex items-center">
+											<span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+											{section.pdfs.length} PDF{section.pdfs.length > 1 ? 's' : ''}
+										</span>
 									</div>
 								</div>
-							</div>
-
-							<!-- PDFs List -->
-							<div class="px-6 py-4">
-								{#if section.pdfs.length === 0}
-									<div class="text-center py-8 text-gray-500">
-										<svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-										</svg>
-										<p class="text-sm">No PDFs for this section</p>
+								<div class="flex space-x-2">
+									<button
+										on:click={() => openUploadModal(section)}
+										class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 font-semibold"
+									>
+										📄 Add PDF
+									</button>
+									{#if section.pdfs.length > 0}
 										<button
-											on:click={() => openUploadModal(section)}
-											class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+											on:click={() => openSendModal(section)}
+											class="px-3 py-2 bg-[#6B9AD9] text-white text-sm rounded hover:bg-blue-600 font-semibold"
+											disabled={section.auditions_count === 0}
 										>
-											Add the first PDF →
+											📤 Bulk Send
 										</button>
-									</div>
-								{:else}
-									<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-										{#each section.pdfs as pdf}
-											<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-												<div class="flex items-start justify-between mb-2">
-													<div class="flex-1">
-														<h4 class="font-medium text-gray-900">{pdf.title}</h4>
-														{#if pdf.description}
-															<p class="text-sm text-gray-600 mt-1">{pdf.description}</p>
-														{/if}
-													</div>
-													<button
-														on:click={() => deletePdf(pdf, section)}
-														class="text-red-500 hover:text-red-700 p-1"
-														title="Delete"
-													>
-														<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16" />
-														</svg>
-													</button>
-												</div>
-												<div class="flex items-center justify-between text-xs text-gray-500">
-													<span>{pdf.file.name}</span>
-													<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-														Used {pdf.usage_count} time{pdf.usage_count > 1 ? 's' : ''}
-													</span>
-												</div>
-											</div>
-										{/each}
-									</div>
-								{/if}
+									{/if}
+								</div>
 							</div>
 						</div>
-					{/each}
-				</div>
+
+						<!-- PDFs List -->
+						<div class="px-6 py-4">
+							{#if section.pdfs.length === 0}
+								<div class="text-center py-8 text-gray-500">
+									<svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+									</svg>
+									<p class="text-sm">No PDFs for this section</p>
+									<button
+										on:click={() => openUploadModal(section)}
+										class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+									>
+										Add the first PDF →
+									</button>
+								</div>
+							{:else}
+								<div class="grid grid-cols-1 {isMobile ? 'gap-3' : 'md:grid-cols-2 lg:grid-cols-3 gap-4'}">
+									{#each section.pdfs as pdf}
+										<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+											<div class="flex items-start justify-between mb-2">
+												<div class="flex-1">
+													<h4 class="font-medium text-gray-900">{pdf.title}</h4>
+													{#if pdf.description}
+														<p class="text-sm text-gray-600 mt-1">{pdf.description}</p>
+													{/if}
+												</div>
+												<button
+													on:click={() => deletePdf(pdf, section)}
+													class="text-red-500 hover:text-red-700 p-1"
+													title="Delete"
+												>
+													<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16" />
+													</svg>
+												</button>
+											</div>
+											<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center justify-between'} text-xs text-gray-500">
+												<span class="truncate">{pdf.file.name}</span>
+												<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold {isMobile ? 'text-center' : ''}">
+													Used {pdf.usage_count} time{pdf.usage_count > 1 ? 's' : ''}
+												</span>
+											</div>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/each}
 			{/if}
+		{/if}
+
+		{#if isMobile}
+			<ProjectPhoneDisplayer {project} selectedTab={5} />
 		{/if}
 	</div>
 </div>
@@ -540,14 +606,14 @@
 			<div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
 				<button
 					on:click={closeUploadModal}
-					class="px-4 py-2 text-gray-500 hover:text-gray-700"
+					class="px-4 py-2 text-gray-500 hover:text-gray-700 font-semibold"
 					disabled={isUploading}
 				>
 					Cancel
 				</button>
 				<button
 					on:click={uploadPdf}
-					class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
 					disabled={!uploadFile || !uploadTitle || isUploading}
 				>
 					{#if isUploading}
@@ -600,7 +666,7 @@
 									{/if}
 									<p class="text-xs text-gray-500">{pdf.file.name}</p>
 								</div>
-								<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+								<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold">
 									Used {pdf.usage_count} time{pdf.usage_count > 1 ? 's' : ''}
 								</span>
 							</div>
@@ -624,14 +690,14 @@
 			<div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
 				<button
 					on:click={closeSendModal}
-					class="px-4 py-2 text-gray-500 hover:text-gray-700"
+					class="px-4 py-2 text-gray-500 hover:text-gray-700 font-semibold"
 					disabled={isSending}
 				>
 					Cancel
 				</button>
 				<button
 					on:click={sendPdfsToSection}
-					class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="px-4 py-2 bg-[#6B9AD9] text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
 					disabled={selectedPdfs.length === 0 || isSending}
 				>
 					{#if isSending}
