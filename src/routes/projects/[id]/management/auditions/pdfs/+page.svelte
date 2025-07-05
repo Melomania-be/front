@@ -359,20 +359,7 @@
 						{/if}
 					</div>
 					<div class="flex gap-3">
-						<button
-							on:click={() => loadSectionPdfs()}
-							class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold"
-							disabled={loading}
-						>
-							{#if loading}
-								<div class="flex items-center">
-									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-									Refreshing...
-								</div>
-							{:else}
-								🔄 Refresh
-							{/if}
-						</button>
+
 						<button
 							on:click={goBack}
 							class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 font-semibold"

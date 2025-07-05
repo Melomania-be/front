@@ -865,13 +865,7 @@
                         </p>
                     </div>
                     <div class="flex gap-3">
-                        <button
-                          on:click={manualRefresh}
-                          class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 font-semibold"
-                          title="Refresh all data"
-                        >
-                            🔄 Refresh
-                        </button>
+
                         <button
                           on:click={goToPdfManagement}
                           class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400 font-semibold"

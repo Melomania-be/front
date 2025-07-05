@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/auditions/+page.svelte - VERSION AVEC DESIGN UNIFORME ET LECTURE MÉDIA -->
+<!-- src/routes/projects/[id]/management/auditions/+page.svelte - VERSION AVEC URLs RELATIVES -->
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
@@ -9,6 +9,28 @@
 	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
 
 	export let data;
+
+	// ✅ Fonction pour obtenir l'URL des fichiers avec URLs relatives
+	function getFileUrl(fileId: number, action: 'download' | 'stream' = 'stream'): string {
+		return `/api/files/${action}/${fileId}`;
+	}
+
+	// ✅ Fonction pour gérer les erreurs média
+	function handleMediaError(event: Event, fileName: string) {
+		console.error(`❌ Media error for ${fileName}:`, event);
+		const target = event.target as HTMLMediaElement;
+		if (target && target.error) {
+			const errorMessages = {
+				1: 'MEDIA_ERR_ABORTED - Download aborted',
+				2: 'MEDIA_ERR_NETWORK - Network error',
+				3: 'MEDIA_ERR_DECODE - Decode error',
+				4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - Source not supported'
+			};
+			const errorMsg = errorMessages[target.error.code] || `Unknown error (${target.error.code})`;
+			console.error(`Media error details: ${errorMsg}`);
+			showNotification(`Cannot play ${fileName}: ${errorMsg}`, 'error');
+		}
+	}
 
 	let project: Project | undefined;
 	let auditions: Audition[] = [];
@@ -76,9 +98,9 @@
 						pending: auditionsData.stats.pending || auditions.filter(a => !a.is_submitted).length,
 						completed: auditionsData.stats.submitted || auditions.filter(a => a.is_submitted).length,
 						overdue: auditionsData.stats.expired || auditions.filter(a =>
-							!a.is_submitted &&
-							a.deadline &&
-							new Date(a.deadline) < new Date()
+								!a.is_submitted &&
+								a.deadline &&
+								new Date(a.deadline) < new Date()
 						).length
 					};
 				} else {
@@ -135,9 +157,9 @@
 			pending: auditions.filter(a => !a.is_submitted).length,
 			completed: auditions.filter(a => a.is_submitted).length,
 			overdue: auditions.filter(a =>
-				!a.is_submitted &&
-				a.deadline &&
-				new Date(a.deadline) < now
+					!a.is_submitted &&
+					a.deadline &&
+					new Date(a.deadline) < now
 			).length
 		};
 	}
@@ -147,9 +169,9 @@
 		let matchesSection = !filterSection || audition.participant?.section?.name === filterSection;
 		let matchesStatus = !filterStatus || getAuditionStatus(audition) === filterStatus;
 		let matchesSearch = !searchText ||
-			audition.participant?.contact?.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
-			audition.participant?.contact?.lastName?.toLowerCase().includes(searchText.toLowerCase()) ||
-			audition.participant?.contact?.email?.toLowerCase().includes(searchText.toLowerCase());
+				audition.participant?.contact?.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
+				audition.participant?.contact?.lastName?.toLowerCase().includes(searchText.toLowerCase()) ||
+				audition.participant?.contact?.email?.toLowerCase().includes(searchText.toLowerCase());
 
 		return matchesSection && matchesStatus && matchesSearch;
 	});
@@ -247,26 +269,31 @@
 		}
 	}
 
-	async function downloadFile(fileId: number, fileName: string) {
-		try {
-			const response = await fetch(`/files/download/${fileId}`);
-			if (response.ok) {
-				const blob = await response.blob();
-				const url = window.URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = fileName;
-				document.body.appendChild(a);
-				a.click();
-				window.URL.revokeObjectURL(url);
-				document.body.removeChild(a);
-			} else {
-				alert('Error downloading file');
-			}
-		} catch (error) {
-			console.error('Download error:', error);
-			alert('Error downloading file');
-		}
+	// ✅ FONCTION DE TÉLÉCHARGEMENT AVEC URLs RELATIVES
+	function downloadFile(fileId: number, fileName: string) {
+		console.log(`📥 Downloading file ${fileId}: ${fileName}`);
+
+		const downloadUrl = getFileUrl(fileId, 'download');
+		console.log(`🔗 Download URL: ${downloadUrl}`);
+
+		// ✅ SOLUTION DÉFINITIVE : Lien simple sans target="_blank"
+		const link = document.createElement('a');
+		link.href = downloadUrl;
+		link.download = fileName; // ← Cet attribut évite la navigation
+		// PAS de target="_blank" → évite le flash de page blanche
+
+		// ✅ Ajout invisible au DOM
+		link.style.display = 'none';
+		document.body.appendChild(link);
+
+		// ✅ Clic pour déclencher le téléchargement
+		link.click();
+
+		// ✅ Nettoyage immédiat
+		document.body.removeChild(link);
+
+		console.log(`✅ Download initiated for: ${fileName}`);
+		showNotification(`Download started: ${fileName}`, 'success');
 	}
 
 	function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
@@ -375,8 +402,8 @@
 								<p class="text-sm text-gray-600">{totalPdfs} PDFs across {sections.length} sections</p>
 							</div>
 							<button
-								on:click={goToPdfManagement}
-								class="px-3 py-2 bg-[#6B9AD9] text-white text-sm rounded hover:bg-blue-600 font-semibold"
+									on:click={goToPdfManagement}
+									class="px-3 py-2 bg-[#6B9AD9] text-white text-sm rounded hover:bg-blue-600 font-semibold"
 							>
 								Manage
 							</button>
@@ -390,8 +417,8 @@
 								<p class="text-sm text-gray-600">From pending applications</p>
 							</div>
 							<button
-								on:click={goToValidation}
-								class="px-3 py-2 bg-[#6B9AD9] text-white text-sm rounded hover:bg-blue-600 font-semibold"
+									on:click={goToValidation}
+									class="px-3 py-2 bg-[#6B9AD9] text-white text-sm rounded hover:bg-blue-600 font-semibold"
 							>
 								Validate
 							</button>
@@ -431,8 +458,8 @@
 						<p class="mt-1 text-sm text-gray-500">Start by requesting auditions from pending applications.</p>
 						<div class="mt-6">
 							<button
-								on:click={goToValidation}
-								class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 font-semibold"
+									on:click={goToValidation}
+									class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 font-semibold"
 							>
 								Request First Audition
 							</button>
@@ -447,17 +474,17 @@
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
 							<input
-								type="text"
-								bind:value={searchText}
-								placeholder="Name or email..."
-								class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+									type="text"
+									bind:value={searchText}
+									placeholder="Name or email..."
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 							/>
 						</div>
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-1">Section</label>
 							<select
-								bind:value={filterSection}
-								class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+									bind:value={filterSection}
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 							>
 								<option value="">All sections</option>
 								{#each uniqueSections as section}
@@ -468,8 +495,8 @@
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
 							<select
-								bind:value={filterStatus}
-								class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+									bind:value={filterStatus}
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 							>
 								<option value="">All statuses</option>
 								<option value="pending">Pending</option>
@@ -479,12 +506,12 @@
 						</div>
 						<div class="flex items-end">
 							<button
-								on:click={() => {
+									on:click={() => {
 									searchText = '';
 									filterSection = '';
 									filterStatus = '';
 								}}
-								class="w-full px-3 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 font-semibold"
+									class="w-full px-3 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 font-semibold"
 							>
 								Clear Filters
 							</button>
@@ -566,8 +593,8 @@
 										</td>
 										<td class="px-4 py-2">
 											<button
-												on:click={() => openAuditionDetails(audition)}
-												class="px-3 py-1 bg-[#6B9AD9] text-white text-xs rounded hover:bg-blue-600 font-semibold"
+													on:click={() => openAuditionDetails(audition)}
+													class="px-3 py-1 bg-[#6B9AD9] text-white text-xs rounded hover:bg-blue-600 font-semibold"
 											>
 												View Details
 											</button>
@@ -599,8 +626,8 @@
 						🎭 AUDITION DETAILS
 					</h1>
 					<button
-						on:click={closeAuditionModal}
-						class="text-gray-400 hover:text-gray-600 p-2"
+							on:click={closeAuditionModal}
+							class="text-gray-400 hover:text-gray-600 p-2"
 					>
 						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -712,7 +739,7 @@
 					</div>
 				{/if}
 
-				<!-- Enhanced Uploaded Files with Media Players -->
+				<!-- ✅ SECTION MÉDIA AVEC URLs RELATIVES : Uploaded Files with Media Players -->
 				{#if selectedAudition.files && selectedAudition.files.length > 0}
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 						<h1 class="font-bold text-lg mb-4">
@@ -756,8 +783,8 @@
 												</div>
 											</div>
 											<button
-												on:click={() => downloadFile(auditionFile.file.id, auditionFile.file.name)}
-												class="{isMobile ? 'w-full' : ''} px-3 py-2 text-sm bg-[#6B9AD9] text-white rounded hover:bg-blue-600 font-semibold flex items-center space-x-1"
+													on:click={() => downloadFile(auditionFile.file.id, auditionFile.file.name)}
+													class="{isMobile ? 'w-full' : ''} px-3 py-2 text-sm bg-[#6B9AD9] text-white rounded hover:bg-blue-600 font-semibold flex items-center space-x-1"
 											>
 												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -767,50 +794,55 @@
 										</div>
 									</div>
 
-									<!-- Integrated Media Player -->
+									<!-- ✅ LECTEURS MÉDIA AVEC URLs RELATIVES -->
 									<div class="p-3">
 										{#if auditionFile.file_type === 'video'}
-											<!-- Video Player -->
+											<!-- Video Player avec URLs relatives -->
 											<div class="bg-black rounded-lg overflow-hidden border-2 border-gray-400">
 												<video
-													controls
-													preload="metadata"
-													class="w-full max-h-96"
-													poster=""
-													on:error={(e) => console.error('Video error:', e)}
+														controls
+														preload="metadata"
+														class="w-full max-h-96"
+														on:error={(e) => handleMediaError(e, auditionFile.file.name)}
+														on:loadstart={() => console.log(`🎥 Loading video: ${auditionFile.file.name}`)}
+														on:canplay={() => console.log(`✅ Video ready: ${auditionFile.file.name}`)}
 												>
-													<source src="/files/download/{auditionFile.file.id}" type="video/mp4">
-													<source src="/files/download/{auditionFile.file.id}" type="video/webm">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="video/mp4">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="video/webm">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="video/ogg">
 													<p class="text-white p-4">
 														Your browser does not support video playback.
 														<button
-															on:click={() => downloadFile(auditionFile.file.id, auditionFile.file.name)}
-															class="text-blue-300 underline ml-2"
+																on:click={() => downloadFile(auditionFile.file.id, auditionFile.file.name)}
+																class="text-blue-300 underline ml-2"
 														>
-															Download file
+															Download file instead
 														</button>
 													</p>
 												</video>
 											</div>
 										{:else if auditionFile.file_type === 'audio'}
-											<!-- Audio Player -->
+											<!-- Audio Player avec URLs relatives -->
 											<div class="bg-gray-100 rounded-lg p-4 border-2 border-gray-300">
 												<audio
-													controls
-													preload="metadata"
-													class="w-full"
-													on:error={(e) => console.error('Audio error:', e)}
+														controls
+														preload="metadata"
+														class="w-full"
+														on:error={(e) => handleMediaError(e, auditionFile.file.name)}
+														on:loadstart={() => console.log(`🎵 Loading audio: ${auditionFile.file.name}`)}
+														on:canplay={() => console.log(`✅ Audio ready: ${auditionFile.file.name}`)}
 												>
-													<source src="/files/download/{auditionFile.file.id}" type="audio/mpeg">
-													<source src="/files/download/{auditionFile.file.id}" type="audio/wav">
-													<source src="/files/download/{auditionFile.file.id}" type="audio/ogg">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="audio/mpeg">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="audio/wav">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="audio/ogg">
+													<source src="{getFileUrl(auditionFile.file.id, 'stream')}" type="audio/mp4">
 													<p class="text-gray-600">
 														Your browser does not support audio playback.
 														<button
-															on:click={() => downloadFile(auditionFile.file.id, auditionFile.file.name)}
-															class="text-blue-600 underline ml-2"
+																on:click={() => downloadFile(auditionFile.file.id, auditionFile.file.name)}
+																class="text-blue-600 underline ml-2"
 														>
-															Download file
+															Download file instead
 														</button>
 													</p>
 												</audio>
@@ -846,14 +878,14 @@
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="flex {isMobile ? 'flex-col space-y-3' : 'justify-end space-x-3'}">
 						<button
-							on:click={closeAuditionModal}
-							class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 font-semibold {isMobile ? 'w-full' : ''}"
+								on:click={closeAuditionModal}
+								class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 font-semibold {isMobile ? 'w-full' : ''}"
 						>
 							Close
 						</button>
 						<button
-							on:click={() => deleteAudition(selectedAudition.id)}
-							class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold {isMobile ? 'w-full' : ''}"
+								on:click={() => deleteAudition(selectedAudition.id)}
+								class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold {isMobile ? 'w-full' : ''}"
 						>
 							Delete Audition
 						</button>
@@ -865,92 +897,92 @@
 {/if}
 
 <style>
-    .prose {
-        max-width: none;
-    }
+	.prose {
+		max-width: none;
+	}
 
-    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-        color: inherit;
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
-    }
+	.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+		color: inherit;
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+	}
 
-    .prose p {
-        margin-bottom: 1rem;
-    }
+	.prose p {
+		margin-bottom: 1rem;
+	}
 
-    .prose ul, .prose ol {
-        margin-bottom: 1rem;
-        padding-left: 1.5rem;
-    }
+	.prose ul, .prose ol {
+		margin-bottom: 1rem;
+		padding-left: 1.5rem;
+	}
 
-    .prose li {
-        margin-bottom: 0.25rem;
-    }
+	.prose li {
+		margin-bottom: 0.25rem;
+	}
 
-    /* Video player styles */
-    video {
-        background-color: #000;
-        border-radius: 8px;
-    }
+	/* Video player styles */
+	video {
+		background-color: #000;
+		border-radius: 8px;
+	}
 
-    video::-webkit-media-controls-panel {
-        background-color: rgba(0, 0, 0, 0.8);
-    }
+	video::-webkit-media-controls-panel {
+		background-color: rgba(0, 0, 0, 0.8);
+	}
 
-    /* Custom audio player styles */
-    audio {
-        height: 54px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-    }
+	/* Custom audio player styles */
+	audio {
+		height: 54px;
+		background-color: #f8f9fa;
+		border-radius: 8px;
+	}
 
-    audio::-webkit-media-controls-panel {
-        background-color: #f8f9fa;
-    }
+	audio::-webkit-media-controls-panel {
+		background-color: #f8f9fa;
+	}
 
-    /* Mobile improvements */
-    @media (max-width: 768px) {
-        video {
-            max-height: 250px;
-        }
+	/* Mobile improvements */
+	@media (max-width: 768px) {
+		video {
+			max-height: 250px;
+		}
 
-        audio {
-            height: 48px;
-        }
-    }
+		audio {
+			height: 48px;
+		}
+	}
 
-    /* Loading animation for media */
-    video, audio {
-        transition: opacity 0.3s ease;
-    }
+	/* Loading animation for media */
+	video, audio {
+		transition: opacity 0.3s ease;
+	}
 
-    video:not([src]), audio:not([src]) {
-        opacity: 0.6;
-    }
+	video:not([src]), audio:not([src]) {
+		opacity: 0.6;
+	}
 
-    /* Custom loading indicator */
-    .media-loading {
-        position: relative;
-    }
+	/* Custom loading indicator */
+	.media-loading {
+		position: relative;
+	}
 
-    .media-loading::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 40px;
-        height: 40px;
-        border: 3px solid #f3f4f6;
-        border-top: 3px solid #3b82f6;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        z-index: 10;
-    }
+	.media-loading::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 40px;
+		height: 40px;
+		border: 3px solid #f3f4f6;
+		border-top: 3px solid #3b82f6;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+		z-index: 10;
+	}
 
-    @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
+	@keyframes spin {
+		0% { transform: translate(-50%, -50%) rotate(0deg); }
+		100% { transform: translate(-50%, -50%) rotate(360deg); }
+	}
 </style>
