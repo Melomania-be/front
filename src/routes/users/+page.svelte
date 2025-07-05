@@ -4,6 +4,7 @@
 	let listUsers: any[] = [];
 
 	const newUser = {
+		fullName:'',
 		email: '',
 		password: '',
 		password_confirmation: ''
@@ -57,6 +58,7 @@
 		const response = await fetch('/api/users', {
 			method: 'PUT',
 			body: JSON.stringify({
+				full_name: newUser.fullName,
 				email: newUser.email,
 				password: newUser.password,
 				password_confirmation: newUser.password_confirmation
@@ -86,6 +88,15 @@
 	<div class="flex flex-col border p-4 rounded-lg shadow-sm">
 		<h1 class="text-2xl font-bold text-center w-full">Add User</h1>
 		<form>
+			<div class="flex flex-col mb-4">
+				<label for="email">Full Name</label>
+				<input
+					type="email"
+					class="border border-collapse rounded-md p-2"
+					bind:value={newUser.fullName}
+					required
+				/>
+			</div>
 			<div class="flex flex-col mb-4">
 				<label for="email">Email</label>
 				<input
@@ -130,6 +141,7 @@
 			{#each listUsers as user}
 				<div class="flex justify-between border border-collapse rounded-md mb-2 p-2">
 					<div>
+						<p>Full Name : {user.fullName}</p>
 						<p>Email : {user.email}</p>
 						<p>Created : {user.createdAt}</p>
 						<p>Last activity : {user.token.lastUsedAt}</p>

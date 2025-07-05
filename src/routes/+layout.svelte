@@ -140,6 +140,7 @@
         faGuitar,
         faSignOutAlt
     } from '@fortawesome/free-solid-svg-icons';
+    import { Toaster } from 'svelte-french-toast';
 	import { onMount } from 'svelte';
 
     export let data;
@@ -248,7 +249,7 @@
 {:else}
 <slot />
 {/if}
-
+<Toaster position="top-center" />
 
 
 

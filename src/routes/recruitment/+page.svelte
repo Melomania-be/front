@@ -24,6 +24,13 @@
     name: string;
   }
 
+   export interface CurrentUser {
+    id: number;
+    fullName: string;
+    email: string;
+    // Add other properties you might receive from /auth/me if needed, but keep it minimal
+  }
+
   export interface Recruitment {
     id: number;
     firstName: string;
@@ -59,6 +66,7 @@
   let daysThreshold = 14;
   const SIMILARITY_THRESHOLD = 2;
   let isRecalculating = false;
+  let currentLoggedInUser: CurrentUser | null = null;
 
   // New variable declaration for the datetime-local input binding
   let checkStatusDateTime: string | null = null;
@@ -336,7 +344,7 @@ function getLevenshteinDistance(a: string, b: string): number {
         const columnsToCopy = [
             { key: 'firstName', header: 'First Name' },
             { key: 'lastName', header: 'Last Name' },
-            { key: 'sectionGroup', header: 'Section Group', getValue: (r: Recruitment) => r.sectionGroup?.name ?? `ID:${r.sectionGroupId}` },
+            { key: 'sectionGroup', header: 'Section', getValue: (r: Recruitment) => r.sectionGroup?.name ?? `ID:${r.sectionGroupId}` },
             { key: 'contactDate', header: 'Contact Date', getValue: (r: Recruitment) => formatDate(r.contactDate) },
             { key: 'contactedBy', header: 'Contacted By', getValue: (r: Recruitment) => r.user?.fullName ?? `ID:${r.contactedBy}` },
             { key: 'status', header: 'Status' },
@@ -472,12 +480,31 @@ async function fetchRecruitment(shouldSort = true) {
     }
   }
 
+
+async function fetchCurrentUser() {
+    try {
+     
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const result = await res.json();
+        currentLoggedInUser = result.data; // Assuming your backend returns { message: '...', data: User }
+        // console.log('Logged-in user fetched:', currentLoggedInUser);
+      } else {
+        console.warn('Could not fetch logged-in user:', await res.text());
+        currentLoggedInUser = null; // Ensure it's null if not logged in or error
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      currentLoggedInUser = null;
+    }
+  }
+
   async function fetchSectionGroups() {
     try {
       const res = await fetch('/api/sectionGroups');
       sectionGroups = res.ok ? await res.json() : [];
     } catch {
-      toast.error('Failed to load section groups.');
+      toast.error('Failed to load section.');
     }
   }
 
@@ -603,7 +630,7 @@ async function saveRecruit() {
       editForm.sectionGroupId === undefined ||
       !editForm.status // Status is always required
     ) {
-      toast.error('Please fill all required fields: First Name, Last Name, Section Group, Status.');
+      toast.error('Please fill all required fields: First Name, Last Name, Section, Status.');
       return;
     }
 
@@ -914,7 +941,7 @@ function openAddModal() {
       lastName: '',
       sectionGroupId: sectionGroups.length > 0 ? sectionGroups[0].id : undefined,
       contactDate: null, // Default to null for 'not yet contacted'
-      contactedBy: null, // Default to null for 'not yet contacted'
+      contactedBy: currentLoggedInUser?.id ?? null, // Default to null for 'not yet contacted'
       status: 'not yet contacted', // NEW DEFAULT STATUS
       comment: null,
     };
@@ -1134,6 +1161,7 @@ async function updateStatuses() {
   // --- Lifecycle ---
 
   onMount(async () => {
+    await fetchCurrentUser();
     await Promise.all([fetchRecruitment(), fetchUsers(), fetchSectionGroups()]);
     if (browser) await performStatusCheck('automatic');
 
@@ -1229,7 +1257,7 @@ async function updateStatuses() {
                             on:click={() => sortTable(column)}
                         >
                             {column === 'sectionGroupId'
-                                ? 'Section Group'
+                                ? 'Section'
                                 : column === 'contactDate'
                                 ? 'Contact Date'
                                 : column === 'contactedBy'
@@ -1329,14 +1357,14 @@ async function updateStatuses() {
                     <div>
                         <label
                             class="block text-sm font-semibold text-gray-700 mb-1"
-                            >Section Group <span class="text-red-500">*</span></label
+                            >Section <span class="text-red-500">*</span></label
                         >
                         <select
                             bind:value={editForm.sectionGroupId}
                             class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
                         >
                             {#if editForm.sectionGroupId === undefined || sectionGroups.length === 0}
-                                <option value="" disabled>Select a section group</option>
+                                <option value="" disabled>Select a section</option>
                             {/if}
                             {#each sectionGroups as sg (sg.id)}
                                 <option value={sg.id}>{sg.name}</option>
