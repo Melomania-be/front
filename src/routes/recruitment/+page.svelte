@@ -802,17 +802,95 @@ async function saveRecruit() {
   //   }
   // }
 
-  async function deleteRecruit(id: number) {
+  // async function deleteRecruit(id: number) {
+  //   if (!confirm('Are you sure you want to delete this recruit?')) return;
+  //   try {
+  //     const res = await fetch(`/api/recruitment/${id}`, { method: 'DELETE' });
+  //     if (!res.ok) throw new Error(await res.text());
+  //     toast.success('Recruitment deleted.');
+  //     await fetchRecruitment();
+  //   } catch (err) {
+  //     console.error('Delete error:', err);
+  //     toast.error('Failed to delete recruit.');
+  //   }
+  // }
+
+   async function deleteRecruit(id: number) {
     if (!confirm('Are you sure you want to delete this recruit?')) return;
     try {
-      const res = await fetch(`/api/recruitment/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/recruitment/${id}`, {
+        method: 'DELETE'
+      });
       if (!res.ok) throw new Error(await res.text());
-      toast.success('Recruitment deleted.');
+      toast.success('Recruitment deleted successfully.');
       await fetchRecruitment();
-    } catch (err) {
-      console.error('Delete error:', err);
-      toast.error('Failed to delete recruit.');
+    } catch (err: unknown) {
+      console.error('Error deleting recruit:', err);
+      let errorMessage = 'Failed to delete recruit: An unexpected error occurred.';
+      if (err instanceof Error) {
+        try {
+          const errorParsed = JSON.parse(err.message);
+          errorMessage = errorParsed.message || errorMessage;
+        } catch {
+          errorMessage = err.message;
+        }
+      } else if (typeof err === 'string') {
+          errorMessage = err;
+      }
+      toast.error(errorMessage);
     }
+  }
+
+
+   async function deleteSelectedRecruitments() {
+    if (selectedRecruitments.size === 0) {
+      toast.error('Please select at least one recruit to delete.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedRecruitments.size} selected recruit(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    let successfulDeletes = 0;
+    let failedDeletes = 0;
+
+    // Convert Set to Array to iterate, as Set might change during async operations
+    const idsToDelete = Array.from(selectedRecruitments);
+
+    // Perform deletions sequentially to avoid overwhelming the backend and for clearer error reporting
+    for (const id of idsToDelete) {
+      try {
+        const res = await fetch(`/api/recruitment/${id}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`Failed to delete recruit ID ${id}:`, errorText);
+          failedDeletes++;
+          // Optionally, show a toast for each failure or collect them
+          toast.error(`Failed to delete recruit ID ${id}.`);
+        } else {
+          successfulDeletes++;
+        }
+      } catch (err: unknown) {
+        console.error(`Error deleting recruit ID ${id}:`, err);
+        failedDeletes++;
+        toast.error(`Error deleting recruit ID ${id}.`);
+      }
+    }
+
+    if (successfulDeletes > 0) {
+      toast.success(`Successfully deleted ${successfulDeletes} recruit(s).`);
+    }
+    if (failedDeletes > 0) {
+      toast.error(`Failed to delete ${failedDeletes} recruit(s). Check console for details.`);
+    }
+
+    // Clear selection and refresh data after all attempts
+    selectedRecruitments.clear();
+    selectedRecruitments = selectedRecruitments; // Trigger reactivity
+    await fetchRecruitment();
   }
 
   // function openAddModal() {
@@ -1121,6 +1199,14 @@ async function updateStatuses() {
             disabled={selectedRecruitments.size === 0}
         >
             Copy Selected to Excel ({selectedRecruitments.size})
+        </button>
+
+         <button
+            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+            on:click={deleteSelectedRecruitments}
+            disabled={selectedRecruitments.size === 0}
+        >
+            Delete Selected ({selectedRecruitments.size})
         </button>
     </div>
 
