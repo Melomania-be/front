@@ -1,17 +1,48 @@
-<!-- src/routes/audition/[token]/+page.svelte - Version complète avec URLs API corrigées -->
+<!-- src/routes/audition/[token]/+page.svelte - Version complète avec détection automatique corrigée -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 
 	export let data;
 
-	// ✅ Configuration API corrigée
+	// ✅ DÉTECTION AUTOMATIQUE D'ENVIRONNEMENT CORRIGÉE
 	function getApiBaseUrl(): string {
 		if (typeof window !== 'undefined') {
 			const hostname = window.location.hostname;
-			const isDev = hostname === 'localhost' || hostname === '127.0.0.1';
-			return isDev ? 'http://localhost:3333' : window.location.origin;
+			const protocol = window.location.protocol;
+
+			console.log('🌐 Frontend environment detection:', {
+				hostname,
+				protocol,
+				fullUrl: window.location.href
+			});
+
+			// Développement local
+			if (hostname === 'localhost' || hostname === '127.0.0.1') {
+				console.log('🔧 Using LOCAL development API');
+				return 'http://localhost:3333';
+			}
+
+			// Serveur de test Universe
+			if (hostname === 'tool.sc1ciro3903.universe.wf' || hostname.includes('universe.wf')) {
+				console.log('🧪 Using TEST server API (universe.wf)');
+				return 'http://tool.sc1ciro3903.universe.wf:3333';
+			}
+
+			// Production Melomania
+			if (hostname === 'tool.melomania.be' || hostname.includes('melomania.be')) {
+				console.log('🚀 Using PRODUCTION API (melomania.be)');
+				return 'https://tool.melomania.be:3333';
+			}
+
+			// Fallback intelligent - même protocole et domaine avec port 3333
+			const apiUrl = `${protocol}//${hostname}:3333`;
+			console.log('⚡ Using FALLBACK API configuration:', apiUrl);
+			return apiUrl;
 		}
+
+		// Server-side fallback (pendant le rendu côté serveur)
+		console.log('🔧 Using SERVER-SIDE fallback API');
 		return 'http://localhost:3333';
 	}
 
@@ -163,11 +194,11 @@
 		}
 	}
 
-	// ✅ FONCTION DE TÉLÉCHARGEMENT PDF CORRIGÉE
+	// ✅ FONCTION DE TÉLÉCHARGEMENT PDF AVEC DÉTECTION AUTO
 	function downloadPdf(pdfId: number, fileName: string) {
 		console.log(`📥 Downloading PDF ${pdfId}: ${fileName}`);
 
-		// ✅ CORRECTION : Utiliser API_BASE_URL
+		// ✅ Utilisation de l'API détectée automatiquement
 		const downloadUrl = `${API_BASE_URL}/audition/${data.token}/pdf/${pdfId}/download`;
 		console.log(`🔗 Download URL: ${downloadUrl}`);
 
@@ -196,20 +227,20 @@
 		}, 5000);
 	}
 
-	// ✅ FONCTION LOADPDFS CORRIGÉE
+	// ✅ FONCTION LOADPDFS AVEC DÉTECTION AUTO
 	async function loadPdfs() {
 		loadingPdfs = true;
 		try {
-			// ✅ CORRECTION : Utiliser API_BASE_URL
+			console.log(`📚 Loading PDFs from: ${API_BASE_URL}/audition/${data.token}/pdfs`);
 			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/pdfs`);
 			if (response.ok) {
 				pdfFiles = await response.json();
-				console.log('PDFs loaded:', pdfFiles);
+				console.log('✅ PDFs loaded:', pdfFiles.length);
 			} else {
-				console.error('Error loading PDFs');
+				console.error('❌ Error loading PDFs:', response.status);
 			}
 		} catch (error) {
-			console.error('Network error loading PDFs:', error);
+			console.error('❌ Network error loading PDFs:', error);
 		} finally {
 			loadingPdfs = false;
 		}
@@ -218,12 +249,14 @@
 	// ======= FONCTIONS PRINCIPALES =======
 
 	onMount(async () => {
+		console.log(`🎭 Initializing audition page with API: ${API_BASE_URL}`);
 		await loadAudition();
 		await loadPdfs();
 	});
 
 	async function loadAudition() {
 		try {
+			console.log(`🔄 Loading audition from: ${API_BASE_URL}/audition/${data.token}`);
 			const response = await fetch(`${API_BASE_URL}/audition/${data.token}`);
 
 			if (response.ok) {
@@ -240,7 +273,7 @@
 				}
 
 				// Debug received data
-				console.log('Audition data loaded:', {
+				console.log('✅ Audition data loaded:', {
 					submitted_at: audition.submitted_at,
 					is_submitted: audition.is_submitted,
 					files_count: audition.files?.length || 0,
@@ -259,12 +292,13 @@
 				loading = false;
 			}
 		} catch (err) {
+			console.error('❌ Network error loading audition:', err);
 			error = 'Network error, please try again';
 			loading = false;
 		}
 	}
 
-	// ✅ FONCTION UPLOAD CORRIGÉE
+	// ✅ FONCTION UPLOAD AVEC DÉTECTION AUTO
 	async function uploadFile() {
 		if (!selectedFiles || selectedFiles.length === 0) {
 			showNotification('Please select a file', 'error');
@@ -300,14 +334,13 @@
 		uploadProgress = 0;
 
 		try {
-			console.log('🚀 Starting file upload...');
+			console.log(`🚀 Starting file upload to: ${API_BASE_URL}/audition/${data.token}/upload`);
 
 			const formData = new FormData();
 			formData.append('file', file);
 			formData.append('fileType', fileType);
 			formData.append('description', fileDescription.trim());
 
-			// ✅ CORRECTION : Utiliser directement API_BASE_URL
 			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/upload`, {
 				method: 'POST',
 				body: formData
@@ -348,14 +381,14 @@
 		}
 	}
 
-	// ✅ FONCTION DELETE CORRIGÉE
+	// ✅ FONCTION DELETE AVEC DÉTECTION AUTO
 	async function deleteFile(fileId: number) {
 		if (!confirm('Are you sure you want to delete this file?')) {
 			return;
 		}
 
 		try {
-			// ✅ CORRECTION : Utiliser API_BASE_URL
+			console.log(`🗑️ Deleting file from: ${API_BASE_URL}/audition/${data.token}/files/${fileId}`);
 			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/files/${fileId}`, {
 				method: 'DELETE'
 			});
@@ -367,17 +400,18 @@
 				showNotification('Error deleting file', 'error');
 			}
 		} catch (err) {
+			console.error('❌ Error deleting file:', err);
 			showNotification('Network error', 'error');
 		}
 	}
 
-	// ✅ FONCTION SAVE AND EXIT CORRIGÉE
+	// ✅ FONCTION SAVE AND EXIT AVEC DÉTECTION AUTO
 	async function saveAndExit() {
 		saving = true;
 
 		try {
 			if (candidateNotes.trim()) {
-				// ✅ CORRECTION : Utiliser API_BASE_URL
+				console.log(`💾 Saving notes to: ${API_BASE_URL}/audition/${data.token}/save-notes`);
 				const response = await fetch(`${API_BASE_URL}/audition/${data.token}/save-notes`, {
 					method: 'POST',
 					headers: {
@@ -405,14 +439,14 @@
 				}
 			}, 2000);
 		} catch (error) {
-			console.error('Save error:', error);
+			console.error('❌ Save error:', error);
 			showNotification('Error saving.', 'error');
 		} finally {
 			saving = false;
 		}
 	}
 
-	// ✅ FONCTION SUBMIT CORRIGÉE
+	// ✅ FONCTION SUBMIT AVEC DÉTECTION AUTO
 	async function submitAudition() {
 		if (!audition.files || audition.files.length === 0) {
 			showNotification('You must upload at least one file before submitting your audition.', 'error');
@@ -426,7 +460,7 @@
 		submitting = true;
 
 		try {
-			// ✅ CORRECTION : Utiliser API_BASE_URL
+			console.log(`🎯 Submitting audition to: ${API_BASE_URL}/audition/${data.token}/submit`);
 			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/submit`, {
 				method: 'POST',
 				headers: {
@@ -449,7 +483,7 @@
 				showNotification('Error during submission: ' + (errorData?.error || 'Unknown error'), 'error');
 			}
 		} catch (err) {
-			console.error('Submission error:', err);
+			console.error('❌ Submission error:', err);
 			showNotification('Network error during submission', 'error');
 		} finally {
 			submitting = false;
@@ -501,13 +535,15 @@
 <div class="bg-[#E7E7E7] p-4 min-h-screen">
 	<div class="max-w-4xl mx-auto">
 
-		<!-- ✅ Header avec design uniforme -->
+		<!-- ✅ Header avec design uniforme et info de debug -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 			<div class="flex items-center justify-between">
 				<div>
 					<h1 class="font-bold text-2xl text-gray-900">🎭 AUDITION PORTAL</h1>
 					<p class="text-gray-600 mt-2">Melomania - Collaborative Musicians Platform</p>
 					<p class="text-sm text-blue-600 mt-1 font-medium">🎵 Accepted files: Audio and Video only</p>
+					<!-- Debug info pour les développeurs -->
+					<p class="text-xs text-gray-400 mt-1">🔧 API: {API_BASE_URL}</p>
 				</div>
 				<div class="text-right">
 					{#if audition?.deadline && !audition?.is_submitted}
@@ -646,8 +682,8 @@
 											<p class="text-xs text-blue-600 font-medium">Section: {pdf.section}</p>
 										</div>
 										<button
-												on:click={() => downloadPdf(pdf.file.id, pdf.file.name)}
-												class="ml-3 px-3 py-2 bg-[#6B9AD9] text-white text-xs rounded hover:bg-blue-600 font-semibold transition-colors"
+											on:click={() => downloadPdf(pdf.file.id, pdf.file.name)}
+											class="ml-3 px-3 py-2 bg-[#6B9AD9] text-white text-xs rounded hover:bg-blue-600 font-semibold transition-colors"
 										>
 											📥 Download
 										</button>
@@ -733,12 +769,12 @@
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-2">File type</label>
 							<select
-									bind:value={fileType}
-									on:change={() => {
+								bind:value={fileType}
+								on:change={() => {
 									resetFileSelection();
 								}}
-									class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-									disabled={uploading}
+								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								disabled={uploading}
 							>
 								<option value="video">🎬 Video (.mp4, .avi, .mov, .mkv, etc.)</option>
 								<option value="audio">🎵 Audio (.mp3, .wav, .aac, .flac, etc.)</option>
@@ -751,13 +787,13 @@
 								<span class="text-xs text-gray-500">(Max: 50MB)</span>
 							</label>
 							<input
-									type="file"
-									bind:this={fileInput}
-									bind:files={selectedFiles}
-									on:change={handleFileSelection}
-									accept={getAcceptedTypes().join(',')}
-									class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-									disabled={uploading}
+								type="file"
+								bind:this={fileInput}
+								bind:files={selectedFiles}
+								on:change={handleFileSelection}
+								accept={getAcceptedTypes().join(',')}
+								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+								disabled={uploading}
 							/>
 
 							{#if fileValidationError}
@@ -779,12 +815,12 @@
 					<div class="mb-4">
 						<label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
 						<input
-								type="text"
-								bind:value={fileDescription}
-								placeholder="e.g. Interpretation of Bach Invention No.1"
-								maxlength="255"
-								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								disabled={uploading}
+							type="text"
+							bind:value={fileDescription}
+							placeholder="e.g. Interpretation of Bach Invention No.1"
+							maxlength="255"
+							class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							disabled={uploading}
 						/>
 						<div class="text-xs text-gray-500 mt-1">
 							{fileDescription.length}/255 characters
@@ -805,9 +841,9 @@
 
 					<div class="flex items-center justify-between">
 						<button
-								on:click={uploadFile}
-								disabled={uploading || !selectedFiles || !fileDescription.trim() || fileValidationError}
-								class="bg-[#6B9AD9] text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							on:click={uploadFile}
+							disabled={uploading || !selectedFiles || !fileDescription.trim() || fileValidationError}
+							class="bg-[#6B9AD9] text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							{#if uploading}
 								<div class="flex items-center">
@@ -821,8 +857,8 @@
 
 						{#if selectedFiles && selectedFiles.length > 0 && !uploading}
 							<button
-									on:click={resetFileSelection}
-									class="text-gray-500 hover:text-gray-700 text-sm font-medium"
+								on:click={resetFileSelection}
+								class="text-gray-500 hover:text-gray-700 text-sm font-medium"
 							>
 								Cancel selection
 							</button>
@@ -877,8 +913,8 @@
 										{/if}
 									</div>
 									<button
-											on:click={() => deleteFile(auditionFile.id)}
-											class="text-red-600 hover:text-red-800 ml-4 p-2 hover:bg-red-50 rounded transition-colors"
+										on:click={() => deleteFile(auditionFile.id)}
+										class="text-red-600 hover:text-red-800 ml-4 p-2 hover:bg-red-50 rounded transition-colors"
 									>
 										<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 											<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 112 0v6a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
@@ -897,11 +933,11 @@
 					<div class="mb-4">
 						<label class="block text-sm font-medium text-gray-700 mb-2">Personal notes (optional)</label>
 						<textarea
-								bind:value={candidateNotes}
-								rows="4"
-								placeholder="Add any information you would like to share..."
-								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								disabled={submitting}
+							bind:value={candidateNotes}
+							rows="4"
+							placeholder="Add any information you would like to share..."
+							class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							disabled={submitting}
 						></textarea>
 					</div>
 
@@ -925,9 +961,9 @@
 					<div class="flex flex-col sm:flex-row gap-3 justify-between">
 						<!-- Save and exit button -->
 						<button
-								on:click={saveAndExit}
-								disabled={saving}
-								class="px-4 py-3 bg-gray-500 text-white rounded-md font-semibold hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							on:click={saveAndExit}
+							disabled={saving}
+							class="px-4 py-3 bg-gray-500 text-white rounded-md font-semibold hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							{#if saving}
 								<div class="flex items-center justify-center">
@@ -941,9 +977,9 @@
 
 						<!-- Submit button -->
 						<button
-								on:click={submitAudition}
-								disabled={submitting || (audition.files && audition.files.length === 0)}
-								class="px-4 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-1 sm:flex-none"
+							on:click={submitAudition}
+							disabled={submitting || (audition.files && audition.files.length === 0)}
+							class="px-4 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-1 sm:flex-none"
 						>
 							{submitting ? 'Submitting...' : '🎯 Submit my audition permanently'}
 						</button>
@@ -961,26 +997,26 @@
 </div>
 
 <style>
-	.prose {
-		max-width: none;
-	}
+    .prose {
+        max-width: none;
+    }
 
-	.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-		color: inherit;
-		margin-top: 1rem;
-		margin-bottom: 0.5rem;
-	}
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+        color: inherit;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
 
-	.prose p {
-		margin-bottom: 1rem;
-	}
+    .prose p {
+        margin-bottom: 1rem;
+    }
 
-	.prose ul, .prose ol {
-		margin-bottom: 1rem;
-		padding-left: 1.5rem;
-	}
+    .prose ul, .prose ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
 
-	.prose li {
-		margin-bottom: 0.25rem;
-	}
+    .prose li {
+        margin-bottom: 0.25rem;
+    }
 </style>
