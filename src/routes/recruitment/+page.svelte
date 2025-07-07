@@ -1264,7 +1264,7 @@ async function updateStatuses() {
   <h3 class="text-xl font-semibold text-gray-900 mb-6">🎯 Filter Recruitments</h3>
 
   <!-- Filters Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-6 gap-6">
     <!-- First Name -->
     <div>
       <label for="filterFirstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
@@ -1347,7 +1347,7 @@ async function updateStatuses() {
   </div>
 
   <!-- Buttons -->
-  <div class="mt-8 flex flex-col sm:flex-row sm:justify-end gap-4">
+  <div class="mt-4 flex flex-col sm:flex-row sm:justify-end gap-4">
     <button
       on:click={() => fetchRecruitment(false)}
       class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -1366,7 +1366,7 @@ async function updateStatuses() {
 
 
 <div class="container mx-auto p-4 font-inter antialiased">
-    <div class="mb-4">
+    <div class="mb-6 flex flex-col sm:flex-row sm:justify-start gap-3">
         <button
             class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
             on:click={openAddModal}
