@@ -73,6 +73,14 @@
  let selectedRecruitments: Set<number> = new Set();
 
 
+   // --- NEW: Filter State Variables ---
+  let filterFirstName: string = '';
+  let filterLastName: string = '';
+  let filterSectionGroupId: number | null = null; // For filtering by section group ID
+  let filterContactDate: string = ''; // For filtering by exact contact date (YYYY-MM-DD)
+  let filterContactedBy: number | null = null; // For filtering by contacted by user ID
+  let filterStatus: RecruitmentStatus | '' = ''; // For filtering by status
+
   const statuses: RecruitmentStatus[] = [
    'not yet contacted', // ADDED
     'awaiting response',
@@ -439,37 +447,69 @@ function getLevenshteinDistance(a: string, b: string): number {
 
   // --- CRUD & Status Check ---
 
-  // async function fetchRecruitment() {
-  //   try {
-  //     const res = await fetch('/api/recruitment');
-  //     if (res.ok) {
-  //       recruitment = await res.json();
-  //       sortTable(sortColumn);
-  //     } else {
-  //       toast.error('Failed to refresh recruitment data.');
-  //     }
-  //   } catch {
-  //     toast.error('Could not load recruitment data.');
-  //   }
-  // }
 
-async function fetchRecruitment(shouldSort = true) { 
-  try {
-    const res = await fetch('/api/recruitment');
-    if (res.ok) {
-      recruitment = await res.json();
+// async function fetchRecruitment(shouldSort = true) { 
+//   try {
+//     const res = await fetch('/api/recruitment');
+//     if (res.ok) {
+//       recruitment = await res.json();
       
-      // Only sort if the shouldSort parameter is true
-      if (shouldSort) {
-        sortTable(sortColumn);
+//       // Only sort if the shouldSort parameter is true
+//       if (shouldSort) {
+//         sortTable(sortColumn);
+//       }
+//     } else {
+//       toast.error('Failed to refresh recruitment data.');
+//     }
+//   } catch {
+//     toast.error('Could not load recruitment data.');
+//   }
+// }
+
+
+ async function fetchRecruitment(shouldSort = true) {
+    try {
+      // Build query parameters from filter state
+      const queryParams = new URLSearchParams();
+
+      if (filterFirstName.trim()) {
+        queryParams.append('firstName', filterFirstName.trim());
       }
-    } else {
-      toast.error('Failed to refresh recruitment data.');
+      if (filterLastName.trim()) {
+        queryParams.append('lastName', filterLastName.trim());
+      }
+      // For number/enum filters, ensure they are not null/empty string before appending
+      if (filterSectionGroupId !== null) {
+        queryParams.append('sectionGroupId', String(filterSectionGroupId));
+      }
+      if (filterContactDate.trim()) { // filterContactDate is YYYY-MM-DD string
+        queryParams.append('contactDate', filterContactDate.trim());
+      }
+      if (filterContactedBy !== null) {
+        queryParams.append('contactedBy', String(filterContactedBy));
+      }
+      if (filterStatus !== '') {
+        queryParams.append('status', filterStatus);
+      }
+
+      // Construct the URL with query parameters
+      const url = `/api/recruitment${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+      const res = await fetch(url); // Use the constructed URL
+      if (res.ok) {
+        recruitment = await res.json();
+
+        if (shouldSort) {
+          sortTable(sortColumn);
+        }
+      } else {
+        toast.error('Failed to refresh recruitment data with filters.');
+      }
+    } catch {
+      toast.error('Could not load recruitment data with filters.');
     }
-  } catch {
-    toast.error('Could not load recruitment data.');
   }
-}
+
 
   async function fetchUsers() {
     try {
@@ -523,7 +563,7 @@ async function fetchCurrentUser() {
       const result = await res.json();
       if (res.ok) {
         toast.success(result.message || 'Status check completed.');
-        await fetchRecruitment();
+        await fetchRecruitment(false);
       } else {
         toast.error(result.message || 'Status check failed.');
       }
@@ -735,7 +775,7 @@ async function saveRecruit() {
         console.error('Backend save error:', errorText);
         throw new Error(errorText); // Throw it to be caught by the outer catch
       }
-      await fetchRecruitment();
+      await fetchRecruitment(false);
       closeModal();
     } catch (err: unknown) { // Explicitly type err as unknown for clarity, though it's default
       console.error('Error saving recruit:', err);
@@ -850,7 +890,7 @@ async function saveRecruit() {
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success('Recruitment deleted successfully.');
-      await fetchRecruitment();
+      await fetchRecruitment(false);
     } catch (err: unknown) {
       console.error('Error deleting recruit:', err);
       let errorMessage = 'Failed to delete recruit: An unexpected error occurred.';
@@ -917,7 +957,7 @@ async function saveRecruit() {
     // Clear selection and refresh data after all attempts
     selectedRecruitments.clear();
     selectedRecruitments = selectedRecruitments; // Trigger reactivity
-    await fetchRecruitment();
+    await fetchRecruitment(false);
   }
 
   // function openAddModal() {
@@ -1061,7 +1101,7 @@ function openAddModal() {
         throw new Error(errorText);
       }
       toast.success(`Recruit ${action}ed. Status changed to '${newStatus}'.`);
-      await fetchRecruitment();
+      await fetchRecruitment(false);
     } catch (err: unknown) {
       console.error(`${action} error:`, err);
       let errorMessage = `Failed to ${action} recruit.`;
@@ -1158,15 +1198,40 @@ async function updateStatuses() {
     checkAndUpdateStatus(firstName, lastName, 'withdraw');
   }
 
+  function clearFilters() {
+    filterFirstName = '';
+    filterLastName = '';
+    filterSectionGroupId = null;
+    filterContactDate = '';
+    filterContactedBy = null;
+    filterStatus = '';
+     sortColumn = 'lastName';
+    sortDirection = 'asc';
+    fetchRecruitment(false); // Re-fetch data after clearing filters
+  }
+
+
   // --- Lifecycle ---
 
   onMount(async () => {
-    await fetchCurrentUser();
-    await Promise.all([fetchRecruitment(), fetchUsers(), fetchSectionGroups()]);
-    if (browser) await performStatusCheck('automatic');
 
-     selectedRecruitments.clear();
-      selectedRecruitments = selectedRecruitments;
+     if (browser) {
+      await fetchCurrentUser();
+      // fetchRecruitment will automatically apply any initial filter values
+      // (e.g., if you load them from localStorage later)
+      await Promise.all([fetchRecruitment(false), fetchUsers(), fetchSectionGroups()]);
+      await performStatusCheck('automatic');
+    }
+
+    selectedRecruitments.clear();
+    selectedRecruitments = selectedRecruitments;
+  
+    // await fetchCurrentUser();
+    // await Promise.all([fetchRecruitment(), fetchUsers(), fetchSectionGroups()]);
+    // if (browser) await performStatusCheck('automatic');
+
+    //  selectedRecruitments.clear();
+    //   selectedRecruitments = selectedRecruitments;
   });
 </script>
 
@@ -1211,6 +1276,112 @@ async function updateStatuses() {
         </button>
     </div>
 </div>
+
+
+<div class="mb-6 p-6 border border-slate-200 rounded-2xl bg-white shadow-sm">
+  <h3 class="text-xl font-semibold text-gray-900 mb-6">🎯 Filter Recruitments</h3>
+
+  <!-- Filters Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+    <!-- First Name -->
+    <div>
+      <label for="filterFirstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+      <input
+        id="filterFirstName"
+        type="text"
+        bind:value={filterFirstName}
+        placeholder="Filter by first name"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition"
+      />
+    </div>
+
+    <!-- Last Name -->
+    <div>
+      <label for="filterLastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+      <input
+        id="filterLastName"
+        type="text"
+        bind:value={filterLastName}
+        placeholder="Filter by last name"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition"
+      />
+    </div>
+
+    <!-- Section Group -->
+    <div>
+      <label for="filterSectionGroup" class="block text-sm font-medium text-gray-700 mb-1">Section Group</label>
+      <select
+        id="filterSectionGroup"
+        bind:value={filterSectionGroupId}
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition"
+      >
+        <option value={null}>All Section Groups</option>
+        {#each sectionGroups as sg (sg.id)}
+          <option value={sg.id}>{sg.name}</option>
+        {/each}
+      </select>
+    </div>
+
+    <!-- Contact Date -->
+    <div>
+      <label for="filterContactDate" class="block text-sm font-medium text-gray-700 mb-1">Contact Date</label>
+      <input
+        id="filterContactDate"
+        type="date"
+        bind:value={filterContactDate}
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition"
+      />
+    </div>
+
+    <!-- Contacted By -->
+    <div>
+      <label for="filterContactedBy" class="block text-sm font-medium text-gray-700 mb-1">Contacted By</label>
+      <select
+        id="filterContactedBy"
+        bind:value={filterContactedBy}
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition"
+      >
+        <option value={null}>All Users</option>
+        {#each users as user (user.id)}
+          <option value={user.id}>{user.fullName ?? `User #${user.id}`}</option>
+        {/each}
+      </select>
+    </div>
+
+    <!-- Status -->
+    <div>
+      <label for="filterStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+      <select
+        id="filterStatus"
+        bind:value={filterStatus}
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition"
+      >
+        <option value="">All Statuses</option>
+        {#each statuses as s}
+          <option value={s}>{s}</option>
+        {/each}
+      </select>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="mt-8 flex flex-col sm:flex-row sm:justify-end gap-4">
+    <button
+      on:click={() => fetchRecruitment(false)}
+      class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+    >
+      Apply Filters
+    </button>
+    <button
+      on:click={() => clearFilters()}
+      class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg shadow hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
+    >
+      Clear Filters
+    </button>
+  </div>
+</div>
+
+
 
 <div class="container mx-auto p-4 font-inter antialiased">
     <div class="mb-4">
@@ -1276,7 +1447,7 @@ async function updateStatuses() {
                     </th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <!-- <tbody class="divide-y divide-gray-200">
                 {#each recruitment as r (r.id)}
                     <tr class="hover:bg-gray-50 transition duration-100 ease-in-out">
                         <td class="px-4 py-2">
@@ -1313,7 +1484,67 @@ async function updateStatuses() {
                         </td>
                     </tr>
                 {/each}
-            </tbody>
+            </tbody> -->
+
+             <tbody class="divide-y divide-gray-200">
+            {#if recruitment.length === 0}
+                <tr>
+                    <!--
+                        colspan should be the total number of columns in your table.
+                        Count them:
+                        1 (checkbox) +
+                        7 (firstName, lastName, sectionGroup, contactDate, contactedBy, status, comment) +
+                        1 (Actions)
+                        = 9 columns.
+                        If you have 'statusUpdatedAt' in your table, it would be 10.
+                        Based on your `columns` array, you have 7 data columns.
+                        So, 1 (checkbox) + 7 (data) + 1 (actions) = 9.
+                        Let's use 9 for now. If your table has more, adjust accordingly.
+                    -->
+                    <td colspan="9" class="px-4 py-4 text-center text-gray-500">
+                        No matching recruitment records found. Adjust your filters or add new recruits.
+                    </td>
+                </tr>
+            {:else}
+                {#each recruitment as r (r.id)}
+                    <tr class="hover:bg-gray-50 transition duration-100 ease-in-out">
+                        <td class="px-4 py-2">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-4 w-4 text-blue-600 rounded"
+                                on:change={() => toggleRecruitmentSelection(r.id)}
+                                checked={selectedRecruitments.has(r.id)}
+                            />
+                        </td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.firstName}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.lastName}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">
+                            {r.sectionGroup?.name ?? `ID: ${r.sectionGroupId}`}
+                        </td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{formatDate(r.contactDate)}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">
+                            {r.user?.fullName ?? (r.contactedBy === null ? 'N/A' : `ID: ${r.contactedBy}`)}
+                        </td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.status}</td>
+                        <td class="px-4 py-2 text-sm text-gray-800">{r.comment ?? 'N/A'}</td>
+                        <td class="px-4 py-2 text-sm flex space-x-2">
+                            <button
+                                class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out"
+                                on:click={() => openEditModal(r)}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                class="text-red-600 hover:text-red-800 transition duration-150 ease-in-out"
+                                on:click={() => deleteRecruit(r.id)}
+                            >
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                {/each}
+            {/if}
+        </tbody>
         </table>
     </div>
 

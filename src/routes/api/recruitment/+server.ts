@@ -24,8 +24,8 @@ const RECRUITMENTS_API_ENDPOINT = `${API_URL}/recruitments`;
 // 	return res;
 // };
 
-export const GET: RequestHandler = async ({ cookies, fetch }) => {
-	const res = await fetch(RECRUITMENTS_API_ENDPOINT, {
+export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
+	const res = await fetch(`${RECRUITMENTS_API_ENDPOINT}${url.search}`, {
 		method: 'GET',
 		headers: {
 			authorization: `${await getToken(cookies)}`
