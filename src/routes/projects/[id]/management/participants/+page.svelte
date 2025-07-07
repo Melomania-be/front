@@ -119,6 +119,14 @@
 <ProjectHeadDisplayer {project} selectedTab={1} />
 <div class="bg-[#E7E7E7] p-4 min-h-screen pb-[80px]">
 	<div class="p-4 gap-4 flex flex-col">
+		<div>
+			<a
+    href="/recruitment"
+    class="inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+>
+    Go to Recruitments
+</a>
+		</div>
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
             <h1 class="font-bold text-lg mb-2">NEW PARTICIPANTS</h1>
             {#if participantNotValidated}
@@ -135,6 +143,7 @@
                 <p class="px-10">No new participants waiting for validation</p>
             {/if}
 		</div>
+		
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
             <div class="flex items-center">
 			<h1 class="font-bold text-lg">PARTICIPANTS</h1>
