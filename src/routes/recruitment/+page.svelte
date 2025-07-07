@@ -448,24 +448,6 @@ function getLevenshteinDistance(a: string, b: string): number {
   // --- CRUD & Status Check ---
 
 
-// async function fetchRecruitment(shouldSort = true) { 
-//   try {
-//     const res = await fetch('/api/recruitment');
-//     if (res.ok) {
-//       recruitment = await res.json();
-      
-//       // Only sort if the shouldSort parameter is true
-//       if (shouldSort) {
-//         sortTable(sortColumn);
-//       }
-//     } else {
-//       toast.error('Failed to refresh recruitment data.');
-//     }
-//   } catch {
-//     toast.error('Could not load recruitment data.');
-//   }
-// }
-
 
  async function fetchRecruitment(shouldSort = true) {
     try {
