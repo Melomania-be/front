@@ -20,20 +20,17 @@
 		orderBy: string;
 		order: string;
 	} = {
-		filters: {
-			type: 'and',
-			filtersDepth1: [
-				{
-					type: 'and',
-					filtersDepth2: []
-				}
-			]
+		filters:{
+			type : 'and',
+			filtersDepth1: [{type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []}]
 		},
 		page: 1,
 		limit: 250,
 		orderBy: 'id',
 		order: 'asc'
 	};
+
+	
 
 	onMount(async () => {
 		fetchData();
