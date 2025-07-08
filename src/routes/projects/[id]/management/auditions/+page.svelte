@@ -519,12 +519,17 @@
 					</div>
 				</div>
 
-				<!-- Auditions List -->
+				<!-- Auditions List - Design Homogène avec Contours -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
-					<div class="flex items-center justify-between mb-4">
-						<h1 class="font-bold text-lg">
-							ALL AUDITIONS ({filteredAuditions.length})
-						</h1>
+					<div class="flex items-center space-x-3 mb-4">
+						<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
+							<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+							</svg>
+						</div>
+						<div>
+							<h1 class="font-bold text-lg">ALL AUDITIONS ({filteredAuditions.length})</h1>
+						</div>
 					</div>
 
 					{#if filteredAuditions.length === 0}
@@ -532,78 +537,164 @@
 							No auditions match the current filters.
 						</div>
 					{:else}
-						<div class="w-full overflow-x-auto">
-							<table class="w-full min-w-[800px] text-sm text-left rtl:text-right text-gray-500">
-								<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
-								<tr>
-									<th class="px-4 py-2">Participant</th>
-									<th class="px-4 py-2">Email</th>
-									<th class="px-4 py-2">Section</th>
-									<th class="px-4 py-2">Status</th>
-									<th class="px-4 py-2">Deadline</th>
-									<th class="px-4 py-2">Files</th>
-									<th class="px-4 py-2">Actions</th>
-								</tr>
-								</thead>
-								<tbody>
+						{#if isMobile}
+							<!-- Mobile Card Layout - Design Homogène -->
+							<div class="space-y-3">
 								{#each filteredAuditions as audition}
 									{@const status = getAuditionStatus(audition)}
-									<tr class="cursor-pointer hover:bg-gray-100 border-b border-gray-200">
-										<td class="px-4 py-2">
-											<div class="flex items-center space-x-3">
-												<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-														<span class="text-blue-600 font-medium text-xs">
-															{audition.participant?.contact?.firstName?.charAt(0)}{audition.participant?.contact?.lastName?.charAt(0)}
-														</span>
+									<div class="border-2 border-[#8C8C8C] rounded-[10px] p-4 hover:bg-gray-50 cursor-pointer"
+											 on:click={() => openAuditionDetails(audition)}
+											 role="button"
+											 tabindex="0">
+
+										<!-- Header avec Participant et Status -->
+										<div class="flex items-start justify-between mb-3">
+											<div class="flex items-center space-x-3 flex-1 min-w-0">
+												<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center flex-shrink-0">
+									<span class="text-white font-bold text-sm">
+										{audition.participant?.contact?.firstName?.charAt(0)}{audition.participant?.contact?.lastName?.charAt(0)}
+									</span>
 												</div>
-												<span class="font-medium text-gray-900">
+												<div class="flex-1 min-w-0">
+													<h3 class="font-bold text-gray-900 truncate">
 														{audition.participant?.contact?.firstName} {audition.participant?.contact?.lastName}
-													</span>
-											</div>
-										</td>
-										<td class="px-4 py-2">{audition.participant?.contact?.email}</td>
-										<td class="px-4 py-2">
-												<span class="text-blue-600 font-medium">
-													{audition.participant?.section?.name}
-												</span>
-										</td>
-										<td class="px-4 py-2">
-												<span class={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(status)}`}>
-													{getStatusIcon(status)} {status}
-												</span>
-										</td>
-										<td class="px-4 py-2">
-											<div class="text-gray-900 font-medium">
-												{formatDate(audition.deadline)}
-											</div>
-											{#if audition.is_submitted && audition.submitted_at}
-												<div class="text-green-600 text-xs">
-													Submitted: {formatDate(audition.submitted_at)}
+													</h3>
+													<p class="text-sm text-gray-600 truncate break-all">{audition.participant?.contact?.email}</p>
 												</div>
-											{/if}
-										</td>
-										<td class="px-4 py-2">
-											{#if audition.files && audition.files.length > 0}
-												<div class="text-blue-600 text-xs">
-													{audition.files.length} file{audition.files.length > 1 ? 's' : ''}
+											</div>
+											<div class="flex-shrink-0 ml-2">
+								<span class={`inline-flex items-center px-2 py-1 rounded-[6px] text-xs font-bold border-2
+									${status === 'completed' ? 'bg-green-100 text-green-700 border-green-300' :
+									  status === 'overdue' ? 'bg-red-100 text-red-700 border-red-300' :
+									  'bg-yellow-100 text-yellow-700 border-yellow-300'}`}>
+									{getStatusIcon(status)} {status === 'completed' ? 'DONE' : status === 'overdue' ? 'LATE' : 'PENDING'}
+								</span>
+											</div>
+										</div>
+
+										<!-- Section Badge -->
+										<div class="mb-3">
+							<span class="inline-flex items-center px-3 py-1 rounded-[6px] text-xs font-bold bg-blue-100 text-blue-700 border-2 border-blue-300">
+								{audition.participant?.section?.name}
+							</span>
+										</div>
+
+										<!-- Informations Grid -->
+										<div class="grid grid-cols-2 gap-3 mb-3">
+											<div class="bg-gray-50 border-2 border-gray-300 rounded-[8px] p-3">
+												<div class="flex items-center mb-1">
+													<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+													</svg>
+													<span class="text-xs font-bold text-gray-600 uppercase">DEADLINE</span>
 												</div>
-											{:else}
-												<span class="text-gray-400 text-xs">No files</span>
-											{/if}
-										</td>
-										<td class="px-4 py-2">
-											<button
+												<p class="text-sm font-bold text-gray-900">{formatDate(audition.deadline)}</p>
+											</div>
+											<div class="bg-gray-50 border-2 border-gray-300 rounded-[8px] p-3">
+												<div class="flex items-center mb-1">
+													<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+													</svg>
+													<span class="text-xs font-bold text-gray-600 uppercase">FILES</span>
+												</div>
+												{#if audition.files && audition.files.length > 0}
+													<p class="text-sm font-bold text-blue-600">
+														{audition.files.length} file{audition.files.length > 1 ? 's' : ''}
+													</p>
+												{:else}
+													<p class="text-sm font-bold text-gray-400">No files</p>
+												{/if}
+											</div>
+										</div>
+
+										<!-- Footer Submitted -->
+										{#if audition.is_submitted && audition.submitted_at}
+											<div class="flex items-center justify-between pt-3 border-t-2 border-gray-200">
+												<div class="flex items-center space-x-2">
+													<div class="w-3 h-3 bg-green-500 rounded-full border-2 border-green-300"></div>
+													<span class="text-xs text-gray-700 font-bold">SUBMITTED</span>
+												</div>
+												<span class="text-xs font-bold text-green-600">{formatDate(audition.submitted_at)}</span>
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{:else}
+							<!-- Desktop Table Layout - Simple -->
+							<div class="w-full overflow-x-auto">
+								<table class="w-full min-w-[800px] text-sm text-left text-gray-500">
+									<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
+									<tr>
+										<th class="px-4 py-2">Participant</th>
+										<th class="px-4 py-2">Email</th>
+										<th class="px-4 py-2">Section</th>
+										<th class="px-4 py-2">Status</th>
+										<th class="px-4 py-2">Deadline</th>
+										<th class="px-4 py-2">Files</th>
+										<th class="px-4 py-2">Actions</th>
+									</tr>
+									</thead>
+									<tbody>
+									{#each filteredAuditions as audition}
+										{@const status = getAuditionStatus(audition)}
+										<tr class="cursor-pointer hover:bg-gray-100 border-b border-gray-200">
+											<td class="px-4 py-2">
+												<div class="flex items-center space-x-3">
+													<div class="w-8 h-8 bg-[#6B9AD9] rounded-[6px] flex items-center justify-center">
+											<span class="text-white font-bold text-xs">
+												{audition.participant?.contact?.firstName?.charAt(0)}{audition.participant?.contact?.lastName?.charAt(0)}
+											</span>
+													</div>
+													<span class="font-medium text-gray-900">
+											{audition.participant?.contact?.firstName} {audition.participant?.contact?.lastName}
+										</span>
+												</div>
+											</td>
+											<td class="px-4 py-2">{audition.participant?.contact?.email}</td>
+											<td class="px-4 py-2">
+									<span class="text-blue-600 font-medium">
+										{audition.participant?.section?.name}
+									</span>
+											</td>
+											<td class="px-4 py-2">
+									<span class={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(status)}`}>
+										{getStatusIcon(status)} {status}
+									</span>
+											</td>
+											<td class="px-4 py-2">
+												<div class="text-gray-900 font-medium">
+													{formatDate(audition.deadline)}
+												</div>
+												{#if audition.is_submitted && audition.submitted_at}
+													<div class="text-green-600 text-xs">
+														Submitted: {formatDate(audition.submitted_at)}
+													</div>
+												{/if}
+											</td>
+											<td class="px-4 py-2">
+												{#if audition.files && audition.files.length > 0}
+													<div class="text-blue-600 text-xs">
+														{audition.files.length} file{audition.files.length > 1 ? 's' : ''}
+													</div>
+												{:else}
+													<span class="text-gray-400 text-xs">No files</span>
+												{/if}
+											</td>
+											<td class="px-4 py-2">
+												<button
 													on:click={() => openAuditionDetails(audition)}
 													class="px-3 py-1 bg-[#6B9AD9] text-white text-xs rounded hover:bg-blue-600 font-semibold"
-											>
-												View Details
-											</button>
-										</td>
-									</tr>
-								{/each}
-								</tbody>
-							</table>
-						</div>
+												>
+													View Details
+												</button>
+											</td>
+										</tr>
+									{/each}
+									</tbody>
+								</table>
+							</div>
+						{/if}
 					{/if}
 				</div>
 			{/if}
@@ -647,9 +738,18 @@
 								{selectedAudition.participant?.contact?.firstName} {selectedAudition.participant?.contact?.lastName}
 							</p>
 						</div>
-						<div>
+						<div class="min-w-0">
 							<span class="text-sm font-medium text-gray-700">Email:</span>
-							<p class="text-gray-900">{selectedAudition.participant?.contact?.email}</p>
+							{#if isMobile}
+								<p class="text-gray-900 text-sm break-all">
+									{selectedAudition.participant?.contact?.email}
+								</p>
+							{:else}
+								<p class="text-gray-900 text-sm truncate"
+									 title="{selectedAudition.participant?.contact?.email}">
+									{selectedAudition.participant?.contact?.email}
+								</p>
+							{/if}
 						</div>
 						<div>
 							<span class="text-sm font-medium text-gray-700">Section:</span>
