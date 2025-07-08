@@ -23,6 +23,8 @@
 	export let filterLevel: string[];
 	export let instrumentFamily: string[];
 
+	export let selectedLevelInstruments: [number, string | null][];
+
 	let instruments: Instrument[] = [];
 	
 
@@ -44,28 +46,18 @@
 		options = options;
 	}
 
-	function updateSearchBar(value: string) {
-		
+	function updateSearchBar(value: string) {	
 		if (value) {
 			const orTerms = value.split(/\s+/).filter(Boolean);
-			options.filters.filtersDepth1 = [
-				{
-					type: 'or',
-					filtersDepth2: orTerms.map(term => [
+			options.filters.filtersDepth1[0].filtersDepth2 = orTerms.map(term => [
 					{ relation: 'self', column: 'email', operation: 'like', filter: `%${term}%` },
 					{ relation: 'self', column: 'first_name', operation: 'like', filter: `%${term}%` },
 					{ relation: 'self', column: 'last_name', operation: 'like', filter: `%${term}%` },
 					{ relation: 'self', column: 'messenger', operation: 'like', filter: `%${term}%` }
 					]).flat()
-				}
-			];
-		} else {
-			options.filters.filtersDepth1 = [
-				{
-					type: 'or',
-					filtersDepth2: []
-				}
-			];
+		}
+		else {
+			options.filters.filtersDepth1[0].filtersDepth2 = []
 		}
 		options = options;
 		console.log(quickSearch);
@@ -155,30 +147,50 @@
 	let selectedFamilyIds: Set<string> = new Set();
 	let projectIds : string = "";
 	let projectName : string = "";
+	let personIds : string = "";
+	
 
-	function updateProjectsIdFilter(projectIds : string){
+	function initFilter(){
+	}
+
+	function updateFilter(){
 		const projects = projectIds.split(",")
+		const persons = personIds.split(",")
 
-		if (!options.filters.filtersDepth1[1]) {
-			addSubCondition('and');
-		}
-
-		const filtersGroup = options.filters.filtersDepth1[1];
-
-		filtersGroup.filtersDepth2 = filtersGroup.filtersDepth2.filter(
-			(f) => !(f.relation === 'participants' && f.column === 'project_id')
-		);
-
+		options.filters.filtersDepth1[2].filtersDepth2 = []
+		
 		if(projectIds !== ""){
-		// Ajoute les filtres actuels
-		for (const project of projects) {
-			filtersGroup.filtersDepth2.push({
-				relation: 'participants',
-				column: 'project_id',
-				operation: '=',
-				filter: project
+			// Ajoute les filtres actuels
+			for (const project of projects) {
+				options.filters.filtersDepth1[2].filtersDepth2.push({
+					relation: 'participants',
+					column: 'project_id',
+					operation: '=',
+					filter: project
+				});
+			}
+		}
+		if(projectName !== ""){
+			options.filters.filtersDepth1[2].filtersDepth2.push({
+				relation: 'projects',
+				column: 'name',
+				operation: 'like',
+				filter: projectName
 			});
 		}
+
+		options.filters.filtersDepth1[3].filtersDepth2 = []
+
+		if(personIds !== ""){
+			// Ajoute les filtres actuels
+			for (const person of persons) {
+				options.filters.filtersDepth1[3].filtersDepth2.push({
+					relation: 'self',
+					column: 'id',
+					operation: '=',
+					filter: person
+				});
+			}
 		}
 
 	}
@@ -212,7 +224,7 @@
 		}
 		// Met à jour le groupe de filtres
 		if (!options.filters.filtersDepth1[1]) {
-			addSubCondition('or');
+			addCondition('or');
 		}
 		const filtersGroup = options.filters.filtersDepth1[1];
 
@@ -239,9 +251,10 @@
 	// Fonction pour mettre à jour les filtres des instruments
 	function toggleInstrumentFilter(id: number, checked: boolean) {
 		if (checked) {
-			selectedInstrumentIds.add(id);
+			selectedInstrumentIds = new Set(selectedInstrumentIds.add(id))
 		} else {
-			selectedInstrumentIds.delete(id);
+			selectedInstrumentIds.delete(id)
+   			selectedInstrumentIds = new Set(selectedInstrumentIds)
 		}
 
 		// Met à jour le groupe de filtres
@@ -272,13 +285,28 @@
 
 	const dispatch = createEventDispatcher();
 
+	function resetFilter(){
+		options.filters = {
+			type : 'and',
+			filtersDepth1: [{type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []}]
+		}
+	}
+
 	function triggerSearch() {
-		updateProjectsIdFilter(projectIds)
+		initFilter();
+		updateSearchBar(quickSearch)
+		updateFilter()
 		updateProjectNameFilter();
 		console.log(filter)
 		dispatch('optionsUpdated');
 	}
 
+	function handleLevelChange(instrumentId: number, level: string) {
+		if (level) {
+			const updated = selectedLevelInstruments.filter(([id]) => id !== instrumentId);
+			selectedLevelInstruments = [...updated, [instrumentId, level]];
+		}
+	}
 
 </script>
 
@@ -293,7 +321,7 @@
 				<h2 class="text-md font-bold mb-4 text-xl">Instruments</h2>
 				<div class="grid grid-cols-[1fr_1fr_1fr] mb-6 px-4">
 					{#each instruments as instrument}
-						<div class="flex gap-2 items-center">
+						<div class="flex gap-2 h-8 items-center">
 							<input
 								id={String(instrument.id)}
 								checked={selectedInstrumentIds.has(instrument.id)}
@@ -302,6 +330,15 @@
 								on:change={(e) => toggleInstrumentFilter(instrument.id, e.target.checked)}
 							/>
 							<p>{instrument.name}</p>
+							{#if selectedInstrumentIds.has(instrument.id)}
+								<select class="border-2 rounded-lg border-gray-400"
+								on:change={(e) => handleLevelChange(instrument.id, e.target.value)}>
+									<option class="" value={null}>none</option>
+									{#each levels as level}
+										<option class="{levelToStyle(level)}" value={level}>{levelSimplificator(level)}</option>
+									{/each}
+								</select>
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -343,21 +380,28 @@
 					<p class="font-semibold text-gray-500 mr-2 ml-4">By Name :</p>
 					<input type="text" bind:value={projectName} class="border-2 rounded-lg border-gray-300 pl-2" />
 				</div>
+				<h2 class="text-md font-bold mb-2 text-xl">Person</h2>
+				<div class="px-4 flex mb-6">
+					<p class="font-semibold text-gray-500 mr-2">By Id :</p>
+					<input type="text" bind:value={personIds} class="border-2 rounded-lg border-gray-300 pl-2" />
+				</div>
 			</div>
 			<div class="flex pr-6 bg-white border-t py-2 rounded-b-xl border-gray-300">
 				<button
 					class="w-[20%] px-4 py-2 my-2 rounded-full hover:underline font-semibold"
 					on:click={() => {
 						popUpFilter = false;
-						deleteGroup(options.filters.filtersDepth1[1]);
 						filterLevel = [];
 						selectedFamilyIds.clear();
 						selectedInstrumentIds.clear();
 						projectIds = "";
 						projectName = "";
-						triggerSearch();
+						personIds = "";
 						document.body.style.overflow = '';
+						selectedLevelInstruments = [];
+						resetFilter();
 						console.log(options);
+						dispatch('optionsUpdated');
 					}}>Reset Filter</button
 				>
 				<Button
@@ -381,7 +425,7 @@
 					placeholder="Search..."
 					bind:value={quickSearch}
 				/>
-				<button class="ml-auto mr-2" on:click={()=>{popUpFilter = false; quickSearch = "",updateSearchBar(quickSearch)}}><Fa icon={faXmark} class="text-[18px]" style="color: #6b7280;" /></button>
+				<button class="ml-auto mr-2" on:click={()=>{popUpFilter = false; quickSearch = "",updateSearchBar(quickSearch);triggerSearch()}}><Fa icon={faXmark} class="text-[18px]" style="color: #6b7280;" /></button>
 			</div>
 			<div class="flex justify-center items-center">
 				<Button
@@ -405,8 +449,9 @@
 			<p class="text-gray-500 font-semibold">Filter</p>
 			<Fa icon={faSliders} class="text-[16px]" style="color: #6b7280;" />
 		</button>
+		<!--
 		{#each options.filters.filtersDepth1.slice(1) as depth1}
-			<div class="flex items-center">
+			<div class="flex items-center bg-red-300">
 				{#if depth1 !== options.filters.filtersDepth1[0]}
 					<div>
 						{options.filters.type}
@@ -443,6 +488,7 @@
 				</button>
 			</div>
 		{/each}
+		
 		<div>
 			{#if options.filters.filtersDepth1.length > 1}
 				<select bind:value={options.filters.type} class="mr-2">
@@ -456,6 +502,7 @@
 				>+</button
 			>
 		</div>
+		-->
 		
 	</div>
 {/if}

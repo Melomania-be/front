@@ -12,6 +12,5 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 			}
 		}
 	);
-
 	return res;
 };

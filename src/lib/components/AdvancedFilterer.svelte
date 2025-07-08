@@ -1,4 +1,6 @@
 <script lang="ts" generics="DataType extends GenericDataType">
+	import TableContact from '$lib/components/TableContact.svelte';
+
 	import { familyToEmoji, familyToStyle } from './contact/StylesFunctions';
 
 	import { DataTable } from 'smelte';
@@ -11,7 +13,7 @@
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
 	import Paginator from '$lib/components/Paginator.svelte';
-	import Table from '$lib/components/Table.svelte';
+	import Table from '$lib/components/TableContact.svelte';
 	import QueryBuilder from './QueryBuilder.svelte';
 	import { Button } from 'flowbite-svelte';
 
@@ -76,6 +78,8 @@
 	let typesOfWhere = ['and', 'or'];
 	let selectedData: GenericDataType | null = null;
 
+	let selectedLevelInstruments: [number, string | null][] = []
+
 	let instrumentFamily: string[] = [];
 
 	const dispatch = createEventDispatcher();
@@ -98,6 +102,7 @@
 		bind:typesOfWhere
 		bind:filterLevel
 		bind:instrumentFamily
+		bind:selectedLevelInstruments
 		on:optionsUpdated={() => dispatch('optionsUpdated')}
 	/>
 </div>
@@ -150,7 +155,7 @@
 	{#if !showData}
 		<slot />
 	{:else}
-		<Table
+		<TableContact
 			bind:data
 			bind:options
 			bind:meta
@@ -160,6 +165,7 @@
 			bind:selectedData
 			bind:filterLevel
 			bind:columnDisplayer
+			bind:selectedLevelInstruments
 		/>
 	{/if}
 

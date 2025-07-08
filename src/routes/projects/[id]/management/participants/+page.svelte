@@ -320,6 +320,7 @@
 					<div class="flex">
 						<div class="flex-1 p-4 grid grid-cols-2">
 							{#each Object.entries(HeadTable) as [colName, displayed]}
+							
 								<div class="flex items-center">
 									<input
 										class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7] ml-2 mr-2"
