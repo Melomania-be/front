@@ -407,7 +407,7 @@
 							<p class="font-medium">📚 Process Overview</p>
 							<p>
 								1. <strong>Upload</strong> PDFs for each section
-								• 2. <strong>Bulk send</strong> PDFs to all auditions in a section
+								• 2. <strong>send</strong> an audition request to a candidate
 								• 3. Candidates can <strong>download</strong> and play the pieces
 								• 4. They will send back their <strong>audio/video recordings</strong>
 							</p>

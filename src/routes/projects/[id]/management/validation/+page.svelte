@@ -635,6 +635,7 @@
 
             console.log('Sending audition data:', auditionData);
 
+            // ✅ ÉTAPE 1 : Créer l'audition
             const url = `/api/projects/${data.id}/management/participants/${currentParticipant.id}/request-audition`;
             console.log('Request URL:', url);
 
@@ -650,14 +651,42 @@
             console.log('🎭 Response headers:', response.headers);
 
             if (response.ok) {
-                console.log('✅ Audition request successful');
+                const auditionResult = await response.json();
+                console.log('✅ Audition created successfully:', auditionResult);
 
-                // ✅ CORRECTION : Reset des flags et rechargement des données
+                // ✅ ÉTAPE 2 : Envoyer l'email séparément
+                try {
+                    console.log('📧 Sending audition email...');
+
+                    const emailResponse = await fetch('/api/mailing/sendAuditionRequest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            projectId: data.id,
+                            participantId: currentParticipant.id,
+                            auditionId: auditionResult.audition?.id
+                        })
+                    });
+
+                    if (emailResponse.ok) {
+                        console.log('✅ Audition email sent successfully');
+                        showNotification('Audition request sent successfully! The candidate will receive an email with the audition request with excerpts attached.', 'success');
+                    } else {
+                        console.warn('⚠️ Email sending failed, but audition was created');
+                        showNotification('Audition request created, but email failed to send. Please contact the candidate manually.', 'info');
+                    }
+                } catch (emailError) {
+                    console.error('❌ Email sending error:', emailError);
+                    showNotification('Audition request created, but email failed to send. Please contact the candidate manually.', 'info');
+                }
+
+                // ✅ ÉTAPE 3 : Recharger les données
                 participantsLoaded = false;
                 auditionsLoaded = false;
                 dataFullyLoaded = false;
 
-                // ✅ CORRECTION : Recharger les données dans le bon ordre
                 try {
                     await loadParticipants();
                     await loadAuditionsData();
@@ -667,15 +696,12 @@
                     syncAuditionStatuses();
 
                     console.log('✅ Data reloaded successfully');
-
                     closeAuditionModal();
-                    showNotification('Audition request sent successfully! The candidate will automatically receive PDFs for their section.', 'success');
 
                 } catch (reloadError) {
                     console.error('❌ Error reloading data:', reloadError);
-                    // Même si le rechargement échoue, on ferme le modal
                     closeAuditionModal();
-                    showNotification('Audition request sent successfully, but interface may need manual refresh.', 'info');
+                    showNotification('Audition request sent, but interface may need manual refresh.', 'info');
                 }
 
             } else {
