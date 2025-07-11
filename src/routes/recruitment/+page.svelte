@@ -53,6 +53,7 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import toast from 'svelte-french-toast';
+  import MultiSelectStatus from '$lib/components/recruitment/MultiSelectStatus.svelte';
 
   // --- State ---
   let recruitment: Recruitment[] = [];
@@ -79,7 +80,7 @@
   let filterSectionGroupId: number | null = null; // For filtering by section group ID
   let filterContactDate: string = ''; // For filtering by exact contact date (YYYY-MM-DD)
   let filterContactedBy: number | null = null; // For filtering by contacted by user ID
-  let filterStatus: RecruitmentStatus | '' = ''; // For filtering by status
+   let filterStatus: RecruitmentStatus[] = []; // For filtering by status
 
   const statuses: RecruitmentStatus[] = [
    'not yet contacted', // ADDED
@@ -470,9 +471,12 @@ function getLevenshteinDistance(a: string, b: string): number {
       if (filterContactedBy !== null) {
         queryParams.append('contactedBy', String(filterContactedBy));
       }
-      if (filterStatus !== '') {
-        queryParams.append('status', filterStatus);
-      }
+      // if (filterStatus !== '') {
+      //   queryParams.append('status', filterStatus);
+      // }
+       filterStatus.forEach(s => {
+        queryParams.append('status', s); // Appends each selected status
+      });
 
       // Construct the URL with query parameters
       const url = `/api/recruitment${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
@@ -1186,7 +1190,7 @@ async function updateStatuses() {
     filterSectionGroupId = null;
     filterContactDate = '';
     filterContactedBy = null;
-    filterStatus = '';
+    filterStatus = [];
      sortColumn = 'lastName';
     sortDirection = 'asc';
     fetchRecruitment(false); // Re-fetch data after clearing filters
@@ -1331,7 +1335,7 @@ async function updateStatuses() {
     </div>
 
     <!-- Status -->
-    <div>
+    <!-- <div>
       <label for="filterStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
       <select
         id="filterStatus"
@@ -1343,7 +1347,19 @@ async function updateStatuses() {
           <option value={s}>{s}</option>
         {/each}
       </select>
-    </div>
+    </div> -->
+
+<div>
+    <!-- REPLACED SELECT WITH CUSTOM COMPONENT -->
+    <MultiSelectStatus
+        statuses={statuses}
+        bind:selectedStatuses={filterStatus}
+        label="Status"
+    />
+    <!-- END REPLACEMENT -->
+</div>
+
+
   </div>
 
   <!-- Buttons -->
@@ -1707,5 +1723,22 @@ async function updateStatuses() {
         outline: 2px solid transparent;
         outline-offset: 2px;
         box-shadow: 0 0 0 3px rgba(100, 150, 255, 0.45); /* blue-500 with opacity */
+    }
+     .custom-scroll-bar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-scroll-bar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .custom-scroll-bar::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .custom-scroll-bar::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 </style>
