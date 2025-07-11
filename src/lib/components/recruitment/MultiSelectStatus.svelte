@@ -1,7 +1,9 @@
-<!-- src/lib/components/recruitment/MultiSelectStatus.svelte -->
+<!-- src/lib/components/MultiSelectStatus.svelte -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { RecruitmentStatus } from '../../types/recruitment'; // Adjust path if needed
+  import { onMount, onDestroy } from 'svelte';
+  import { browser } from '$app/environment'; // ADDED: Import browser environment variable
+  import type { RecruitmentStatus } from '$lib/types/recruitment'; // MODIFIED: Corrected import path
 
   // Props
   export let statuses: RecruitmentStatus[]; // All available status options
@@ -38,12 +40,17 @@
   }
 
   // Lifecycle hook for click outside listener
-  import { onMount, onDestroy } from 'svelte';
   onMount(() => {
-    document.addEventListener('click', handleClickOutside);
+    // FIX: Only add event listener if in browser environment (for SSR safety)
+    if (browser) {
+      document.addEventListener('click', handleClickOutside);
+    }
   });
   onDestroy(() => {
-    document.removeEventListener('click', handleClickOutside);
+    // FIX: Only remove event listener if in browser environment
+    if (browser) {
+      document.removeEventListener('click', handleClickOutside);
+    }
   });
 
   // Reactive statement to update the displayed text
@@ -56,14 +63,17 @@
 </script>
 
 <div class="relative w-full">
-  <label for="multi-select-status" class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+  <!-- MODIFIED: label 'for' attribute and button 'id' to match -->
+  <!-- ADDED: aria-labelledby to button for better accessibility -->
+  <label id="multi-select-status-label" for="multi-select-status-button" class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
   <button
-    id="multi-select-status"
+    id="multi-select-status-button"
     bind:this={buttonRef}
     on:click={() => isOpen = !isOpen}
     class="relative w-full flex justify-between items-center px-3 py-2 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm cursor-pointer transition-colors duration-200 ease-in-out"
     aria-haspopup="listbox"
     aria-expanded={isOpen}
+    aria-labelledby="multi-select-status-label"
   >
     <span>{displayText}</span>
     <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -76,13 +86,22 @@
       bind:this={dropdownRef}
       class="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 overflow-y-auto custom-scroll-bar"
       role="listbox"
+      aria-labelledby="multi-select-status-label" 
+      tabindex="-1"
     >
       {#each statuses as statusOption (statusOption)}
         <div
           class="flex items-center px-3 py-2 cursor-pointer hover:bg-blue-50"
           on:click={() => toggleStatus(statusOption)}
+          on:keydown={(e) => { // ADDED: Keyboard event handler for accessibility
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault(); // Prevent default scroll/space behavior
+              toggleStatus(statusOption);
+            }
+          }}
           role="option"
           aria-selected={selectedStatuses.includes(statusOption)}
+          tabindex="0" 
         >
           <input
             type="checkbox"
@@ -100,6 +119,7 @@
 
 <!-- Custom scrollbar for multi-select (optional, but improves appearance) -->
 <style>
+  /* These styles are correctly placed here within the component's style block */
   .custom-scroll-bar::-webkit-scrollbar {
       width: 8px;
   }
