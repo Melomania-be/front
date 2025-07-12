@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/validation/+page.svelte - VERSION AVEC DESIGN UNIFORME -->
+<!-- src/routes/projects/[id]/management/validation/+page.svelte - VERSION AVEC DESIGN UNIFORME ET SUPPRESSION AMÉLIORÉE -->
 <script lang="ts">
     import AttendancePicker from '$lib/components/participant/AttendancePicker.svelte';
     import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
@@ -21,6 +21,10 @@
     let showRefusalModal = false;
     let refusalMessage = '';
     let isRefusing = false;
+
+    // 🆕 Variables for simple deletion modal
+    let showDeleteModal = false;
+    let isDeleting = false;
 
     // Variables for audition modal
     let showAuditionModal = false;
@@ -448,6 +452,62 @@
         return auditionsData.find(a => a.participant && a.participant.id === participant.id) || null;
     }
 
+    // 🆕 NOUVELLES FONCTIONS POUR LA SUPPRESSION SIMPLE
+    function openDeleteModal() {
+        if (!currentParticipant) {
+            alert('No participant selected');
+            return;
+        }
+        showDeleteModal = true;
+    }
+
+    function closeDeleteModal() {
+        showDeleteModal = false;
+        isDeleting = false;
+    }
+
+    async function deleteParticipantWithoutEmail() {
+        if (!currentParticipant) return;
+
+        isDeleting = true;
+
+        try {
+            const response = await fetch(
+              `/api/projects/${data.id}/management/participants/${currentParticipant.id}`,
+              {
+                  method: 'DELETE',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              }
+            );
+
+            if (response.ok) {
+                const participantName = `${currentParticipant.contact.firstName} ${currentParticipant.contact.lastName}`;
+
+                participants = participants.filter(
+                  (participant) => participant.id !== currentParticipant!.id
+                );
+                currentParticipant = null;
+                closeDeleteModal();
+                showNotification(`${participantName} has been deleted successfully (no email sent)`, 'success');
+
+                // Reload stats
+                await loadAuditionStats();
+                await loadAuditionsData();
+            } else {
+                const errorText = await response.text();
+                console.error('Delete error:', errorText);
+                alert('Error during deletion');
+            }
+        } catch (error) {
+            console.error('Error deleting participant:', error);
+            alert('Network error');
+        } finally {
+            isDeleting = false;
+        }
+    }
+
     // Existing functions...
     async function deleteParticipant() {
         if (!currentParticipant) return;
@@ -601,10 +661,8 @@
         if (!currentParticipant) return;
 
         console.log('🎭 Starting audition request for:', currentParticipant?.contact?.firstName);
-        console.log('🎭 Current auditionsData:', auditionsData?.length || 0);
-        console.log('🎭 Current participants:', participants?.length || 0);
 
-        // ✅ DOUBLE VÉRIFICATION avant la requête
+        // ✅ VÉRIFICATION avant la requête
         if (isParticipantInAudition(currentParticipant)) {
             const statusText = getAuditionStatusText(currentParticipant);
             alert(`Error: This participant is already in audition (status: ${statusText}). Cannot request another audition.`);
@@ -630,15 +688,14 @@
             const auditionData = {
                 instructions: finalInstructions || '',
                 required_files: filteredRequiredFiles,
-                deadline: auditionDeadline || null
+                deadline: auditionDeadline || null,
+                sendEmail: true // ✅ Laisser le backend gérer l'email automatiquement
             };
 
             console.log('Sending audition data:', auditionData);
 
-            // ✅ ÉTAPE 1 : Créer l'audition
+            // ✅ ÉTAPE UNIQUE : Créer l'audition (le backend enverra l'email automatiquement)
             const url = `/api/projects/${data.id}/management/participants/${currentParticipant.id}/request-audition`;
-            console.log('Request URL:', url);
-
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -647,42 +704,41 @@
                 body: JSON.stringify(auditionData)
             });
 
-            console.log('🎭 Response status:', response.status);
-            console.log('🎭 Response headers:', response.headers);
-
             if (response.ok) {
                 const auditionResult = await response.json();
                 console.log('✅ Audition created successfully:', auditionResult);
 
-                // ✅ ÉTAPE 2 : Envoyer l'email séparément
-                try {
-                    console.log('📧 Sending audition email...');
-
-                    const emailResponse = await fetch('/api/mailing/sendAuditionRequest', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            projectId: data.id,
-                            participantId: currentParticipant.id,
-                            auditionId: auditionResult.audition?.id
-                        })
-                    });
-
-                    if (emailResponse.ok) {
-                        console.log('✅ Audition email sent successfully');
-                        showNotification('Audition request sent successfully! The candidate will receive an email with the audition request with excerpts attached.', 'success');
-                    } else {
-                        console.warn('⚠️ Email sending failed, but audition was created');
-                        showNotification('Audition request created, but email failed to send. Please contact the candidate manually.', 'info');
-                    }
-                } catch (emailError) {
-                    console.error('❌ Email sending error:', emailError);
-                    showNotification('Audition request created, but email failed to send. Please contact the candidate manually.', 'info');
+                // ✅ Message de succès basé sur le statut réel de l'email
+                if (auditionResult.email_status?.sent) {
+                    showNotification(
+                      'Audition request sent successfully! The candidate will receive an email with the audition request and PDFs attached.',
+                      'success'
+                    );
+                } else {
+                    showNotification(
+                      'Audition request created, but email failed to send. Please contact the candidate manually.',
+                      'info'
+                    );
                 }
 
-                // ✅ ÉTAPE 3 : Recharger les données
+                // ❌ SUPPRIMER CET APPEL MANUEL D'EMAIL (cause du double email)
+                // try {
+                //     console.log('📧 Sending audition email...');
+                //     const emailResponse = await fetch('/api/mailing/sendAuditionRequest', {
+                //         method: 'POST',
+                //         headers: { 'Content-Type': 'application/json' },
+                //         body: JSON.stringify({
+                //             projectId: data.id,
+                //             participantId: currentParticipant.id,
+                //             auditionId: auditionResult.audition?.id
+                //         })
+                //     });
+                //     // ... code d'email supprimé
+                // } catch (emailError) {
+                //     // ... code d'email supprimé
+                // }
+
+                // ✅ Recharger les données
                 participantsLoaded = false;
                 auditionsLoaded = false;
                 dataFullyLoaded = false;
@@ -1217,9 +1273,10 @@
                                 </div>
                             </div>
 
-                            <!-- ✅ SECTION DES ACTIONS AMÉLIORÉE -->
+                            <!-- ✅ SECTION DES ACTIONS AMÉLIORÉE AVEC LA NOUVELLE FONCTIONNALITÉ -->
                             <div class="border-t border-gray-200 pt-6">
-                                <div class="flex flex-wrap gap-3">
+                                <!-- Actions principales -->
+                                <div class="flex flex-wrap gap-3 mb-4">
                                     <!-- Validation -->
                                     <button
                                       class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1247,19 +1304,41 @@
                                             <span class="relative z-10">🎭 Audition {getAuditionStatusText(currentParticipant)}</span>
                                         </button>
                                     {/if}
+                                </div>
 
-                                    <!-- Refusal -->
-                                    <button
-                                      class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-                                      on:click={openRefusalModal}
-                                    >
-                                        ❌ Reject
-                                    </button>
+                                <!-- ✅ NOUVELLES ACTIONS DE SUPPRESSION - Design professionnel -->
+                                <div class="border-t border-gray-100 pt-4">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                        <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        </svg>
+                                        Alternative Actions
+                                    </h4>
+                                    <div class="flex gap-3">
+                                        <!-- Refus avec email -->
+                                        <button
+                                          class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                                          on:click={openRefusalModal}
+                                        >
+                                            📧 Reject and send email
+                                        </button>
+
+                                        <!-- ✅ NOUVEAU : Suppression simple sans email -->
+                                        <button
+                                          class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm"
+                                          on:click={openDeleteModal}
+                                        >
+                                            🗑️ Delete silently (no email)
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-2 text-center">
+                                        ⚠️ Use "Delete silently" when rejection was already communicated through another channel
+                                    </p>
                                 </div>
 
                                 {#if !currentParticipant.contact.validated}
-                                    <p class="text-sm text-red-600 mt-2 text-center">
-                                        ⚠️ Contact must be validated before any action
+                                    <p class="text-sm text-red-600 mt-3 text-center">
+                                        ⚠️ Contact must be validated before validation or audition request
                                     </p>
                                 {/if}
                             </div>
@@ -1282,6 +1361,76 @@
         {/if}
     </div>
 </div>
+
+<!-- ✅ NOUVEAU MODAL : Suppression simple sans email -->
+{#if showDeleteModal}
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-lg max-w-lg w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H7a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Delete participant
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                Are you sure you want to delete <strong>{currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</strong> from this project?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-yellow-400 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="text-sm text-yellow-700">
+                            <p class="font-medium">⚠️ Silent deletion</p>
+                            <p class="mt-1">This will permanently delete the participant <strong>without sending any email notification</strong>. Use this only when rejection has already been communicated through another channel.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Participant details:</h4>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p><span class="font-medium">Name:</span> {currentParticipant?.contact.firstName} {currentParticipant?.contact.lastName}</p>
+                        <p><span class="font-medium">Email:</span> {currentParticipant?.contact.email}</p>
+                        <p><span class="font-medium">Section:</span> {currentParticipant?.section.name}</p>
+                        {#if isParticipantInAudition(currentParticipant)}
+                            <p class="text-yellow-600 font-medium">⚠️ This participant has an active audition</p>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button
+                  class="px-4 py-2 text-gray-500 hover:text-gray-700 font-medium"
+                  on:click={closeDeleteModal}
+                  disabled={isDeleting}
+                >
+                    Cancel
+                </button>
+                <button
+                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  on:click={deleteParticipantWithoutEmail}
+                  disabled={isDeleting}
+                >
+                    {isDeleting ? 'Deleting...' : 'Delete permanently'}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
 
 <!-- Audition modal -->
 {#if showAuditionModal}
@@ -1683,6 +1832,115 @@
     @media (max-width: 1024px) {
         .grid.lg\\:grid-cols-2 {
             grid-template-columns: 1fr;
+        }
+    }
+
+    /* ✅ NOUVEAUX STYLES pour le modal de suppression */
+    .delete-modal-enter {
+        animation: modal-slide-in 0.3s ease-out;
+    }
+
+    @keyframes modal-slide-in {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    /* Style pour les boutons de suppression */
+    .danger-button {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .danger-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .danger-button:hover::before {
+        left: 100%;
+    }
+
+    /* Amélioration visuelle pour les sections d'actions */
+    .action-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .action-section-title {
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .action-section-title svg {
+        margin-right: 0.5rem;
+        color: #6c757d;
+    }
+
+    /* Style pour distinguer les actions primaires des actions secondaires */
+    .primary-actions {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .secondary-actions {
+        background: rgba(108, 117, 125, 0.05);
+        border-radius: 6px;
+        padding: 0.75rem;
+    }
+
+    /* Indicateur visuel pour les actions dangereuses */
+    .danger-zone {
+        border-left: 4px solid #dc3545;
+        background: linear-gradient(90deg, rgba(220, 53, 69, 0.05) 0%, rgba(248, 249, 250, 0.05) 100%);
+    }
+
+    /* Style pour les informations contextuelles */
+    .context-info {
+        background: rgba(13, 110, 253, 0.05);
+        border: 1px solid rgba(13, 110, 253, 0.2);
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+    }
+
+    .context-info p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #495057;
+    }
+
+    /* Responsive pour les actions */
+    @media (max-width: 640px) {
+        .action-section {
+            padding: 0.75rem;
+        }
+
+        .flex.gap-3 {
+            flex-direction: column;
+        }
+
+        .flex-1 {
+            flex: none;
         }
     }
 </style>
