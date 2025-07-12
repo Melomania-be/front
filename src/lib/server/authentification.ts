@@ -4,7 +4,7 @@ export function setToken(cookies: Cookies, token: string) {
 	cookies.set('Authorization', `Bearer ${token}`, {
 		path: '/',
 		expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-		sameSite: 'lax',
+		sameSite: 'none',
 		secure: process.env.NODE_ENV === 'production',
 		httpOnly: process.env.NODE_ENV === 'production'
 	});
