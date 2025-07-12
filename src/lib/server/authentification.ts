@@ -4,7 +4,7 @@ export function setToken(cookies: Cookies, token: string) {
 	cookies.set('Authorization', `Bearer ${token}`, {
 		path: '/',
 		expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-		sameSite: 'none',
+		sameSite: 'lax',
 		secure: process.env.NODE_ENV === 'production',
 		httpOnly: process.env.NODE_ENV === 'production'
 	});
@@ -22,7 +22,12 @@ export function getToken(cookies: Cookies): string | null {
 
 export function removeToken(cookies: Cookies): void {
 	try {
-		cookies.delete('Authorization', { path: '/' });
+		cookies.delete('Authorization', {
+			path: '/',
+			sameSite: 'lax',
+			secure: process.env.NODE_ENV === 'production',
+			httpOnly: process.env.NODE_ENV === 'production'
+		});
 	} catch (error) {
 		console.error('Error removing token:', error);
 	}
