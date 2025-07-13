@@ -5,7 +5,7 @@
 
 	export let data;
 
-	//  DÉTECTION AUTOMATIQUE D'ENVIRONNEMENT CORRIGÉE
+	// DÉTECTION AUTOMATIQUE D'ENVIRONNEMENT CORRIGÉE
 	function getApiBaseUrl(): string {
 		if (typeof window !== 'undefined') {
 			const hostname = window.location.hostname;
@@ -23,22 +23,22 @@
 				return 'http://localhost:3333';
 			}
 
-			//  CORRECTION : Serveur de test Universe - PORT 80 (pas de port dans l'URL)
+			// SERVEUR DE TEST Universe.wf - UTILISE LE MÊME PROTOCOLE ET HOST
 			if (hostname === 'tool.sc1ciro3903.universe.wf' || hostname.includes('universe.wf')) {
-				console.log('🧪 Using TEST server API (universe.wf) - PORT 80');
-				return 'http://tool.sc1ciro3903.universe.wf'; // ← SANS PORT (port 80 par défaut)
+				console.log('🧪 Using TEST server API (universe.wf)');
+				// Force HTTP sans port pour universe.wf
+				return 'http://tool.sc1ciro3903.universe.wf';
 			}
 
-			//  CORRECTION : Production Melomania - PORT 443 (pas de port dans l'URL HTTPS)
+			// PRODUCTION Melomania - UTILISE HTTPS
 			if (hostname === 'tool.melomania.be' || hostname.includes('melomania.be')) {
-				console.log('🚀 Using PRODUCTION API (melomania.be) - PORT 443');
-				return 'https://tool.melomania.be'; // ← SANS PORT (port 443 par défaut HTTPS)
+				console.log('🚀 Using PRODUCTION API (melomania.be)');
+				return 'https://tool.melomania.be';
 			}
 
-			// CORRECTION : Fallback sans port
-			const apiUrl = `${protocol}//${hostname}`;
-			console.log('⚡ Using FALLBACK API configuration (no port):', apiUrl);
-			return apiUrl;
+			// Fallback - utilise window.location.origin (protocole + hostname + port si présent)
+			console.log('⚡ Using FALLBACK API configuration');
+			return window.location.origin;
 		}
 
 		// Server-side fallback
@@ -46,7 +46,38 @@
 		return 'http://localhost:3333';
 	}
 
-	const API_BASE_URL = getApiBaseUrl();
+	// VÉRIFICATION SUPPLÉMENTAIRE - s'assurer qu'aucun port indésirable n'est ajouté
+	function sanitizeApiUrl(url: string): string {
+		// Pour universe.wf, s'assurer qu'il n'y a pas de port :3333
+		if (url.includes('universe.wf') && url.includes(':3333')) {
+			const cleanUrl = url.replace(':3333', '');
+			console.warn('⚠️ Removed unwanted port :3333 from universe.wf URL:', cleanUrl);
+			return cleanUrl;
+		}
+		
+		// Pour melomania.be, s'assurer qu'il n'y a pas de port :3333
+		if (url.includes('melomania.be') && url.includes(':3333')) {
+			const cleanUrl = url.replace(':3333', '');
+			console.warn('⚠️ Removed unwanted port :3333 from melomania.be URL:', cleanUrl);
+			return cleanUrl;
+		}
+		
+		return url;
+	}
+
+	// UTILISATION FINALE
+	const rawApiUrl = getApiBaseUrl();
+	const API_BASE_URL = sanitizeApiUrl(rawApiUrl);
+
+	console.log('✅ FINAL API_BASE_URL:', API_BASE_URL);
+
+	// Vérification finale avant chaque requête
+	function buildApiUrl(endpoint: string): string {
+		const fullUrl = `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+		const cleanUrl = sanitizeApiUrl(fullUrl);
+		console.log('🔗 API Request URL:', cleanUrl);
+		return cleanUrl;
+	}
 
 	let audition: any = null;
 	let loading = true;
@@ -199,7 +230,7 @@
 		console.log(`📥 Downloading PDF ${pdfId}: ${fileName}`);
 
 		// ✅ Utilisation de l'API détectée automatiquement
-		const downloadUrl = `${API_BASE_URL}/audition/${data.token}/pdf/${pdfId}/download`;
+		const downloadUrl = buildApiUrl(`/audition/${data.token}/pdf/${pdfId}/download`);
 		console.log(`🔗 Download URL: ${downloadUrl}`);
 
 		const link = document.createElement('a');
@@ -231,8 +262,9 @@
 	async function loadPdfs() {
 		loadingPdfs = true;
 		try {
-			console.log(`📚 Loading PDFs from: ${API_BASE_URL}/audition/${data.token}/pdfs`);
-			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/pdfs`);
+			const apiUrl = buildApiUrl(`/audition/${data.token}/pdfs`);
+			console.log(`📚 Loading PDFs from: ${apiUrl}`);
+			const response = await fetch(apiUrl);
 			if (response.ok) {
 				pdfFiles = await response.json();
 				console.log('✅ PDFs loaded:', pdfFiles.length);
@@ -256,8 +288,9 @@
 
 	async function loadAudition() {
 		try {
-			console.log(`🔄 Loading audition from: ${API_BASE_URL}/audition/${data.token}`);
-			const response = await fetch(`${API_BASE_URL}/audition/${data.token}`);
+			const apiUrl = buildApiUrl(`/audition/${data.token}`);
+			console.log(`🔄 Loading audition from: ${apiUrl}`);
+			const response = await fetch(apiUrl);
 
 			if (response.ok) {
 				audition = await response.json();
@@ -334,14 +367,15 @@
 		uploadProgress = 0;
 
 		try {
-			console.log(`🚀 Starting file upload to: ${API_BASE_URL}/audition/${data.token}/upload`);
+			const apiUrl = buildApiUrl(`/audition/${data.token}/upload`);
+			console.log(`🚀 Starting file upload to: ${apiUrl}`);
 
 			const formData = new FormData();
 			formData.append('file', file);
 			formData.append('fileType', fileType);
 			formData.append('description', fileDescription.trim());
 
-			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/upload`, {
+			const response = await fetch(apiUrl, {
 				method: 'POST',
 				body: formData
 			});
@@ -388,8 +422,9 @@
 		}
 
 		try {
-			console.log(`🗑️ Deleting file from: ${API_BASE_URL}/audition/${data.token}/files/${fileId}`);
-			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/files/${fileId}`, {
+			const apiUrl = buildApiUrl(`/audition/${data.token}/files/${fileId}`);
+			console.log(`🗑️ Deleting file from: ${apiUrl}`);
+			const response = await fetch(apiUrl, {
 				method: 'DELETE'
 			});
 
@@ -411,8 +446,9 @@
 
 		try {
 			if (candidateNotes.trim()) {
-				console.log(`💾 Saving notes to: ${API_BASE_URL}/audition/${data.token}/save-notes`);
-				const response = await fetch(`${API_BASE_URL}/audition/${data.token}/save-notes`, {
+				const apiUrl = buildApiUrl(`/audition/${data.token}/save-notes`);
+				console.log(`💾 Saving notes to: ${apiUrl}`);
+				const response = await fetch(apiUrl, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
@@ -460,8 +496,9 @@
 		submitting = true;
 
 		try {
-			console.log(`🎯 Submitting audition to: ${API_BASE_URL}/audition/${data.token}/submit`);
-			const response = await fetch(`${API_BASE_URL}/audition/${data.token}/submit`, {
+			const apiUrl = buildApiUrl(`/audition/${data.token}/submit`);
+			console.log(`🎯 Submitting audition to: ${apiUrl}`);
+			const response = await fetch(apiUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
