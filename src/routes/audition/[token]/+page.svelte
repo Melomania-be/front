@@ -5,7 +5,7 @@
 
 	export let data;
 
-	// ✅ DÉTECTION AUTOMATIQUE D'ENVIRONNEMENT CORRIGÉE
+	//  DÉTECTION AUTOMATIQUE D'ENVIRONNEMENT CORRIGÉE
 	function getApiBaseUrl(): string {
 		if (typeof window !== 'undefined') {
 			const hostname = window.location.hostname;
@@ -23,25 +23,25 @@
 				return 'http://localhost:3333';
 			}
 
-			// Serveur de test Universe
+			//  CORRECTION : Serveur de test Universe - PORT 80 (pas de port dans l'URL)
 			if (hostname === 'tool.sc1ciro3903.universe.wf' || hostname.includes('universe.wf')) {
-				console.log('🧪 Using TEST server API (universe.wf)');
-				return 'http://tool.sc1ciro3903.universe.wf:3333';
+				console.log('🧪 Using TEST server API (universe.wf) - PORT 80');
+				return 'http://tool.sc1ciro3903.universe.wf'; // ← SANS PORT (port 80 par défaut)
 			}
 
-			// Production Melomania
+			//  CORRECTION : Production Melomania - PORT 443 (pas de port dans l'URL HTTPS)
 			if (hostname === 'tool.melomania.be' || hostname.includes('melomania.be')) {
-				console.log('🚀 Using PRODUCTION API (melomania.be)');
-				return 'https://tool.melomania.be:3333';
+				console.log('🚀 Using PRODUCTION API (melomania.be) - PORT 443');
+				return 'https://tool.melomania.be'; // ← SANS PORT (port 443 par défaut HTTPS)
 			}
 
-			// Fallback intelligent - même protocole et domaine avec port 3333
-			const apiUrl = `${protocol}//${hostname}:3333`;
-			console.log('⚡ Using FALLBACK API configuration:', apiUrl);
+			// CORRECTION : Fallback sans port
+			const apiUrl = `${protocol}//${hostname}`;
+			console.log('⚡ Using FALLBACK API configuration (no port):', apiUrl);
 			return apiUrl;
 		}
 
-		// Server-side fallback (pendant le rendu côté serveur)
+		// Server-side fallback
 		console.log('🔧 Using SERVER-SIDE fallback API');
 		return 'http://localhost:3333';
 	}
