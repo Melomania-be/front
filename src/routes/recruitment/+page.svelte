@@ -31,6 +31,17 @@
     // Add other properties you might receive from /auth/me if needed, but keep it minimal
   }
 
+   export interface Project {
+        id: number;
+        name: string;
+        // Add other properties you might fetch for a project if needed, e.g., sectionGroupId
+        sectionGroupId?: number | null;
+        folderId?: number | null;
+        createdAt?: string;
+        updatedAt?: string;
+    }
+
+
   export interface Recruitment {
     id: number;
     firstName: string;
@@ -46,6 +57,8 @@
     updatedAt: string; // ISO string from backend DateTime
     sectionGroup?: LookupSectionGroup; // Optional, as it might not always be preloaded
     user?: LookupUser;                 // Optional, as it might not always be preloaded or contactedBy is null
+    projectId: number | null; // NEW: projectId property
+    project?: Project; // NEW: Optional Project object if preloaded
   }
 </script>
 
@@ -54,6 +67,7 @@
   import { browser } from '$app/environment';
   import toast from 'svelte-french-toast';
   import MultiSelectStatus from '$lib/components/recruitment/MultiSelectStatus.svelte';
+  import { page } from '$app/stores';
 
   // --- State ---
   let recruitment: Recruitment[] = [];
@@ -64,6 +78,7 @@
   let showModal = false;
   let isEditing = false;
   let editForm: Partial<Recruitment> = {};
+  let allProjects: Project[] = [];
   let daysThreshold = 14;
   const SIMILARITY_THRESHOLD = 2;
   let isRecalculating = false;
@@ -80,7 +95,8 @@
   let filterSectionGroupId: number | null = null; // For filtering by section group ID
   let filterContactDate: string = ''; // For filtering by exact contact date (YYYY-MM-DD)
   let filterContactedBy: number | null = null; // For filtering by contacted by user ID
-   let filterStatus: RecruitmentStatus[] = []; // For filtering by status
+  let filterStatus: RecruitmentStatus[] = []; // For filtering by status
+  let filterProjectId: string | null = null; // NEW: For filtering by project ID (string to handle 'null')
 
   const statuses: RecruitmentStatus[] = [
    'not yet contacted', // ADDED
@@ -98,6 +114,7 @@
     'firstName',
     'lastName',
     'sectionGroupId',
+    // 'projectId',
     'contactDate',
     'contactedBy',
     'status',
@@ -233,6 +250,18 @@ function sortTable(column: keyof Recruitment) {
             bVal = b.contactedBy ?? -1;
           }
           break;
+          case 'projectId':
+            if (a.project?.name) { // Sort by project name if preloaded
+                aVal = a.project.name.toLowerCase();
+            } else { // Fallback to project ID, or -1 if null
+                aVal = a.projectId ?? -1;
+            }
+            if (b.project?.name) {
+                bVal = b.project.name.toLowerCase();
+            } else {
+                bVal = b.projectId ?? -1;
+            }
+            break;
 
         default:
           // For other columns, convert to lowercase string to compare.
@@ -354,6 +383,7 @@ function getLevenshteinDistance(a: string, b: string): number {
             { key: 'firstName', header: 'First Name' },
             { key: 'lastName', header: 'Last Name' },
             { key: 'sectionGroup', header: 'Section', getValue: (r: Recruitment) => r.sectionGroup?.name ?? `ID:${r.sectionGroupId}` },
+            // { key: 'project', header: 'Project', getValue: (r: Recruitment) => r.project?.name ?? (r.projectId === null ? 'Unassigned' : `ID:${r.projectId}`) }, // NEW: Project column for copy
             { key: 'contactDate', header: 'Contact Date', getValue: (r: Recruitment) => formatDate(r.contactDate) },
             { key: 'contactedBy', header: 'Contacted By', getValue: (r: Recruitment) => r.user?.fullName ?? `ID:${r.contactedBy}` },
             { key: 'status', header: 'Status' },
@@ -477,7 +507,9 @@ function getLevenshteinDistance(a: string, b: string): number {
        filterStatus.forEach(s => {
         queryParams.append('status', s); // Appends each selected status
       });
-
+ if (filterProjectId !== null && filterProjectId !== '') {
+            queryParams.append('projectId', filterProjectId);
+        }
       // Construct the URL with query parameters
       const url = `/api/recruitment${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
@@ -493,6 +525,7 @@ function getLevenshteinDistance(a: string, b: string): number {
       }
     } catch {
       toast.error('Could not load recruitment data with filters.');
+      // console.error('Fetch recruitment error:', err);
     }
   }
 
@@ -505,6 +538,23 @@ function getLevenshteinDistance(a: string, b: string): number {
       toast.error('Failed to load users.');
     }
   }
+
+
+  async function fetchProjects() {
+        try {
+            const res = await fetch('/api/projects-for-dropdown'); // Call your SvelteKit API route for projects
+            if (res.ok) {
+                allProjects = await res.json();
+                console.log('Fetched projects:', allProjects); // Debugging
+            } else {
+                toast.error('Failed to load projects for dropdown.');
+                console.error('Failed to load projects:', await res.text());
+            }
+        } catch (err) {
+            toast.error('Could not load projects for dropdown.');
+            console.error('Error fetching projects:', err);
+        }
+    }
 
 
 async function fetchCurrentUser() {
@@ -711,7 +761,7 @@ async function saveRecruit() {
       // If status is 'not yet contacted', contactDate and contactedBy must be null in payload.
       // This is because the backend expects null for this status.
       contactDateToSend = null;
-      contactedByToSend = null;
+      contactedByToSend = editForm.contactedBy ?? null;;
     } else {
       // For other statuses:
       // contactDate: Use the provided date string from the form.
@@ -735,6 +785,7 @@ async function saveRecruit() {
       // --- Use the conditionally determined values ---
       contactDate: contactDateToSend,
       contactedBy: contactedByToSend,
+       projectId: editForm.projectId ?? null,
     };
     // --- END MODIFIED PAYLOAD CONSTRUCTION ---
 
@@ -970,6 +1021,7 @@ function openAddModal() {
       contactedBy: currentLoggedInUser?.id ?? null, // Default to null for 'not yet contacted'
       status: 'not yet contacted', // NEW DEFAULT STATUS
       comment: null,
+      projectId: filterProjectId ? parseInt(filterProjectId) : null,
     };
     showModal = true;
   }
@@ -1193,32 +1245,110 @@ async function updateStatuses() {
     filterStatus = [];
      sortColumn = 'lastName';
     sortDirection = 'asc';
+    filterProjectId = null;
     fetchRecruitment(false); // Re-fetch data after clearing filters
   }
 
 
   // --- Lifecycle ---
 
-  onMount(async () => {
+  // onMount(async () => {
 
-     if (browser) {
-      await fetchCurrentUser();
-      // fetchRecruitment will automatically apply any initial filter values
-      // (e.g., if you load them from localStorage later)
-      await Promise.all([fetchRecruitment(false), fetchUsers(), fetchSectionGroups()]);
-      await performStatusCheck('automatic');
+  //    if (browser) {
+  //     await fetchCurrentUser();
+  //     // fetchRecruitment will automatically apply any initial filter values
+  //     // (e.g., if you load them from localStorage later)
+  //     await Promise.all([fetchRecruitment(false), fetchUsers(), fetchSectionGroups()]);
+  //     await performStatusCheck('automatic');
+  //   }
+
+  //   selectedRecruitments.clear();
+  //   selectedRecruitments = selectedRecruitments;
+  
+  //   // await fetchCurrentUser();
+  //   // await Promise.all([fetchRecruitment(), fetchUsers(), fetchSectionGroups()]);
+  //   // if (browser) await performStatusCheck('automatic');
+
+  //   //  selectedRecruitments.clear();
+  //   //   selectedRecruitments = selectedRecruitments;
+  // });
+
+
+
+  onMount(async () => {
+    if (browser) {
+        // --- FIX START ---
+        // 1. FIRST: Read projectId from URL and set the filter state.
+        const urlParams = new URLSearchParams($page.url.search);
+        const initialProjectId = urlParams.get('projectId');
+        if (initialProjectId !== null) { // Check for explicit null or non-existent
+            filterProjectId = initialProjectId;
+        } else {
+            // If projectId is NOT in the URL, ensure filterProjectId is truly null
+            // (or whatever you use for 'All Projects', e.g., empty string)
+            filterProjectId = null;
+        }
+        // --- FIX END ---
+
+        // 2. Then, fetch all initial lookup data and current user.
+        await Promise.all([
+            fetchCurrentUser(),
+            fetchUsers(),
+            fetchSectionGroups(),
+            fetchProjects() // Make sure this is still included for your new dropdown
+        ]);
+
+        // 3. NOW call fetchRecruitment, which will use the *correctly set* filterProjectId.
+        await fetchRecruitment(false); // This will now fetch with the initialProjectId from the URL
+        await performStatusCheck('automatic');
     }
 
     selectedRecruitments.clear();
     selectedRecruitments = selectedRecruitments;
-  
-    // await fetchCurrentUser();
-    // await Promise.all([fetchRecruitment(), fetchUsers(), fetchSectionGroups()]);
-    // if (browser) await performStatusCheck('automatic');
 
-    //  selectedRecruitments.clear();
-    //   selectedRecruitments = selectedRecruitments;
-  });
+    // The reactive block for `$page.url.searchParams.get('projectId')` is still useful
+    // for handling external URL changes (e.g., browser back/forward buttons)
+    // after the initial load.
+});
+
+
+
+  // --- NEW: Reactive declaration to trigger fetchRecruitment when filterProjectId changes ---
+    $: if (browser && $page.url.searchParams.get('projectId') !== filterProjectId && filterProjectId !== null) {
+        // This reactive block ensures that if the URL changes (e.g., from browser back/forward or programmatic goto)
+        // and its projectId differs from the current filterProjectId, we update the filterProjectId.
+        // The `on:change` on the select element will directly update filterProjectId and call fetchRecruitment.
+        // This is mainly for external URL changes.
+        filterProjectId = $page.url.searchParams.get('projectId');
+        // No need to re-fetch here if the `on:change` also triggers `fetchRecruitment`
+        // or if `filterProjectId` reactivity directly triggers `fetchRecruitment` (which we'll do).
+    }
+
+    $: { // Reactive block to watch filterProjectId and other filters
+        // Only run fetchRecruitment if the component is mounted (browser check)
+        // AND if the reactive dependencies (filters) actually change.
+        // Svelte handles dependencies automatically here.
+        if (browser) {
+            // Re-fetch when any of these change:
+            // filterFirstName, filterLastName, filterSectionGroupId, filterContactDate,
+            // filterContactedBy, filterStatus, filterProjectId
+            // Note: filterStatus is an array, Svelte tracks its reference for changes.
+            // If contents change, but ref doesn't, Svelte won't re-run this $: block.
+            // A common pattern for array changes is to trigger fetch manually or use JSON.stringify
+            // for simple comparisons in $: blocks, but that can be inefficient.
+            // For now, let's assume direct changes to `filterStatus` state trigger it.
+            // It's often better to have an "Apply Filters" button or debounce changes for performance.
+            // Given your "Apply Filters" button, we can remove the immediate reactivity here
+            // and rely solely on the button click.
+            // However, for initial load from URL, `fetchRecruitment` needs to run.
+            // The `onMount` already triggers an initial fetch.
+
+            // If we're relying on the "Apply Filters" button, this reactive block is less critical
+            // for *triggering* fetches, but useful for other reactive side-effects if needed.
+            // For now, we'll ensure `fetchRecruitment` is called when filters change via UI.
+        }
+    }
+    // --- END NEW ---
 </script>
 
 
@@ -1307,6 +1437,19 @@ async function updateStatuses() {
         {/each}
       </select>
     </div>
+
+ <!-- <div>
+        <label for="filterProject" class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+        <select
+            id="filterProject"
+            bind:value={filterProjectId}
+            on:change={() => fetchRecruitment(false)} class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition"
+        >
+            <option value="">All Projects</option> <option value="null">Unassigned</option> {#each allProjects as project (project.id)}
+                <option value={project.id}>{project.name}</option>
+            {/each}
+        </select>
+    </div> -->
 
     <!-- Contact Date -->
     <div>
@@ -1431,6 +1574,8 @@ async function updateStatuses() {
                                 ? 'Contact Date'
                                 : column === 'contactedBy'
                                 ? 'Contacted By'
+                                //  : column === 'projectId' // NEW: Project column header
+                                //     ? 'Project'
                                 : column.charAt(0).toUpperCase() +
                                   column.slice(1).replace(/([A-Z])/g, ' $1')}
                             {#if sortColumn === column}
@@ -1519,6 +1664,9 @@ async function updateStatuses() {
                         <td class="px-4 py-2 text-sm text-gray-800">
                             {r.sectionGroup?.name ?? `ID: ${r.sectionGroupId}`}
                         </td>
+                         <!-- <td class="px-4 py-2 text-sm text-gray-800">
+                            {r.project?.name ?? (r.projectId === null ? 'Unassigned' : `ID: ${r.projectId}`)}
+                        </td> -->
                         <td class="px-4 py-2 text-sm text-gray-800">{formatDate(r.contactDate)}</td>
                         <td class="px-4 py-2 text-sm text-gray-800">
                             {r.user?.fullName ?? (r.contactedBy === null ? 'N/A' : `ID: ${r.contactedBy}`)}
@@ -1601,6 +1749,21 @@ async function updateStatuses() {
                         </select>
                     </div>
 
+                <!-- <div>
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-1"
+                        >Project</label>
+                        <select
+                            bind:value={editForm.projectId}
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                        >
+                            <option value={null}>No Project (Unassigned)</option>
+                            {#each allProjects as project (project.id)}
+                                <option value={project.id}>{project.name}</option>
+                            {/each}
+                        </select>
+                    </div> -->
+
                     <div>
                         <label
                             class="block text-sm font-semibold text-gray-700 mb-1"
@@ -1617,7 +1780,7 @@ async function updateStatuses() {
                         />
                     </div>
 
-                    <div>
+                    <!-- <div>
                         <label
                             class="block text-sm font-semibold text-gray-700 mb-1"
                             >Contacted By
@@ -1639,7 +1802,31 @@ async function updateStatuses() {
                                 <option value={user.id}>{user.fullName ?? `User #${user.id}`}</option>
                             {/each}
                         </select>
-                    </div>
+                    </div> -->
+
+                    <div>
+    <label
+        class="block text-sm font-semibold text-gray-700 mb-1"
+        for="contactedBySelect" 
+    >
+        Contacted By <span class="text-red-500">*</span> <!-- Contacted By is now always required by frontend validation -->
+    </label>
+    <select
+        id="contactedBySelect" 
+        bind:value={editForm.contactedBy}
+       
+        class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+    >
+        <!-- MODIFIED: Default option text and value -->
+        {#if users.length === 0} <!-- Only show this if no users are loaded -->
+            <option value={null} disabled>Loading users...</option>
+        {/if}
+        <option value={null}>Select a user</option> <!-- Always provide a null option, but validation will catch if required -->
+        {#each users as user (user.id)}
+            <option value={user.id}>{user.fullName ?? `User #${user.id}`}</option>
+        {/each}
+    </select>
+</div>
 
                     <div>
                         <label
@@ -1742,3 +1929,5 @@ async function updateStatuses() {
         background: #555;
     }
 </style>
+
+<!-- username: student-02-ffc20c3dd932@qwiklabs.net password: FoaRbaEwI1Q5 projectid: qwiklabs-gcp-00-512ec96f83bc-->

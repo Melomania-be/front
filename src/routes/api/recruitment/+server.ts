@@ -2,8 +2,8 @@ import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private'; // Make sure API_URL includes http://localhost:3333
 
-// Assuming your AdonisJS backend route for "get all" is http://localhost:3333/api/v1/recruitments
 const RECRUITMENTS_API_ENDPOINT = `${API_URL}/recruitments`;
+const RECRUITMENTS_ADVANCED_SEARCH_ENDPOINT = `${API_URL}/recruitments/search/advanced`; // Assuming you might use this for POST filtering
 
 // export const GET: RequestHandler = async ({ cookies, fetch }) => {
 // 	const res = await fetch(RECRUITMENTS_API_ENDPOINT, {
@@ -64,3 +64,26 @@ export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
 
 	return res;
 };
+
+// If you have a separate POST for advanced search, it might look like this:
+/*
+export const POST_ADVANCED_SEARCH: RequestHandler = async ({ cookies, fetch, request }) => {
+    const filters = await request.json(); // Filters including projectId
+    const res = await fetch(RECRUITMENTS_ADVANCED_SEARCH_ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            authorization: `${await getToken(cookies)}`
+        },
+        body: JSON.stringify(filters)
+    });
+
+    if (!res.ok) {
+        console.error(`Backend Advanced Search error (${res.status}):`, await res.text());
+        const errorBody = await res.text();
+        return new Response(errorBody, { status: res.status, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    return res;
+};
+*/

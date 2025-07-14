@@ -114,19 +114,39 @@
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
 	};
+
+ const handleGoToRecruitments = () => {
+        if (data && data.id) { // Use data.id directly as it comes from SvelteKit's route params
+            goto(`/recruitment?projectId=${data.id}`);
+        } else {
+            console.warn('Project ID not available from route data for recruitment navigation.');
+            // Fallback: navigate to a general recruitments page if project ID is somehow missing
+            goto('/recruitment');
+        }
+    };
+
 </script>
 
 <ProjectHeadDisplayer {project} selectedTab={1} />
 <div class="bg-[#E7E7E7] p-4 min-h-screen pb-[80px]">
 	<div class="p-4 gap-4 flex flex-col">
-		<div>
+		<!-- <div>
 			<a
     href="/recruitment"
     class="inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
 >
     Go to Recruitments
 </a>
-		</div>
+		</div> -->
+
+ <div>
+            <button
+                on:click={handleGoToRecruitments} class="inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+            >
+                Go to Recruitments
+            </button>
+            </div>
+
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
             <h1 class="font-bold text-lg mb-2">NEW PARTICIPANTS</h1>
             {#if participantNotValidated}
