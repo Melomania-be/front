@@ -85,9 +85,13 @@
   let currentLoggedInUser: CurrentUser | null = null;
 
   // New variable declaration for the datetime-local input binding
-  let checkStatusDateTime: string | null = null;
+ let checkStatusDateTime: string | null = null;
  let selectedRecruitments: Set<number> = new Set();
 
+
+  let showCopyModal = false; // Controls visibility of the new copy modal
+  let targetProjectIdForCopy: number | null = null; // Holds the selected project ID in the copy modal
+  let isCopying = false; // To show loading state for copy operation
 
    // --- NEW: Filter State Variables ---
   let filterFirstName: string = '';
@@ -1181,6 +1185,76 @@ function openAddModal() {
 //   }
 // }
 
+
+
+ function openCopyModal() {
+        if (selectedRecruitments.size === 0) {
+            toast.error('Please select at least one recruit to copy.');
+            return;
+        }
+        targetProjectIdForCopy = null; // Reset selection when opening modal
+        showCopyModal = true;
+    }
+
+    function closeCopyModal() {
+        showCopyModal = false;
+        targetProjectIdForCopy = null; // Clear selected project
+        // Optionally, clear selectedRecruitments here if you want them deselected after modal close
+        // selectedRecruitments.clear();
+        // selectedRecruitments = selectedRecruitments;
+    }
+
+
+async function handleCopyRecruitments() {
+        if (targetProjectIdForCopy === null) {
+            toast.error('Please select a destination project.');
+            return;
+        }
+
+        isCopying = true;
+        try {
+            const res = await fetch('/api/recruitment/copy-to-project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recruitmentIds: Array.from(selectedRecruitments),
+                    targetProjectId: targetProjectIdForCopy
+                })
+            });
+
+            const result = await res.json();
+            if (!res.ok) {
+                console.error('Backend copy error:', result);
+                throw new Error(result.message || 'Failed to copy recruitments.');
+            }
+
+            toast.success(result.message || `Successfully copied ${selectedRecruitments.size} recruitments.`);
+            closeCopyModal();
+            selectedRecruitments.clear(); // Clear selection after successful copy
+            selectedRecruitments = selectedRecruitments; // Trigger reactivity
+            await fetchRecruitment(false); // Refresh the list to show new copies
+        } catch (err: unknown) {
+            console.error('Error copying recruitments:', err);
+            let errorMessage = 'Failed to copy recruitments: An unexpected error occurred.';
+            if (err instanceof Error) {
+                try {
+                    const errorParsed = JSON.parse(err.message);
+                    errorMessage = errorParsed.message || errorMessage;
+                } catch {
+                    errorMessage = err.message;
+                }
+            } else if (typeof err === 'string') {
+                errorMessage = err;
+            }
+            toast.error(errorMessage);
+        } finally {
+            isCopying = false;
+        }
+    }
+
+
+
+
 async function updateStatuses() {
   isRecalculating = true;
   try {
@@ -1548,6 +1622,16 @@ async function updateStatuses() {
         >
             Delete Selected ({selectedRecruitments.size})
         </button>
+
+
+        <button
+            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+            on:click={openCopyModal}
+            disabled={selectedRecruitments.size === 0}
+        >
+            Copy Selected ({selectedRecruitments.size})
+        </button>
+
     </div>
 
     <div class="overflow-x-auto rounded-lg shadow-md">
@@ -1693,6 +1777,74 @@ async function updateStatuses() {
         </tbody>
         </table>
     </div>
+
+
+ {#if showCopyModal}
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full transform transition-all duration-300 scale-100 opacity-100">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                    Copy {selectedRecruitments.size} Recruitments
+                </h2>
+
+                <p class="text-gray-700 mb-4">
+                    Select the project where you want to copy the selected recruitments.
+                    New records will be created, and their status will be automatically reset to 'not yet contacted'.
+                </p>
+
+                <div class="mb-4">
+                    <label for="copyProjectSelect" class="block text-sm font-semibold text-gray-700 mb-1">
+                        Destination Project <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        id="copyProjectSelect"
+                        bind:value={targetProjectIdForCopy}
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    >
+                        <option value={null} disabled>Select a project...</option> <!-- Placeholder, initially selected -->
+                        {#each allProjects as project (project.id)}
+                            <option value={project.id}>{project.name}</option>
+                        {/each}
+                    </select>
+                </div>
+
+                <!-- Dynamic Confirmation Message -->
+                <p class="text-sm text-gray-600 mb-6">
+                    You are about to create <strong class="font-bold">{selectedRecruitments.size} new recruitment records</strong>,
+                    copying them to project: <strong class="font-bold">
+                        {targetProjectIdForCopy === null ? 'No Project (Unassigned)' : (allProjects.find(p => p.id === targetProjectIdForCopy)?.name || '...')}
+                    </strong>.
+                    Their status will be set to 'not yet contacted'.
+                </p>
+
+                <div class="flex justify-end space-x-2">
+                    <button
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                        on:click={closeCopyModal}
+                        type="button"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+                        on:click={handleCopyRecruitments}
+                        disabled={targetProjectIdForCopy === null || isCopying}
+                        type="button"
+                    >
+                        {#if isCopying}
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Copying...
+                        {:else}
+                            Copy
+                        {/if}
+                    </button>
+                </div>
+            </div>
+        </div>
+    {/if}
+
 
     {#if showModal}
         <div
