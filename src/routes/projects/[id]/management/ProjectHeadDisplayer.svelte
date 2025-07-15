@@ -12,7 +12,7 @@
 		faEnvelope,
 		faMusic,
 		faSheetPlastic,
-		faUsers,
+		faUsers, faWallet,
 		faUserPlus  // ← Ajout de l'icône recrutement
 	} from '@fortawesome/free-solid-svg-icons';
 	import { browser } from '$app/environment';
@@ -26,6 +26,7 @@
 	let callsheetUrl : string = '';
 	let attendanceUrl : string = '';
 	let auditionsUrl : string = '';
+	let accountingUrl : string = '';
 	let recruitmentUrl: string = '';  // ← Ajout de l'URL recrutement
 
 	let participantNotValidated : number = 0;
@@ -38,6 +39,7 @@
 		callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
 		auditionsUrl = `/projects/${project.id}/management/auditions`;
+		accountingUrl = `/projects/${project.id}/management/accounting`;
 		recruitmentUrl = `/projects/${project.id}/management/recruitment`;  // ← Ajout
 
 		// Compter les participants non validés
@@ -106,6 +108,10 @@
 
 	function navigateToAuditions() {
 		if (auditionsUrl) goto(auditionsUrl);
+	}
+
+	function navigateToAccounting() {
+		if (accountingUrl) goto(accountingUrl);
 	}
 
 	// ← Ajout de la fonction de navigation pour le recrutement
@@ -184,6 +190,10 @@
 					<Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "#6B9AD9;" : " #9ca3af;" }" />
 					Auditions
 				</button>
+		<button class="flex gap-2 items-center p-3 {selectedTab === 6 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={navigateToAccounting}>
+			<Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "#6B9AD9;" : " #9ca3af;" }" />
+			Accounting
+		</button>
 
 		<!-- ← Ajout de l'onglet Recrutement -->
 		<button class="flex gap-2 items-center p-3 {selectedTab === 6 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={navigateToRecruitment}>
@@ -247,6 +257,11 @@
 					<Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "#6B9AD9;" : " #9ca3af;" }" />
 					Auditions
 				</button>
+		<button class="flex gap-2 items-center p-3 {selectedTab === 6 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={navigateToAccounting}>
+			<Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "#6B9AD9;" : " #9ca3af;" }" />
+			Accounting
+		</button>
+		
 
 	<!-- ← Ajout de l'onglet Recrutement désactivé -->
 	<button class="flex gap-2 items-center p-3 {selectedTab === 6 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" disabled>
