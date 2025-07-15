@@ -5,7 +5,7 @@
 	import DateShow from '$lib/components/DateShow.svelte';
 	import { onMount } from 'svelte';
 	import Fa from 'svelte-fa';
-	import { faCalendarCheck, faDiagramProject, faEnvelope, faMusic, faSheetPlastic, faUsers } from '@fortawesome/free-solid-svg-icons';
+	import { faCalendarCheck, faDiagramProject, faEnvelope, faMusic, faSheetPlastic, faUsers, faWallet } from '@fortawesome/free-solid-svg-icons';
 	import { browser } from '$app/environment';
 
 	export let project : any;
@@ -17,6 +17,7 @@
 	let callsheetUrl : string = '';
 	let attendanceUrl : string = '';
 	let auditionsUrl : string = '';
+	let accountingUrl : string = '';
 
 	let participantNotValidated : number = 0;
 
@@ -28,6 +29,7 @@
 		callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
 		auditionsUrl = `/projects/${project.id}/management/auditions`;
+		accountingUrl = `/projects/${project.id}/management/accounting`;
 
 		// Compter les participants non validés
 		participantNotValidated = 0;
@@ -96,6 +98,10 @@
 	function navigateToAuditions() {
 		if (auditionsUrl) goto(auditionsUrl);
 	}
+
+	function navigateToAccounting() {
+		if (accountingUrl) goto(accountingUrl);
+	}
 </script>
 
 <div class="bg-white">
@@ -163,6 +169,10 @@
 			<Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "#6B9AD9;" : " #9ca3af;" }" />
 			Auditions
 		</button>
+		<button class="flex gap-2 items-center p-3 {selectedTab === 6 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={navigateToAccounting}>
+			<Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "#6B9AD9;" : " #9ca3af;" }" />
+			Accounting
+		</button>
 		</div>
 	{:else}
 		<div class="flex items-center p-2">
@@ -215,6 +225,11 @@
 			<Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "#6B9AD9;" : " #9ca3af;" }" />
 			Auditions
 		</button>
+		<button class="flex gap-2 items-center p-3 {selectedTab === 6 ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={navigateToAccounting}>
+			<Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "#6B9AD9;" : " #9ca3af;" }" />
+			Accounting
+		</button>
+		
 </div>
 {/if}
 {:else}
