@@ -14,4 +14,4 @@
 	}
 </script>
 
-<input type="time" value={usableTime} on:change={changeHandler} />
+<input type="time" value={usableTime} step="300" on:change={changeHandler} /> <!--Set step to 300 to have only multiples of 5 minutes in the timepicker-->
