@@ -52,6 +52,11 @@
 
 	onMount(() => {
 		loadFile();
+		// Écouter l'événement de téléchargement personnalisé
+		document.addEventListener('download-file', downloadFile);
+		return () => {
+			document.removeEventListener('download-file', downloadFile);
+		};
 	});
 
 	async function loadFile() {
@@ -106,16 +111,45 @@
 		fullscreen = !fullscreen;
 	}
 
-	// Rendu conditionnel selon le type de fichier
+	// Rendu conditionnel selon le type de fichier - VERSION CORRIGÉE pour Edge
 	function renderPreview() {
 		switch (fileCategory) {
 			case 'pdf':
 				return `
-					<iframe
-						src="${fileUrl}"
-						class="w-full h-full border-0"
-						title="PDF Preview: ${fileName}"
-					></iframe>
+					<div class="w-full h-full flex flex-col">
+						<div class="p-3 bg-blue-50 border-b flex items-center justify-between">
+							<span class="text-sm text-blue-700">PDF Preview: ${fileName}</span>
+							<button
+								onclick="window.open('${fileUrl}', '_blank')"
+								class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+							>
+								Open in New Tab
+							</button>
+						</div>
+						<iframe
+							src="${fileUrl}"
+							class="flex-1 border-0"
+							title="PDF Preview: ${fileName}"
+							onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+						></iframe>
+						<div style="display:none;" class="flex-1 flex items-center justify-center">
+							<div class="text-center">
+								<p class="text-gray-600 mb-4">PDF preview blocked by browser</p>
+								<button
+									onclick="window.open('${fileUrl}', '_blank')"
+									class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
+								>
+									Open in New Tab
+								</button>
+								<button
+									onclick="document.dispatchEvent(new CustomEvent('download-file'))"
+									class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+								>
+									Download
+								</button>
+							</div>
+						</div>
+					</div>
 				`;
 
 			case 'image':
@@ -132,13 +166,15 @@
 
 			case 'video':
 				return `
-					<video
-						controls
-						class="w-full h-full"
-						src="${fileUrl}"
-					>
-						Your browser does not support the video tag.
-					</video>
+					<div class="flex items-center justify-center h-full p-4">
+						<video
+							controls
+							class="max-w-full max-h-full"
+							src="${fileUrl}"
+						>
+							Your browser does not support the video tag.
+						</video>
+					</div>
 				`;
 
 			case 'audio':
@@ -157,20 +193,78 @@
 
 			case 'text':
 				return `
-					<iframe
-						src="${fileUrl}"
-						class="w-full h-full border-0 bg-white"
-						title="Text Preview: ${fileName}"
-					></iframe>
+					<div class="w-full h-full flex flex-col">
+						<div class="p-2 bg-gray-50 border-b flex items-center justify-between">
+							<span class="text-sm text-gray-700">Text file: ${fileName}</span>
+							<button
+								onclick="window.open('${fileUrl}', '_blank')"
+								class="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+							>
+								Open in New Tab
+							</button>
+						</div>
+						<iframe
+							src="${fileUrl}"
+							class="flex-1 border-0 bg-white"
+							title="Text Preview: ${fileName}"
+							onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+						></iframe>
+						<div style="display:none;" class="flex-1 flex items-center justify-center">
+							<div class="text-center">
+								<p class="text-gray-600 mb-4">Text preview blocked by browser</p>
+								<button
+									onclick="window.open('${fileUrl}', '_blank')"
+									class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
+								>
+									Open in New Tab
+								</button>
+								<button
+									onclick="document.dispatchEvent(new CustomEvent('download-file'))"
+									class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+								>
+									Download
+								</button>
+							</div>
+						</div>
+					</div>
 				`;
 
 			case 'code':
 				return `
-					<iframe
-						src="${fileUrl}"
-						class="w-full h-full border-0 bg-gray-900 text-green-400"
-						title="Code Preview: ${fileName}"
-					></iframe>
+					<div class="w-full h-full flex flex-col">
+						<div class="p-2 bg-gray-900 text-green-400 border-b flex items-center justify-between">
+							<span class="text-sm">Code file: ${fileName}</span>
+							<button
+								onclick="window.open('${fileUrl}', '_blank')"
+								class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+							>
+								Open in New Tab
+							</button>
+						</div>
+						<iframe
+							src="${fileUrl}"
+							class="flex-1 border-0 bg-gray-900 text-green-400"
+							title="Code Preview: ${fileName}"
+							onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+						></iframe>
+						<div style="display:none;" class="flex-1 flex items-center justify-center bg-gray-900">
+							<div class="text-center">
+								<p class="text-green-400 mb-4">Code preview blocked by browser</p>
+								<button
+									onclick="window.open('${fileUrl}', '_blank')"
+									class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mr-2"
+								>
+									Open in New Tab
+								</button>
+								<button
+									onclick="document.dispatchEvent(new CustomEvent('download-file'))"
+									class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+								>
+									Download
+								</button>
+							</div>
+						</div>
+					</div>
 				`;
 
 			case 'office':
@@ -204,24 +298,22 @@
 							<h3 class="text-lg font-semibold mb-4">${fileName}</h3>
 							<p class="text-gray-600 mb-4">Preview not available for this file type</p>
 							<button
-								onclick="document.dispatchEvent(new CustomEvent('download-file'))"
-								class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+								onclick="window.open('${fileUrl}', '_blank')"
+								class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
 							>
-								Download File
+								Open in New Tab
+							</button>
+							<button
+								onclick="document.dispatchEvent(new CustomEvent('download-file'))"
+								class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+							>
+								Download
 							</button>
 						</div>
 					</div>
 				`;
 		}
 	}
-
-	// Écouter l'événement de téléchargement personnalisé
-	onMount(() => {
-		document.addEventListener('download-file', downloadFile);
-		return () => {
-			document.removeEventListener('download-file', downloadFile);
-		};
-	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
