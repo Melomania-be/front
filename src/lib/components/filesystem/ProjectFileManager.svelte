@@ -32,6 +32,7 @@
 			const response = await fetch(`/api/filesystem/projects/${project.id}`);
 			if (response.ok) {
 				fileStructure = await response.json();
+				console.log('Project structure loaded:', fileStructure);
 			} else {
 				// Initialize structure if doesn't exist
 				await initializeProjectStructure();
@@ -48,6 +49,7 @@
 			});
 			if (response.ok) {
 				fileStructure = await response.json();
+				console.log('Project structure initialized:', fileStructure);
 			}
 		} catch (error) {
 			console.error('Error initializing project structure:', error);
@@ -63,7 +65,15 @@
 			const response = await fetch(`/api/filesystem/folders/${folder.id}/contents`);
 			if (response.ok) {
 				const contents = await response.json();
-				folder.children = contents;
+				// Convert to FileSystemItem format
+				folder.children = contents.map(item => ({
+					...item,
+					updatedAt: new Date(item.updatedAt),
+					createdAt: new Date(item.createdAt)
+				}));
+				// Force reactivity
+				currentFolder = { ...currentFolder };
+				console.log('Folder contents loaded:', contents);
 			}
 		} catch (error) {
 			console.error('Error loading folder contents:', error);
@@ -111,10 +121,11 @@
 		showUploader = true;
 	}
 
+	// ✅ CORRECTION : Upload avec rafraîchissement automatique
 	async function handleUpload(files: FileList) {
 		const formData = new FormData();
 
-		// Ajouter les fichiers avec le nom correct
+		// Add files with correct name
 		if (files.length === 1) {
 			formData.append('file', files[0]);
 		} else {
@@ -139,9 +150,18 @@
 
 			if (response.ok && result.success) {
 				console.log('Upload successful:', result.message);
+
+				// ✅ CORRECTION : Rafraîchir selon le contexte
 				if (currentFolder) {
+					// Recharger le contenu du dossier actuel
 					await navigateToFolder(currentFolder);
+				} else {
+					// Recharger toute la structure du projet
+					await loadProjectStructure();
+					// Force reactivity pour mettre à jour les compteurs
+					fileStructure = { ...fileStructure };
 				}
+
 				showUploader = false;
 			} else {
 				console.error('Upload failed:', result.error);
@@ -157,10 +177,82 @@
 		if (breadcrumbs.length > 1) {
 			// Navigate to parent folder
 			const parentBreadcrumb = breadcrumbs[breadcrumbs.length - 2];
-			// This would need proper implementation
+			// This would need proper implementation to find parent folder
+			console.log('Going back to:', parentBreadcrumb);
 		} else {
 			currentFolder = null;
 			breadcrumbs = [];
+		}
+	}
+
+	function handleItemClick(item: FileSystemItem) {
+		if (item.type === 'folder') {
+			navigateToFolder(item);
+		} else {
+			// Handle file click - maybe preview or download
+			console.log('File clicked:', item.name);
+		}
+	}
+
+	// ✅ CORRECTION : Fonction de rafraîchissement améliorée
+	async function handleRefresh() {
+		if (currentFolder) {
+			await navigateToFolder(currentFolder);
+		} else {
+			await loadProjectStructure();
+			// Force reactivity
+			fileStructure = { ...fileStructure };
+		}
+	}
+
+	// Helper function to get folder by name from structure
+	function getFolderByName(name: string): FileSystemItem | null {
+		if (!fileStructure || !fileStructure.rootFolder.children) return null;
+
+		return fileStructure.rootFolder.children.find(f => f.name === name) || null;
+	}
+
+	// ✅ CORRECTION : Comptage récursif des fichiers
+	function getFileCount(folder: FileSystemItem | null): number {
+		if (!folder?.children) return 0;
+
+		let count = 0;
+		for (const child of folder.children) {
+			if (child.type === 'file') {
+				count++;
+			} else if (child.type === 'folder' && child.children) {
+				count += getFileCount(child); // Récursif pour les sous-dossiers
+			}
+		}
+		return count;
+	}
+
+	// Helper function to get piece count for scores folder
+	function getPieceCount(): number {
+		const scoresFolder = getFolderByName('Scores');
+		if (!scoresFolder?.children) return 0;
+		return scoresFolder.children.filter(item => item.type === 'folder').length;
+	}
+
+	// ✅ AJOUT : Fonction pour créer un dossier à la racine
+	async function createRootFolder(name: string) {
+		try {
+			const response = await fetch('/api/filesystem/folders', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name,
+					projectId: project.id // Pas de parentId = dossier racine
+				})
+			});
+
+			if (response.ok) {
+				await loadProjectStructure();
+				// Force reactivity
+				fileStructure = { ...fileStructure };
+			}
+		} catch (error) {
+			console.error('Error creating root folder:', error);
 		}
 	}
 </script>
@@ -185,9 +277,9 @@
 					<div class="h-6 w-px bg-gray-300"></div>
 					<nav class="flex items-center gap-2">
 						{#each breadcrumbs as breadcrumb, i}
-              <span class="text-gray-700 {i === breadcrumbs.length - 1 ? 'font-bold' : ''}">
-                {breadcrumb.name}
-              </span>
+							<span class="text-gray-700 {i === breadcrumbs.length - 1 ? 'font-bold' : ''}">
+								{breadcrumb.name}
+							</span>
 							{#if i < breadcrumbs.length - 1}
 								<span class="text-gray-400">/</span>
 							{/if}
@@ -206,9 +298,9 @@
 					<button
 						class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
 						on:click={() => {
-              const name = prompt('Folder name:');
-              if (name) createFolder(name);
-            }}
+							const name = prompt('Folder name:');
+							if (name) createFolder(name);
+						}}
 					>
 						<Plus size={16} />
 						New Folder
@@ -218,14 +310,8 @@
 
 			<FileSystemExplorer
 				items={currentFolder.children || []}
-				on:itemClick={(e) => {
-          if (e.detail.type === 'folder') {
-            navigateToFolder(e.detail);
-          }
-        }}
-				on:refresh={() => {
-          if (currentFolder) navigateToFolder(currentFolder);
-        }}
+				on:itemClick={(e) => handleItemClick(e.detail)}
+				on:refresh={handleRefresh}
 			/>
 		</div>
 	{:else}
@@ -236,9 +322,9 @@
 				<button
 					class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
 					on:click={() => {
-            const name = prompt('Custom folder name:');
-            if (name) createFolder(name);
-          }}
+						const name = prompt('Custom folder name:');
+						if (name) createRootFolder(name);
+					}}
 				>
 					<Plus size={16} />
 					Custom Folder
@@ -248,13 +334,14 @@
 			<!-- Default Folders -->
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 				{#each defaultFolders as folderType}
+					{@const folder = getFolderByName(folderType.name)}
 					<button
 						class="p-6 bg-gradient-to-br from-white to-gray-50 border-2 border-[#E7E7E7] rounded-xl hover:border-[#6B9AD9] transition-all duration-300 text-left group"
 						on:click={() => {
-              // Find corresponding folder in structure
-              const folder = fileStructure?.rootFolder.children?.find(f => f.name === folderType.name);
-              if (folder) navigateToFolder(folder);
-            }}
+							if (folder) {
+								navigateToFolder(folder);
+							}
+						}}
 					>
 						<div class="flex items-center gap-4">
 							<div class="p-3 {folderType.color} text-white rounded-lg group-hover:scale-110 transition-transform">
@@ -264,9 +351,9 @@
 								<h3 class="font-semibold text-lg text-gray-700">{folderType.name}</h3>
 								<p class="text-sm text-gray-500">
 									{#if folderType.name === 'Scores'}
-										{project.pieces?.length || 0} piece{project.pieces?.length !== 1 ? 's' : ''}
+										{getPieceCount()} piece{getPieceCount() !== 1 ? 's' : ''}
 									{:else}
-										Click to explore
+										{getFileCount(folder)} file{getFileCount(folder) !== 1 ? 's' : ''}
 									{/if}
 								</p>
 							</div>
@@ -290,7 +377,7 @@
 									<div>
 										<h4 class="font-semibold">{folder.name}</h4>
 										<p class="text-sm opacity-80">
-											{folder.children?.length || 0} item{folder.children?.length !== 1 ? 's' : ''}
+											{getFileCount(folder)} file{getFileCount(folder) !== 1 ? 's' : ''}
 										</p>
 									</div>
 								</div>
@@ -299,6 +386,17 @@
 					</div>
 				</div>
 			{/if}
+
+			<!-- Upload to root button -->
+			<div class="border-t-2 border-[#E7E7E7] pt-6 text-center">
+				<button
+					class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors mx-auto"
+					on:click={openUploader}
+				>
+					<Upload size={20} />
+					Upload Files to Project Root
+				</button>
+			</div>
 		</div>
 	{/if}
 </div>

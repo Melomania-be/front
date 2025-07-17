@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { File, Folder, Download, Trash2, Edit3, MoreVertical, Music, Image, Video, FileText } from 'lucide-svelte';
+	import { File, Folder, Download, Trash2, Edit3, MoreVertical, Music, Image, Video, FileText, Eye } from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
+	import FilePreview from './FilePreview.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -11,6 +12,8 @@
 	let selectedItem: FileSystemItem | null = null;
 	let showContextMenu = false;
 	let contextMenuPosition = { x: 0, y: 0 };
+	let showPreview = false;
+	let previewFile: FileSystemItem | null = null;
 
 	function formatFileSize(bytes: number): string {
 		if (bytes === 0) return '0 B';
@@ -81,7 +84,13 @@
 	}
 
 	function handleItemClick(item: FileSystemItem) {
-		dispatch('itemClick', item);
+		if (item.type === 'file') {
+			// Prévisualiser le fichier au lieu de le télécharger
+			previewFile = item;
+			showPreview = true;
+		} else {
+			dispatch('itemClick', item);
+		}
 	}
 
 	function handleRightClick(event: MouseEvent, item: FileSystemItem) {
@@ -150,6 +159,11 @@
 			day: 'numeric'
 		});
 	}
+
+	function previewFileFunction(item: FileSystemItem) {
+		previewFile = item;
+		showPreview = true;
+	}
 </script>
 
 <div class="space-y-2">
@@ -198,6 +212,17 @@
 							{#if item.type === 'file'}
 								<button
 									class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+									on:click|stopPropagation={() => {
+										previewFile = item;
+										showPreview = true;
+									}}
+									title="Preview"
+								>
+									<Eye size={16} />
+								</button>
+
+								<button
+									class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
 									on:click|stopPropagation={() => downloadFile(item)}
 									title="Download"
 								>
@@ -239,9 +264,21 @@
 			<button
 				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
 				on:click={() => {
-          downloadFile(selectedItem);
-          showContextMenu = false;
-        }}
+					previewFile = selectedItem;
+					showPreview = true;
+					showContextMenu = false;
+				}}
+			>
+				<Eye size={16} />
+				Preview
+			</button>
+
+			<button
+				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+				on:click={() => {
+					downloadFile(selectedItem);
+					showContextMenu = false;
+				}}
 			>
 				<Download size={16} />
 				Download
@@ -251,9 +288,9 @@
 		<button
 			class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
 			on:click={() => {
-        renameItem(selectedItem);
-        showContextMenu = false;
-      }}
+				renameItem(selectedItem);
+				showContextMenu = false;
+			}}
 		>
 			<Edit3 size={16} />
 			Rename
@@ -264,14 +301,27 @@
 		<button
 			class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600 flex items-center gap-2"
 			on:click={() => {
-        deleteItem(selectedItem);
-        showContextMenu = false;
-      }}
+				deleteItem(selectedItem);
+				showContextMenu = false;
+			}}
 		>
 			<Trash2 size={16} />
 			Delete
 		</button>
 	</div>
+{/if}
+
+<!-- File Preview Modal -->
+{#if showPreview && previewFile}
+	<FilePreview
+		fileId={previewFile.id}
+		fileName={previewFile.name}
+		fileType={previewFile.mimeType || ''}
+		onClose={() => {
+			showPreview = false;
+			previewFile = null;
+		}}
+	/>
 {/if}
 
 <svelte:window on:click={() => showContextMenu = false} />

@@ -2,18 +2,22 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import Accordion from '$lib/components/Accordion.svelte';
 	import { Download, Music, FileText, Eye } from 'lucide-svelte';
+	import FilePreview from '$lib/components/filesystem/FilePreview.svelte';
 
 	export let callsheet: Callsheet;
 
-	async function downloadScore(pieceId: number, fileName: string) {
+	let showPreview = false;
+	let previewFile: { id: number; name: string; type: string } | null = null;
+
+	async function downloadScore(fileId: number) {
 		try {
-			const response = await fetch(`/api/filesystem/pieces/${pieceId}/scores/${fileName}`);
+			const response = await fetch(`/api/files/download/${fileId}`);
 			if (response.ok) {
 				const blob = await response.blob();
 				const url = URL.createObjectURL(blob);
 				const a = document.createElement('a');
 				a.href = url;
-				a.download = fileName;
+				a.download = `score_${fileId}`;
 				document.body.appendChild(a);
 				a.click();
 				document.body.removeChild(a);
@@ -26,9 +30,9 @@
 		}
 	}
 
-	function previewScore(pieceId: number, fileName: string) {
-		// Open in new tab for preview
-		window.open(`/api/filesystem/pieces/${pieceId}/scores/${fileName}`, '_blank');
+	function previewScore(fileId: number, fileName: string, fileType: string = '') {
+		previewFile = { id: fileId, name: fileName, type: fileType };
+		showPreview = true;
 	}
 
 	function getFileIcon(fileName: string) {
@@ -91,32 +95,63 @@
 						{/if}
 					</td>
 					<td class="px-4 sm:px-6 py-4 align-top">
-						{#if piece.folder?.files && piece.folder.files.length > 0}
+						{#if (piece.folder?.files && piece.folder.files.length > 0) || (piece.files && piece.files.length > 0)}
 							<div class="flex flex-wrap gap-2">
-								{#each piece.folder.files as file}
-									<div class="flex items-center gap-1 px-3 py-2 {getFileColor(file.name)} rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200">
-										<svelte:component this={getFileIcon(file.name)} size={14} />
-										<span class="text-sm font-medium truncate max-w-[120px]" title={file.name}>
-                        {file.name}
-                      </span>
-										<div class="flex gap-1 ml-2">
-											<button
-												class="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
-												on:click={() => previewScore(piece.id, file.name)}
-												title="Preview"
-											>
-												<Eye size={12} />
-											</button>
-											<button
-												class="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
-												on:click={() => downloadScore(piece.id, file.name)}
-												title="Download"
-											>
-												<Download size={12} />
-											</button>
+								<!-- Files from folder -->
+								{#if piece.folder?.files}
+									{#each piece.folder.files as file}
+										<div class="flex items-center gap-1 px-3 py-2 {getFileColor(file.name)} rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200">
+											<svelte:component this={getFileIcon(file.name)} size={14} />
+											<span class="text-sm font-medium truncate max-w-[120px]" title={file.name}>
+												{file.name}
+											</span>
+											<div class="flex gap-1 ml-2">
+												<button
+													class="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+													on:click={() => previewScore(file.id, file.name, file.type || '')}
+													title="Preview"
+												>
+													<Eye size={12} />
+												</button>
+												<button
+													class="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+													on:click={() => downloadScore(file.id)}
+													title="Download"
+												>
+													<Download size={12} />
+												</button>
+											</div>
 										</div>
-									</div>
-								{/each}
+									{/each}
+								{/if}
+
+								<!-- Direct files linked to piece -->
+								{#if piece.files}
+									{#each piece.files as file}
+										<div class="flex items-center gap-1 px-3 py-2 {getFileColor(file.name)} rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200">
+											<svelte:component this={getFileIcon(file.name)} size={14} />
+											<span class="text-sm font-medium truncate max-w-[120px]" title={file.name}>
+												{file.name}
+											</span>
+											<div class="flex gap-1 ml-2">
+												<button
+													class="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+													on:click={() => previewScore(file.id, file.name, file.type || '')}
+													title="Preview"
+												>
+													<Eye size={12} />
+												</button>
+												<button
+													class="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+													on:click={() => downloadScore(file.id)}
+													title="Download"
+												>
+													<Download size={12} />
+												</button>
+											</div>
+										</div>
+									{/each}
+								{/if}
 							</div>
 						{:else}
 							<div class="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-lg">
@@ -138,6 +173,19 @@
 		</div>
 	{/if}
 </div>
+
+<!-- File Preview Modal -->
+{#if showPreview && previewFile}
+	<FilePreview
+		fileId={previewFile.id}
+		fileName={previewFile.name}
+		fileType={previewFile.type}
+		onClose={() => {
+			showPreview = false;
+			previewFile = null;
+		}}
+	/>
+{/if}
 
 <style>
     /* Amélioration responsive des boutons */
