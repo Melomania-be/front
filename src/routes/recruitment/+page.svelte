@@ -1319,7 +1319,7 @@ async function updateStatuses() {
     filterStatus = [];
      sortColumn = 'lastName';
     sortDirection = 'asc';
-    filterProjectId = null;
+    // filterProjectId = null;
     fetchRecruitment(false); // Re-fetch data after clearing filters
   }
 
