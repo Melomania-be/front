@@ -79,31 +79,7 @@
 	}
 
 	function getFileTypeColor(fileName: string): string {
-		const extension = fileName.split('.').pop()?.toLowerCase();
-		switch (extension) {
-			case 'pdf':
-			case 'doc':
-			case 'docx':
-				return 'text-red-600 bg-red-50';
-			case 'jpg':
-			case 'jpeg':
-			case 'png':
-			case 'gif':
-			case 'webp':
-				return 'text-green-600 bg-green-50';
-			case 'mp3':
-			case 'wav':
-			case 'flac':
-			case 'aac':
-				return 'text-purple-600 bg-purple-50';
-			case 'mp4':
-			case 'avi':
-			case 'mov':
-			case 'mkv':
-				return 'text-pink-600 bg-pink-50';
-			default:
-				return 'text-gray-600 bg-gray-50';
-		}
+		return 'text-gray-700 bg-gray-100';
 	}
 </script>
 

@@ -54,38 +54,11 @@
 	}
 
 	function getFileColor(item: FileSystemItem) {
-		if (item.type === 'folder') return 'text-blue-600';
-
-		const extension = item.name.split('.').pop()?.toLowerCase();
-		switch (extension) {
-			case 'pdf':
-			case 'doc':
-			case 'docx':
-				return 'text-red-600';
-			case 'jpg':
-			case 'jpeg':
-			case 'png':
-			case 'gif':
-			case 'webp':
-				return 'text-green-600';
-			case 'mp3':
-			case 'wav':
-			case 'flac':
-			case 'aac':
-				return 'text-purple-600';
-			case 'mp4':
-			case 'avi':
-			case 'mov':
-			case 'mkv':
-				return 'text-pink-600';
-			default:
-				return 'text-gray-600';
-		}
+		return 'text-gray-700';
 	}
 
 	function handleItemClick(item: FileSystemItem) {
 		if (item.type === 'file') {
-			// Prévisualiser le fichier au lieu de le télécharger
 			previewFile = item;
 			showPreview = true;
 		} else {
