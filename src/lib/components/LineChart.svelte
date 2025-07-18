@@ -6,59 +6,38 @@
 
   export let accountings: Accounting[] = [];
 
-  let year : number = 2025;
-
-  let emptyList = [[0,0] , [0,0] , [0,0] , [0,0] ,[0,0] , [0,0] ,[0,0] , [0,0] ,[0,0] , [0,0] ,[0,0] , [0,0]]
-
-  let monthlyDespenses = emptyList;
+  let paid : number = 0;
+  let toPaid : number = 0;
+  let income : number = 0;
 
   $ : if(accountings.length !== 0){
     for(const acc of accountings){
+      if(acc.amount > 0){
+        income += Number(acc.amount)
+      }
+      else{
         if(acc.paymentDate){
-            const paymentDate = new Date(acc.paymentDate);
-            const PaymentYear = paymentDate.getFullYear();
-            if(PaymentYear === year){
-                const paymentMonth = paymentDate.getMonth();
-                if(acc.amount < 0){
-                    monthlyDespenses[paymentMonth - 1][0] += acc.amount;
-                }
-                else{
-                    monthlyDespenses[paymentMonth - 1][1] += acc.amount;
-                }
-            }
+          paid += Number(acc.amount)
         }
+        else{
+          toPaid += Number(acc.amount)
+        }
+      }
     }
   }
-
-  const months = [
-  'January',   // 0
-  'February',  // 1
-  'March',     // 2
-  'April',     // 3
-  'May',       // 4
-  'June',      // 5
-  'July',      // 6
-  'August',    // 7
-  'September', // 8
-  'October',   // 9
-  'November',  // 10
-  'December'   // 11
-];
 
 </script>
 
 {#if accountings}
-  <div class="p-2 mt-2 h-auto w-full items-center flex flex-col">
-    <div class="bg-red-200 flex-1 w-full gap-2 flex">
-        {#each monthlyDespenses as md}
-            <div class="flex-1">{md[0]}</div>
-        {/each}
+  <div class="h-auto w-full items-center flex gap-4 text-gray-600 font-bold">
+    <div class="border-2 w-full rounded-xl border-gray-400 p-2">
+      Paid : <span class="text-blue-500">{-paid} €</span>
     </div>
-    <hr class="border-2 border-gray-400 rounded-full w-full" />
-    <div class="bg-green-200 flex-1 w-full gap-2 flex">
-        {#each monthlyDespenses as md}
-            <div class="flex-1">{md[1]}</div>
-        {/each}
+    <div class="border-2 w-full rounded-xl border-gray-400 p-2">
+      To Paid : <span class="text-red-500"> {-toPaid} € </span>
+    </div>
+    <div class="border-2 w-full rounded-xl border-gray-400 p-2">
+      Income : <span class="text-green-500">{income} €</span>
     </div>
   </div>
 {:else}

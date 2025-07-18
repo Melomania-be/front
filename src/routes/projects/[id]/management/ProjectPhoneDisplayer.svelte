@@ -12,7 +12,7 @@
 		faEnvelope,
 		faMusic,
 		faSheetPlastic,
-		faUsers,
+		faUsers, faWallet,
 		faUserPlus  // ← Ajout de l'icône recrutement
 	} from '@fortawesome/free-solid-svg-icons';
 
@@ -26,6 +26,7 @@
 	let callsheetUrl : string;
 	let attendanceUrl : string;
 	let auditionUrl : string;
+	let accountingUrl : string;
 	let recruitmentUrl: string;  // ← Ajout URL recrutement
 
 	let participantNotValidated : number = 0;
@@ -38,6 +39,7 @@
 		callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
 		auditionUrl = `/projects/${project.id}/management/auditions`;
+		accountingUrl = `/projects/${project.id}/management/accounting`;
 		recruitmentUrl = `/projects/${project.id}/management/recruitment`;  // ← Ajout
 
 		if(project?.participants){
@@ -113,6 +115,11 @@
             <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
 			</div>
 			</button>
+		<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(accountingUrl)}>
+			<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
+            <Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "white;" : "#8C8C8C;" }" />
+			</div>
+        </button>
 			<!-- ← Ajout du bouton recrutement -->
 			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(recruitmentUrl)}>
 				<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
@@ -157,6 +164,11 @@
             <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
 			</div>
 			</button>
+		<button class="flex-1 flex p-3 justify-center items-center">
+			<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
+            <Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "white;" : "#8C8C8C;" }" />
+			</div>
+        </button>
 			<!-- ← Ajout du bouton recrutement désactivé -->
 			<button class="flex-1 flex p-3 justify-center items-center">
 				<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">

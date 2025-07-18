@@ -8,6 +8,6 @@
   export let options;
 </script>
 
-<div class="w-full h-full">
+<div class="overflow-visible">
   <Pie {data} {options} />
 </div>
