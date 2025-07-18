@@ -317,7 +317,7 @@
 				on:optionsUpdated={() => fetchData()}
 			>
 				<div class="bg-gray-200 rounded-lg w-full border-2 border-gray-400 mb-6 mt-6">
-					<div class="flex">
+					<div class="flex {isMobile ? "flex-col" : "" }">
 						<div class="flex-1 p-4 grid grid-cols-2">
 							{#each Object.entries(HeadTable) as [colName, displayed]}
 							
@@ -333,7 +333,7 @@
 							{/each}
 						</div>
 						<div
-							class="mt-4 mb-4 items-center justify-center border-2 rounded-full border-gray-500"
+							class="mt-4 mb-4 items-center justify-center border-2 rounded-full border-gray-500 {isMobile ? "mx-4" : "" }"
 						></div>
 						<div class="flex-1 w-full p-4 grid grid-cols-1">
 							<p class="font-bold text-gray-600">Forms :</p>
