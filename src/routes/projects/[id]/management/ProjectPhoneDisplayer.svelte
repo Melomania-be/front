@@ -5,7 +5,7 @@
 	import DateShow from '$lib/components/DateShow.svelte';
 	import { onMount } from 'svelte';
 	import Fa from 'svelte-fa';
-	import { faCalendarCheck, faDiagramProject, faEnvelope, faMusic, faSheetPlastic, faUsers } from '@fortawesome/free-solid-svg-icons';
+	import { faCalendarCheck, faDiagramProject, faEnvelope, faMusic, faSheetPlastic, faUsers, faWallet } from '@fortawesome/free-solid-svg-icons';
 
 	export let project : any;
 	
@@ -17,6 +17,7 @@
     let callsheetUrl : string;
 	let attendanceUrl : string;
 	let auditionUrl : string;
+	let accountingUrl : string;
 	
 	let participantNotValidated : number = 0;
 
@@ -28,6 +29,7 @@
         callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
 		auditionUrl = `/projects/${project.id}/management/auditions`;
+		accountingUrl = `/projects/${project.id}/management/accounting`;
 
 		if(project?.participants){
         for(const p of project.participants){
@@ -102,6 +104,11 @@
             <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
 			</div>
         </button>
+		<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(accountingUrl)}>
+			<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
+            <Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "white;" : "#8C8C8C;" }" />
+			</div>
+        </button>
 	</div>
 	{:else}
 	<div class="ml-3 w-full text-lg text-gray-400 font-semibold flex mr-3">
@@ -138,6 +145,11 @@
 		<button class="flex-1 flex p-3 justify-center items-center">
 			<div class="{selectedTab === 5 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
             <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
+			</div>
+        </button>
+		<button class="flex-1 flex p-3 justify-center items-center">
+			<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
+            <Fa icon={faWallet} class="text-[16px]" style="color: {selectedTab === 6 ? "white;" : "#8C8C8C;" }" />
 			</div>
         </button>
 	</div>
