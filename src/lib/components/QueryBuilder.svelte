@@ -308,18 +308,32 @@
 		}
 	}
 
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
 </script>
 
 {#if popUpFilter}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 pl-64">
-		<div class="bg-white pb-4 rounded-xl shadow-xl w-[60%] h-[50%] text-gray-600">
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 {isMobile ? "" : "pl-64"} ">
+		<div class="bg-white pb-4 rounded-xl shadow-xl h-[50%] text-gray-600 {isMobile ? "w-[90%]" : "w-[60%]"}">
 			<div class='flex items-center'>
 				<h2 class="text-xl font-bold my-4 ml-6 uppercase text-gray-400">Filter</h2>
 				<button class="ml-auto mr-6" on:click={()=>{popUpFilter = false; document.body.style.overflow = '';}}><Fa icon={faXmark} class="text-[22px]" style="color: #6b7280;" /></button>
 			</div>
 			<div class="px-6 h-[80%] w-auto overflow-y-scroll">
 				<h2 class="text-md font-bold mb-4 text-xl">Instruments</h2>
-				<div class="grid grid-cols-[1fr_1fr_1fr] mb-6 px-4">
+				<div class="grid  mb-6  {isMobile ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr_1fr_1fr] px-4"}">
 					{#each instruments as instrument}
 						<div class="flex gap-2 h-8 items-center">
 							<input
@@ -343,7 +357,7 @@
 					{/each}
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Family</h2>
-				<div class="grid gap-2 grid-cols-[1fr_1fr_1fr] mb-6 px-4">
+				<div class="grid gap-2 mb-6 {isMobile ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr_1fr_1fr] px-4"}">
 					{#each instrumentFamily as family}
 					<div class="flex items-center gap-2">
 							<input
@@ -358,7 +372,7 @@
 					{/each}
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Level</h2>
-				<div class="grid items-center grid-cols-3 mb-6 px-4 gap-2">
+				<div class="grid items-center mb-6 px-4 gap-2 {isMobile ? "" : "grid-cols-[1fr_1fr_1fr] px-4"}">
 					{#each levels as level}
 					<div class="flex items-center gap-2">
 							<input
@@ -373,12 +387,15 @@
 					{/each}
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Project</h2>
-				<div class="px-4 flex mb-6">
-					<p class="font-semibold text-gray-500 mr-2">By Id :</p>
-					<input type="text" bind:value={projectIds} class="border-2 rounded-lg border-gray-300 pl-2" />
-
-					<p class="font-semibold text-gray-500 mr-2 ml-4">By Name :</p>
-					<input type="text" bind:value={projectName} class="border-2 rounded-lg border-gray-300 pl-2" />
+				<div class="mb-6 {isMobile ? "" : "flex px-4"}">
+					<div class="flex">
+						<p class="font-semibold text-gray-500 mr-2">By Id :</p>
+						<input type="text" bind:value={projectIds} class="border-2 rounded-lg border-gray-300 pl-2" />
+					</div>
+					<div class="flex {isMobile ? "mt-4" : "ml-4"} ">
+						<p class="font-semibold text-gray-500 mr-2">By Name :</p>
+						<input type="text" bind:value={projectName} class="border-2 rounded-lg border-gray-300 pl-2" />
+					</div>
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Person</h2>
 				<div class="px-4 flex mb-6">

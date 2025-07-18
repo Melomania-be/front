@@ -9,7 +9,7 @@
 
 	import { faGear, faListCheck, faM, faSliders } from '@fortawesome/free-solid-svg-icons';
 
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
 	import Paginator from '$lib/components/Paginator.svelte';
@@ -89,6 +89,21 @@
 	}
 	let showColumList = false;
 
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
+	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
+
 </script>
 
 
@@ -112,14 +127,22 @@
 	class="grid grid-cols-1 place-items-center p-2 border-2 border-gray-400 rounded-xl m-4 bg-white"
 >
 	<div class="w-full relative">
-		<div class="flex items-center ml-2">
+		<div class="flex flex-col items-center ml-2">
 			<div class="flex gap-2">
 				{#if instrumentFamily.length !== 0 }
-				<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center">Legend : 
-					{#each instrumentFamily as family}
-						<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-					{/each}
-				</p>
+					{#if !isMobile}
+					<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend : 
+						{#each instrumentFamily as family}
+							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
+						{/each}
+					</p>
+					{:else}
+						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center	">
+						{#each instrumentFamily as family}
+							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
+						{/each}
+						</div>
+					{/if}
 				{/if}
 			</div>
 			<button on:click={() => (showColumList = !showColumList)} class="flex ml-auto mr-2 mt-2 mb-2">
