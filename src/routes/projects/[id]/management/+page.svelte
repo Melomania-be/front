@@ -14,13 +14,24 @@
 
 	export let data;
 
-	// Ajout de vérifications de sécurité
-	let project = data?.data?.[0] || null;
+	// ✅ CORRECTION : Accès correct aux données selon les logs du backend
+	let project = data?.data || null; // Pas de [0] car ce n'est pas un tableau
 	let participantsNotSeenCallsheet = data?.participantsNotSeenCallsheet || [];
 	let participantsNotValidated = data?.participantsNotValidated || [];
 	let participantsWithoutEmail = data?.participantsWithoutEmail || [];
 
-	let allParticipants : Participant[] = [];
+	// ✅ AJOUT : Debug pour voir la structure des données
+	console.log('Frontend data structure:', {
+		hasData: !!data,
+		hasDataData: !!data?.data,
+		projectId: project?.id,
+		projectName: project?.name,
+		participantsNotValidatedCount: participantsNotValidated.length,
+		participantsWithoutEmailCount: participantsWithoutEmail.length,
+		participantsNotSeenCallsheetCount: participantsNotSeenCallsheet.length
+	});
+
+	let allParticipants: Participant[] = [];
 
 	// Vérifications conditionnelles
 	let urlSvelteApi = project ? `/api/projects/${project.id}/management/participants` : '';
@@ -37,12 +48,18 @@
 
 	onMount(async () => {
 		if (project) {
+			console.log('Project loaded, fetching participants...', project.id);
 			await fetchData();
+		} else {
+			console.error('No project data available');
 		}
 	});
 
 	async function fetchData() {
-		if (!project || !project.id) return;
+		if (!project || !project.id) {
+			console.error('Cannot fetch data: no project or project ID');
+			return;
+		}
 
 		try {
 			let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -57,6 +74,9 @@
 			if (response.ok) {
 				const responseData = await response.json();
 				allParticipants = responseData?.data || [];
+				console.log('Participants loaded:', allParticipants.length);
+			} else {
+				console.error('Failed to fetch participants:', response.status);
 			}
 		} catch (error) {
 			console.error('Error fetching participants:', error);
@@ -94,24 +114,28 @@
 </script>
 
 {#if project}
-	<div class="w-auto {isMobile ? "pb-[50px]" : ""}">
-	<ProjectHeadDisplayer {project} selectedTab={0}></ProjectHeadDisplayer>
-	<Dashboard
-		{project}
-		participants={allParticipants}
-		{participantsNotSeenCallsheet}
-		{participantsNotValidated}
-		{participantsWithoutEmail}
-	/>
-	{#if isMobile}
-		<ProjectPhoneDisplayer {project} selectedTab={0}/>
-	{/if}
+	<div class="w-auto {isMobile ? 'pb-[50px]' : ''}">
+		<ProjectHeadDisplayer {project} selectedTab={0}></ProjectHeadDisplayer>
+		<Dashboard
+			{project}
+			participants={allParticipants}
+			{participantsNotSeenCallsheet}
+			{participantsNotValidated}
+			{participantsWithoutEmail}
+		/>
+		{#if isMobile}
+			<ProjectPhoneDisplayer {project} selectedTab={0}/>
+		{/if}
 	</div>
 {:else}
 	<div class="flex justify-center items-center h-64 bg-gray-100">
 		<div class="text-center">
 			<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
 			<p class="text-gray-600 text-lg">Loading project...</p>
+			<!-- ✅ AJOUT : Debug info -->
+			<p class="text-gray-400 text-sm mt-2">
+				Data available: {!!data}, Project: {!!project}
+			</p>
 		</div>
 	</div>
 {/if}
