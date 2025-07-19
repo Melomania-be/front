@@ -63,6 +63,7 @@
 		initSortableWhenReady();
 	}
 
+
 	async function initSortableWhenReady() {
 		await tick(); // attend que allPiecesContainer soit bindé dans le DOM
 
@@ -616,8 +617,9 @@
 									<table class="table-auto max-w-min min-w-max">
 										<thead>
 											<tr>
-												<th class="px-3 py-1">Start Date</th>
-												<th class="px-3 py-1">End Date</th>
+												<th class="px-3 py-1">Date</th>
+												<th class="px-3 py-1">Start Time</th>
+												<th class="px-3 py-1">End Time</th>
 												<th class="px-3 py-1">Place</th>
 												<th class="px-3 py-1">Comment</th>
 												<th class="px-3 py-1">Actions</th>
@@ -627,11 +629,12 @@
 											{#each project.rehearsals as rehearsal}
 												<tr class="rehearsal-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={rehearsal.startDate} />
+														<DatePicker bind:date={rehearsal.startDate} on:change={() => rehearsal.endDate = rehearsal.startDate}/>
+													</td>
+													<td class="px-3 py-1">
 														<TimePicker bind:date={rehearsal.startDate} />
 													</td>
 													<td class="px-3 py-1">
-														<DatePicker bind:date={rehearsal.endDate} />
 														<TimePicker bind:date={rehearsal.endDate} />
 													</td>
 													<td class="px-3 py-1">
@@ -709,8 +712,9 @@
 									<table class="table-auto max-w-min min-w-max">
 										<thead>
 											<tr>
-												<th class="px-3 py-1">Start Date</th>
-												<th class="px-3 py-1">End Date</th>
+												<th class="px-3 py-1">Date</th>
+												<th class="px-3 py-1">Start Time</th>
+												<th class="px-3 py-1">End Time</th>
 												<th class="px-3 py-1">Place</th>
 												<th class="px-3 py-1">Comment</th>
 												<th class="px-3 py-1">Actions</th>
@@ -720,11 +724,12 @@
 											{#each project.concerts as concert}
 												<tr class="concert-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={concert.startDate} />
+														<DatePicker bind:date={concert.startDate} on:change={() => concert.endDate = concert.startDate}/> <!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
+													</td>
+													<td class="px-3 py-1">
 														<TimePicker bind:date={concert.startDate} />
 													</td>
 													<td class="px-3 py-1">
-														<DatePicker bind:date={concert.endDate} />
 														<TimePicker bind:date={concert.endDate} />
 													</td>
 													<td class="px-3 py-1">
