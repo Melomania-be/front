@@ -1,4 +1,4 @@
-<!-- src/routes/audition/[token]/+page.svelte - Version complète avec détection automatique corrigée -->
+<!-- src/routes/audition/[token]/+page.svelte - Version complète corrigée avec gestion d'erreurs améliorée -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
@@ -54,14 +54,14 @@
 			console.warn('⚠️ Removed unwanted port :3333 from universe.wf URL:', cleanUrl);
 			return cleanUrl;
 		}
-		
+
 		// Pour melomania.be, s'assurer qu'il n'y a pas de port :3333
 		if (url.includes('melomania.be') && url.includes(':3333')) {
 			const cleanUrl = url.replace(':3333', '');
 			console.warn('⚠️ Removed unwanted port :3333 from melomania.be URL:', cleanUrl);
 			return cleanUrl;
 		}
-		
+
 		return url;
 	}
 
@@ -86,6 +86,14 @@
 	let submitting = false;
 	let candidateNotes = '';
 	let saving = false;
+
+	// ✅ AMÉLIORATION : Détails d'erreur pour meilleure UX
+	let errorDetails = {
+		type: '',
+		message: '',
+		canRetry: false,
+		supportContact: ''
+	};
 
 	// Variables for upload - RESTRICTED to audio/video only
 	let selectedFiles: FileList | null = null;
@@ -258,34 +266,7 @@
 		}, 5000);
 	}
 
-	// ✅ FONCTION LOADPDFS AVEC DÉTECTION AUTO
-	async function loadPdfs() {
-		loadingPdfs = true;
-		try {
-			const apiUrl = buildApiUrl(`/audition/${data.token}/pdfs`);
-			console.log(`📚 Loading PDFs from: ${apiUrl}`);
-			const response = await fetch(apiUrl);
-			if (response.ok) {
-				pdfFiles = await response.json();
-				console.log('✅ PDFs loaded:', pdfFiles.length);
-			} else {
-				console.error('❌ Error loading PDFs:', response.status);
-			}
-		} catch (error) {
-			console.error('❌ Network error loading PDFs:', error);
-		} finally {
-			loadingPdfs = false;
-		}
-	}
-
-	// ======= FONCTIONS PRINCIPALES =======
-
-	onMount(async () => {
-		console.log(`🎭 Initializing audition page with API: ${API_BASE_URL}`);
-		await loadAudition();
-		await loadPdfs();
-	});
-
+	// ✅ AMÉLIORATION : Fonction loadAudition avec gestion d'erreurs détaillée
 	async function loadAudition() {
 		try {
 			const apiUrl = buildApiUrl(`/audition/${data.token}`);
@@ -305,31 +286,122 @@
 					pdfFiles = audition.pdfs;
 				}
 
-				// Debug received data
-				console.log('✅ Audition data loaded:', {
-					submitted_at: audition.submitted_at,
-					is_submitted: audition.is_submitted,
-					files_count: audition.files?.length || 0,
-					pdfs_count: audition.pdfs?.length || 0
-				});
-
+				console.log('✅ Audition data loaded successfully');
 				loading = false;
-			} else if (response.status === 404) {
-				error = 'Audition not found or invalid token';
-				loading = false;
-			} else if (response.status === 410) {
-				error = 'The deadline for this audition has passed';
-				loading = false;
+				error = ''; // Clear any previous errors
+				errorDetails = { type: '', message: '', canRetry: false, supportContact: '' };
 			} else {
-				error = 'Error loading audition';
+				// ✅ AMÉLIORATION : Gestion détaillée des erreurs selon le status
+				let errorData = null;
+				try {
+					errorData = await response.json();
+				} catch (parseError) {
+					console.warn('Could not parse error response');
+				}
+
+				switch (response.status) {
+					case 400:
+						errorDetails = {
+							type: 'invalid_link',
+							message: 'Invalid audition link',
+							canRetry: false,
+							supportContact: 'Please contact the project organizers for a valid audition link.'
+						};
+						break;
+					case 404:
+						errorDetails = {
+							type: 'not_found',
+							message: 'Audition not found',
+							canRetry: false,
+							supportContact: 'This audition link is invalid or has expired. Please contact the project organizers.'
+						};
+						break;
+					case 410:
+						errorDetails = {
+							type: 'expired',
+							message: 'Audition deadline has passed',
+							canRetry: false,
+							supportContact: 'The deadline for this audition has passed. Please contact the project organizers if you need assistance.'
+						};
+						break;
+					case 500:
+						errorDetails = {
+							type: 'server_error',
+							message: 'Server error',
+							canRetry: true,
+							supportContact: 'A temporary server error occurred. Please try again in a few moments.'
+						};
+						break;
+					default:
+						errorDetails = {
+							type: 'unknown',
+							message: 'Unknown error occurred',
+							canRetry: true,
+							supportContact: 'An unexpected error occurred. Please try again or contact support.'
+						};
+				}
+
+				error = errorData?.message || errorDetails.message;
 				loading = false;
 			}
 		} catch (err) {
 			console.error('❌ Network error loading audition:', err);
-			error = 'Network error, please try again';
+			errorDetails = {
+				type: 'network_error',
+				message: 'Network connection error',
+				canRetry: true,
+				supportContact: 'Please check your internet connection and try again.'
+			};
+			error = 'Network error, please check your connection and try again';
 			loading = false;
 		}
 	}
+
+	// ✅ AMÉLIORATION : Fonction loadPdfs avec gestion d'erreurs améliorée
+	async function loadPdfs() {
+		loadingPdfs = true;
+		try {
+			const apiUrl = buildApiUrl(`/audition/${data.token}/pdfs`);
+			console.log(`📚 Loading PDFs from: ${apiUrl}`);
+			const response = await fetch(apiUrl);
+
+			if (response.ok) {
+				pdfFiles = await response.json();
+				console.log('✅ PDFs loaded:', pdfFiles.length);
+			} else if (response.status === 404) {
+				console.log('📚 No PDFs found for this audition (404)');
+				pdfFiles = []; // Set empty array instead of error
+			} else {
+				console.warn('⚠️ Error loading PDFs:', response.status);
+				pdfFiles = []; // Continue without PDFs
+			}
+		} catch (error) {
+			console.warn('⚠️ Network error loading PDFs:', error);
+			pdfFiles = []; // Continue without PDFs instead of failing
+		} finally {
+			loadingPdfs = false;
+		}
+	}
+
+	// ✅ NOUVELLE FONCTION : Retry loading
+	async function retryLoading() {
+		loading = true;
+		error = '';
+		errorDetails = { type: '', message: '', canRetry: false, supportContact: '' };
+
+		await Promise.all([
+			loadAudition(),
+			loadPdfs()
+		]);
+	}
+
+	// ======= FONCTIONS PRINCIPALES =======
+
+	onMount(async () => {
+		console.log(`🎭 Initializing audition page with API: ${API_BASE_URL}`);
+		await loadAudition();
+		await loadPdfs();
+	});
 
 	// ✅ FONCTION UPLOAD AVEC DÉTECTION AUTO
 	async function uploadFile() {
@@ -600,20 +672,74 @@
 				</div>
 			</div>
 		{:else if error}
-			<!-- ✅ Error state avec design uniforme -->
+			<!-- ✅ AMÉLIORATION : Interface d'erreur plus détaillée -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
-				<div class="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-					<div class="flex items-center">
-						<div class="flex-shrink-0">
-							<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-								<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+				<div class="text-center py-8">
+					<!-- Icône selon le type d'erreur -->
+					{#if errorDetails.type === 'expired'}
+						<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+							<svg class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
 							</svg>
 						</div>
-						<div class="ml-3">
-							<h3 class="text-sm font-medium text-red-800">Error</h3>
-							<p class="mt-1 text-sm text-red-700">{error}</p>
+					{:else if errorDetails.type === 'not_found' || errorDetails.type === 'invalid_link'}
+						<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+							<svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+							</svg>
 						</div>
+					{:else}
+						<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+							<svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+							</svg>
+						</div>
+					{/if}
+
+					<!-- Titre et message d'erreur -->
+					<h3 class="text-lg font-medium text-gray-900 mb-2">{errorDetails.message}</h3>
+					<p class="text-sm text-gray-600 mb-6">{errorDetails.supportContact}</p>
+
+					<!-- Boutons d'action -->
+					<div class="flex flex-col sm:flex-row gap-3 justify-center">
+						{#if errorDetails.canRetry}
+							<button
+								on:click={retryLoading}
+								class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center space-x-2"
+							>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+								</svg>
+								<span>Try Again</span>
+							</button>
+						{/if}
+
+						<!-- Bouton pour copier le token (debug) -->
+						{#if errorDetails.type === 'not_found' || errorDetails.type === 'invalid_link'}
+							<button
+								on:click={() => {
+									navigator.clipboard.writeText(data.token);
+									showNotification('Token copied to clipboard', 'info');
+								}}
+								class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
+							>
+								Copy Token for Support
+							</button>
+						{/if}
 					</div>
+
+					<!-- Informations techniques pour le support -->
+					{#if errorDetails.type !== 'expired'}
+						<div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg text-left">
+							<h4 class="text-sm font-medium text-gray-900 mb-2">Technical Information:</h4>
+							<div class="text-xs text-gray-600 space-y-1">
+								<p><strong>Error Type:</strong> {errorDetails.type}</p>
+								<p><strong>Token:</strong> {data.token}</p>
+								<p><strong>API URL:</strong> {API_BASE_URL}</p>
+								<p><strong>Timestamp:</strong> {new Date().toISOString()}</p>
+							</div>
+						</div>
+					{/if}
 				</div>
 			</div>
 		{:else if audition}
