@@ -122,7 +122,7 @@
 	const levels = [
     'Amateur - low level',
 	'Amateur - medium',
-    "Amateur - high level",
+    "Amateur - high",
     "Student",
     "Professional",
     "High level professional"

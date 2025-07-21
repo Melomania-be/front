@@ -25,7 +25,7 @@ export function levelToStyle(level: string) {
             return "text-red-500 border-red-500";
         case 'amateur - medium':
             return "text-orange-500 border-orange-500";
-        case 'amateur - high level':
+        case 'amateur - high':
             return "text-yellow-500 border-yellow-500";
         case 'student':
             return "text-green-500 border-green-500";
@@ -70,7 +70,7 @@ export	function levelSimplificator(level : string){
 				return 'Student';
 			case 'professional':
 				return 'Pro';
-			case 'amateur - high level':
+			case 'amateur - high':
 				return 'High';
 			case 'high level professional':
 				return 'High Pro';
