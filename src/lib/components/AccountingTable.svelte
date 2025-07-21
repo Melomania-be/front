@@ -387,7 +387,7 @@
 							Paid : <span class="text-blue-500">{-paid} €</span>
 						</div>
 						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
-							To Paid : <span class="text-red-500"> {-toPaid} € </span>
+							To be paid : <span class="text-red-500"> {-toPaid} € </span>
 						</div>
 						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
 							Income : <span class="text-green-500">{income} €</span>
