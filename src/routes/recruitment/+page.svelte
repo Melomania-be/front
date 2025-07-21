@@ -12,17 +12,26 @@
     | 'not available'
     | 'to follow up'      // Changed from 'to be contacted'
     | 'cancelled'
-    | 'other';
+    | 'other'
+    | 'pending validation' // NEW: Added to match migration
 
   export interface LookupUser {
     id: number;
     fullName: string | null;
   }
 
-  export interface LookupSectionGroup {
-    id: number;
-    name: string;
-  }
+  // export interface LookupSectionGroup {
+  //   id: number;
+  //   name: string;
+  // }
+
+  export interface LookupSection {
+        id: number;
+        name: string;
+        // Add other properties if needed, e.g., sectionGroupId
+        sectionGroupId?: number | null;
+    }
+
 
    export interface CurrentUser {
     id: number;
@@ -46,7 +55,8 @@
     id: number;
     firstName: string;
     lastName: string;
-    sectionGroupId: number;
+    // sectionGroupId: number;
+     sectionId: number | null;
     // --- MODIFIED: contactDate can be string OR null ---
     contactDate: string | null;
     // --- MODIFIED: contactedBy can be number OR null ---
@@ -55,7 +65,8 @@
     comment: string | null;
     createdAt: string; // ISO string from backend DateTime
     updatedAt: string; // ISO string from backend DateTime
-    sectionGroup?: LookupSectionGroup; // Optional, as it might not always be preloaded
+    // sectionGroup?: LookupSectionGroup; // Optional, as it might not always be preloaded
+    section?: LookupSection;
     user?: LookupUser;                 // Optional, as it might not always be preloaded or contactedBy is null
     projectId: number | null; // NEW: projectId property
     project?: Project; // NEW: Optional Project object if preloaded
@@ -72,7 +83,8 @@
   // --- State ---
   let recruitment: Recruitment[] = [];
   let users: LookupUser[] = [];
-  let sectionGroups: LookupSectionGroup[] = [];
+  // let sectionGroups: LookupSectionGroup[] = [];
+  let sections: LookupSection[] = [];
   let sortColumn: keyof Recruitment = 'lastName';
   let sortDirection: 'asc' | 'desc' = 'asc';
   let showModal = false;
@@ -96,7 +108,8 @@
    // --- NEW: Filter State Variables ---
   let filterFirstName: string = '';
   let filterLastName: string = '';
-  let filterSectionGroupId: number | null = null; // For filtering by section group ID
+  // let filterSectionGroupId: number | null = null; // For filtering by section group ID
+   let filterSectionId: number | null = null;
   let filterContactDate: string = ''; // For filtering by exact contact date (YYYY-MM-DD)
   let filterContactedBy: number | null = null; // For filtering by contacted by user ID
   let filterStatus: RecruitmentStatus[] = []; // For filtering by status
@@ -110,6 +123,7 @@
     'registered',
     'not available',
     'to follow up',      // CHANGED from 'to be contacted'
+    'pending validation', // NEW: Added to match migration
     'cancelled',
     'other',
   ];
@@ -117,7 +131,7 @@
   const columns: (keyof Recruitment)[] = [
     'firstName',
     'lastName',
-    'sectionGroupId',
+    'sectionId',
     // 'projectId',
     'contactDate',
     'contactedBy',
@@ -219,21 +233,21 @@ function sortTable(column: keyof Recruitment) {
           bVal = b.contactDate ? new Date(b.contactDate) : new Date(0);
           break;
 
-        case 'sectionGroupId':
+        case 'sectionId':
           // Prefer sorting by sectionGroup name if available.
           // If sectionGroup or its name is null/undefined, use sectionGroupId.
           // If sectionGroupId is also null, use -1 to ensure consistent numerical sorting (e.g., at the start).
-          if (a.sectionGroup?.name) {
-            aVal = a.sectionGroup.name.toLowerCase();
+          if (a.section?.name) {
+            aVal = a.section.name.toLowerCase();
           } else {
             // Fallback to sectionGroupId. If it's null, use -1.
-            aVal = a.sectionGroupId ?? -1;
+            aVal = a.sectionId ?? -1;
           }
 
-          if (b.sectionGroup?.name) {
-            bVal = b.sectionGroup.name.toLowerCase();
+          if (b.section?.name) {
+            bVal = b.section.name.toLowerCase();
           } else {
-            bVal = b.sectionGroupId ?? -1;
+            bVal = b.sectionId ?? -1;
           }
           break;
 
@@ -386,7 +400,8 @@ function getLevenshteinDistance(a: string, b: string): number {
         const columnsToCopy = [
             { key: 'firstName', header: 'First Name' },
             { key: 'lastName', header: 'Last Name' },
-            { key: 'sectionGroup', header: 'Section', getValue: (r: Recruitment) => r.sectionGroup?.name ?? `ID:${r.sectionGroupId}` },
+            { key: 'section', header: 'Section', getValue: (r: Recruitment) => r.section?.name ?? `ID:${r.sectionId}` },
+            // { key: 'sectionGroup', header: 'Section', getValue: (r: Recruitment) => r.sectionGroup?.name ?? `ID:${r.sectionGroupId}` },
             // { key: 'project', header: 'Project', getValue: (r: Recruitment) => r.project?.name ?? (r.projectId === null ? 'Unassigned' : `ID:${r.projectId}`) }, // NEW: Project column for copy
             { key: 'contactDate', header: 'Contact Date', getValue: (r: Recruitment) => formatDate(r.contactDate) },
             { key: 'contactedBy', header: 'Contacted By', getValue: (r: Recruitment) => r.user?.fullName ?? `ID:${r.contactedBy}` },
@@ -496,8 +511,8 @@ function getLevenshteinDistance(a: string, b: string): number {
         queryParams.append('lastName', filterLastName.trim());
       }
       // For number/enum filters, ensure they are not null/empty string before appending
-      if (filterSectionGroupId !== null) {
-        queryParams.append('sectionGroupId', String(filterSectionGroupId));
+      if (filterSectionId !== null) {
+        queryParams.append('sectionId', String(filterSectionId));
       }
       if (filterContactDate.trim()) { // filterContactDate is YYYY-MM-DD string
         queryParams.append('contactDate', filterContactDate.trim());
@@ -579,14 +594,35 @@ async function fetchCurrentUser() {
     }
   }
 
-  async function fetchSectionGroups() {
-    try {
-      const res = await fetch('/api/sectionGroups');
-      sectionGroups = res.ok ? await res.json() : [];
-    } catch {
-      toast.error('Failed to load section.');
+  // async function fetchSections() {
+  //   try {
+  //     const res = await fetch('/api/sections');
+  //     // sectionGroups = res.ok ? await res.json() : [];
+  //       sections = await res.json();
+  //       //  console.error('Failed to load sections:', await res.text());
+  //       console.log('Fetched sections:', sections);
+
+  //   } catch(err) {
+  //     toast.error('Failed to load section.');
+  //      console.error('Error fetching sections:', err);
+  //   }
+  // }
+
+  async function fetchSections() {
+        try {
+            const res = await fetch('/api/sections'); // Assuming you have a SvelteKit API route for /api/sections
+            if (res.ok) {
+                sections = await res.json();
+                console.log('Fetched sections:', sections);
+            } else {
+                toast.error('Failed to load sections for dropdown.');
+                console.error('Failed to load sections:', await res.text());
+            }
+        } catch (err) {
+            toast.error('Could not load sections for dropdown.');
+            console.error('Error fetching sections:', err);
+        }
     }
-  }
 
   async function performStatusCheck(trigger: 'manual' | 'automatic') {
     if (!daysThreshold || daysThreshold <= 0) {
@@ -707,7 +743,7 @@ async function saveRecruit() {
     if (
       !editForm.firstName?.trim() ||
       !editForm.lastName?.trim() ||
-      editForm.sectionGroupId === undefined ||
+      editForm.sectionId === undefined ||
       !editForm.status // Status is always required
     ) {
       toast.error('Please fill all required fields: First Name, Last Name, Section, Status.');
@@ -783,7 +819,7 @@ async function saveRecruit() {
     const payload = {
       firstName: editForm.firstName.trim(),
       lastName: editForm.lastName.trim(),
-      sectionGroupId: editForm.sectionGroupId,
+      sectionId: editForm.sectionId,
       status: editForm.status,
       comment: editForm.comment ?? null,
       // --- Use the conditionally determined values ---
@@ -1020,7 +1056,7 @@ function openAddModal() {
     editForm = {
       firstName: '',
       lastName: '',
-      sectionGroupId: sectionGroups.length > 0 ? sectionGroups[0].id : undefined,
+      sectionId: sections.length > 0 ? sections[0].id : undefined,
       contactDate: null, // Default to null for 'not yet contacted'
       contactedBy: currentLoggedInUser?.id ?? null, // Default to null for 'not yet contacted'
       status: 'not yet contacted', // NEW DEFAULT STATUS
@@ -1313,7 +1349,7 @@ async function updateStatuses() {
   function clearFilters() {
     filterFirstName = '';
     filterLastName = '';
-    filterSectionGroupId = null;
+    filterSectionId = null;
     filterContactDate = '';
     filterContactedBy = null;
     filterStatus = [];
@@ -1368,7 +1404,7 @@ async function updateStatuses() {
         await Promise.all([
             fetchCurrentUser(),
             fetchUsers(),
-            fetchSectionGroups(),
+            fetchSections(),
             fetchProjects() // Make sure this is still included for your new dropdown
         ]);
 
@@ -1499,14 +1535,14 @@ async function updateStatuses() {
 
     <!-- Section Group -->
     <div>
-      <label for="filterSectionGroup" class="block text-sm font-medium text-gray-700 mb-1">Section Group</label>
+      <label for="filterSectionGroup" class="block text-sm font-medium text-gray-700 mb-1">Section</label>
       <select
         id="filterSectionGroup"
-        bind:value={filterSectionGroupId}
+        bind:value={filterSectionId}
         class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition"
       >
-        <option value={null}>All Section Groups</option>
-        {#each sectionGroups as sg (sg.id)}
+        <option value={null}>All Sections</option>
+        {#each sections as sg (sg.id)}
           <option value={sg.id}>{sg.name}</option>
         {/each}
       </select>
@@ -1652,7 +1688,7 @@ async function updateStatuses() {
                             class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
                             on:click={() => sortTable(column)}
                         >
-                            {column === 'sectionGroupId'
+                            {column === 'sectionId'
                                 ? 'Section'
                                 : column === 'contactDate'
                                 ? 'Contact Date'
@@ -1746,7 +1782,7 @@ async function updateStatuses() {
                         <td class="px-4 py-2 text-sm text-gray-800">{r.firstName}</td>
                         <td class="px-4 py-2 text-sm text-gray-800">{r.lastName}</td>
                         <td class="px-4 py-2 text-sm text-gray-800">
-                            {r.sectionGroup?.name ?? `ID: ${r.sectionGroupId}`}
+                            {r.section?.name ?? `ID: ${r.sectionId}`}
                         </td>
                          <!-- <td class="px-4 py-2 text-sm text-gray-800">
                             {r.project?.name ?? (r.projectId === null ? 'Unassigned' : `ID: ${r.projectId}`)}
@@ -1780,70 +1816,75 @@ async function updateStatuses() {
 
 
  {#if showCopyModal}
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full transform transition-all duration-300 scale-100 opacity-100">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800">
-                    Copy {selectedRecruitments.size} Recruitments
-                </h2>
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full transform transition-all duration-300 scale-100 opacity-100">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                Copy {selectedRecruitments.size} Recruitments
+            </h2>
 
-                <p class="text-gray-700 mb-4">
-                    Select the project where you want to copy the selected recruitments.
-                    New records will be created, and their status will be automatically reset to 'not yet contacted'.
-                </p>
+            <p class="text-gray-700 mb-4">
+                Select the project where you want to copy the selected recruitments.
+                New records will be created, and their status will be automatically reset to 'not yet contacted'.
+            </p>
 
-                <div class="mb-4">
-                    <label for="copyProjectSelect" class="block text-sm font-semibold text-gray-700 mb-1">
-                        Destination Project <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                        id="copyProjectSelect"
-                        bind:value={targetProjectIdForCopy}
-                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                    >
-                        <option value={null} disabled>Select a project...</option> <!-- Placeholder, initially selected -->
-                        {#each allProjects as project (project.id)}
+            <div class="mb-4">
+                <label for="copyProjectSelect" class="block text-sm font-semibold text-gray-700 mb-1">
+                    Destination Project <span class="text-red-500">*</span>
+                </label>
+                <select
+                    id="copyProjectSelect"
+                    bind:value={targetProjectIdForCopy}
+                    class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                >
+                    <!-- Removed: <option value={null}>No Project (Unassigned)</option> -->
+                    <option value={null} disabled>Select a project...</option> <!-- Placeholder, initially selected -->
+                    {#each allProjects as project (project.id)}
+                        <!-- Conditional rendering to exclude current project, as discussed before -->
+                        {#if String(project.id) !== filterProjectId}
                             <option value={project.id}>{project.name}</option>
-                        {/each}
-                    </select>
-                </div>
-
-                <!-- Dynamic Confirmation Message -->
-                <p class="text-sm text-gray-600 mb-6">
-                    You are about to create <strong class="font-bold">{selectedRecruitments.size} new recruitment records</strong>,
-                    copying them to project: <strong class="font-bold">
-                        {targetProjectIdForCopy === null ? 'No Project (Unassigned)' : (allProjects.find(p => p.id === targetProjectIdForCopy)?.name || '...')}
-                    </strong>.
-                    Their status will be set to 'not yet contacted'.
-                </p>
-
-                <div class="flex justify-end space-x-2">
-                    <button
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
-                        on:click={closeCopyModal}
-                        type="button"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
-                        on:click={handleCopyRecruitments}
-                        disabled={targetProjectIdForCopy === null || isCopying}
-                        type="button"
-                    >
-                        {#if isCopying}
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Copying...
-                        {:else}
-                            Copy
                         {/if}
-                    </button>
-                </div>
+                    {/each}
+                </select>
+            </div>
+
+            <!-- Dynamic Confirmation Message -->
+            <p class="text-sm text-gray-600 mb-6">
+                You are about to create <strong class="font-bold">{selectedRecruitments.size} new recruitment records</strong>,
+                copying them to project: <strong class="font-bold">
+                    <!-- Updated: Display selected project name, or '...' if not yet selected -->
+                    {allProjects.find(p => p.id === targetProjectIdForCopy)?.name || '...'}
+                </strong>.
+                Their status will be set to 'not yet contacted'.
+            </p>
+
+            <div class="flex justify-end space-x-2">
+                <button
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                    on:click={closeCopyModal}
+                    type="button"
+                >
+                    Cancel
+                </button>
+                <button
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm transition duration-150 ease-in-out"
+                    on:click={handleCopyRecruitments}
+                    disabled={targetProjectIdForCopy === null || isCopying}
+                    type="button"
+                >
+                    {#if isCopying}
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Copying...
+                    {:else}
+                        Copy
+                    {/if}
+                </button>
             </div>
         </div>
-    {/if}
+    </div>
+{/if}
 
 
     {#if showModal}
@@ -1889,13 +1930,13 @@ async function updateStatuses() {
                             >Section <span class="text-red-500">*</span></label
                         >
                         <select
-                            bind:value={editForm.sectionGroupId}
+                            bind:value={editForm.sectionId}
                             class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
                         >
-                            {#if editForm.sectionGroupId === undefined || sectionGroups.length === 0}
+                            {#if editForm.sectionId === undefined || sections.length === 0}
                                 <option value="" disabled>Select a section</option>
                             {/if}
-                            {#each sectionGroups as sg (sg.id)}
+                            {#each sections as sg (sg.id)}
                                 <option value={sg.id}>{sg.name}</option>
                             {/each}
                         </select>

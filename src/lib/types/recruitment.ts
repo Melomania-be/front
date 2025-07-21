@@ -7,4 +7,5 @@ export type RecruitmentStatus =
 	| 'not available'
 	| 'to follow up'
 	| 'cancelled'
-	| 'other';
+	| 'other'
+	| 'pending validation'; // Added to match migration
