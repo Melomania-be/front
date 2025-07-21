@@ -20,20 +20,17 @@
 		orderBy: string;
 		order: string;
 	} = {
-		filters: {
-			type: 'and',
-			filtersDepth1: [
-				{
-					type: 'and',
-					filtersDepth2: []
-				}
-			]
+		filters:{
+			type : 'and',
+			filtersDepth1: [{type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []}]
 		},
 		page: 1,
 		limit: 250,
 		orderBy: 'id',
 		order: 'asc'
 	};
+
+	
 
 	onMount(async () => {
 		fetchData();
@@ -70,6 +67,7 @@
 	}
 </script>
 
+<div class="bg-[#E7E7E7] ">
 <AdvancedFilterer
 	bind:columns
 	bind:meta
@@ -79,3 +77,4 @@
 	on:optionsUpdated={() => fetchData()}
 	showData
 />
+</div>

@@ -49,6 +49,7 @@
 		if (browser) {
 			isMobile = window.innerWidth < 768;
 		}
+		
 	}
 
 	onMount(() => {
@@ -119,6 +120,7 @@
 						options.order = options.order === 'asc' ? 'desc' : 'asc';
 						options.page = meta.firstPage;
 						dispatchOptionsUpdated();
+						console.log(data.columns);
 					}}
 				>
 					<span
