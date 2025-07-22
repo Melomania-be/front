@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/ProjectMaterialsManager.svelte -->
+<!-- src/lib/components/materials/ProjectMaterialsManager.svelte - Version améliorée -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Save, AlertCircle, CheckCircle, Music, Plus } from 'lucide-svelte';
@@ -16,6 +16,8 @@
 	let hasChanges = false;
 	let showEditor = false;
 	let selectedPieceForNewMaterial: Piece | null = null;
+	let errorMessage = '';
+	let successMessage = '';
 
 	// État des matériels sélectionnés
 	let materialSelections: Record<number, number | null> = {};
@@ -38,12 +40,18 @@
 		pieces.forEach(piece => {
 			materialSelections[piece.id] = piece.selectedMaterialId;
 		});
+
+		console.log('🎼 Pieces loaded:', pieces.length);
+		console.log('📋 Initial material selections:', materialSelections);
 	}
 
 	function handleMaterialSelected(event: CustomEvent, piece: any) {
 		const material = event.detail;
 		materialSelections[piece.id] = material?.id || null;
 		hasChanges = true;
+		errorMessage = '';
+
+		console.log(`🎯 Material selected for piece ${piece.id}:`, material?.id || 'none');
 	}
 
 	function handleCreateMaterial(event: CustomEvent) {
@@ -68,6 +76,8 @@
 		if (!hasChanges || isSaving) return;
 
 		isSaving = true;
+		errorMessage = '';
+		successMessage = '';
 
 		try {
 			const updates = pieces.map(piece => ({
@@ -76,27 +86,55 @@
 				materialId: materialSelections[piece.id] || null
 			}));
 
+			console.log('💾 Saving material assignments:', updates);
+
 			const response = await fetch('/api/materials/assign-bulk', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ assignments: updates })
 			});
 
+			console.log('📡 Response status:', response.status);
+
 			if (response.ok) {
+				const result = await response.json();
+				console.log('✅ Save successful:', result);
+
 				hasChanges = false;
+				successMessage = result.message || 'Matériels assignés avec succès';
+
 				dispatch('materialsUpdated');
 
 				// Recharger les données du projet
 				await loadProjectPieces();
+
+				// Clear success message after 3 seconds
+				setTimeout(() => {
+					successMessage = '';
+				}, 3000);
 			} else {
-				alert('Erreur lors de la sauvegarde');
+				const errorData = await response.json();
+				console.error('❌ Save failed:', errorData);
+
+				errorMessage = errorData.error || errorData.details?.error || 'Erreur lors de la sauvegarde';
+
+				// Afficher les détails si disponibles
+				if (errorData.details) {
+					console.error('📋 Error details:', errorData.details);
+				}
 			}
 		} catch (error) {
-			console.error('Error saving material assignments:', error);
-			alert('Erreur de connexion');
+			console.error('💥 Network/Parse error:', error);
+			errorMessage = `Erreur de connexion: ${error.message}`;
 		}
 
 		isSaving = false;
+	}
+
+	// Clear messages when user makes changes
+	function clearMessages() {
+		errorMessage = '';
+		successMessage = '';
 	}
 
 	$: unspecifiedCount = pieces.filter(p => !materialSelections[p.id]).length;
@@ -115,9 +153,9 @@
 
 		{#if hasChanges}
 			<button
-				class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
-				on:click={saveChanges}
-				disabled={isSaving}
+					class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
+					on:click={saveChanges}
+					disabled={isSaving}
 			>
 				{#if isSaving}
 					<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -128,6 +166,25 @@
 			</button>
 		{/if}
 	</div>
+
+	<!-- Messages d'erreur et de succès -->
+	{#if errorMessage}
+		<div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+			<div class="flex items-center gap-2">
+				<AlertCircle class="text-red-600 flex-shrink-0" size={16} />
+				<p class="text-sm text-red-700">{errorMessage}</p>
+			</div>
+		</div>
+	{/if}
+
+	{#if successMessage}
+		<div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+			<div class="flex items-center gap-2">
+				<CheckCircle class="text-green-600 flex-shrink-0" size={16} />
+				<p class="text-sm text-green-700">{successMessage}</p>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Résumé du statut -->
 	{#if !isLoading}
@@ -208,12 +265,15 @@
 									Matériel à utiliser :
 								</label>
 								<MaterialSelector
-									{piece}
-									projectId={project.id}
-									selectedMaterialId={materialSelections[piece.id]}
-									required={true}
-									on:materialSelected={(e) => handleMaterialSelected(e, piece)}
-									on:createMaterial={handleCreateMaterial}
+										{piece}
+										projectId={project.id}
+										selectedMaterialId={materialSelections[piece.id]}
+										required={true}
+										on:materialSelected={(e) => {
+										handleMaterialSelected(e, piece);
+										clearMessages();
+									}}
+										on:createMaterial={handleCreateMaterial}
 								/>
 							</div>
 						</div>
@@ -244,10 +304,10 @@
 <!-- Modal de création de matériel -->
 {#if showEditor && selectedPieceForNewMaterial}
 	<MaterialEditor
-		piece={selectedPieceForNewMaterial}
-		editMode="create"
-		on:saved={handleMaterialCreated}
-		on:cancelled={() => {
+			piece={selectedPieceForNewMaterial}
+			editMode="create"
+			on:saved={handleMaterialCreated}
+			on:cancelled={() => {
 			showEditor = false;
 			selectedPieceForNewMaterial = null;
 		}}
