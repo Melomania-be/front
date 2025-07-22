@@ -214,6 +214,11 @@
 	$: {
 		if (currentParticipant) participants = [currentParticipant];
 	}
+	function openContactPage() {
+    	if (currentParticipant.contact?.id) {
+    		goto(`/contacts/${currentParticipant.contact.id}`);
+		}
+	}
 </script>
 
 {#if currentParticipant}
@@ -243,6 +248,14 @@
 						{currentParticipant.contact?.firstName}
 						{currentParticipant.contact?.lastName}
 					</h1>
+					{#if currentParticipant.contact?.id}
+						<button
+							class="mt-2 inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
+							on:click={openContactPage}
+						>
+							Open contact page
+						</button>
+						{/if}
 					<div class="m-1">
 						<h2 class="uppercase">Project form</h2>
 						{#if registration.form && currentParticipant.answers.length > 0}
