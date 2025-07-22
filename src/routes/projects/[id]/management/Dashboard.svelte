@@ -1,3 +1,4 @@
+<!-- src/routes/projects/[id]/management/Dashboard.svelte (version mise à jour) -->
 <script lang="ts">
 	import DateShow from '$lib/components/DateShow.svelte';
 	import type { Participant } from '$lib/types/Participant';
@@ -8,6 +9,7 @@
 	import DisplayerSection from './DisplayerSection.svelte';
 	import DisplayerSheets from './DisplayerSheets.svelte';
 	import Notification from './Notification.svelte';
+	import MaterialStatusAlert from '$lib/components/materials/MaterialStatusAlert.svelte';
 	import {faUser} from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 	import { browser } from '$app/environment';
@@ -44,41 +46,46 @@
 
 {#if project}
 	<div class="h-auto p-4 {isMobile ? "bg-[#E7E7E7] w-screen" : "bg-[#E7E7E7]"} border-2">
-	<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center w-full">
-		<div class="bg-white border-2 border-[#E35656] rounded-[10px]
-		{isMobile ? "w-full" : " w-[90%]"}
-		">
-			<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
-	</div>
-	<div class="flex text-white h-[100px] font-bold
-		{isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4"}
-		">
+		<!-- ✅ NOUVEAU : Alerte pour les matériels non spécifiés -->
+		{#if project.id}
+			<MaterialStatusAlert projectId={project.id} />
+{/if}
+
+<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center w-full">
+			<div class="bg-white border-2 border-[#E35656] rounded-[10px]
+			{isMobile ? "w-full" : " w-[90%]"}
+			">
+				<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
+</div>
+<div class="flex text-white h-[100px] font-bold
+			{isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4"}
+			">
 			<div class="flex w-full text-center {isMobile ? "gap-3" : "gap-6"}">
 				<div class="rounded-lg py-2 px-4 flex-1 h-full bg-[#6CB1C8]">
 	<p>PARTICIPANTS</p>
 	<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"}
-					">{project?.participants?.length || 0}</p>
+						">{project?.participants?.length || 0}</p>
 </div>
-	<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
-		<p>REHEARSALS</p>
-		<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project?.rehearsals?.length || 0}</p>
-	</div>
-	<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
-		<p>CONCERTS</p>
-		<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project?.concerts?.length || 0}</p>
-	</div>
-	</div>
-	</div>
-	</div>
+<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
+	<p>REHEARSALS</p>
+	<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project?.rehearsals?.length || 0}</p>
+</div>
+<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
+	<p>CONCERTS</p>
+	<p class=" font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"} ">{project?.concerts?.length || 0}</p>
+</div>
+</div>
+</div>
+</div>
 
-	<div class="flex w-[100%] flex-col md:flex-row gap-6 mt-4">
-		<DisplayerEvents bind:project />
-	</div>
+<div class="flex w-[100%] flex-col md:flex-row gap-6 mt-4">
+	<DisplayerEvents bind:project />
+</div>
 
-	<div
-		class="h-full {isMobile ? "w-full" : "w-2/5"} mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
-		>
-		<div class="flex p-4 flex-col w-full">
+<div
+	class="h-full {isMobile ? "w-full" : "w-2/5"} mt-4 border-[#8C8C8C] rounded-[10px] border-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+			>
+			<div class="flex p-4 flex-col w-full">
 	<div class="flex items-center">
 		<h1 class="font-bold text-lg">MANAGERS</h1>
 		<div class="ml-auto mr-0">
@@ -110,31 +117,31 @@
 		{/if}
 	</div>
 </div>
-	</div>
+</div>
 
-	<div class="mt-4">
-		<DisplayerSection bind:project bind:participants participantsNotValidated={participantsNotValidated} />
-	</div>
+<div class="mt-4">
+	<DisplayerSection bind:project bind:participants participantsNotValidated={participantsNotValidated} />
+</div>
 
-	<div class="flex mt-4">
-		<div class="w-full">
-			<DisplayerSheets
-				bind:project
-				bind:participants
-				bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
-				bind:participantsNotValidated
-			/>
-		</div>
+<div class="flex mt-4">
+	<div class="w-full">
+		<DisplayerSheets
+			bind:project
+			bind:participants
+			bind:participantsSeenCallsheet={participantsNotSeenCallsheet}
+			bind:participantsNotValidated
+		/>
 	</div>
-	<div class="mt-4 w-full md:w-1/2">
-		<DisplayerPieces bind:project />
-	</div>
-	</div>
+</div>
+<div class="mt-4 w-full md:w-1/2">
+	<DisplayerPieces bind:project />
+</div>
+</div>
 {:else}
-	<div class="flex justify-center items-center h-64 bg-gray-100">
-		<div class="text-center">
-			<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-			<p class="text-gray-600">Loading dashboard...</p>
-		</div>
+<div class="flex justify-center items-center h-64 bg-gray-100">
+	<div class="text-center">
+		<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+		<p class="text-gray-600">Loading dashboard...</p>
 	</div>
+</div>
 {/if}
