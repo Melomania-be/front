@@ -4,7 +4,7 @@
 	export let withTime: boolean = false;
 	export let withDate: boolean = true;
 	export let isRehearsal: boolean = false;
-
+	export let multiLine: boolean = false; // NOUVELLE PROP
 
 	let usableStartTime = new Date(startTime);
 
@@ -19,6 +19,12 @@
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric'
+	};
+	const shortDateOptions: Intl.DateTimeFormatOptions = {
+		weekday: 'long',
+		day: 'numeric',
+		month: 'numeric',
+		year: '2-digit'
 	};
 	const timeOption: Intl.DateTimeFormatOptions = {
 		hour: '2-digit',
@@ -35,7 +41,11 @@
 
 <span>
 	{#if startTime}
-		{#if withTime && withDate}
+		{#if multiLine}
+			<!-- AFFICHAGE SUR DEUX LIGNES -->
+			{usableStartTime.toLocaleDateString(undefined, shortDateOptions)}<br>
+			{usableStartTime.toLocaleTimeString(undefined, timeOption)} - {usableEndTime.toLocaleTimeString(undefined, timeOption)}
+		{:else if withTime && withDate}
 			{usableStartTime.toLocaleTimeString(undefined, timeOption)}
 			{' - '}
 			{usableEndTime.toLocaleTimeString(undefined, timeOption)}
@@ -56,3 +66,4 @@
 		-
 	{/if}
 </span>
+
