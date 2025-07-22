@@ -59,21 +59,34 @@
 </script>
 
 <div class="overflow-x-auto">
-    <table class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400 border border-collapse">
+    <table class="w-auto text-sm text-left text-gray-500 dark:text-gray-400 border border-collapse">
         <thead class="text-xs text-gray-700 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">
         <tr>
-            <th class="px-4 py-2">Participant</th>
+            <!-- <th class="px-4 py-2">Participant</th> -->
             {#each concertsOrRehearsals as concertOrRehearsal}
                 <th class="px-4 py-2 border-l uppercase" colspan="2">{concertOrRehearsal.place}</th>
             {/each}
         </tr>
         <tr>
-            <th></th>
+            <!-- <th></th> -->
             {#each concertsOrRehearsals as concertOrRehearsal}
                 {#if type === 'rehearsal'}
-                    <th class="px-4 py-2 border-l min-w-[220px]" colspan="2"><DateShow startTime={concertOrRehearsal.startDate} endTime={concertOrRehearsal.endDate} isRehearsal/></th>
+                    <th class="px-4 py-2 border-l min-w-[220px]" colspan="2">
+                            <DateShow 
+                                startTime={concertOrRehearsal.startDate} 
+                                endTime={concertOrRehearsal.endDate} 
+                                isRehearsal
+                                multiLine
+                            />
+                    </th>
                 {:else}
-                    <th class="px-4 py-2 border-l min-w-[220px]" colspan="2"><DateShow startTime={concertOrRehearsal.startDate} endTime={concertOrRehearsal.endDate}/></th>
+                    <th class="px-4 py-2 border-l min-w-[220px]" colspan="2">
+                        <DateShow 
+                            startTime={concertOrRehearsal.startDate} 
+                            endTime={concertOrRehearsal.endDate} 
+                            multiLine
+                        />
+                    </th>
                 {/if}
             {/each}
         </tr>
@@ -81,7 +94,7 @@
         <tbody>
         {#each participants as participant}
             <tr class="even:bg-gray-100 dark:even:bg-gray-800">
-                <td class="px-4 py-2 border">{participant.contact ? participant.contact.firstName : ''}</td>
+                <!-- <td class="px-4 py-2 border">{participant.contact ? participant.contact.firstName : ''}</td> -->
                 {#each concertsOrRehearsals as concertOrRehearsal}
                     <td class="px-4 py-2 border w-12">
                         <input
