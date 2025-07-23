@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte (version sans debug) -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte (version complète) -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Music, Image, Video, FileText, Folder, Plus, Upload, Download, Trash2, ChevronLeft, Package } from 'lucide-svelte';
@@ -64,11 +64,41 @@
 			const response = await fetch(`/api/filesystem/folders/${folder.id}/contents`);
 			if (response.ok) {
 				const contents = await response.json();
-				folder.children = contents.map(item => ({
-					...item,
-					updatedAt: new Date(item.updatedAt),
-					createdAt: new Date(item.createdAt)
-				}));
+
+				// ✅ CORRECTION : Si c'est le dossier "Scores", enrichir avec les matériels
+				if (folder.name === 'Scores') {
+					// Charger aussi les matériels pour chaque pièce
+					const enrichedContents = await Promise.all(contents.map(async (item) => {
+						if (item.type === 'folder' && item.pieceId) {
+							// Charger les matériels pour cette pièce
+							try {
+								const materialsResponse = await fetch(`/api/materials/piece/${item.pieceId}`);
+								if (materialsResponse.ok) {
+									const materials = await materialsResponse.json();
+									item.materials = materials;
+									console.log(`📦 Loaded ${materials.length} materials for piece ${item.name}`);
+								}
+							} catch (error) {
+								console.error('Error loading materials for piece:', item.pieceId, error);
+								item.materials = [];
+							}
+						}
+						return item;
+					}));
+
+					folder.children = enrichedContents.map(item => ({
+						...item,
+						updatedAt: new Date(item.updatedAt),
+						createdAt: new Date(item.createdAt)
+					}));
+				} else {
+					folder.children = contents.map(item => ({
+						...item,
+						updatedAt: new Date(item.updatedAt),
+						createdAt: new Date(item.createdAt)
+					}));
+				}
+
 				currentFolder = { ...currentFolder };
 			}
 		} catch (error) {

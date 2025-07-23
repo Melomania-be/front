@@ -68,11 +68,21 @@
 		try {
 			const response = await fetch('/api/filesystem/general');
 			if (response.ok) {
-				generalFiles = await response.json();
-				console.log('General files loaded:', generalFiles);
+				const data = await response.json();
+				console.log('✅ General files raw data:', data);
+
+				// ✅ CORRECTION : Adapter la structure des données
+				generalFiles = Array.isArray(data) ? data.map(item => ({
+					...item,
+					updatedAt: new Date(item.updatedAt),
+					createdAt: new Date(item.createdAt)
+				})) : [];
+
+				console.log('✅ General files processed:', generalFiles);
 			}
 		} catch (error) {
 			console.error('Error loading general files:', error);
+			generalFiles = [];
 		}
 	}
 
@@ -230,9 +240,9 @@
 <div class="min-h-screen bg-[#E7E7E7] {isMobile ? 'pb-16' : ''}">
 	<!-- Header -->
 	<FileSystemHeader
-		{activeTab}
-		{selectedProject}
-		on:tabChange={(e) => {
+			{activeTab}
+			{selectedProject}
+			on:tabChange={(e) => {
 			activeTab = e.detail;
 			// Reset navigation when switching tabs
 			if (activeTab === 'general') {
@@ -242,8 +252,8 @@
 				generalBreadcrumbs = [];
 			}
 		}}
-		on:projectChange={(e) => selectProject(e.detail)}
-		on:refresh={() => {
+			on:projectChange={(e) => selectProject(e.detail)}
+			on:refresh={() => {
 			if (activeTab === 'projects') {
 				loadProjects();
 			} else {
@@ -261,8 +271,8 @@
 		{:else if activeTab === 'projects'}
 			{#if selectedProject}
 				<ProjectFileManager
-					project={selectedProject}
-					on:back={() => selectedProject = null}
+						project={selectedProject}
+						on:back={() => selectedProject = null}
 				/>
 			{:else}
 				<!-- Project Selection Grid -->
@@ -278,8 +288,8 @@
 						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 							{#each projects as project}
 								<button
-									class="p-4 bg-gradient-to-r from-[#6CB1C8] to-[#5077BA] text-white rounded-lg hover:from-[#5a9bb4] hover:to-[#4563a0] transition-all duration-300 text-left"
-									on:click={() => selectProject(project)}
+										class="p-4 bg-gradient-to-r from-[#6CB1C8] to-[#5077BA] text-white rounded-lg hover:from-[#5a9bb4] hover:to-[#4563a0] transition-all duration-300 text-left"
+										on:click={() => selectProject(project)}
 								>
 									<div class="flex items-center gap-3">
 										<FolderOpen size={24} />
@@ -304,8 +314,8 @@
 					<div class="flex items-center justify-between mb-6">
 						<div class="flex items-center gap-3">
 							<button
-								class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
-								on:click={goBackGeneral}
+									class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
+									on:click={goBackGeneral}
 							>
 								<ChevronLeft size={20} />
 								Back
@@ -325,15 +335,15 @@
 
 						<div class="flex gap-2">
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
-								on:click={() => showGeneralUploader = true}
+									class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
+									on:click={() => showGeneralUploader = true}
 							>
 								<Upload size={16} />
 								Upload
 							</button>
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-								on:click={() => {
+									class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+									on:click={() => {
 									const name = prompt('Folder name:');
 									if (name) handleCreateGeneralFolder(name);
 								}}
@@ -345,9 +355,9 @@
 					</div>
 
 					<FileSystemExplorer
-						items={currentGeneralFolder.children || []}
-						on:itemClick={(e) => handleGeneralItemClick(e.detail)}
-						on:refresh={handleGeneralRefresh}
+							items={currentGeneralFolder.children || []}
+							on:itemClick={(e) => handleGeneralItemClick(e.detail)}
+							on:refresh={handleGeneralRefresh}
 					/>
 				{:else}
 					<!-- ✅ CORRECTION : Vue racine des fichiers généraux -->
@@ -355,15 +365,15 @@
 						<h2 class="font-bold text-lg uppercase text-gray-700">GENERAL FILES</h2>
 						<div class="flex gap-2">
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
-								on:click={() => showGeneralUploader = true}
+									class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
+									on:click={() => showGeneralUploader = true}
 							>
 								<Upload size={16} />
 								Upload Files
 							</button>
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-								on:click={() => {
+									class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+									on:click={() => {
 									const name = prompt('Folder name:');
 									if (name) handleCreateGeneralFolder(name);
 								}}
@@ -375,9 +385,9 @@
 					</div>
 
 					<FileSystemExplorer
-						items={generalFiles}
-						on:itemClick={(e) => handleGeneralItemClick(e.detail)}
-						on:refresh={handleGeneralRefresh}
+							items={generalFiles}
+							on:itemClick={(e) => handleGeneralItemClick(e.detail)}
+							on:refresh={handleGeneralRefresh}
 					/>
 				{/if}
 			</div>
@@ -387,13 +397,13 @@
 
 {#if showGeneralUploader}
 	<FileUploader
-		on:upload={(e) => handleGeneralUpload(e.detail)}
-		on:cancel={() => showGeneralUploader = false}
+			on:upload={(e) => handleGeneralUpload(e.detail)}
+			on:cancel={() => showGeneralUploader = false}
 	/>
 {/if}
 
 <style>
-    :global(.grid-cols-auto-fit) {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
+	:global(.grid-cols-auto-fit) {
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	}
 </style>

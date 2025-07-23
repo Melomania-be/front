@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/ProjectMaterialsManager.svelte - Version avec upload de fichiers -->
+<!-- src/lib/components/materials/ProjectMaterialsManager.svelte - Version complète avec upload de fichiers -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Save, AlertCircle, CheckCircle, Music, Plus, Upload, FileText, Download, Eye, Trash2, Edit } from 'lucide-svelte';
@@ -166,67 +166,65 @@
 		console.log('📤 Opening uploader for material:', material.name);
 	}
 
-	// ✅ NOUVEAU : Gérer l'upload de fichiers avec debug amélioré
+	// Dans handleFileUpload()
 	async function handleFileUpload(files: FileList) {
 		if (!selectedMaterialForUpload) {
-			console.error('❌ No material selected for upload');
-			return;
+			console.error('❌ No material selected for upload')
+			return
 		}
 
-		console.log('📤 Uploading files to material:', selectedMaterialForUpload.name);
-		console.log('📂 Files to upload:', Array.from(files).map(f => `${f.name} (${f.size} bytes)`));
+		console.log('📤 Uploading files to material:', selectedMaterialForUpload.name)
 
-		const formData = new FormData();
+		const formData = new FormData()
 		Array.from(files).forEach((file, index) => {
-			console.log(`📄 Adding file ${index + 1}: ${file.name}`);
-			formData.append('files', file);
-		});
-
-		// ✅ Debug FormData
-		console.log('📋 FormData entries:');
-		for (const [key, value] of formData.entries()) {
-			if (value instanceof File) {
-				console.log(`  ${key}: ${value.name} (${value.size} bytes, ${value.type})`);
-			} else {
-				console.log(`  ${key}: ${value}`);
-			}
-		}
+			console.log(`📄 Adding file ${index + 1}: ${file.name}`)
+			formData.append('files', file)
+		})
 
 		try {
-			console.log(`🚀 Sending request to: /api/materials/${selectedMaterialForUpload.id}/files`);
-
 			const response = await fetch(`/api/materials/${selectedMaterialForUpload.id}/files`, {
 				method: 'POST',
 				body: formData
-			});
+			})
 
-			console.log('📥 Response status:', response.status);
-			console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+			const responseData = await response.json()
+			console.log('📥 Response:', responseData)
 
-			const responseData = await response.json();
-			console.log('📥 Response data:', responseData);
+			if (response.ok && responseData.success) {
+				console.log('✅ Upload successful!')
 
-			if (response.ok) {
-				console.log('✅ Upload successful!');
-				// Recharger les matériels pour cette pièce
-				const piece = pieces.find(p => materialsData[p.id]?.some(m => m.id === selectedMaterialForUpload.id));
-				if (piece) {
-					await loadMaterialsForPiece(piece.id);
+				// Recharger les matériels pour toutes les pièces
+				await loadAllMaterials()
+
+				// Recharger les données du projet
+				await loadProjectPieces()
+
+				// Notifier le composant parent
+				dispatch('materialsUpdated')
+
+				showUploader = false
+				selectedMaterialForUpload = null
+
+				successMessage = responseData.message
+				if (responseData.errors && responseData.errors.length > 0) {
+					errorMessage = `Avertissements: ${responseData.errors.join(', ')}`
 				}
-				showUploader = false;
-				selectedMaterialForUpload = null;
-				successMessage = responseData.message || 'Fichiers ajoutés avec succès !';
-				setTimeout(() => successMessage = '', 3000);
+
+				setTimeout(() => {
+					successMessage = ''
+					errorMessage = ''
+				}, 5000)
+
 			} else {
-				console.error('❌ Upload failed:', response.status);
-				errorMessage = 'Erreur lors de l\'upload: ' + (responseData.error || responseData.message || 'Erreur inconnue');
-				if (responseData.details) {
-					console.error('📋 Error details:', responseData.details);
+				console.error('❌ Upload failed:', responseData)
+				errorMessage = responseData.error || 'Erreur lors de l\'upload'
+				if (responseData.errors) {
+					errorMessage += ': ' + responseData.errors.join(', ')
 				}
 			}
 		} catch (error) {
-			console.error('❌ Upload error:', error);
-			errorMessage = 'Erreur lors de l\'upload des fichiers: ' + error.message;
+			console.error('❌ Upload error:', error)
+			errorMessage = 'Erreur de connexion lors de l\'upload'
 		}
 	}
 

@@ -1,3 +1,5 @@
+import type { Material } from './Material';
+
 export interface FileSystemItem {
 	id: number;
 	name: string;
@@ -12,6 +14,7 @@ export interface FileSystemItem {
 	updatedAt: Date;
 	children?: FileSystemItem[];
 	isSystemGenerated?: boolean; // Pour les dossiers auto-créés
+	materials?: Material[]; // ✅ AJOUT : Matériels associés à un dossier de pièce
 }
 
 export interface ProjectFileStructure {
