@@ -7,4 +7,6 @@ export interface Accounting {
     categoryId : number;
     projectId : number;
     contactId : number | null;
+    isIndividualPayment : boolean;
+    isMusicianFee : boolean;
 }

@@ -7,7 +7,6 @@
 	import type { Accounting } from '$lib/types/Accounting';
 	import PieChart from '$lib/components/PieChart.svelte';
 	import type { ExpenseCategory } from '$lib/types/ExpenseCategory';
-	import LineChart from '$lib/components/LineChart.svelte';
 	import { Row } from 'svelte-materialify';
 	import { Colors } from 'chart.js';
 	import Fa from 'svelte-fa';
