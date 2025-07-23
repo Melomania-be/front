@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/ProjectMaterialsManager.svelte - Version avec vérification directe -->
+<!-- src/lib/components/materials/ProjectMaterialsManager.svelte - Version sans debug -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Save, AlertCircle, CheckCircle, Music, Plus } from 'lucide-svelte';
@@ -27,70 +27,19 @@
 		isLoading = false;
 	});
 
-	// ✅ NOUVELLE APPROCHE : Chargement direct depuis la base pivot
+	// Chargement des données du projet
 	async function loadProjectPieces() {
 		if (!project?.pieces) return;
 
-		console.log('🔍 Loading project pieces data...');
-		console.log('🎯 Raw project data:', project);
-
-		try {
-			// ✅ ÉTAPE 1 : Charger les données directement depuis performed_ins
-			const response = await fetch(`/api/debug/performed-ins/${project.id}`);
-			if (response.ok) {
-				const pivotData = await response.json();
-				console.log('📊 Direct pivot data loaded:', pivotData);
-
-				// ✅ ÉTAPE 2 : Combiner avec les données du projet
-				pieces = project.pieces.map((piece: any) => {
-					// Trouver les données pivot correspondantes
-					const pivotInfo = pivotData.performedIns.find((p: any) => p.piece_id === piece.id);
-
-					return {
-						...piece,
-						// ✅ Utiliser les données pivot directes
-						materialSpecified: pivotInfo?.material_specified || false,
-						selectedMaterialId: pivotInfo?.material_id || null,
-						// ✅ Debug info
-						pivotInfo: pivotInfo
-					};
-				});
-			} else {
-				console.warn('⚠️ Pivot data loading failed, using fallback');
-				// Fallback vers l'ancienne méthode
-				await loadProjectPiecesFallback();
-				return;
-			}
-		} catch (error) {
-			console.error('❌ Error loading pivot data:', error);
-			// Fallback vers l'ancienne méthode
-			await loadProjectPiecesFallback();
-			return;
-		}
-
-		// ✅ ÉTAPE 3 : Initialiser les sélections
-		pieces.forEach(piece => {
-			materialSelections[piece.id] = piece.selectedMaterialId;
-		});
-
-		console.log('🎼 Pieces loaded with pivot data:', pieces.length);
-		console.log('📋 Piece details:', pieces.map(p => ({
-			id: p.id,
-			name: p.name,
-			selectedMaterialId: p.selectedMaterialId,
-			materialSpecified: p.materialSpecified,
-			pivotInfo: p.pivotInfo
-		})));
-		console.log('📋 Initial material selections:', materialSelections);
+		await loadProjectPiecesFallback();
 	}
 
-	// ✅ FALLBACK : Méthode de chargement d'origine
+	// Méthode de chargement standard
 	async function loadProjectPiecesFallback() {
 		try {
 			const response = await fetch(`/api/projects/${project.id}`);
 			if (response.ok) {
 				const fullProjectData = await response.json();
-				console.log('📥 Fallback: Full project data loaded:', fullProjectData);
 
 				pieces = fullProjectData.pieces.map((piece: any) => ({
 					...piece,
@@ -106,7 +55,7 @@
 				}));
 			}
 		} catch (error) {
-			console.error('❌ Fallback also failed:', error);
+			console.error('Failed to load project data:', error);
 			pieces = project.pieces.map((piece: any) => ({
 				...piece,
 				materialSpecified: false,
@@ -125,8 +74,6 @@
 		materialSelections[piece.id] = material?.id || null;
 		hasChanges = true;
 		errorMessage = '';
-
-		console.log(`🎯 Material selected for piece ${piece.id}:`, material?.id || 'none');
 	}
 
 	function handleCreateMaterial(event: CustomEvent) {
@@ -161,30 +108,23 @@
 				materialId: materialSelections[piece.id] || null
 			}));
 
-			console.log('💾 Saving material assignments:', updates);
-
 			const response = await fetch('/api/materials/assign-bulk', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ assignments: updates })
 			});
 
-			console.log('📡 Response status:', response.status);
-
 			if (response.ok) {
 				const result = await response.json();
-				console.log('✅ Save successful:', result);
 
 				hasChanges = false;
 				successMessage = result.message || 'Matériels assignés avec succès';
 
 				dispatch('materialsUpdated');
 
-				// ✅ CORRECTION : Recharger directement les données pivot
+				// Recharger directement les données pivot
 				setTimeout(async () => {
-					console.log('🔄 Reloading pivot data after save...');
 					await loadProjectPieces();
-					console.log('✅ Data reloaded successfully');
 				}, 500);
 
 				// Clear success message after 3 seconds
@@ -193,16 +133,16 @@
 				}, 3000);
 			} else {
 				const errorData = await response.json();
-				console.error('❌ Save failed:', errorData);
+				console.error('Save failed:', errorData);
 
 				errorMessage = errorData.error || errorData.details?.error || 'Erreur lors de la sauvegarde';
 
 				if (errorData.details) {
-					console.error('📋 Error details:', errorData.details);
+					console.error('Error details:', errorData.details);
 				}
 			}
 		} catch (error) {
-			console.error('💥 Network/Parse error:', error);
+			console.error('Network/Parse error:', error);
 			errorMessage = `Erreur de connexion: ${error.message}`;
 		}
 
@@ -217,19 +157,6 @@
 
 	$: unspecifiedCount = pieces.filter(p => !materialSelections[p.id]).length;
 	$: specifiedCount = pieces.filter(p => materialSelections[p.id]).length;
-
-	// ✅ FONCTION DE DEBUG
-	async function debugProject() {
-		if (import.meta.env.DEV) {
-			try {
-				const response = await fetch(`/api/debug/project/${project.id}/materials-detailed`);
-				const debugData = await response.json();
-				console.log('🔬 DEBUG DATA:', debugData);
-			} catch (error) {
-				console.error('❌ Debug failed:', error);
-			}
-		}
-	}
 </script>
 
 <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
@@ -243,16 +170,6 @@
 		</div>
 
 		<div class="flex gap-2">
-			<!-- ✅ BOUTON DE DEBUG -->
-			{#if import.meta.env.DEV}
-				<button
-						class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
-						on:click={debugProject}
-				>
-					🔬 Debug
-				</button>
-			{/if}
-
 			{#if hasChanges}
 				<button
 						class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
@@ -286,40 +203,6 @@
 				<CheckCircle class="text-green-600 flex-shrink-0" size={16} />
 				<p class="text-sm text-green-700">{successMessage}</p>
 			</div>
-		</div>
-	{/if}
-
-	<!-- ✅ DEBUG : Afficher les informations de debug améliorées -->
-	{#if import.meta.env.DEV}
-		<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
-			<details>
-				<summary class="cursor-pointer text-blue-700 font-medium">Debug Info</summary>
-				<div class="mt-2 space-y-2">
-					<div>
-						<strong>Status:</strong>
-						<pre class="text-blue-600">{JSON.stringify({
-							pieceCount: pieces.length,
-							hasChanges,
-							specifiedCount,
-							unspecifiedCount
-						}, null, 2)}</pre>
-					</div>
-					<div>
-						<strong>Material Selections:</strong>
-						<pre class="text-blue-600">{JSON.stringify(materialSelections, null, 2)}</pre>
-					</div>
-					<div>
-						<strong>Pieces with Pivot Data:</strong>
-						<pre class="text-blue-600">{JSON.stringify(pieces.map(p => ({
-							id: p.id,
-							name: p.name,
-							selectedMaterialId: p.selectedMaterialId,
-							materialSpecified: p.materialSpecified,
-							hasPivotInfo: !!p.pivotInfo
-						})), null, 2)}</pre>
-					</div>
-				</div>
-			</details>
 		</div>
 	{/if}
 
@@ -385,12 +268,6 @@
 									<AlertCircle class="text-orange-500 flex-shrink-0" size={16} />
 								{:else}
 									<CheckCircle class="text-green-500 flex-shrink-0" size={16} />
-								{/if}
-								<!-- ✅ Indicateur de debug -->
-								{#if import.meta.env.DEV && piece.pivotInfo}
-									<span class="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">
-										DB: {piece.pivotInfo.material_id || 'null'}
-									</span>
 								{/if}
 							</div>
 

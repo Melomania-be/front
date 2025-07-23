@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte (version mise à jour) -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte (version sans debug) -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Music, Image, Video, FileText, Folder, Plus, Upload, Download, Trash2, ChevronLeft, Package } from 'lucide-svelte';
@@ -35,7 +35,6 @@
 			const response = await fetch(`/api/filesystem/projects/${project.id}`);
 			if (response.ok) {
 				fileStructure = await response.json();
-				console.log('Project structure loaded:', fileStructure);
 			} else {
 				await initializeProjectStructure();
 			}
@@ -51,7 +50,6 @@
 			});
 			if (response.ok) {
 				fileStructure = await response.json();
-				console.log('Project structure initialized:', fileStructure);
 			}
 		} catch (error) {
 			console.error('Error initializing project structure:', error);
@@ -72,7 +70,6 @@
 					createdAt: new Date(item.createdAt)
 				}));
 				currentFolder = { ...currentFolder };
-				console.log('Folder contents loaded:', contents);
 			}
 		} catch (error) {
 			console.error('Error loading folder contents:', error);
@@ -135,7 +132,6 @@
 		formData.append('projectId', project.id.toString());
 
 		try {
-			console.log('Uploading files to project folder...');
 			const response = await fetch('/api/filesystem/upload', {
 				method: 'POST',
 				body: formData
@@ -144,8 +140,6 @@
 			const result = await response.json();
 
 			if (response.ok && result.success) {
-				console.log('Upload successful:', result.message);
-
 				if (currentFolder) {
 					await navigateToFolder(currentFolder);
 				} else {
@@ -167,7 +161,6 @@
 	function goBack() {
 		if (breadcrumbs.length > 1) {
 			const parentBreadcrumb = breadcrumbs[breadcrumbs.length - 2];
-			console.log('Going back to:', parentBreadcrumb);
 		} else {
 			currentFolder = null;
 			breadcrumbs = [];
@@ -177,8 +170,6 @@
 	function handleItemClick(item: FileSystemItem) {
 		if (item.type === 'folder') {
 			navigateToFolder(item);
-		} else {
-			console.log('File clicked:', item.name);
 		}
 	}
 
@@ -253,12 +244,12 @@
 			<div class="border-b border-gray-200 mb-6">
 				<nav class="flex space-x-8">
 					<button
-						class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {
+							class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {
 							activeTab === 'materials'
 								? 'border-[#6B9AD9] text-[#6B9AD9]'
 								: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 						}"
-						on:click={() => activeTab = 'materials'}
+							on:click={() => activeTab = 'materials'}
 					>
 						<div class="flex items-center gap-2">
 							<Package size={16} />
@@ -267,12 +258,12 @@
 					</button>
 
 					<button
-						class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {
+							class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {
 							activeTab === 'files'
 								? 'border-[#6B9AD9] text-[#6B9AD9]'
 								: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 						}"
-						on:click={() => activeTab = 'files'}
+							on:click={() => activeTab = 'files'}
 					>
 						<div class="flex items-center gap-2">
 							<Folder size={16} />
@@ -285,16 +276,16 @@
 			{#if activeTab === 'materials'}
 				<!-- Gestionnaire de matériels -->
 				<ProjectMaterialsManager
-					{project}
-					on:materialsUpdated={handleMaterialsUpdated}
+						{project}
+						on:materialsUpdated={handleMaterialsUpdated}
 				/>
 			{:else if currentFolder}
 				<!-- Vue dossier -->
 				<div class="flex items-center justify-between mb-6">
 					<div class="flex items-center gap-3">
 						<button
-							class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
-							on:click={goBack}
+								class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
+								on:click={goBack}
 						>
 							<ChevronLeft size={20} />
 							Back
@@ -314,15 +305,15 @@
 
 					<div class="flex gap-2">
 						<button
-							class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
-							on:click={openUploader}
+								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
+								on:click={openUploader}
 						>
 							<Upload size={16} />
 							Upload
 						</button>
 						<button
-							class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-							on:click={() => {
+								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+								on:click={() => {
 								const name = prompt('Folder name:');
 								if (name) createFolder(name);
 							}}
@@ -334,17 +325,16 @@
 				</div>
 
 				<FileSystemExplorer
-					items={currentFolder.children || []}
-					on:itemClick={(e) => handleItemClick(e.detail)}
-					on:refresh={handleRefresh}
+						items={currentFolder.children || []}
+						on:itemClick={(e) => handleItemClick(e.detail)}
 				/>
 			{:else}
 				<!-- Vue racine des fichiers -->
 				<div class="flex items-center justify-between mb-6">
 					<h2 class="text-xl font-bold text-gray-700 uppercase">ARBORESCENCE DES FICHIERS</h2>
 					<button
-						class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-						on:click={() => {
+							class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+							on:click={() => {
 							const name = prompt('Custom folder name:');
 							if (name) createRootFolder(name);
 						}}
@@ -359,8 +349,8 @@
 					{#each defaultFolders as folderType}
 						{@const folder = getFolderByName(folderType.name)}
 						<button
-							class="p-6 bg-gradient-to-br from-white to-gray-50 border-2 border-[#E7E7E7] rounded-xl hover:border-[#6B9AD9] transition-all duration-300 text-left group"
-							on:click={() => {
+								class="p-6 bg-gradient-to-br from-white to-gray-50 border-2 border-[#E7E7E7] rounded-xl hover:border-[#6B9AD9] transition-all duration-300 text-left group"
+								on:click={() => {
 								if (folder) {
 									navigateToFolder(folder);
 								}
@@ -392,8 +382,8 @@
 						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 							{#each fileStructure.customFolders as folder}
 								<button
-									class="p-4 bg-gradient-to-br from-[#6CB1C8] to-[#5077BA] text-white rounded-lg hover:from-[#5a9bb4] hover:to-[#4563a0] transition-all duration-300 text-left"
-									on:click={() => navigateToFolder(folder)}
+										class="p-4 bg-gradient-to-br from-[#6CB1C8] to-[#5077BA] text-white rounded-lg hover:from-[#5a9bb4] hover:to-[#4563a0] transition-all duration-300 text-left"
+										on:click={() => navigateToFolder(folder)}
 								>
 									<div class="flex items-center gap-3">
 										<Folder size={24} />
@@ -413,8 +403,8 @@
 				<!-- Upload vers la racine -->
 				<div class="border-t-2 border-[#E7E7E7] pt-6 text-center">
 					<button
-						class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors mx-auto"
-						on:click={openUploader}
+							class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors mx-auto"
+							on:click={openUploader}
 					>
 						<Upload size={20} />
 						Upload Files to Project Root
@@ -427,7 +417,7 @@
 
 {#if showUploader}
 	<FileUploader
-		on:upload={(e) => handleUpload(e.detail)}
-		on:cancel={() => showUploader = false}
+			on:upload={(e) => handleUpload(e.detail)}
+			on:cancel={() => showUploader = false}
 	/>
 {/if}
