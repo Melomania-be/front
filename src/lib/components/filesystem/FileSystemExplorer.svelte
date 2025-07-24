@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version complète avec gestion des matériels -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version corrigée avec gestion complète des matériels -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -23,6 +23,8 @@
 	import type { Material } from '$lib/types/Material';
 	import FilePreview from './FilePreview.svelte';
 
+	import { onMount } from 'svelte';
+
 	const dispatch = createEventDispatcher();
 
 	export let items: FileSystemItem[] = [];
@@ -37,6 +39,72 @@
 	let previewFile: FileSystemItem | null = null;
 	let expandedMaterials: Set<number> = new Set(); // Matériels expanded
 	let showMaterialUploader: { [key: number]: boolean } = {}; // Upload par matériel
+	let materialsData: { [key: number]: Material[] } = {}; // Cache des matériels avec fichiers
+	let loadedPieces = new Set<number>(); // Track des pièces déjà chargées
+
+	// ✅ CHARGEMENT AUTOMATIQUE AU MONTAGE
+	onMount(async () => {
+		// Charger les matériels pour toutes les pièces
+		for (const item of items) {
+			if (item.type === 'folder' && item.pieceId && !loadedPieces.has(item.pieceId)) {
+				await loadMaterialsWithFiles(item.pieceId);
+				loadedPieces.add(item.pieceId);
+			}
+		}
+		materialsData = { ...materialsData }; // Force reactivity
+	});
+
+	// ✅ RÉACTIF AUX CHANGEMENTS D'ITEMS
+	$: {
+		if (items) {
+			loadMaterialsForNewItems();
+		}
+	}
+
+	async function loadMaterialsForNewItems() {
+		for (const item of items) {
+			if (item.type === 'folder' && item.pieceId && !loadedPieces.has(item.pieceId)) {
+				await loadMaterialsWithFiles(item.pieceId);
+				loadedPieces.add(item.pieceId);
+			}
+		}
+		materialsData = { ...materialsData };
+	}
+
+	// ✅ CHARGEMENT DES MATÉRIELS AVEC FICHIERS (comme dans ProgramSection)
+	async function loadMaterialsWithFiles(pieceId: number) {
+		if (materialsData[pieceId]) return materialsData[pieceId]; // Cache
+
+		try {
+			console.log(`📦 Loading materials for piece: ${pieceId}`);
+
+			const response = await fetch(`/api/materials/piece/${pieceId}`);
+			if (response.ok) {
+				const materials = await response.json();
+				console.log(`📦 Loaded ${materials.length} materials for piece ${pieceId}:`, materials);
+
+				// ✅ COPIE DE LA LOGIQUE DE ProgramSection.svelte
+				// Charger les fichiers pour chaque matériel
+				for (const material of materials) {
+					console.log(`🔍 Material ${material.name} has files:`, material.files);
+					console.log(`🔍 Material ${material.name} files_count:`, material.files_count);
+
+					// S'assurer que les fichiers sont présents
+					if (!material.files) {
+						material.files = [];
+					}
+				}
+
+				console.log(`✅ Final materials for piece ${pieceId}:`, materials);
+				materialsData[pieceId] = materials;
+				return materials;
+			}
+		} catch (error) {
+			console.error('Error loading materials for piece:', pieceId, error);
+		}
+
+		return [];
+	}
 
 	function formatFileSize(bytes: number): string {
 		if (bytes === 0) return '0 B';
@@ -148,6 +216,52 @@
 		}
 	}
 
+	// ✅ SUPPRESSION DE FICHIER DE MATÉRIEL AVEC MISE À JOUR LOCALE
+	async function deleteMaterialFile(fileId: number, fileName: string, materialId: number) {
+		if (!confirm(`Êtes-vous sûr de vouloir supprimer "${fileName}" ?`)) {
+			return;
+		}
+
+		try {
+			const response = await fetch(`/api/filesystem/files/${fileId}`, {
+				method: 'DELETE'
+			});
+
+			if (response.ok) {
+				console.log(`✅ File ${fileName} deleted successfully`);
+
+				// ✅ MISE À JOUR LOCALE IMMÉDIATE
+				// Trouver le matériel et supprimer le fichier de son tableau
+				for (const pieceId in materialsData) {
+					const materials = materialsData[pieceId];
+					const material = materials.find(m => m.id === materialId);
+
+					if (material && material.files) {
+						// Supprimer le fichier du tableau local
+						const fileIndex = material.files.findIndex(f => f.id === fileId);
+						if (fileIndex !== -1) {
+							material.files.splice(fileIndex, 1);
+							console.log(`🗑️ Removed file from local cache. Remaining files: ${material.files.length}`);
+						}
+					}
+				}
+
+				// ✅ FORCER LA RÉACTIVITÉ
+				materialsData = { ...materialsData };
+
+				// ✅ DISPATCH POUR NOTIFIER LE PARENT
+				dispatch('refresh');
+
+			} else {
+				console.error('Delete failed:', response.status);
+				alert('Erreur lors de la suppression');
+			}
+		} catch (error) {
+			console.error('Error deleting material file:', error);
+			alert('Erreur lors de la suppression: ' + error.message);
+		}
+	}
+
 	async function deleteItem(item: FileSystemItem) {
 		if (confirm(`Êtes-vous sûr de vouloir supprimer "${item.name}" ?`)) {
 			try {
@@ -208,8 +322,8 @@
 		showPreview = true;
 	}
 
-	// ✅ NOUVEAU : Gestion des matériels
-	function toggleMaterialExpansion(materialId: number) {
+	// ✅ GESTION DES MATÉRIELS
+	async function toggleMaterialExpansion(materialId: number, pieceId: number) {
 		if (expandedMaterials.has(materialId)) {
 			expandedMaterials.delete(materialId);
 		} else {
@@ -228,7 +342,7 @@
 		showMaterialUploader = { ...showMaterialUploader };
 	}
 
-	// ✅ NOUVEAU : Upload vers un matériel depuis l'explorateur
+	// ✅ UPLOAD vers un matériel AVEC MISE À JOUR LOCALE
 	async function handleMaterialFileUpload(materialId: number, files: FileList) {
 		if (!files || files.length === 0) return;
 
@@ -249,7 +363,29 @@
 
 			if (response.ok && responseData.success) {
 				console.log('✅ Upload successful to material');
-				dispatch('refresh'); // Rafraîchir l'explorateur
+
+				// ✅ MISE À JOUR LOCALE IMMÉDIATE
+				// Ajouter les nouveaux fichiers au tableau local
+				if (responseData.files) {
+					for (const pieceId in materialsData) {
+						const materials = materialsData[pieceId];
+						const material = materials.find(m => m.id === materialId);
+
+						if (material) {
+							if (!material.files) {
+								material.files = [];
+							}
+							// Ajouter les nouveaux fichiers
+							material.files.push(...responseData.files);
+							console.log(`📁 Added ${responseData.files.length} files to local cache. Total files: ${material.files.length}`);
+						}
+					}
+				}
+
+				// ✅ FORCER LA RÉACTIVITÉ
+				materialsData = { ...materialsData };
+
+				dispatch('refresh');
 				closeMaterialUploader(materialId);
 			} else {
 				console.error('❌ Upload failed:', responseData);
@@ -261,7 +397,7 @@
 		}
 	}
 
-	// ✅ NOUVEAU : Télécharger un fichier de matériel
+	// ✅ Télécharger un fichier de matériel
 	async function downloadMaterialFile(fileId: number, fileName: string) {
 		try {
 			const response = await fetch(`/api/files/download/${fileId}`);
@@ -282,9 +418,8 @@
 		}
 	}
 
-	// ✅ NOUVEAU : Prévisualiser un fichier de matériel
+	// ✅ Prévisualiser un fichier de matériel
 	function previewMaterialFile(file: any) {
-		// Créer un objet FileSystemItem compatible pour la prévisualisation
 		const fileItem: FileSystemItem = {
 			id: file.id,
 			name: file.name,
@@ -300,7 +435,7 @@
 		showPreview = true;
 	}
 
-	// ✅ NOUVEAU : Gérer l'input file pour matériel
+	// ✅ Gérer l'input file pour matériel
 	function handleMaterialFileInput(materialId: number, event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
@@ -320,12 +455,14 @@
 	{:else}
 		<div class="grid gap-2">
 			{#each items as item}
+				{@const materialsList = materialsData[item.pieceId] || item.materials || []}
+
 				<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
 					<!-- Élément principal (fichier ou dossier) -->
 					<div
-							class="flex items-center justify-between p-4 hover:bg-gray-100 transition-all duration-200 cursor-pointer group"
-							on:click={() => handleItemClick(item)}
-							on:contextmenu={(e) => handleRightClick(e, item)}
+						class="flex items-center justify-between p-4 hover:bg-gray-100 transition-all duration-200 cursor-pointer group"
+						on:click={() => handleItemClick(item)}
+						on:contextmenu={(e) => handleRightClick(e, item)}
 					>
 						<div class="flex items-center gap-3 flex-1 min-w-0">
 							<div class="flex-shrink-0 p-2 bg-white rounded-lg border border-gray-200 group-hover:border-[#6B9AD9] transition-colors">
@@ -339,8 +476,8 @@
 											{formatFileSize(item.size || 0)}
 										{:else}
 											Dossier
-											{#if item.materials && item.materials.length > 0}
-												• {item.materials.length} matériel{item.materials.length !== 1 ? 's' : ''}
+											{#if materialsList.length > 0}
+												• {materialsList.length} matériel{materialsList.length !== 1 ? 's' : ''}
 											{/if}
 										{/if}
 									</p>
@@ -360,34 +497,34 @@
 							<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 								{#if item.type === 'file'}
 									<button
-											class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-											on:click|stopPropagation={() => previewFileFunction(item)}
-											title="Prévisualiser"
+										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+										on:click|stopPropagation={() => previewFileFunction(item)}
+										title="Prévisualiser"
 									>
 										<Eye size={16} />
 									</button>
 
 									<button
-											class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-											on:click|stopPropagation={() => downloadFile(item)}
-											title="Télécharger"
+										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+										on:click|stopPropagation={() => downloadFile(item)}
+										title="Télécharger"
 									>
 										<Download size={16} />
 									</button>
 								{/if}
 
 								<button
-										class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
-										on:click|stopPropagation={() => renameItem(item)}
-										title="Renommer"
+									class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
+									on:click|stopPropagation={() => renameItem(item)}
+									title="Renommer"
 								>
 									<Edit3 size={16} />
 								</button>
 
 								<button
-										class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-										on:click|stopPropagation={() => deleteItem(item)}
-										title="Supprimer"
+									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+									on:click|stopPropagation={() => deleteItem(item)}
+									title="Supprimer"
 								>
 									<Trash2 size={16} />
 								</button>
@@ -395,137 +532,155 @@
 						{/if}
 					</div>
 
-					<!-- ✅ NOUVEAU : Section des matériels pour les dossiers de pièces -->
-					{#if showMaterials && item.type === 'folder' && item.materials && item.materials.length > 0}
-						<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-							<div class="p-3">
-								<h5 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-									<Package size={14} class="text-blue-600" />
-									Matériels de cette pièce ({item.materials.length})
-								</h5>
+					<!-- ✅ SECTION DES MATÉRIELS SIMPLIFIÉE -->
+					{#if showMaterials && item.type === 'folder' && item.pieceId && materialsData[item.pieceId]}
+						{@const materials = materialsData[item.pieceId]}
+						{#if materials.length > 0}
+							<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+								<div class="p-3">
+									<h5 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+										<Package size={14} class="text-blue-600" />
+										Matériels de cette pièce ({materials.length})
+									</h5>
 
-								<div class="space-y-2">
-									{#each item.materials as material}
-										<div class="bg-white border border-blue-200 rounded-lg overflow-hidden">
-											<!-- En-tête du matériel -->
-											<div class="p-3">
-												<div class="flex items-center justify-between">
-													<div class="flex items-center gap-2 flex-1">
-														<button
+									<div class="space-y-2">
+										{#each materials as material}
+											<div class="bg-white border border-blue-200 rounded-lg overflow-hidden">
+												<!-- En-tête du matériel -->
+												<div class="p-3">
+													<div class="flex items-center justify-between">
+														<div class="flex items-center gap-2 flex-1">
+															<button
 																class="p-1 hover:bg-gray-100 rounded transition-colors"
-																on:click={() => toggleMaterialExpansion(material.id)}
-														>
-															{#if expandedMaterials.has(material.id)}
-																<ChevronDown size={14} class="text-gray-600" />
-															{:else}
-																<ChevronRight size={14} class="text-gray-600" />
-															{/if}
-														</button>
+																on:click={() => toggleMaterialExpansion(material.id, item.pieceId)}
+															>
+																{#if expandedMaterials.has(material.id)}
+																	<ChevronDown size={14} class="text-gray-600" />
+																{:else}
+																	<ChevronRight size={14} class="text-gray-600" />
+																{/if}
+															</button>
 
-														<div class="flex-1">
-															<div class="flex items-center gap-2">
-																<h6 class="font-medium text-gray-800">{material.name}</h6>
-																{#if material.is_default}
-																	<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-																		Défaut
-																	</span>
-																{/if}
-															</div>
-															<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-																<span>{material.files_count || 0} fichier{material.files_count !== 1 ? 's' : ''}</span>
-																{#if material.edition}
-																	<span>Édition: {material.edition}</span>
-																{/if}
-																{#if material.editor}
-																	<span>Éditeur: {material.editor}</span>
-																{/if}
+															<div class="flex-1">
+																<div class="flex items-center gap-2">
+																	<h6 class="font-medium text-gray-800">{material.name}</h6>
+																	{#if material.is_default}
+																		<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+																			Défaut
+																		</span>
+																	{/if}
+																</div>
+																<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
+																	<span>{material.files?.length || 0} fichier{(material.files?.length || 0) !== 1 ? 's' : ''}</span>
+																	{#if material.edition}
+																		<span>Édition: {material.edition}</span>
+																	{/if}
+																	{#if material.editor}
+																		<span>Éditeur: {material.editor}</span>
+																	{/if}
+																</div>
 															</div>
 														</div>
-													</div>
 
-													<!-- Actions du matériel -->
-													<div class="flex items-center gap-1">
-														<input
+														<!-- Actions du matériel -->
+														<div class="flex items-center gap-1">
+															<input
 																type="file"
 																multiple
 																accept=".pdf,.musicxml,.mxl,.mid,.midi,.jpg,.jpeg,.png,.doc,.docx,.txt,.zip"
 																style="display: none;"
 																id="material-upload-{material.id}"
 																on:change={(e) => handleMaterialFileInput(material.id, e)}
-														/>
-														<button
+															/>
+															<button
 																class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
 																on:click={() => document.getElementById(`material-upload-${material.id}`)?.click()}
 																title="Ajouter des fichiers"
-														>
-															<Upload size={14} />
-														</button>
+															>
+																<Upload size={14} />
+															</button>
+														</div>
 													</div>
+
+													{#if material.description}
+														<p class="text-sm text-gray-600 mt-2">{material.description}</p>
+													{/if}
 												</div>
 
-												{#if material.description}
-													<p class="text-sm text-gray-600 mt-2">{material.description}</p>
-												{/if}
-											</div>
-
-											<!-- ✅ Fichiers du matériel (si expanded) -->
-											{#if expandedMaterials.has(material.id)}
-												<div class="border-t border-blue-100 bg-blue-25">
-													{#if material.files && material.files.length > 0}
-														<div class="p-3 space-y-2">
-															{#each material.files as file}
-																<div class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
-																	<div class="flex items-center gap-2 flex-1 min-w-0">
-																		<svelte:component
+												<!-- ✅ Fichiers du matériel (si expanded) -->
+												{#if expandedMaterials.has(material.id)}
+													<div class="border-t border-blue-100 bg-blue-25">
+														{#if material.files && material.files.length > 0}
+															<div class="p-3 space-y-2">
+																{#each material.files as file}
+																	<div class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
+																		<div class="flex items-center gap-2 flex-1 min-w-0">
+																			<svelte:component
 																				this={getFileIcon({...file, type: 'file'})}
 																				size={16}
 																				class={getFileColor({...file, type: 'file'})}
-																		/>
-																		<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
-																		<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
-																		{#if file.instrument_part}
-																			<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-																				{file.instrument_part}
-																			</span>
-																		{/if}
-																	</div>
+																			/>
+																			<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
+																			<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
+																			{#if file.instrument_part}
+																				<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+																					{file.instrument_part}
+																				</span>
+																			{/if}
+																		</div>
 
-																	<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-																		<button
+																		<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+																			<button
 																				class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
 																				on:click={() => previewMaterialFile(file)}
 																				title="Prévisualiser"
-																		>
-																			<Eye size={14} />
-																		</button>
-																		<button
+																			>
+																				<Eye size={14} />
+																			</button>
+																			<button
 																				class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
 																				on:click={() => downloadMaterialFile(file.id, file.name)}
 																				title="Télécharger"
-																		>
-																			<Download size={14} />
-																		</button>
+																			>
+																				<Download size={14} />
+																			</button>
+																			<button
+																				class="p-1 text-gray-600 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+																				on:click={() => deleteMaterialFile(file.id, file.name, material.id)}
+																				title="Supprimer"
+																			>
+																				<Trash2 size={14} />
+																			</button>
+																		</div>
 																	</div>
-																</div>
-															{/each}
-														</div>
-													{:else}
-														<div class="p-4 text-center text-gray-500">
-															<FileText class="mx-auto mb-2" size={24} />
-															<p class="text-sm">Aucun fichier dans ce matériel</p>
-															<button
+																{/each}
+															</div>
+														{:else}
+															<div class="p-4 text-center text-gray-500">
+																<FileText class="mx-auto mb-2" size={24} />
+																<p class="text-sm">Aucun fichier dans ce matériel</p>
+																<button
 																	class="text-xs text-blue-600 hover:text-blue-700 mt-1"
 																	on:click={() => document.getElementById(`material-upload-${material.id}`)?.click()}
-															>
-																Ajouter des fichiers
-															</button>
-														</div>
-													{/if}
-												</div>
-											{/if}
-										</div>
-									{/each}
+																>
+																	Ajouter des fichiers
+																</button>
+															</div>
+														{/if}
+													</div>
+												{/if}
+											</div>
+										{/each}
+									</div>
 								</div>
+							</div>
+						{/if}
+					{:else if showMaterials && item.type === 'folder' && item.pieceId && !materialsData[item.pieceId]}
+						<!-- Indicateur de chargement -->
+						<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3">
+							<div class="flex items-center gap-2">
+								<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+								<span class="text-sm text-gray-600">Chargement des matériels...</span>
 							</div>
 						</div>
 					{/if}
@@ -538,14 +693,14 @@
 <!-- Menu contextuel -->
 {#if showContextMenu && selectedItem}
 	<div
-			class="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 min-w-[150px]"
-			style="left: {contextMenuPosition.x}px; top: {contextMenuPosition.y}px;"
-			on:click|stopPropagation
+		class="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 min-w-[150px]"
+		style="left: {contextMenuPosition.x}px; top: {contextMenuPosition.y}px;"
+		on:click|stopPropagation
 	>
 		{#if selectedItem.type === 'file'}
 			<button
-					class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-					on:click={() => {
+				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+				on:click={() => {
 					previewFileFunction(selectedItem);
 					showContextMenu = false;
 				}}
@@ -555,8 +710,8 @@
 			</button>
 
 			<button
-					class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-					on:click={() => {
+				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+				on:click={() => {
 					downloadFile(selectedItem);
 					showContextMenu = false;
 				}}
@@ -567,8 +722,8 @@
 		{/if}
 
 		<button
-				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-				on:click={() => {
+			class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+			on:click={() => {
 				renameItem(selectedItem);
 				showContextMenu = false;
 			}}
@@ -580,8 +735,8 @@
 		<hr class="my-1 border-gray-200" />
 
 		<button
-				class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600 flex items-center gap-2"
-				on:click={() => {
+			class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600 flex items-center gap-2"
+			on:click={() => {
 				deleteItem(selectedItem);
 				showContextMenu = false;
 			}}
@@ -595,10 +750,10 @@
 <!-- Modal de prévisualisation -->
 {#if showPreview && previewFile}
 	<FilePreview
-			fileId={previewFile.id}
-			fileName={previewFile.name}
-			fileType={previewFile.mimeType || ''}
-			onClose={() => {
+		fileId={previewFile.id}
+		fileName={previewFile.name}
+		fileType={previewFile.mimeType || ''}
+		onClose={() => {
 			showPreview = false;
 			previewFile = null;
 		}}
@@ -608,7 +763,7 @@
 <svelte:window on:click={() => showContextMenu = false} />
 
 <style>
-	.bg-blue-25 {
-		background-color: #f8faff;
-	}
+    .bg-blue-25 {
+        background-color: #f8faff;
+    }
 </style>
