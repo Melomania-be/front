@@ -6,9 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/ProjectMaterialAssignment.svelte" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/ProjectMaterialsSelector.svelte" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/SimpleMaterialsManager.svelte" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/files/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/files/+server.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

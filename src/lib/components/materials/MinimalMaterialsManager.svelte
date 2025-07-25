@@ -49,38 +49,54 @@
 	async function loadMaterialsForPiece(piece: any) {
 		try {
 			selectedPiece = piece;
+			console.log(`🔄 Loading materials for piece: ${piece.name}`);
+
 			const response = await fetch(`/api/materials/piece/${piece.id}`);
 			if (response.ok) {
-				materials = await response.json();
+				const materialsData = await response.json();
+				console.log(`📦 Loaded ${materialsData.length} materials from API`);
 
-				// ✅ CORRECTION : Charger le nombre réel de fichiers pour chaque matériel
-				for (const material of materials) {
+				// ✅ SOLUTION DÉFINITIVE : Charger les fichiers réels en parallèle
+				const materialPromises = materialsData.map(async (material) => {
 					try {
+						// Garder le count original comme fallback
+						const originalCount = material.files_count || material.files?.length || 0;
+
+						// Essayer de récupérer les fichiers réels
 						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
 						if (filesResponse.ok) {
 							const files = await filesResponse.json();
-							// Mettre à jour le count avec le nombre réel de fichiers
-							material.files_count = Array.isArray(files) ? files.length : 0;
-							material.files = files; // Stocker aussi les fichiers si besoin
+							material.files = Array.isArray(files) ? files : [];
+							material.files_count = material.files.length;
 						} else {
-							// Si la route n'existe pas, essayer avec l'ancienne structure
-							material.files_count = material.files?.length || 0;
+							// Fallback vers les données originales
+							material.files_count = originalCount;
+							material.files = material.files || [];
 						}
+
+						return material;
 					} catch (error) {
 						console.error(`Error loading files for material ${material.id}:`, error);
-						material.files_count = material.files?.length || 0;
+						// En cas d'erreur, utiliser les données existantes
+						material.files_count = material.files_count || material.files?.length || 0;
+						return material;
 					}
-				}
+				});
 
-				console.log(`✅ Loaded ${materials.length} materials for piece:`, piece.name);
-				console.log('📁 Materials with file counts:', materials.map(m => ({
-					name: m.name,
-					files_count: m.files_count
-				})));
+				// Attendre le traitement de tous les matériels
+				materials = await Promise.all(materialPromises);
 
-				// Force reactivity
+				console.log(`✅ Final materials with file counts:`,
+					materials.map(m => ({
+						name: m.name,
+						files_count: m.files_count
+					}))
+				);
+
+				// Forcer la réactivité
 				materials = [...materials];
 			} else {
+				console.error(`❌ Failed to load materials for piece ${piece.id}`);
 				materials = [];
 			}
 		} catch (error) {

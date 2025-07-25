@@ -61,44 +61,72 @@
 		if (materialsData[pieceId]) return materialsData[pieceId];
 
 		try {
-			console.log(`📦 Loading materials with real file count for piece: ${pieceId}`);
+			console.log(`📦 Loading materials with file count for piece: ${pieceId}`);
 
 			const response = await fetch(`/api/materials/piece/${pieceId}`);
 			if (response.ok) {
 				const materials = await response.json();
 				console.log(`📦 Loaded ${materials.length} materials for piece ${pieceId}`);
 
-				// ✅ CORRECTION : Charger le nombre réel de fichiers pour chaque matériel
-				for (const material of materials) {
+				// ✅ SOLUTION DÉFINITIVE : Récupérer les fichiers réels pour chaque matériel
+				const materialPromises = materials.map(async (material) => {
 					try {
+						// Préserver le count existant comme backup
+						const backupCount = material.files_count || material.files?.length || 0;
+
 						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
 						if (filesResponse.ok) {
 							const files = await filesResponse.json();
-							material.files = files;
-							material.files_count = Array.isArray(files) ? files.length : 0;
-							console.log(`📁 Material ${material.name} has ${material.files_count} files`);
+
+							// Mise à jour avec les vraies données
+							material.files = Array.isArray(files) ? files : [];
+							material.files_count = material.files.length;
+
+							console.log(`📁 Material "${material.name}": ${material.files_count} files`);
 						} else {
-							// Fallback : utiliser les fichiers déjà chargés
-							material.files_count = material.files?.length || 0;
-							console.log(`📁 Material ${material.name} fallback count: ${material.files_count}`);
+							// Utiliser les données backup
+							material.files_count = backupCount;
+							console.log(`📁 Material "${material.name}": ${material.files_count} files (backup)`);
 						}
+
+						return material;
 					} catch (error) {
 						console.error(`Error loading files for material ${material.id}:`, error);
-						material.files_count = material.files?.length || 0;
+						material.files_count = material.files_count || material.files?.length || 0;
+						return material;
 					}
-				}
+				});
 
-				console.log(`✅ Final materials for piece ${pieceId} with file counts:`,
-					materials.map(m => ({ name: m.name, files_count: m.files_count })));
+				// Attendre que tous les matériels soient traités
+				const processedMaterials = await Promise.all(materialPromises);
 
-				materialsData[pieceId] = materials;
-				return materials;
+				console.log(`✅ Final materials for piece ${pieceId}:`,
+					processedMaterials.map(m => ({
+						name: m.name,
+						files_count: m.files_count
+					}))
+				);
+
+				materialsData[pieceId] = processedMaterials;
+				return processedMaterials;
 			}
 		} catch (error) {
 			console.error('Error loading materials for piece:', pieceId, error);
 		}
 
 		return [];
+	}
+
+	// ✅ AUSSI : Corriger la fonction getTotalFilesCount
+	function getTotalFilesCount(pieceId: number): number {
+		const materials = materialsData[pieceId] || [];
+		const total = materials.reduce((total, material) => {
+			const count = material.files_count || 0;
+			return total + count;
+		}, 0);
+
+		console.log(`📊 Total files for piece ${pieceId}: ${total}`);
+		return total;
 	}
 
 	function formatFileSize(bytes: number): string {
@@ -429,13 +457,7 @@
 		}
 	}
 
-	// ✅ CORRECTION : Calculer le nombre total de fichiers correctement
-	function getTotalFilesCount(pieceId: number): number {
-		const materials = materialsData[pieceId] || [];
-		return materials.reduce((total, material) => {
-			return total + (material.files_count || 0);
-		}, 0);
-	}
+
 </script>
 
 <div class="space-y-2">
