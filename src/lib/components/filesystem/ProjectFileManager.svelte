@@ -1,11 +1,11 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte (version corrigée) -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte - Version intégrée -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { Music, Image, Video, FileText, Folder, Plus, Upload, Download, Trash2, ChevronLeft, Package } from 'lucide-svelte';
+	import { Music, Image, Video, FileText, Folder, Plus, Upload, ChevronLeft, Package } from 'lucide-svelte';
 	import type { ProjectFileStructure, FileSystemItem } from '$lib/types/FileSystem';
 	import FileSystemExplorer from './FileSystemExplorer.svelte';
 	import FileUploader from './FileUploader.svelte';
-	import ProjectMaterialsManager from '../materials/ProjectMaterialsManager.svelte';
+	import MinimalMaterialsManager from '../materials/MinimalMaterialsManager.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -65,18 +65,14 @@
 			if (response.ok) {
 				const contents = await response.json();
 
-				// ✅ CORRECTION : Si c'est le dossier "Scores", enrichir avec les matériels
 				if (folder.name === 'Scores') {
-					// Charger aussi les matériels pour chaque pièce
 					const enrichedContents = await Promise.all(contents.map(async (item) => {
 						if (item.type === 'folder' && item.pieceId) {
-							// Charger les matériels pour cette pièce
 							try {
 								const materialsResponse = await fetch(`/api/materials/piece/${item.pieceId}`);
 								if (materialsResponse.ok) {
 									const materials = await materialsResponse.json();
 									item.materials = materials;
-									console.log(`📦 Loaded ${materials.length} materials for piece ${item.name}`);
 								}
 							} catch (error) {
 								console.error('Error loading materials for piece:', item.pieceId, error);
@@ -237,7 +233,6 @@
 		return fileStructure.rootFolder.children.find(f => f.name === name) || null;
 	}
 
-	// ✅ CORRECTION : Fonction getFileCount améliorée pour compter les fichiers des matériels
 	function getFileCount(folder: FileSystemItem | null): number {
 		if (!folder?.children) return 0;
 
@@ -246,12 +241,10 @@
 			if (child.type === 'file') {
 				count++;
 			} else if (child.type === 'folder') {
-				// Compter les fichiers du dossier lui-même
 				if (child.children) {
 					count += getFileCount(child);
 				}
 
-				// ✅ NOUVEAU : Compter aussi les fichiers des matériels si c'est un dossier de pièce
 				if (child.materials && child.materials.length > 0) {
 					for (const material of child.materials) {
 						count += material.files?.length || 0;
@@ -269,7 +262,6 @@
 	}
 
 	function handleMaterialsUpdated() {
-		// Rafraîchir les données du projet si nécessaire
 		dispatch('materialsUpdated');
 	}
 </script>
@@ -315,9 +307,8 @@
 			</div>
 
 			{#if activeTab === 'materials'}
-				<!-- Gestionnaire de matériels -->
-				<ProjectMaterialsManager
-					{project}
+				<!-- Gestionnaire minimal de matériels -->
+				<MinimalMaterialsManager
 					on:materialsUpdated={handleMaterialsUpdated}
 				/>
 			{:else if currentFolder}

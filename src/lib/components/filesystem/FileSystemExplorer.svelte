@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version corrigée avec gestion complète des matériels -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version corrigée -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -29,73 +29,68 @@
 
 	export let items: FileSystemItem[] = [];
 	export let showActions = true;
-	export let showMaterials = true; // Afficher les matériels dans les dossiers de pièces
-	export let projectId: number | null = null; // Pour les actions spécifiques au projet
+	export let showMaterials = true;
+	export let projectId: number | null = null;
 
 	let selectedItem: FileSystemItem | null = null;
 	let showContextMenu = false;
 	let contextMenuPosition = { x: 0, y: 0 };
 	let showPreview = false;
 	let previewFile: FileSystemItem | null = null;
-	let expandedMaterials: Set<number> = new Set(); // Matériels expanded
-	let showMaterialUploader: { [key: number]: boolean } = {}; // Upload par matériel
-	let materialsData: { [key: number]: Material[] } = {}; // Cache des matériels avec fichiers
-	let loadedPieces = new Set<number>(); // Track des pièces déjà chargées
+	let expandedMaterials: Set<number> = new Set();
+	let showMaterialUploader: { [key: number]: boolean } = {};
+	let materialsData: { [key: number]: Material[] } = {};
+	let loadedPieces = new Set<number>();
 
-	// ✅ CHARGEMENT AUTOMATIQUE AU MONTAGE
 	onMount(async () => {
-		// Charger les matériels pour toutes les pièces
-		for (const item of items) {
-			if (item.type === 'folder' && item.pieceId && !loadedPieces.has(item.pieceId)) {
-				await loadMaterialsWithFiles(item.pieceId);
-				loadedPieces.add(item.pieceId);
-			}
-		}
-		materialsData = { ...materialsData }; // Force reactivity
+		await loadMaterialsForItems();
 	});
 
-	// ✅ RÉACTIF AUX CHANGEMENTS D'ITEMS
-	$: {
-		if (items) {
-			loadMaterialsForNewItems();
-		}
-	}
-
-	async function loadMaterialsForNewItems() {
+	// ✅ CORRECTION : Charger les matériels avec le décompte réel des fichiers
+	async function loadMaterialsForItems() {
 		for (const item of items) {
 			if (item.type === 'folder' && item.pieceId && !loadedPieces.has(item.pieceId)) {
-				await loadMaterialsWithFiles(item.pieceId);
+				await loadMaterialsWithRealFileCount(item.pieceId);
 				loadedPieces.add(item.pieceId);
 			}
 		}
 		materialsData = { ...materialsData };
 	}
 
-	// ✅ CHARGEMENT DES MATÉRIELS AVEC FICHIERS (comme dans ProgramSection)
-	async function loadMaterialsWithFiles(pieceId: number) {
-		if (materialsData[pieceId]) return materialsData[pieceId]; // Cache
+	async function loadMaterialsWithRealFileCount(pieceId: number) {
+		if (materialsData[pieceId]) return materialsData[pieceId];
 
 		try {
-			console.log(`📦 Loading materials for piece: ${pieceId}`);
+			console.log(`📦 Loading materials with real file count for piece: ${pieceId}`);
 
 			const response = await fetch(`/api/materials/piece/${pieceId}`);
 			if (response.ok) {
 				const materials = await response.json();
-				console.log(`📦 Loaded ${materials.length} materials for piece ${pieceId}:`, materials);
+				console.log(`📦 Loaded ${materials.length} materials for piece ${pieceId}`);
 
-				// ✅ COPIE DE LA LOGIQUE DE ProgramSection.svelte
-				// Charger les fichiers pour chaque matériel
+				// ✅ CORRECTION : Charger le nombre réel de fichiers pour chaque matériel
 				for (const material of materials) {
-					console.log(`🔍 Material ${material.name} has files:`, material.files);
-					console.log(`🔍 Material ${material.name} files_count:`, material.files_count);
-
-					// S'assurer que les fichiers sont présents
-					if (!material.files) {
-						material.files = [];
+					try {
+						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
+						if (filesResponse.ok) {
+							const files = await filesResponse.json();
+							material.files = files;
+							material.files_count = Array.isArray(files) ? files.length : 0;
+							console.log(`📁 Material ${material.name} has ${material.files_count} files`);
+						} else {
+							// Fallback : utiliser les fichiers déjà chargés
+							material.files_count = material.files?.length || 0;
+							console.log(`📁 Material ${material.name} fallback count: ${material.files_count}`);
+						}
+					} catch (error) {
+						console.error(`Error loading files for material ${material.id}:`, error);
+						material.files_count = material.files?.length || 0;
 					}
 				}
 
-				console.log(`✅ Final materials for piece ${pieceId}:`, materials);
+				console.log(`✅ Final materials for piece ${pieceId} with file counts:`,
+					materials.map(m => ({ name: m.name, files_count: m.files_count })));
+
 				materialsData[pieceId] = materials;
 				return materials;
 			}
@@ -216,7 +211,6 @@
 		}
 	}
 
-	// ✅ SUPPRESSION DE FICHIER DE MATÉRIEL AVEC MISE À JOUR LOCALE
 	async function deleteMaterialFile(fileId: number, fileName: string, materialId: number) {
 		if (!confirm(`Êtes-vous sûr de vouloir supprimer "${fileName}" ?`)) {
 			return;
@@ -228,28 +222,22 @@
 			});
 
 			if (response.ok) {
-				console.log(`✅ File ${fileName} deleted successfully`);
-
-				// ✅ MISE À JOUR LOCALE IMMÉDIATE
-				// Trouver le matériel et supprimer le fichier de son tableau
+				// Recharger les matériels pour mettre à jour le count
 				for (const pieceId in materialsData) {
 					const materials = materialsData[pieceId];
 					const material = materials.find(m => m.id === materialId);
 
 					if (material && material.files) {
-						// Supprimer le fichier du tableau local
 						const fileIndex = material.files.findIndex(f => f.id === fileId);
 						if (fileIndex !== -1) {
 							material.files.splice(fileIndex, 1);
-							console.log(`🗑️ Removed file from local cache. Remaining files: ${material.files.length}`);
+							material.files_count = material.files.length; // ✅ Mise à jour du count
+							console.log(`🗑️ Updated file count for material ${material.name}: ${material.files_count}`);
 						}
 					}
 				}
 
-				// ✅ FORCER LA RÉACTIVITÉ
 				materialsData = { ...materialsData };
-
-				// ✅ DISPATCH POUR NOTIFIER LE PARENT
 				dispatch('refresh');
 
 			} else {
@@ -322,14 +310,13 @@
 		showPreview = true;
 	}
 
-	// ✅ GESTION DES MATÉRIELS
 	async function toggleMaterialExpansion(materialId: number, pieceId: number) {
 		if (expandedMaterials.has(materialId)) {
 			expandedMaterials.delete(materialId);
 		} else {
 			expandedMaterials.add(materialId);
 		}
-		expandedMaterials = new Set(expandedMaterials); // Force reactivity
+		expandedMaterials = new Set(expandedMaterials);
 	}
 
 	function openMaterialUploader(materialId: number) {
@@ -342,7 +329,6 @@
 		showMaterialUploader = { ...showMaterialUploader };
 	}
 
-	// ✅ UPLOAD vers un matériel AVEC MISE À JOUR LOCALE
 	async function handleMaterialFileUpload(materialId: number, files: FileList) {
 		if (!files || files.length === 0) return;
 
@@ -364,29 +350,31 @@
 			if (response.ok && responseData.success) {
 				console.log('✅ Upload successful to material');
 
-				// ✅ MISE À JOUR LOCALE IMMÉDIATE
-				// Ajouter les nouveaux fichiers au tableau local
-				if (responseData.files) {
-					for (const pieceId in materialsData) {
-						const materials = materialsData[pieceId];
-						const material = materials.find(m => m.id === materialId);
+				// ✅ CORRECTION : Recharger les matériels pour avoir le count exact
+				for (const pieceId in materialsData) {
+					const materials = materialsData[pieceId];
+					const material = materials.find(m => m.id === materialId);
 
-						if (material) {
-							if (!material.files) {
-								material.files = [];
+					if (material) {
+						// Recharger les fichiers depuis l'API pour avoir le count exact
+						try {
+							const filesResponse = await fetch(`/api/materials/${materialId}/files`);
+							if (filesResponse.ok) {
+								const updatedFiles = await filesResponse.json();
+								material.files = updatedFiles;
+								material.files_count = Array.isArray(updatedFiles) ? updatedFiles.length : 0;
+								console.log(`📁 Updated material ${material.name} file count: ${material.files_count}`);
 							}
-							// Ajouter les nouveaux fichiers
-							material.files.push(...responseData.files);
-							console.log(`📁 Added ${responseData.files.length} files to local cache. Total files: ${material.files.length}`);
+						} catch (error) {
+							console.error('Error reloading files after upload:', error);
 						}
 					}
 				}
 
-				// ✅ FORCER LA RÉACTIVITÉ
 				materialsData = { ...materialsData };
-
 				dispatch('refresh');
 				closeMaterialUploader(materialId);
+
 			} else {
 				console.error('❌ Upload failed:', responseData);
 				alert('Erreur lors de l\'upload: ' + (responseData.error || 'Erreur inconnue'));
@@ -397,7 +385,6 @@
 		}
 	}
 
-	// ✅ Télécharger un fichier de matériel
 	async function downloadMaterialFile(fileId: number, fileName: string) {
 		try {
 			const response = await fetch(`/api/files/download/${fileId}`);
@@ -418,7 +405,6 @@
 		}
 	}
 
-	// ✅ Prévisualiser un fichier de matériel
 	function previewMaterialFile(file: any) {
 		const fileItem: FileSystemItem = {
 			id: file.id,
@@ -435,13 +421,20 @@
 		showPreview = true;
 	}
 
-	// ✅ Gérer l'input file pour matériel
 	function handleMaterialFileInput(materialId: number, event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			handleMaterialFileUpload(materialId, input.files);
-			input.value = ''; // Reset input
+			input.value = '';
 		}
+	}
+
+	// ✅ CORRECTION : Calculer le nombre total de fichiers correctement
+	function getTotalFilesCount(pieceId: number): number {
+		const materials = materialsData[pieceId] || [];
+		return materials.reduce((total, material) => {
+			return total + (material.files_count || 0);
+		}, 0);
 	}
 </script>
 
@@ -456,9 +449,10 @@
 		<div class="grid gap-2">
 			{#each items as item}
 				{@const materialsList = materialsData[item.pieceId] || item.materials || []}
+				{@const totalFilesInMaterials = getTotalFilesCount(item.pieceId)}
 
 				<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
-					<!-- Élément principal (fichier ou dossier) -->
+					<!-- Élément principal -->
 					<div
 						class="flex items-center justify-between p-4 hover:bg-gray-100 transition-all duration-200 cursor-pointer group"
 						on:click={() => handleItemClick(item)}
@@ -478,17 +472,13 @@
 											Dossier
 											{#if materialsList.length > 0}
 												• {materialsList.length} matériel{materialsList.length !== 1 ? 's' : ''}
+												• {totalFilesInMaterials} fichier{totalFilesInMaterials !== 1 ? 's' : ''}
 											{/if}
 										{/if}
 									</p>
 									<p class="text-sm text-gray-500">
 										{formatDate(item.updatedAt)}
 									</p>
-									{#if item.type === 'folder' && item.children}
-										<p class="text-sm text-gray-500">
-											{item.children.length} élément{item.children.length !== 1 ? 's' : ''}
-										</p>
-									{/if}
 								</div>
 							</div>
 						</div>
@@ -532,7 +522,7 @@
 						{/if}
 					</div>
 
-					<!-- ✅ SECTION DES MATÉRIELS SIMPLIFIÉE -->
+					<!-- Section des matériels avec comptes corrects -->
 					{#if showMaterials && item.type === 'folder' && item.pieceId && materialsData[item.pieceId]}
 						{@const materials = materialsData[item.pieceId]}
 						{#if materials.length > 0}
@@ -541,12 +531,14 @@
 									<h5 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
 										<Package size={14} class="text-blue-600" />
 										Matériels de cette pièce ({materials.length})
+										<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+											{totalFilesInMaterials} fichier{totalFilesInMaterials !== 1 ? 's' : ''} total
+										</span>
 									</h5>
 
 									<div class="space-y-2">
 										{#each materials as material}
 											<div class="bg-white border border-blue-200 rounded-lg overflow-hidden">
-												<!-- En-tête du matériel -->
 												<div class="p-3">
 													<div class="flex items-center justify-between">
 														<div class="flex items-center gap-2 flex-1">
@@ -571,7 +563,14 @@
 																	{/if}
 																</div>
 																<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-																	<span>{material.files?.length || 0} fichier{(material.files?.length || 0) !== 1 ? 's' : ''}</span>
+																	<span class="font-semibold {material.files_count > 0 ? 'text-green-600' : 'text-orange-600'}">
+																		{material.files_count || 0} fichier{(material.files_count || 0) !== 1 ? 's' : ''}
+																		{#if material.files_count > 0}
+																			✓
+																		{:else}
+																			⚠
+																		{/if}
+																	</span>
 																	{#if material.edition}
 																		<span>Édition: {material.edition}</span>
 																	{/if}
@@ -582,7 +581,6 @@
 															</div>
 														</div>
 
-														<!-- Actions du matériel -->
 														<div class="flex items-center gap-1">
 															<input
 																type="file"
@@ -607,7 +605,7 @@
 													{/if}
 												</div>
 
-												<!-- ✅ Fichiers du matériel (si expanded) -->
+												<!-- Fichiers du matériel -->
 												{#if expandedMaterials.has(material.id)}
 													<div class="border-t border-blue-100 bg-blue-25">
 														{#if material.files && material.files.length > 0}
@@ -622,11 +620,6 @@
 																			/>
 																			<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
 																			<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
-																			{#if file.instrument_part}
-																				<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-																					{file.instrument_part}
-																				</span>
-																			{/if}
 																		</div>
 
 																		<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -659,12 +652,6 @@
 															<div class="p-4 text-center text-gray-500">
 																<FileText class="mx-auto mb-2" size={24} />
 																<p class="text-sm">Aucun fichier dans ce matériel</p>
-																<button
-																	class="text-xs text-blue-600 hover:text-blue-700 mt-1"
-																	on:click={() => document.getElementById(`material-upload-${material.id}`)?.click()}
-																>
-																	Ajouter des fichiers
-																</button>
 															</div>
 														{/if}
 													</div>
@@ -675,14 +662,6 @@
 								</div>
 							</div>
 						{/if}
-					{:else if showMaterials && item.type === 'folder' && item.pieceId && !materialsData[item.pieceId]}
-						<!-- Indicateur de chargement -->
-						<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3">
-							<div class="flex items-center gap-2">
-								<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-								<span class="text-sm text-gray-600">Chargement des matériels...</span>
-							</div>
-						</div>
 					{/if}
 				</div>
 			{/each}
