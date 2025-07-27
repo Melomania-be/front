@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version corrigée -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version avec sélection de matériel unique -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -17,12 +17,13 @@
 		Upload,
 		ChevronDown,
 		ChevronRight,
-		Plus
+		Plus,
+		CheckCircle,
+		Circle
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import type { Material } from '$lib/types/Material';
 	import FilePreview from './FilePreview.svelte';
-
 	import { onMount } from 'svelte';
 
 	const dispatch = createEventDispatcher();
@@ -42,11 +43,64 @@
 	let materialsData: { [key: number]: Material[] } = {};
 	let loadedPieces = new Set<number>();
 
+	// ✅ NOUVEAU : État pour les matériels sélectionnés par pièce
+	let selectedMaterials: { [pieceId: number]: number | null } = {};
+
 	onMount(async () => {
 		await loadMaterialsForItems();
+		await loadSelectedMaterials();
 	});
 
-	// ✅ CORRECTION : Charger les matériels avec le décompte réel des fichiers
+	// ✅ NOUVEAU : Charger les matériels sélectionnés pour chaque pièce
+	async function loadSelectedMaterials() {
+		for (const item of items) {
+			if (item.type === 'folder' && item.pieceId) {
+				try {
+					const response = await fetch(`/api/pieces/${item.pieceId}/select-material`);
+					if (response.ok) {
+						const result = await response.json();
+						selectedMaterials[item.pieceId] = result.materialId;
+					} else {
+						selectedMaterials[item.pieceId] = null;
+					}
+				} catch (error) {
+					console.error('Error loading selected material for piece:', item.pieceId, error);
+					selectedMaterials[item.pieceId] = null;
+				}
+			}
+		}
+		selectedMaterials = { ...selectedMaterials };
+	}
+
+	// ✅ NOUVEAU : Sélectionner un matériel pour une pièce
+	async function selectMaterial(pieceId: number, materialId: number | null) {
+		try {
+			console.log(`🎵 Selecting material ${materialId} for piece ${pieceId}`);
+
+			const response = await fetch(`/api/pieces/${pieceId}/select-material`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ materialId })
+			});
+
+			if (response.ok) {
+				selectedMaterials[pieceId] = materialId;
+				selectedMaterials = { ...selectedMaterials };
+
+				// Notifier le parent de la mise à jour
+				dispatch('materialSelected', { pieceId, materialId });
+
+				console.log(`✅ Material selection updated for piece ${pieceId}`);
+			} else {
+				console.error('Failed to select material:', response.status);
+				alert('Erreur lors de la sélection du matériel');
+			}
+		} catch (error) {
+			console.error('Error selecting material:', error);
+			alert('Erreur lors de la sélection du matériel');
+		}
+	}
+
 	async function loadMaterialsForItems() {
 		for (const item of items) {
 			if (item.type === 'folder' && item.pieceId && !loadedPieces.has(item.pieceId)) {
@@ -68,25 +122,17 @@
 				const materials = await response.json();
 				console.log(`📦 Loaded ${materials.length} materials for piece ${pieceId}`);
 
-				// ✅ SOLUTION DÉFINITIVE : Récupérer les fichiers réels pour chaque matériel
 				const materialPromises = materials.map(async (material) => {
 					try {
-						// Préserver le count existant comme backup
 						const backupCount = material.files_count || material.files?.length || 0;
 
 						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
 						if (filesResponse.ok) {
 							const files = await filesResponse.json();
-
-							// Mise à jour avec les vraies données
 							material.files = Array.isArray(files) ? files : [];
 							material.files_count = material.files.length;
-
-							console.log(`📁 Material "${material.name}": ${material.files_count} files`);
 						} else {
-							// Utiliser les données backup
 							material.files_count = backupCount;
-							console.log(`📁 Material "${material.name}": ${material.files_count} files (backup)`);
 						}
 
 						return material;
@@ -97,16 +143,7 @@
 					}
 				});
 
-				// Attendre que tous les matériels soient traités
 				const processedMaterials = await Promise.all(materialPromises);
-
-				console.log(`✅ Final materials for piece ${pieceId}:`,
-					processedMaterials.map(m => ({
-						name: m.name,
-						files_count: m.files_count
-					}))
-				);
-
 				materialsData[pieceId] = processedMaterials;
 				return processedMaterials;
 			}
@@ -117,7 +154,6 @@
 		return [];
 	}
 
-	// ✅ AUSSI : Corriger la fonction getTotalFilesCount
 	function getTotalFilesCount(pieceId: number): number {
 		const materials = materialsData[pieceId] || [];
 		const total = materials.reduce((total, material) => {
@@ -127,6 +163,15 @@
 
 		console.log(`📊 Total files for piece ${pieceId}: ${total}`);
 		return total;
+	}
+
+	// ✅ NOUVEAU : Obtenir les fichiers du matériel sélectionné uniquement
+	function getSelectedMaterialFiles(pieceId: number): any[] {
+		const selectedMaterialId = selectedMaterials[pieceId];
+		if (!selectedMaterialId || !materialsData[pieceId]) return [];
+
+		const selectedMaterial = materialsData[pieceId].find(m => m.id === selectedMaterialId);
+		return selectedMaterial?.files || [];
 	}
 
 	function formatFileSize(bytes: number): string {
@@ -250,7 +295,6 @@
 			});
 
 			if (response.ok) {
-				// Recharger les matériels pour mettre à jour le count
 				for (const pieceId in materialsData) {
 					const materials = materialsData[pieceId];
 					const material = materials.find(m => m.id === materialId);
@@ -259,7 +303,7 @@
 						const fileIndex = material.files.findIndex(f => f.id === fileId);
 						if (fileIndex !== -1) {
 							material.files.splice(fileIndex, 1);
-							material.files_count = material.files.length; // ✅ Mise à jour du count
+							material.files_count = material.files.length;
 							console.log(`🗑️ Updated file count for material ${material.name}: ${material.files_count}`);
 						}
 					}
@@ -378,13 +422,11 @@
 			if (response.ok && responseData.success) {
 				console.log('✅ Upload successful to material');
 
-				// ✅ CORRECTION : Recharger les matériels pour avoir le count exact
 				for (const pieceId in materialsData) {
 					const materials = materialsData[pieceId];
 					const material = materials.find(m => m.id === materialId);
 
 					if (material) {
-						// Recharger les fichiers depuis l'API pour avoir le count exact
 						try {
 							const filesResponse = await fetch(`/api/materials/${materialId}/files`);
 							if (filesResponse.ok) {
@@ -456,8 +498,6 @@
 			input.value = '';
 		}
 	}
-
-
 </script>
 
 <div class="space-y-2">
@@ -471,7 +511,8 @@
 		<div class="grid gap-2">
 			{#each items as item}
 				{@const materialsList = materialsData[item.pieceId] || item.materials || []}
-				{@const totalFilesInMaterials = getTotalFilesCount(item.pieceId)}
+				{@const selectedMaterialId = selectedMaterials[item.pieceId]}
+				{@const selectedMaterialFiles = getSelectedMaterialFiles(item.pieceId)}
 
 				<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
 					<!-- Élément principal -->
@@ -494,7 +535,11 @@
 											Dossier
 											{#if materialsList.length > 0}
 												• {materialsList.length} matériel{materialsList.length !== 1 ? 's' : ''}
-												• {totalFilesInMaterials} fichier{totalFilesInMaterials !== 1 ? 's' : ''}
+												{#if selectedMaterialId}
+													• Matériel sélectionné: {selectedMaterialFiles.length} fichier{selectedMaterialFiles.length !== 1 ? 's' : ''}
+												{:else}
+													• Aucun matériel sélectionné
+												{/if}
 											{/if}
 										{/if}
 									</p>
@@ -544,34 +589,43 @@
 						{/if}
 					</div>
 
-					<!-- Section des matériels avec comptes corrects -->
+					<!-- ✅ NOUVELLE SECTION : Sélection de matériel avec checkbox -->
 					{#if showMaterials && item.type === 'folder' && item.pieceId && materialsData[item.pieceId]}
 						{@const materials = materialsData[item.pieceId]}
 						{#if materials.length > 0}
 							<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
 								<div class="p-3">
-									<h5 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-										<Package size={14} class="text-blue-600" />
-										Matériels de cette pièce ({materials.length})
-										<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-											{totalFilesInMaterials} fichier{totalFilesInMaterials !== 1 ? 's' : ''} total
-										</span>
-									</h5>
+									<div class="flex items-center justify-between mb-3">
+										<h5 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+											<Package size={14} class="text-blue-600" />
+											Sélectionner le matériel pour cette pièce
+										</h5>
+										{#if selectedMaterialId}
+											<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+												✓ Matériel sélectionné
+											</span>
+										{:else}
+											<span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+												⚠ Aucun matériel sélectionné
+											</span>
+										{/if}
+									</div>
 
 									<div class="space-y-2">
 										{#each materials as material}
-											<div class="bg-white border border-blue-200 rounded-lg overflow-hidden">
+											<div class="bg-white border border-blue-200 rounded-lg overflow-hidden {selectedMaterialId === material.id ? 'ring-2 ring-blue-500' : ''}">
 												<div class="p-3">
 													<div class="flex items-center justify-between">
-														<div class="flex items-center gap-2 flex-1">
+														<div class="flex items-center gap-3 flex-1">
+															<!-- ✅ CHECKBOX POUR SÉLECTION UNIQUE -->
 															<button
-																class="p-1 hover:bg-gray-100 rounded transition-colors"
-																on:click={() => toggleMaterialExpansion(material.id, item.pieceId)}
+																class="flex items-center gap-2 p-1 hover:bg-gray-100 rounded transition-colors"
+																on:click={() => selectMaterial(item.pieceId, selectedMaterialId === material.id ? null : material.id)}
 															>
-																{#if expandedMaterials.has(material.id)}
-																	<ChevronDown size={14} class="text-gray-600" />
+																{#if selectedMaterialId === material.id}
+																	<CheckCircle class="text-blue-600" size={20} />
 																{:else}
-																	<ChevronRight size={14} class="text-gray-600" />
+																	<Circle class="text-gray-400" size={20} />
 																{/if}
 															</button>
 
@@ -581,6 +635,11 @@
 																	{#if material.is_default}
 																		<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
 																			Défaut
+																		</span>
+																	{/if}
+																	{#if selectedMaterialId === material.id}
+																		<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+																			Sélectionné
 																		</span>
 																	{/if}
 																</div>
@@ -627,8 +686,8 @@
 													{/if}
 												</div>
 
-												<!-- Fichiers du matériel -->
-												{#if expandedMaterials.has(material.id)}
+												<!-- Fichiers du matériel SEULEMENT si sélectionné -->
+												{#if selectedMaterialId === material.id && expandedMaterials.has(material.id)}
 													<div class="border-t border-blue-100 bg-blue-25">
 														{#if material.files && material.files.length > 0}
 															<div class="p-3 space-y-2">
@@ -676,6 +735,24 @@
 																<p class="text-sm">Aucun fichier dans ce matériel</p>
 															</div>
 														{/if}
+													</div>
+												{/if}
+
+												<!-- Bouton pour expand/collapse les fichiers SEULEMENT si sélectionné -->
+												{#if selectedMaterialId === material.id}
+													<div class="border-t border-blue-100 bg-blue-25 p-2">
+														<button
+															class="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1"
+															on:click={() => toggleMaterialExpansion(material.id, item.pieceId)}
+														>
+															{#if expandedMaterials.has(material.id)}
+																<ChevronDown size={16} />
+																Masquer les fichiers
+															{:else}
+																<ChevronRight size={16} />
+																Voir les fichiers ({material.files_count || 0})
+															{/if}
+														</button>
 													</div>
 												{/if}
 											</div>
