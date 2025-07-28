@@ -1,6 +1,9 @@
+<!-- src/lib/components/filesystem/FileUploader.svelte - Design uniforme -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { Upload, X, FileText, Trash2 } from 'lucide-svelte';
+	import { Upload, X, FileText, Trash2, CloudUpload } from 'lucide-svelte';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -9,6 +12,23 @@
 	let fileInput: HTMLInputElement;
 	let isUploading = false;
 	let selectedFiles: File[] = [];
+	let isMobile = false;
+
+	const checkMobile = () => {
+		if (browser) {
+			isMobile = window.innerWidth <= 768;
+		}
+	};
+
+	onMount(() => {
+		checkMobile();
+		if (browser) {
+			window.addEventListener('resize', checkMobile);
+			return () => {
+				window.removeEventListener('resize', checkMobile);
+			};
+		}
+	});
 
 	function handleDrop(e: DragEvent) {
 		e.preventDefault();
@@ -79,66 +99,102 @@
 	}
 
 	function getFileTypeColor(fileName: string): string {
-		return 'text-gray-700 bg-gray-100';
+		const extension = fileName.split('.').pop()?.toLowerCase();
+		switch (extension) {
+			case 'pdf':
+				return 'text-red-600 bg-red-100 border-red-300';
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+			case 'webp':
+				return 'text-green-600 bg-green-100 border-green-300';
+			case 'mp3':
+			case 'wav':
+			case 'flac':
+			case 'aac':
+				return 'text-purple-600 bg-purple-100 border-purple-300';
+			case 'mp4':
+			case 'avi':
+			case 'mov':
+			case 'mkv':
+				return 'text-orange-600 bg-orange-100 border-orange-300';
+			default:
+				return 'text-gray-700 bg-gray-100 border-gray-300';
+		}
 	}
 </script>
 
+<!-- Modal avec design uniforme -->
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-	<div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+	<div class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
 		<!-- Header -->
-		<div class="flex items-center justify-between p-6 border-b border-gray-200">
-			<h3 class="text-xl font-bold text-gray-800">Upload Files</h3>
-			<button
-				class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
-				on:click={cancel}
-				disabled={isUploading}
-			>
-				<X size={20} />
-			</button>
-		</div>
-
-		<!-- Upload Area -->
-		<div class="p-6">
-			<div
-				class="border-2 border-dashed rounded-xl p-8 text-center transition-colors {dragActive ? 'border-[#6B9AD9] bg-blue-50' : 'border-gray-300 hover:border-[#6B9AD9] hover:bg-gray-50'}"
-				on:drop={handleDrop}
-				on:dragover={handleDragOver}
-				on:dragleave={handleDragLeave}
-			>
-				<div class="p-4 bg-[#6B9AD9] bg-opacity-10 rounded-full w-16 h-16 mx-auto mb-4">
-					<Upload class="mx-auto text-[#6B9AD9]" size={32} />
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-t-[10px] p-4">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
+						<CloudUpload size={20} class="text-white" />
+					</div>
+					<div>
+						<h1 class="font-bold text-lg">UPLOAD FILES</h1>
+						<p class="text-sm text-gray-600">Add files to your workspace</p>
+					</div>
 				</div>
-				<p class="text-gray-700 mb-4 text-lg">
-					Drag and drop files here
-				</p>
-				<p class="text-gray-500 mb-4">or</p>
 				<button
-					class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors font-medium"
-					on:click={() => fileInput.click()}
+					class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors"
+					on:click={cancel}
 					disabled={isUploading}
 				>
-					Browse Files
+					<X size={20} />
 				</button>
-
-				<input
-					bind:this={fileInput}
-					type="file"
-					multiple
-					class="hidden"
-					on:change={handleFileSelect}
-					disabled={isUploading}
-				/>
 			</div>
 		</div>
 
-		<!-- Selected Files -->
-		{#if selectedFiles.length > 0}
-			<div class="px-6 pb-6">
-				<div class="bg-gray-50 rounded-lg p-4">
+		<div class="p-4 space-y-4">
+			<!-- Upload Area -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
+				<div
+					class="border-2 border-dashed rounded-[8px] p-8 text-center transition-colors {dragActive ? 'border-[#6B9AD9] bg-blue-50' : 'border-gray-300 hover:border-[#6B9AD9] hover:bg-gray-50'}"
+					on:drop={handleDrop}
+					on:dragover={handleDragOver}
+					on:dragleave={handleDragLeave}
+				>
+					<div class="w-16 h-16 bg-[#6B9AD9] bg-opacity-10 rounded-[10px] flex items-center justify-center mx-auto mb-4">
+						<Upload class="text-[#6B9AD9]" size={32} />
+					</div>
+					<h3 class="text-gray-700 mb-4 text-lg font-bold">
+						DRAG AND DROP FILES HERE
+					</h3>
+					<p class="text-gray-500 mb-4">or</p>
+					<button
+						class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold"
+						on:click={() => fileInput.click()}
+						disabled={isUploading}
+					>
+						Browse Files
+					</button>
+
+					<input
+						bind:this={fileInput}
+						type="file"
+						multiple
+						class="hidden"
+						on:change={handleFileSelect}
+						disabled={isUploading}
+					/>
+				</div>
+			</div>
+
+			<!-- Selected Files -->
+			{#if selectedFiles.length > 0}
+				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="flex items-center justify-between mb-4">
-						<h4 class="font-semibold text-gray-800">Selected Files ({selectedFiles.length})</h4>
+						<h2 class="font-bold text-lg flex items-center gap-2">
+							<FileText class="text-[#6B9AD9]" size={20} />
+							SELECTED FILES ({selectedFiles.length})
+						</h2>
 						<button
-							class="text-sm text-gray-600 hover:text-red-600 transition-colors"
+							class="text-sm text-gray-600 hover:text-red-600 transition-colors font-semibold"
 							on:click={() => selectedFiles = []}
 							disabled={isUploading}
 						>
@@ -148,18 +204,18 @@
 
 					<div class="max-h-48 overflow-y-auto space-y-2">
 						{#each selectedFiles as file, index}
-							<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+							<div class="flex items-center justify-between p-3 bg-gray-50 border-2 border-gray-300 rounded-[8px] hover:border-[#6B9AD9] transition-colors">
 								<div class="flex items-center gap-3 flex-1 min-w-0">
-									<div class="p-2 rounded-lg {getFileTypeColor(file.name)}">
+									<div class="w-10 h-10 rounded-[6px] border-2 {getFileTypeColor(file.name)} flex items-center justify-center">
 										<FileText size={16} />
 									</div>
 									<div class="flex-1 min-w-0">
-										<p class="text-sm font-medium text-gray-800 truncate">{file.name}</p>
+										<p class="text-sm font-bold text-gray-800 truncate">{file.name}</p>
 										<p class="text-xs text-gray-500">{formatFileSize(file.size)}</p>
 									</div>
 								</div>
 								<button
-									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
 									on:click={() => removeFile(index)}
 									disabled={isUploading}
 								>
@@ -169,38 +225,57 @@
 						{/each}
 					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
 
-		<!-- Footer -->
-		<div class="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-			<div class="text-sm text-gray-600">
-				{#if selectedFiles.length > 0}
-					Total: {selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024 < 1
-					? formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))
-					: (selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024).toFixed(2) + ' MB'}
-				{/if}
-			</div>
+			<!-- Footer Actions -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
+					<div class="text-sm text-gray-600 font-semibold">
+						{#if selectedFiles.length > 0}
+							Total: {selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024 < 1
+							? formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))
+							: (selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024).toFixed(2) + ' MB'}
+						{:else}
+							No files selected
+						{/if}
+					</div>
 
-			<div class="flex gap-3">
-				<button
-					class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
-					on:click={cancel}
-					disabled={isUploading}
-				>
-					Cancel
-				</button>
-				<button
-					class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-					disabled={selectedFiles.length === 0 || isUploading}
-					on:click={upload}
-				>
-					{#if isUploading}
-						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-					{/if}
-					Upload {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
-				</button>
+					<div class="flex {isMobile ? 'flex-col w-full' : 'gap-3'}">
+						<button
+							class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
+							on:click={cancel}
+							disabled={isUploading}
+						>
+							Cancel
+						</button>
+						<button
+							class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile ? 'w-full' : ''}"
+							disabled={selectedFiles.length === 0 || isUploading}
+							on:click={upload}
+						>
+							{#if isUploading}
+								<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+							{:else}
+								<Upload size={16} />
+							{/if}
+							Upload {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        :global(.gap-3) {
+            gap: 0.5rem;
+        }
+
+        button {
+            min-height: 44px;
+        }
+    }
+</style>

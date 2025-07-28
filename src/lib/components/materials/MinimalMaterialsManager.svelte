@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - Mobile optimized with visible files -->
+<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - Avec prévisualisation intégrée -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import {
@@ -18,6 +18,7 @@
 		ChevronDown,
 		ChevronRight
 	} from 'lucide-svelte';
+	import FilePreview from '../filesystem/FilePreview.svelte';
 	import { browser } from '$app/environment';
 
 	const dispatch = createEventDispatcher();
@@ -33,6 +34,8 @@
 	let isTablet = false;
 	let windowWidth = 0;
 	let expandedMaterials = new Set<number>(); // Track which materials show files
+	let showPreview = false;
+	let previewFile: any = null;
 	let newMaterialData = {
 		name: '',
 		description: '',
@@ -432,11 +435,26 @@
 		}
 	}
 
+	// ✅ NOUVELLE FONCTION : Prévisualiser un fichier
+	function previewMaterialFile(file: any) {
+		previewFile = {
+			id: file.id,
+			name: file.name,
+			type: 'file',
+			path: file.path,
+			size: file.size,
+			mimeType: file.type || '',
+			createdAt: new Date(file.createdAt),
+			updatedAt: new Date(file.updatedAt)
+		};
+		showPreview = true;
+	}
+
 	// Dynamic grid for responsive design
 	$: gridCols = isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3';
 </script>
 
-<div class="space-y-{isMobile ? '3' : '6'} {isMobile ? 'px-1' : ''}">
+<div class="space-y-{isMobile ? '3' : '6'} {isMobile ? 'px-1' : ''} overflow-hidden">
 	{#if isLoading}
 		<div class="flex justify-center items-center h-64">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
@@ -482,7 +500,7 @@
 		</div>
 	{:else}
 		<!-- Material management with corrected selection display and visible files -->
-		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '6'}">
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '6'} overflow-hidden">
 			<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-{isMobile ? '4' : '6'} gap-{isMobile ? '3' : '4'}">
 				<div>
 					<button
@@ -492,7 +510,7 @@
 						← Back to Pieces
 					</button>
 					<h2 class="text-{isMobile ? 'lg' : '2xl'} font-bold text-gray-700 uppercase {isMobile ? 'text-center' : ''}">MATERIALS & SELECTION</h2>
-					<p class="text-gray-500 mt-1 {isMobile ? 'text-sm text-center' : ''}">{getPieceName(selectedPiece)}</p>
+					<p class="text-gray-500 mt-1 {isMobile ? 'text-sm text-center' : ''} break-words">{getPieceName(selectedPiece)}</p>
 
 					<!-- Selection status with proper reactivity -->
 					{#if selectedPiece}
@@ -500,7 +518,7 @@
 						{#if currentSelectedMaterial}
 							<div class="mt-2 flex items-center gap-2 text-sm {isMobile ? 'justify-center' : ''}">
 								<CheckCircle class="text-green-600" size={16} />
-								<span class="text-green-600 font-medium">
+								<span class="text-green-600 font-medium break-words">
 									Selected Material: {currentSelectedMaterial.name}
 								</span>
 							</div>
@@ -537,7 +555,7 @@
 					</button>
 				</div>
 			{:else}
-				<div class="space-y-{isMobile ? '3' : '4'}">
+				<div class="space-y-{isMobile ? '3' : '4'} overflow-hidden">
 					{#each materials as material}
 						{@const isSelected = selectedMaterials[selectedPiece.id] === material.id}
 						{@const isExpanded = expandedMaterials.has(material.id)}
@@ -545,9 +563,9 @@
 						<div class="border border-gray-200 rounded-lg p-{isMobile ? '3' : '4'} hover:border-[#6B9AD9] transition-all duration-200 {
 							isSelected ? 'ring-2 ring-blue-500 bg-blue-50' :
 							material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : 'bg-white'
-						}">
+						} overflow-hidden">
 							<div class="flex items-start justify-between">
-								<div class="flex items-start gap-{isMobile ? '3' : '4'} flex-1">
+								<div class="flex items-start gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
 									<!-- Selection checkbox -->
 									<div class="pt-1">
 										<button
@@ -563,9 +581,9 @@
 										</button>
 									</div>
 
-									<div class="flex-1 min-w-0">
+									<div class="flex-1 min-w-0 overflow-hidden">
 										<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-2 mb-2">
-											<h3 class="text-{isMobile ? 'base' : 'lg'} font-semibold text-gray-800">{material.name}</h3>
+											<h3 class="text-{isMobile ? 'base' : 'lg'} font-semibold text-gray-800 truncate">{material.name}</h3>
 											<div class="flex items-center gap-2 {isMobile ? '' : 'ml-auto'}">
 												{#if material.is_default}
 													<Star class="text-yellow-500 fill-current" size={14} />
@@ -578,27 +596,27 @@
 										</div>
 
 										{#if material.description && !isMobile}
-											<p class="text-sm text-gray-600 mb-3">{material.description}</p>
+											<p class="text-sm text-gray-600 mb-3 break-words">{material.description}</p>
 										{/if}
 
-										<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-4 gap-4'} text-sm mb-3">
+										<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-4 gap-4'} text-sm mb-3 overflow-hidden">
 											{#if material.edition}
-												<div>
+												<div class="min-w-0">
 													<span class="font-medium text-gray-700">Edition:</span>
-													<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''}">{material.edition}</p>
+													<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''} break-words">{material.edition}</p>
 												</div>
 											{/if}
 											{#if material.editor}
-												<div>
+												<div class="min-w-0">
 													<span class="font-medium text-gray-700">Publisher:</span>
-													<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''}">{material.editor}</p>
+													<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''} break-words">{material.editor}</p>
 												</div>
 											{/if}
-											<div>
+											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Created:</span>
 												<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''}">{formatDate(material.createdAt)}</p>
 											</div>
-											<div>
+											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Files:</span>
 												<p class="text-gray-600 font-semibold {material.files_count > 0 ? 'text-green-600' : 'text-orange-600'} {isMobile ? 'inline ml-1' : ''}">
 													{material.files_count || 0}
@@ -613,7 +631,7 @@
 
 										<!-- Files section - Always visible or expandable -->
 										{#if material.files && material.files.length > 0}
-											<div class="border-t pt-3">
+											<div class="border-t pt-3 overflow-hidden">
 												<div class="flex items-center justify-between mb-2">
 													<h4 class="text-{isMobile ? 'sm' : 'sm'} font-medium text-gray-700">Files ({material.files.length})</h4>
 													{#if !isMobile}
@@ -633,20 +651,21 @@
 												</div>
 
 												{#if isMobile || isExpanded}
-													<div class="space-y-{isMobile ? '1' : '2'}">
+													<div class="space-y-{isMobile ? '1' : '2'} overflow-hidden">
 														{#each material.files as file}
-															<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+															<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-gray-50 rounded hover:bg-gray-100 transition-colors min-w-0">
 																<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
 																	<span class="text-lg">{getFileIcon(file.name)}</span>
 																	<div class="flex-1 min-w-0">
-																		<span class="text-{isMobile ? 'xs' : 'sm'} text-gray-700 truncate block">{file.name}</span>
+																		<span class="text-{isMobile ? 'xs' : 'sm'} text-gray-700 truncate block" title={file.name}>{file.name}</span>
 																		<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
 																	</div>
 																</div>
-																<div class="flex items-center gap-1">
+																<div class="flex items-center gap-1 flex-shrink-0">
+																	<!-- ✅ BOUTON PREVIEW -->
 																	<button
 																		class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-																		on:click={() => window.open(`/api/files/stream/${file.id}`, '_blank')}
+																		on:click={() => previewMaterialFile(file)}
 																		title="Preview"
 																	>
 																		<Eye size={isMobile ? 12 : 14} />
@@ -674,16 +693,16 @@
 										{/if}
 
 										{#if material.notes && !isMobile}
-											<div class="mt-3 p-2 bg-blue-50 rounded text-sm">
+											<div class="mt-3 p-2 bg-blue-50 rounded text-sm overflow-hidden">
 												<span class="font-medium text-blue-800">Notes:</span>
-												<span class="text-blue-700">{material.notes}</span>
+												<span class="text-blue-700 break-words">{material.notes}</span>
 											</div>
 										{/if}
 									</div>
 								</div>
 
 								<!-- Actions -->
-								<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-{isMobile ? '1' : '2'} ml-{isMobile ? '2' : '4'}">
+								<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-{isMobile ? '1' : '2'} ml-{isMobile ? '2' : '4'} flex-shrink-0">
 									<!-- File upload -->
 									<input
 										type="file"
@@ -825,6 +844,19 @@
 	</div>
 {/if}
 
+<!-- ✅ MODAL DE PRÉVISUALISATION -->
+{#if showPreview && previewFile}
+	<FilePreview
+		fileId={previewFile.id}
+		fileName={previewFile.name}
+		fileType={previewFile.mimeType || ''}
+		onClose={() => {
+			showPreview = false;
+			previewFile = null;
+		}}
+	/>
+{/if}
+
 <style>
     /* Enhanced mobile responsiveness */
     @media (max-width: 768px) {
@@ -875,6 +907,26 @@
         .group-hover\:scale-110 {
             transition: none;
         }
+
+        /* Prevent text overflow */
+        .break-words {
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .min-w-0 {
+            min-width: 0;
+        }
+
+        .overflow-hidden {
+            overflow: hidden;
+        }
     }
 
     /* Tablet adjustments */
@@ -885,5 +937,12 @@
         :global(.md\:grid-cols-4) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+    }
+
+    /* Force text wrapping */
+    .break-words {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 </style>

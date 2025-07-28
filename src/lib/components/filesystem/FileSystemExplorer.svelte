@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Fixed version with correct API routes -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Design uniforme avec auditions -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -345,7 +345,6 @@
 		}
 	}
 
-	// ✅ FIXED: Use correct API route for file deletion
 	async function deleteMaterialFile(fileId: number, fileName: string) {
 		if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
 			return;
@@ -353,7 +352,6 @@
 
 		try {
 			console.log('🗑️ Deleting file:', fileId, fileName);
-			// Use the correct route that exists in your API
 			const response = await fetch(`/api/files/${fileId}`, {
 				method: 'DELETE'
 			});
@@ -404,61 +402,119 @@
 	}
 </script>
 
-<div class="space-y-2 {isMobile ? 'px-1' : ''}">
-	{#if items.length === 0}
+{#if items.length === 0}
+	<!-- Empty State - Design Uniforme -->
+	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 		<div class="text-center py-{isMobile ? '8' : '12'}">
-			<Folder class="mx-auto mb-4 text-gray-400" size={isMobile ? 32 : 48} />
-			<p class="text-gray-500 {isMobile ? 'text-sm' : ''}">This folder is empty</p>
-			<p class="text-{isMobile ? 'xs' : 'sm'} text-gray-400 mt-2">Upload files or create folders to get started</p>
+			<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
+				<Folder class="text-gray-400" size={isMobile ? 32 : 48} />
+			</div>
+			<h3 class="font-bold text-lg text-gray-700 mb-2">FOLDER IS EMPTY</h3>
+			<p class="text-gray-500 {isMobile ? 'text-sm' : ''} mb-4">Upload files or create folders to get started</p>
+			<div class="flex {isMobile ? 'flex-col gap-2' : 'justify-center gap-4'}">
+				<button class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center gap-2">
+					<Upload size={16} />
+					Upload Files
+				</button>
+				<button class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold flex items-center justify-center gap-2">
+					<Plus size={16} />
+					New Folder
+				</button>
+			</div>
 		</div>
-	{:else}
-		<div class="grid gap-{isMobile ? '1' : '2'}">
+	</div>
+{:else}
+	<!-- Files List - Design Uniforme -->
+	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+		<div class="flex items-center space-x-3 mb-6">
+			<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
+				<Folder class="w-5 h-5 text-white" />
+			</div>
+			<div>
+				<h1 class="font-bold text-lg">FILES & FOLDERS ({items.length})</h1>
+				<p class="text-sm text-gray-600">Click on items to navigate or preview</p>
+			</div>
+		</div>
+
+		<div class="space-y-{isMobile ? '3' : '4'}">
 			{#each items as item}
 				{@const selectedMaterial = getSelectedMaterial(item.pieceId)}
 				{@const selectedFiles = getSelectedMaterialFiles(item.pieceId)}
 				{@const isExpanded = expandedPieces.has(item.pieceId)}
 
-				<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
-					<!-- Main item -->
+				<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200">
+					<!-- Main Item -->
 					<div
-						class="flex items-center justify-between p-{isMobile ? '3' : '4'} hover:bg-gray-100 transition-all duration-200 cursor-pointer group"
+						class="flex items-center justify-between p-{isMobile ? '3' : '4'} cursor-pointer group"
 						on:click={() => handleItemClick(item)}
 						on:contextmenu={(e) => handleRightClick(e, item)}
+						role="button"
+						tabindex="0"
 					>
-						<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
-							<div class="flex-shrink-0 p-{isMobile ? '1.5' : '2'} bg-white rounded-lg border border-gray-200 group-hover:border-[#6B9AD9] transition-colors">
-								<svelte:component this={getFileIcon(item)} size={isMobile ? 16 : 20} class={getFileColor(item)} />
+						<div class="flex items-center gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
+							<!-- Icon -->
+							<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
+								<svelte:component this={getFileIcon(item)} size={isMobile ? 20 : 24} class={getFileColor(item)} />
 							</div>
-							<div class="flex-1 min-w-0">
-								<h4 class="font-medium text-gray-800 truncate {isMobile ? 'text-sm' : ''}">{item.name}</h4>
-								<div class="flex {isMobile ? 'flex-col' : 'items-center gap-4'} mt-1">
-									<p class="text-{isMobile ? 'xs' : 'sm'} text-gray-500">
-										{#if item.type === 'file'}
-											{formatFileSize(item.size || 0)}
-										{:else}
-											Folder
-											{#if selectedMaterial}
-												{#if !isMobile}• Material: {selectedMaterial.name}{/if}
-												• {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
-											{:else}
-												• No material selected
-											{/if}
-										{/if}
-									</p>
+
+							<!-- File Info -->
+							<div class="flex-1 min-w-0 overflow-hidden">
+								<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-2">
+									<h3 class="font-bold text-gray-900 truncate" title={item.name}>{item.name}</h3>
 									{#if !isMobile}
-										<p class="text-sm text-gray-500">
-											{formatDate(item.updatedAt)}
-										</p>
+										<div class="flex items-center gap-2 text-xs">
+											{#if item.type === 'file'}
+												<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300">
+													{formatFileSize(item.size || 0)}
+												</span>
+											{:else}
+												<span class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold border border-green-300">
+													FOLDER
+												</span>
+											{/if}
+										</div>
+									{/if}
+								</div>
+
+								<!-- Details Grid -->
+								<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-3 gap-4'} text-sm overflow-hidden">
+									<div class="min-w-0">
+										<span class="font-medium text-gray-700">Type:</span>
+										<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'} break-words">
+											{#if item.type === 'file'}
+												{item.name.split('.').pop()?.toUpperCase() || 'FILE'}
+											{:else}
+												Folder
+												{#if selectedMaterial}
+													• Material: {selectedMaterial.name}
+												{:else if item.pieceId}
+													• No material selected
+												{/if}
+											{/if}
+										</span>
+									</div>
+									<div class="min-w-0">
+										<span class="font-medium text-gray-700">Modified:</span>
+										<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'}">{formatDate(item.updatedAt)}</span>
+									</div>
+									{#if item.type === 'folder' && selectedFiles.length > 0}
+										<div class="min-w-0">
+											<span class="font-medium text-gray-700">Files:</span>
+											<span class="text-green-600 font-semibold {isMobile ? 'ml-2' : 'block'}">
+												{selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} ✓
+											</span>
+										</div>
 									{/if}
 								</div>
 							</div>
 						</div>
 
+						<!-- Actions -->
 						{#if showActions && !isMobile}
-							<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+							<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 								{#if item.type === 'file'}
 									<button
-										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
 										on:click|stopPropagation={() => previewFileFunction(item)}
 										title="Preview"
 									>
@@ -466,7 +522,7 @@
 									</button>
 
 									<button
-										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+										class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
 										on:click|stopPropagation={() => downloadFile(item)}
 										title="Download"
 									>
@@ -475,7 +531,7 @@
 								{/if}
 
 								<button
-									class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
+									class="p-2 text-gray-600 hover:text-yellow-600 rounded-lg hover:bg-yellow-50 border border-transparent hover:border-yellow-300 transition-colors"
 									on:click|stopPropagation={() => renameItem(item)}
 									title="Rename"
 								>
@@ -483,7 +539,7 @@
 								</button>
 
 								<button
-									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
 									on:click|stopPropagation={() => deleteItem(item)}
 									title="Delete"
 								>
@@ -495,21 +551,21 @@
 
 					<!-- SELECTED MATERIAL DISPLAY SECTION -->
 					{#if showMaterials && item.type === 'folder' && item.pieceId}
-						<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-							<div class="p-{isMobile ? '2' : '3'}">
-								<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-3 gap-2">
-									<h5 class="text-{isMobile ? 'xs' : 'sm'} font-semibold text-gray-700 flex items-center gap-2">
-										<Package size={isMobile ? 12 : 14} class="text-blue-600" />
-										Selected Material for this Piece
-									</h5>
+						<div class="border-t-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden">
+							<div class="p-{isMobile ? '3' : '4'}">
+								<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-4 gap-2">
+									<h4 class="text-{isMobile ? 'sm' : 'base'} font-bold text-gray-700 flex items-center gap-2">
+										<Package size={isMobile ? 14 : 16} class="text-blue-600" />
+										SELECTED MATERIAL FOR THIS PIECE
+									</h4>
 
 									{#if selectedMaterial}
 										<div class="flex items-center gap-2">
-											<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+											<span class="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-lg font-bold border border-green-300 break-words">
 												✓ {selectedMaterial.name}
 											</span>
 											<button
-												class="text-xs text-blue-600 hover:text-blue-800"
+												class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 p-1"
 												on:click={() => togglePieceExpansion(item.pieceId)}
 											>
 												{#if isExpanded}
@@ -521,8 +577,8 @@
 										</div>
 									{:else}
 										<div class="flex items-center gap-2">
-											<span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
-												⚠ No material selected
+											<span class="text-xs text-orange-600 bg-orange-100 px-3 py-1 rounded-lg font-bold border border-orange-300">
+												⚠ NO MATERIAL SELECTED
 											</span>
 											<Info size={isMobile ? 12 : 14} class="text-gray-400" />
 										</div>
@@ -531,72 +587,79 @@
 
 								{#if selectedMaterial}
 									<!-- Selected material information -->
-									<div class="bg-white border border-blue-200 rounded-lg p-{isMobile ? '2' : '3'} mb-3">
+									<div class="bg-white border-2 border-blue-300 rounded-[8px] p-{isMobile ? '3' : '4'} mb-4 overflow-hidden">
 										<div class="flex items-center justify-between">
-											<div class="flex-1">
-												<h6 class="font-medium text-gray-800 {isMobile ? 'text-sm' : ''}">{selectedMaterial.name}</h6>
-												<div class="flex {isMobile ? 'flex-col' : 'items-center gap-4'} mt-1 text-xs text-gray-500">
-													<span class="font-semibold {selectedFiles.length > 0 ? 'text-green-600' : 'text-orange-600'}">
+											<div class="flex-1 min-w-0">
+												<h5 class="font-bold text-gray-800 {isMobile ? 'text-sm' : ''} truncate" title={selectedMaterial.name}>{selectedMaterial.name}</h5>
+												<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center gap-4'} mt-2 text-xs text-gray-500">
+													<span class="font-bold {selectedFiles.length > 0 ? 'text-green-600' : 'text-orange-600'} flex items-center gap-1">
 														{selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
 														{#if selectedFiles.length > 0}
-															✓
+															<span class="text-green-500">✓</span>
 														{:else}
-															⚠
+															<span class="text-orange-500">⚠</span>
 														{/if}
 													</span>
 													{#if selectedMaterial.edition && !isMobile}
-														<span>Edition: {selectedMaterial.edition}</span>
+														<span class="break-words">Edition: {selectedMaterial.edition}</span>
 													{/if}
 													{#if selectedMaterial.editor && !isMobile}
-														<span>Publisher: {selectedMaterial.editor}</span>
+														<span class="break-words">Publisher: {selectedMaterial.editor}</span>
 													{/if}
 												</div>
 											</div>
 										</div>
 
 										{#if selectedMaterial.description && !isMobile}
-											<p class="text-sm text-gray-600 mt-2">{selectedMaterial.description}</p>
+											<div class="mt-3 p-2 bg-blue-50 rounded text-sm border border-blue-200 overflow-hidden">
+												<span class="font-medium text-blue-800">Description:</span>
+												<span class="text-blue-700 break-words">{selectedMaterial.description}</span>
+											</div>
 										{/if}
 									</div>
 
 									<!-- Selected material files with enhanced actions -->
 									{#if isExpanded && selectedFiles.length > 0}
-										<div class="bg-blue-25 border border-blue-100 rounded-lg p-{isMobile ? '2' : '3'}">
-											<h6 class="text-{isMobile ? 'xs' : 'sm'} font-medium text-gray-700 mb-2">
-												Available Files ({selectedFiles.length})
-											</h6>
-											<div class="space-y-{isMobile ? '1' : '2'}">
+										<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-{isMobile ? '3' : '4'} overflow-hidden">
+											<h5 class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 mb-3 flex items-center gap-2">
+												<FileText size={14} class="text-blue-600" />
+												AVAILABLE FILES ({selectedFiles.length})
+											</h5>
+											<div class="space-y-{isMobile ? '2' : '3'} overflow-hidden">
 												{#each selectedFiles as file}
-													<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
+													<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-white border-2 border-gray-300 rounded-[8px] hover:border-blue-400 transition-colors group min-w-0">
 														<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
-															<svelte:component
-																this={getFileIcon({...file, type: 'file'})}
-																size={isMobile ? 12 : 16}
-																class={getFileColor({...file, type: 'file'})}
-															/>
+															<div class="w-8 h-8 bg-gray-100 rounded-[6px] border border-gray-300 flex items-center justify-center flex-shrink-0">
+																<svelte:component
+																	this={getFileIcon({...file, type: 'file'})}
+																	size={isMobile ? 14 : 16}
+																	class={getFileColor({...file, type: 'file'})}
+																/>
+															</div>
 															<div class="flex-1 min-w-0">
-																<span class="text-{isMobile ? 'xs' : 'sm'} font-medium text-gray-700 truncate block">{file.name}</span>
+																<span class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 truncate block" title={file.name}>{file.name}</span>
 																<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
 															</div>
 														</div>
 
-														<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity">
+														<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity flex-shrink-0">
+															<!-- ✅ BOUTON PREVIEW -->
 															<button
-																class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
 																on:click={() => previewMaterialFile(file)}
 																title="Preview"
 															>
 																<Eye size={isMobile ? 12 : 14} />
 															</button>
 															<button
-																class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
+																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-green-600 rounded-[6px] hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
 																on:click={() => downloadMaterialFile(file.id, file.name)}
 																title="Download"
 															>
 																<Download size={isMobile ? 12 : 14} />
 															</button>
 															<button
-																class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-red-600 rounded-[6px] hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
 																on:click={() => deleteMaterialFile(file.id, file.name)}
 																title="Delete"
 															>
@@ -608,9 +671,9 @@
 											</div>
 										</div>
 									{:else if isExpanded && selectedFiles.length === 0}
-										<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
-											<FileText class="mx-auto mb-2" size={isMobile ? 20 : 24} />
-											<p class="text-{isMobile ? 'xs' : 'sm'}">No files in this material</p>
+										<div class="p-6 text-center text-gray-500 bg-gray-50 border-2 border-gray-300 rounded-[8px]">
+											<FileText class="mx-auto mb-2" size={isMobile ? 24 : 32} />
+											<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO FILES IN THIS MATERIAL</p>
 											<p class="text-xs text-gray-400 mt-1">
 												Add files from material management
 											</p>
@@ -618,10 +681,10 @@
 									{/if}
 								{:else}
 									<!-- Message when no material is selected -->
-									<div class="p-{isMobile ? '3' : '4'} text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-										<Package class="mx-auto mb-2 text-gray-400" size={isMobile ? 20 : 24} />
-										<p class="text-{isMobile ? 'xs' : 'sm'} font-medium">No Material Selected</p>
-										<p class="text-xs text-gray-400 mt-1">
+									<div class="p-{isMobile ? '4' : '6'} text-center text-gray-500 bg-gray-50 border-2 border-dashed border-gray-400 rounded-[8px] overflow-hidden">
+										<Package class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
+										<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO MATERIAL SELECTED</p>
+										<p class="text-xs text-gray-400 mt-1 break-words">
 											Go to material management to select a material for this piece
 										</p>
 									</div>
@@ -632,19 +695,19 @@
 				</div>
 			{/each}
 		</div>
-	{/if}
-</div>
+	</div>
+{/if}
 
 <!-- Context menu -->
 {#if showContextMenu && selectedItem}
 	<div
-		class="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 min-w-[150px]"
+		class="fixed bg-white border-2 border-[#8C8C8C] rounded-[8px] shadow-lg py-2 z-50 min-w-[150px]"
 		style="left: {contextMenuPosition.x}px; top: {contextMenuPosition.y}px;"
 		on:click|stopPropagation
 	>
 		{#if selectedItem.type === 'file'}
 			<button
-				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
 				on:click={() => {
 					previewFileFunction(selectedItem);
 					showContextMenu = false;
@@ -655,7 +718,7 @@
 			</button>
 
 			<button
-				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
 				on:click={() => {
 					downloadFile(selectedItem);
 					showContextMenu = false;
@@ -667,7 +730,7 @@
 		{/if}
 
 		<button
-			class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+			class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
 			on:click={() => {
 				renameItem(selectedItem);
 				showContextMenu = false;
@@ -677,10 +740,10 @@
 			Rename
 		</button>
 
-		<hr class="my-1 border-gray-200" />
+		<hr class="my-1 border-gray-300" />
 
 		<button
-			class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600 flex items-center gap-2"
+			class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600 flex items-center gap-2 font-semibold"
 			on:click={() => {
 				deleteItem(selectedItem);
 				showContextMenu = false;
@@ -708,17 +771,18 @@
 <svelte:window on:click={() => showContextMenu = false} />
 
 <style>
-    .bg-blue-25 {
-        background-color: #f8faff;
-    }
-
+    /* Enhanced mobile responsiveness */
     @media (max-width: 768px) {
-        :global(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
-            margin-top: 0.5rem;
+        :global(.md\:grid-cols-3) {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
         }
 
-        :global(.space-y-2) > :not([hidden]) ~ :not([hidden]) {
-            margin-top: 0.25rem;
+        :global(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.75rem;
+        }
+
+        :global(.space-y-3) > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.5rem;
         }
 
         :global(.gap-4) {
@@ -729,8 +793,37 @@
             gap: 0.375rem;
         }
 
-        :global(.gap-2) {
-            gap: 0.25rem;
+        /* Improve touch targets */
+        button {
+            min-height: 44px;
         }
+
+        /* Force text wrapping and prevent overflow */
+        .break-words {
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .min-w-0 {
+            min-width: 0;
+        }
+
+        .overflow-hidden {
+            overflow: hidden;
+        }
+    }
+
+    /* Force text wrapping globally */
+    .break-words {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 </style>
