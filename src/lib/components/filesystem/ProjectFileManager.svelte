@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte - Version intégrée -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte - Version corrigée -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Music, Image, Video, FileText, Folder, Plus, Upload, ChevronLeft, Package } from 'lucide-svelte';
@@ -28,6 +28,19 @@
 	onMount(async () => {
 		await loadProjectStructure();
 		isLoading = false;
+
+		// Écouter les changements de matériels
+		const handleMaterialsUpdated = () => {
+			if (currentFolder) {
+				navigateToFolder(currentFolder);
+			}
+		};
+
+		window.addEventListener('materialSelectionChanged', handleMaterialsUpdated);
+
+		return () => {
+			window.removeEventListener('materialSelectionChanged', handleMaterialsUpdated);
+		};
 	});
 
 	async function loadProjectStructure() {
@@ -65,35 +78,11 @@
 			if (response.ok) {
 				const contents = await response.json();
 
-				if (folder.name === 'Scores') {
-					const enrichedContents = await Promise.all(contents.map(async (item) => {
-						if (item.type === 'folder' && item.pieceId) {
-							try {
-								const materialsResponse = await fetch(`/api/materials/piece/${item.pieceId}`);
-								if (materialsResponse.ok) {
-									const materials = await materialsResponse.json();
-									item.materials = materials;
-								}
-							} catch (error) {
-								console.error('Error loading materials for piece:', item.pieceId, error);
-								item.materials = [];
-							}
-						}
-						return item;
-					}));
-
-					folder.children = enrichedContents.map(item => ({
-						...item,
-						updatedAt: new Date(item.updatedAt),
-						createdAt: new Date(item.createdAt)
-					}));
-				} else {
-					folder.children = contents.map(item => ({
-						...item,
-						updatedAt: new Date(item.updatedAt),
-						createdAt: new Date(item.createdAt)
-					}));
-				}
+				folder.children = contents.map(item => ({
+					...item,
+					updatedAt: new Date(item.updatedAt),
+					createdAt: new Date(item.createdAt)
+				}));
 
 				currentFolder = { ...currentFolder };
 			}
@@ -263,6 +252,11 @@
 
 	function handleMaterialsUpdated() {
 		dispatch('materialsUpdated');
+
+		// Forcer le rafraîchissement de l'explorateur de fichiers
+		if (currentFolder) {
+			navigateToFolder(currentFolder);
+		}
 	}
 </script>
 
@@ -272,7 +266,6 @@
 			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
 		</div>
 	{:else}
-		<!-- Onglets -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 			<div class="border-b border-gray-200 mb-6">
 				<nav class="flex space-x-8">
@@ -307,12 +300,11 @@
 			</div>
 
 			{#if activeTab === 'materials'}
-				<!-- Gestionnaire minimal de matériels -->
 				<MinimalMaterialsManager
+					projectId={project.id}
 					on:materialsUpdated={handleMaterialsUpdated}
 				/>
 			{:else if currentFolder}
-				<!-- Vue dossier -->
 				<div class="flex items-center justify-between mb-6">
 					<div class="flex items-center gap-3">
 						<button
@@ -358,10 +350,11 @@
 
 				<FileSystemExplorer
 					items={currentFolder.children || []}
+					projectId={project.id}
 					on:itemClick={(e) => handleItemClick(e.detail)}
+					on:refresh={handleRefresh}
 				/>
 			{:else}
-				<!-- Vue racine des fichiers -->
 				<div class="flex items-center justify-between mb-6">
 					<h2 class="text-xl font-bold text-gray-700 uppercase">ARBORESCENCE DES FICHIERS</h2>
 					<button
@@ -376,7 +369,6 @@
 					</button>
 				</div>
 
-				<!-- Dossiers par défaut -->
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 					{#each defaultFolders as folderType}
 						{@const folder = getFolderByName(folderType.name)}
@@ -410,7 +402,6 @@
 					{/each}
 				</div>
 
-				<!-- Dossiers personnalisés -->
 				{#if fileStructure?.customFolders && fileStructure.customFolders.length > 0}
 					<div class="border-t-2 border-[#E7E7E7] pt-6">
 						<h3 class="font-bold text-lg text-gray-700 mb-4">DOSSIERS PERSONNALISÉS</h3>
@@ -435,7 +426,6 @@
 					</div>
 				{/if}
 
-				<!-- Upload vers la racine -->
 				<div class="border-t-2 border-[#E7E7E7] pt-6 text-center">
 					<button
 						class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors mx-auto"

@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version AFFICHAGE SEUL -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version finale propre -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -41,12 +41,12 @@
 	let selectedMaterialFiles: { [pieceId: number]: any[] } = {};
 	let selectedMaterialInfo: { [pieceId: number]: any } = {};
 	let isLoadingMaterials = false;
+	let materialsVersion = 0;
 
 	onMount(async () => {
 		await loadSelectedMaterialsInfo();
 
-		// Écouter les changements de sélection de matériels
-		const handleMaterialChange = (event) => {
+		const handleMaterialChange = () => {
 			loadSelectedMaterialsInfo();
 		};
 
@@ -57,7 +57,6 @@
 		};
 	});
 
-	// ✅ NOUVEAU : Charger les informations des matériels sélectionnés (AFFICHAGE SEUL)
 	async function loadSelectedMaterialsInfo() {
 		if (!items || items.length === 0) return;
 
@@ -66,46 +65,49 @@
 		try {
 			for (const item of items) {
 				if (item.type === 'folder' && item.pieceId) {
-					// 1. Récupérer le matériel sélectionné pour cette pièce
-					const selectedResponse = await fetch(`/api/pieces/${item.pieceId}/select-material`);
+					try {
+						const selectedResponse = await fetch(`/api/pieces/${item.pieceId}/select-material`);
 
-					if (selectedResponse.ok) {
-						const selectedResult = await selectedResponse.json();
+						if (selectedResponse.ok) {
+							const selectedResult = await selectedResponse.json();
 
-						if (selectedResult.materialId) {
-							// 2. Récupérer les infos du matériel sélectionné
-							const materialResponse = await fetch(`/api/materials/${selectedResult.materialId}`);
+							if (selectedResult.materialId) {
+								const materialResponse = await fetch(`/api/materials/${selectedResult.materialId}`);
 
-							if (materialResponse.ok) {
-								const materialData = await materialResponse.json();
-								selectedMaterialInfo[item.pieceId] = materialData;
+								if (materialResponse.ok) {
+									const materialData = await materialResponse.json();
+									selectedMaterialInfo[item.pieceId] = materialData;
 
-								// 3. Récupérer les fichiers du matériel sélectionné
-								const filesResponse = await fetch(`/api/materials/${selectedResult.materialId}/files`);
+									const filesResponse = await fetch(`/api/materials/${selectedResult.materialId}/files`);
 
-								if (filesResponse.ok) {
-									const files = await filesResponse.json();
-									selectedMaterialFiles[item.pieceId] = Array.isArray(files) ? files : [];
-								} else {
-									selectedMaterialFiles[item.pieceId] = [];
+									if (filesResponse.ok) {
+										const files = await filesResponse.json();
+										selectedMaterialFiles[item.pieceId] = Array.isArray(files) ? files : [];
+									} else {
+										selectedMaterialFiles[item.pieceId] = [];
+									}
 								}
+							} else {
+								selectedMaterialInfo[item.pieceId] = null;
+								selectedMaterialFiles[item.pieceId] = [];
 							}
 						} else {
 							selectedMaterialInfo[item.pieceId] = null;
 							selectedMaterialFiles[item.pieceId] = [];
 						}
-					} else {
+					} catch (error) {
 						selectedMaterialInfo[item.pieceId] = null;
 						selectedMaterialFiles[item.pieceId] = [];
 					}
 				}
 			}
 
-			// Force reactivity
 			selectedMaterialInfo = { ...selectedMaterialInfo };
 			selectedMaterialFiles = { ...selectedMaterialFiles };
+			materialsVersion++;
+
 		} catch (error) {
-			// Ignore errors silently
+			// Ignore errors
 		}
 
 		isLoadingMaterials = false;
@@ -210,13 +212,9 @@
 					a.click();
 					document.body.removeChild(a);
 					URL.revokeObjectURL(url);
-				} else {
-					console.error('Download failed:', response.status);
-					alert('Erreur lors du téléchargement du fichier');
 				}
 			} catch (error) {
 				console.error('Error downloading file:', error);
-				alert('Erreur lors du téléchargement: ' + error.message);
 			}
 		}
 	}
@@ -231,13 +229,9 @@
 
 				if (response.ok) {
 					dispatch('refresh');
-				} else {
-					console.error('Delete failed:', response.status);
-					alert('Erreur lors de la suppression');
 				}
 			} catch (error) {
 				console.error('Error deleting item:', error);
-				alert('Erreur lors de la suppression: ' + error.message);
 			}
 		}
 	}
@@ -255,13 +249,9 @@
 
 				if (response.ok) {
 					dispatch('refresh');
-				} else {
-					console.error('Rename failed:', response.status);
-					alert('Erreur lors du renommage');
 				}
 			} catch (error) {
 				console.error('Error renaming item:', error);
-				alert('Erreur lors du renommage: ' + error.message);
 			}
 		}
 	}
@@ -306,7 +296,6 @@
 			}
 		} catch (error) {
 			console.error('Error downloading material file:', error);
-			alert('Erreur lors du téléchargement');
 		}
 	}
 
@@ -326,14 +315,16 @@
 		showPreview = true;
 	}
 
-	// ✅ Obtenir le matériel sélectionné pour une pièce
 	function getSelectedMaterial(pieceId: number): any | null {
 		return selectedMaterialInfo[pieceId] || null;
 	}
 
-	// ✅ Obtenir les fichiers du matériel sélectionné
 	function getSelectedMaterialFiles(pieceId: number): any[] {
 		return selectedMaterialFiles[pieceId] || [];
+	}
+
+	$: if (items && items.length > 0) {
+		loadSelectedMaterialsInfo();
 	}
 </script>
 
@@ -351,213 +342,209 @@
 				{@const selectedFiles = getSelectedMaterialFiles(item.pieceId)}
 				{@const isExpanded = expandedPieces.has(item.pieceId)}
 
-				<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
-					<!-- Élément principal -->
-					<div
-						class="flex items-center justify-between p-4 hover:bg-gray-100 transition-all duration-200 cursor-pointer group"
-						on:click={() => handleItemClick(item)}
-						on:contextmenu={(e) => handleRightClick(e, item)}
-					>
-						<div class="flex items-center gap-3 flex-1 min-w-0">
-							<div class="flex-shrink-0 p-2 bg-white rounded-lg border border-gray-200 group-hover:border-[#6B9AD9] transition-colors">
-								<svelte:component this={getFileIcon(item)} size={20} class={getFileColor(item)} />
-							</div>
-							<div class="flex-1 min-w-0">
-								<h4 class="font-medium text-gray-800 truncate">{item.name}</h4>
-								<div class="flex items-center gap-4 mt-1">
-									<p class="text-sm text-gray-500">
-										{#if item.type === 'file'}
-											{formatFileSize(item.size || 0)}
-										{:else}
-											Dossier
-											{#if selectedMaterial}
-												• Matériel: {selectedMaterial.name}
-												• {selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}
+				{#key `${item.id}-${materialsVersion}`}
+					<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
+						<div
+							class="flex items-center justify-between p-4 hover:bg-gray-100 transition-all duration-200 cursor-pointer group"
+							on:click={() => handleItemClick(item)}
+							on:contextmenu={(e) => handleRightClick(e, item)}
+						>
+							<div class="flex items-center gap-3 flex-1 min-w-0">
+								<div class="flex-shrink-0 p-2 bg-white rounded-lg border border-gray-200 group-hover:border-[#6B9AD9] transition-colors">
+									<svelte:component this={getFileIcon(item)} size={20} class={getFileColor(item)} />
+								</div>
+								<div class="flex-1 min-w-0">
+									<h4 class="font-medium text-gray-800 truncate">{item.name}</h4>
+									<div class="flex items-center gap-4 mt-1">
+										<p class="text-sm text-gray-500">
+											{#if item.type === 'file'}
+												{formatFileSize(item.size || 0)}
 											{:else}
-												• Aucun matériel sélectionné
+												Dossier
+												{#if selectedMaterial}
+													• Matériel: {selectedMaterial.name}
+													• {selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}
+												{:else}
+													• Aucun matériel sélectionné
+												{/if}
 											{/if}
-										{/if}
-									</p>
-									<p class="text-sm text-gray-500">
-										{formatDate(item.updatedAt)}
-									</p>
+										</p>
+										<p class="text-sm text-gray-500">
+											{formatDate(item.updatedAt)}
+										</p>
+									</div>
 								</div>
 							</div>
+
+							{#if showActions}
+								<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+									{#if item.type === 'file'}
+										<button
+											class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+											on:click|stopPropagation={() => previewFileFunction(item)}
+											title="Prévisualiser"
+										>
+											<Eye size={16} />
+										</button>
+
+										<button
+											class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+											on:click|stopPropagation={() => downloadFile(item)}
+											title="Télécharger"
+										>
+											<Download size={16} />
+										</button>
+									{/if}
+
+									<button
+										class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
+										on:click|stopPropagation={() => renameItem(item)}
+										title="Renommer"
+									>
+										<Edit3 size={16} />
+									</button>
+
+									<button
+										class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+										on:click|stopPropagation={() => deleteItem(item)}
+										title="Supprimer"
+									>
+										<Trash2 size={16} />
+									</button>
+								</div>
+							{/if}
 						</div>
 
-						{#if showActions}
-							<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-								{#if item.type === 'file'}
-									<button
-										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-										on:click|stopPropagation={() => previewFileFunction(item)}
-										title="Prévisualiser"
-									>
-										<Eye size={16} />
-									</button>
+						{#if showMaterials && item.type === 'folder' && item.pieceId}
+							<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+								<div class="p-3">
+									<div class="flex items-center justify-between mb-3">
+										<h5 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+											<Package size={14} class="text-blue-600" />
+											Matériel sélectionné pour cette pièce
+										</h5>
 
-									<button
-										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-										on:click|stopPropagation={() => downloadFile(item)}
-										title="Télécharger"
-									>
-										<Download size={16} />
-									</button>
-								{/if}
-
-								<button
-									class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
-									on:click|stopPropagation={() => renameItem(item)}
-									title="Renommer"
-								>
-									<Edit3 size={16} />
-								</button>
-
-								<button
-									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-									on:click|stopPropagation={() => deleteItem(item)}
-									title="Supprimer"
-								>
-									<Trash2 size={16} />
-								</button>
-							</div>
-						{/if}
-					</div>
-
-					<!-- ✅ SECTION AFFICHAGE DU MATÉRIEL SÉLECTIONNÉ (SANS CHECKBOX) -->
-					{#if showMaterials && item.type === 'folder' && item.pieceId}
-						<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-							<div class="p-3">
-								<div class="flex items-center justify-between mb-3">
-									<h5 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
-										<Package size={14} class="text-blue-600" />
-										Matériel sélectionné pour cette pièce
-									</h5>
-
-									{#if selectedMaterial}
-										<div class="flex items-center gap-2">
-											<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-												✓ {selectedMaterial.name}
-											</span>
-											<button
-												class="text-xs text-blue-600 hover:text-blue-800"
-												on:click={() => togglePieceExpansion(item.pieceId)}
-											>
-												{#if isExpanded}
-													<ChevronDown size={16} />
-												{:else}
-													<ChevronRight size={16} />
-												{/if}
-											</button>
-										</div>
-									{:else}
-										<div class="flex items-center gap-2">
-											<span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
-												⚠ Aucun matériel sélectionné
-											</span>
-											<Info size={14} class="text-gray-400" />
-										</div>
-									{/if}
-								</div>
-
-								{#if selectedMaterial}
-									<!-- Informations du matériel sélectionné -->
-									<div class="bg-white border border-blue-200 rounded-lg p-3 mb-3">
-										<div class="flex items-center justify-between">
-											<div class="flex-1">
-												<h6 class="font-medium text-gray-800">{selectedMaterial.name}</h6>
-												<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-													<span class="font-semibold {selectedFiles.length > 0 ? 'text-green-600' : 'text-orange-600'}">
-														{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}
-														{#if selectedFiles.length > 0}
-															✓
-														{:else}
-															⚠
-														{/if}
-													</span>
-													{#if selectedMaterial.edition}
-														<span>Édition: {selectedMaterial.edition}</span>
+										{#if selectedMaterial}
+											<div class="flex items-center gap-2">
+												<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+													✓ {selectedMaterial.name}
+												</span>
+												<button
+													class="text-xs text-blue-600 hover:text-blue-800"
+													on:click={() => togglePieceExpansion(item.pieceId)}
+												>
+													{#if isExpanded}
+														<ChevronDown size={16} />
+													{:else}
+														<ChevronRight size={16} />
 													{/if}
-													{#if selectedMaterial.editor}
-														<span>Éditeur: {selectedMaterial.editor}</span>
-													{/if}
-												</div>
+												</button>
 											</div>
-										</div>
-
-										{#if selectedMaterial.description}
-											<p class="text-sm text-gray-600 mt-2">{selectedMaterial.description}</p>
+										{:else}
+											<div class="flex items-center gap-2">
+												<span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+													⚠ Aucun matériel sélectionné
+												</span>
+												<Info size={14} class="text-gray-400" />
+											</div>
 										{/if}
 									</div>
 
-									<!-- Fichiers du matériel sélectionné -->
-									{#if isExpanded && selectedFiles.length > 0}
-										<div class="bg-blue-25 border border-blue-100 rounded-lg p-3">
-											<h6 class="text-sm font-medium text-gray-700 mb-2">
-												Fichiers disponibles ({selectedFiles.length})
-											</h6>
-											<div class="space-y-2">
-												{#each selectedFiles as file}
-													<div class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
-														<div class="flex items-center gap-2 flex-1 min-w-0">
-															<svelte:component
-																this={getFileIcon({...file, type: 'file'})}
-																size={16}
-																class={getFileColor({...file, type: 'file'})}
-															/>
-															<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
-															<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
-														</div>
-
-														<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-															<button
-																class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-																on:click={() => previewMaterialFile(file)}
-																title="Prévisualiser"
-															>
-																<Eye size={14} />
-															</button>
-															<button
-																class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-																on:click={() => downloadMaterialFile(file.id, file.name)}
-																title="Télécharger"
-															>
-																<Download size={14} />
-															</button>
-														</div>
+									{#if selectedMaterial}
+										<div class="bg-white border border-blue-200 rounded-lg p-3 mb-3">
+											<div class="flex items-center justify-between">
+												<div class="flex-1">
+													<h6 class="font-medium text-gray-800">{selectedMaterial.name}</h6>
+													<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
+														<span class="font-semibold {selectedFiles.length > 0 ? 'text-green-600' : 'text-orange-600'}">
+															{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}
+															{#if selectedFiles.length > 0}
+																✓
+															{:else}
+																⚠
+															{/if}
+														</span>
+														{#if selectedMaterial.edition}
+															<span>Édition: {selectedMaterial.edition}</span>
+														{/if}
+														{#if selectedMaterial.editor}
+															<span>Éditeur: {selectedMaterial.editor}</span>
+														{/if}
 													</div>
-												{/each}
+												</div>
 											</div>
+
+											{#if selectedMaterial.description}
+												<p class="text-sm text-gray-600 mt-2">{selectedMaterial.description}</p>
+											{/if}
 										</div>
-									{:else if isExpanded && selectedFiles.length === 0}
-										<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
-											<FileText class="mx-auto mb-2" size={24} />
-											<p class="text-sm">Aucun fichier dans ce matériel</p>
+
+										{#if isExpanded && selectedFiles.length > 0}
+											<div class="bg-blue-25 border border-blue-100 rounded-lg p-3">
+												<h6 class="text-sm font-medium text-gray-700 mb-2">
+													Fichiers disponibles ({selectedFiles.length})
+												</h6>
+												<div class="space-y-2">
+													{#each selectedFiles as file}
+														<div class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
+															<div class="flex items-center gap-2 flex-1 min-w-0">
+																<svelte:component
+																	this={getFileIcon({...file, type: 'file'})}
+																	size={16}
+																	class={getFileColor({...file, type: 'file'})}
+																/>
+																<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
+																<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
+															</div>
+
+															<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+																<button
+																	class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+																	on:click={() => previewMaterialFile(file)}
+																	title="Prévisualiser"
+																>
+																	<Eye size={14} />
+																</button>
+																<button
+																	class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+																	on:click={() => downloadMaterialFile(file.id, file.name)}
+																	title="Télécharger"
+																>
+																	<Download size={14} />
+																</button>
+															</div>
+														</div>
+													{/each}
+												</div>
+											</div>
+										{:else if isExpanded && selectedFiles.length === 0}
+											<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
+												<FileText class="mx-auto mb-2" size={24} />
+												<p class="text-sm">Aucun fichier dans ce matériel</p>
+												<p class="text-xs text-gray-400 mt-1">
+													Ajoutez des fichiers depuis la gestion des matériels
+												</p>
+											</div>
+										{/if}
+									{:else}
+										<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+											<Package class="mx-auto mb-2 text-gray-400" size={24} />
+											<p class="text-sm font-medium">Aucun matériel sélectionné</p>
 											<p class="text-xs text-gray-400 mt-1">
-												Ajoutez des fichiers depuis la gestion des matériels
+												Rendez-vous dans la gestion des matériels pour sélectionner un matériel pour cette pièce
 											</p>
 										</div>
 									{/if}
-								{:else}
-									<!-- Message quand aucun matériel n'est sélectionné -->
-									<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-										<Package class="mx-auto mb-2 text-gray-400" size={24} />
-										<p class="text-sm font-medium">Aucun matériel sélectionné</p>
-										<p class="text-xs text-gray-400 mt-1">
-											Rendez-vous dans la gestion des matériels pour sélectionner un matériel pour cette pièce
-										</p>
-									</div>
-								{/if}
+								</div>
 							</div>
-						</div>
-					{/if}
-				</div>
+						{/if}
+					</div>
+				{/key}
 			{/each}
 		</div>
 	{/if}
 </div>
 
-<!-- Menu contextuel -->
 {#if showContextMenu && selectedItem}
 	<div
 		class="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 min-w-[150px]"
@@ -614,7 +601,6 @@
 	</div>
 {/if}
 
-<!-- Modal de prévisualisation -->
 {#if showPreview && previewFile}
 	<FilePreview
 		fileId={previewFile.id}
