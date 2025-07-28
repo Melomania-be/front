@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/MaterialStatusAlert.svelte - Version corrigée -->
+<!-- src/lib/components/materials/MaterialStatusAlert.svelte - Version améliorée -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { AlertTriangle, ChevronRight, FileText, RefreshCw } from 'lucide-svelte';
@@ -14,7 +14,7 @@
 		await loadUnspecifiedMaterials();
 		isLoading = false;
 
-		// Écouter les changements de sélection
+		// Listen for material selection changes
 		const handleMaterialChange = () => {
 			loadUnspecifiedMaterials();
 		};
@@ -42,7 +42,7 @@
 			const unspecifiedPieces = [];
 
 			for (const piece of projectData.pieces) {
-				// Vérifier s'il y a une sélection directe
+				// Check if there's a direct selection
 				try {
 					const selectionResponse = await fetch(`/api/pieces/${piece.id}/select-material`);
 					let hasSelection = false;
@@ -56,15 +56,15 @@
 						unspecifiedPieces.push({
 							piece_id: piece.id,
 							piece_name: piece.name,
-							composer_name: piece.composer?.shortName || piece.composer?.longName || 'Compositeur inconnu'
+							composer_name: piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'
 						});
 					}
 				} catch (error) {
-					// En cas d'erreur, considérer comme non spécifié
+					// In case of error, consider as unspecified
 					unspecifiedPieces.push({
 						piece_id: piece.id,
 						piece_name: piece.name,
-						composer_name: piece.composer?.shortName || piece.composer?.longName || 'Compositeur inconnu'
+						composer_name: piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'
 					});
 				}
 			}
@@ -85,37 +85,38 @@
 		isRefreshing = false;
 	}
 
-	// ✅ Fonction pour aller directement à la gestion des matériels
 	function goToMaterialsManagement() {
 		window.location.href = '/files?tab=materials';
 	}
+
+	// Only show alert if there are pieces without materials
+	$: shouldShowAlert = !isLoading && piecesWithoutMaterial.length > 0;
 </script>
 
-{#if !isLoading && piecesWithoutMaterial.length > 0}
-	<div class="mb-6 p-4 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
+{#if shouldShowAlert}
+	<div class="mb-6 p-4 bg-orange-50 border-l-4 border-orange-400 rounded-lg shadow-sm">
 		<div class="flex items-start">
 			<AlertTriangle class="text-orange-400 flex-shrink-0 mt-0.5" size={20} />
 			<div class="ml-3 flex-1">
 				<div class="flex items-center justify-between">
 					<h4 class="text-sm font-medium text-orange-800">
-						Matériels non spécifiés
+						Material Assignment Required
 					</h4>
 					<button
 						class="p-1 text-orange-600 hover:text-orange-800 rounded transition-colors"
 						on:click={refreshStatus}
 						disabled={isRefreshing}
-						title="Actualiser le statut"
+						title="Refresh status"
 					>
 						<RefreshCw class="w-4 h-4 {isRefreshing ? 'animate-spin' : ''}" />
 					</button>
 				</div>
 				<div class="text-sm text-orange-700 mt-1">
-					{piecesWithoutMaterial.length} pièce{piecesWithoutMaterial.length !== 1 ? 's' : ''}
-					{piecesWithoutMaterial.length === 1 ? 'nécessite' : 'nécessitent'}
-					la spécification d'un matériel.
+					{piecesWithoutMaterial.length} piece{piecesWithoutMaterial.length !== 1 ? 's' : ''}
+					{piecesWithoutMaterial.length === 1 ? 'requires' : 'require'} material assignment.
 				</div>
 
-				<div class="flex items-center gap-3 mt-3">
+				<div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3">
 					{#if piecesWithoutMaterial.length > 0}
 						<button
 							class="flex items-center gap-1 text-sm text-orange-800 hover:text-orange-900 font-medium"
@@ -125,7 +126,7 @@
 								class="transition-transform {showDetails ? 'rotate-90' : ''}"
 								size={16}
 							/>
-							{showDetails ? 'Masquer' : 'Voir'} les détails
+							{showDetails ? 'Hide' : 'Show'} details
 						</button>
 					{/if}
 
@@ -134,7 +135,7 @@
 						on:click={goToMaterialsManagement}
 					>
 						<FileText size={14} />
-						Gérer les matériels
+						Manage Materials
 					</button>
 				</div>
 			</div>
@@ -157,7 +158,7 @@
 				</div>
 
 				<div class="mt-3 text-xs text-orange-700">
-					Utilisez la gestion des matériels pour spécifier quel matériel utiliser pour chaque pièce.
+					Use the material management interface to specify which material to use for each piece.
 				</div>
 			</div>
 		{/if}
@@ -166,7 +167,7 @@
 	<div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
 		<div class="flex items-center">
 			<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-3"></div>
-			<span class="text-sm text-gray-600">Vérification du statut des matériels...</span>
+			<span class="text-sm text-gray-600">Checking material status...</span>
 		</div>
 	</div>
 {/if}
