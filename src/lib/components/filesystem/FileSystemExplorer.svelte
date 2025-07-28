@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version avec sélection de matériel unique -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Version AFFICHAGE SEUL -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -18,8 +18,7 @@
 		ChevronDown,
 		ChevronRight,
 		Plus,
-		CheckCircle,
-		Circle
+		Info
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import type { Material } from '$lib/types/Material';
@@ -38,140 +37,78 @@
 	let contextMenuPosition = { x: 0, y: 0 };
 	let showPreview = false;
 	let previewFile: FileSystemItem | null = null;
-	let expandedMaterials: Set<number> = new Set();
-	let showMaterialUploader: { [key: number]: boolean } = {};
-	let materialsData: { [key: number]: Material[] } = {};
-	let loadedPieces = new Set<number>();
-
-	// ✅ NOUVEAU : État pour les matériels sélectionnés par pièce
-	let selectedMaterials: { [pieceId: number]: number | null } = {};
+	let expandedPieces = new Set<number>();
+	let selectedMaterialFiles: { [pieceId: number]: any[] } = {};
+	let selectedMaterialInfo: { [pieceId: number]: any } = {};
+	let isLoadingMaterials = false;
 
 	onMount(async () => {
-		await loadMaterialsForItems();
-		await loadSelectedMaterials();
+		await loadSelectedMaterialsInfo();
+
+		// Écouter les changements de sélection de matériels
+		const handleMaterialChange = (event) => {
+			loadSelectedMaterialsInfo();
+		};
+
+		window.addEventListener('materialSelectionChanged', handleMaterialChange);
+
+		return () => {
+			window.removeEventListener('materialSelectionChanged', handleMaterialChange);
+		};
 	});
 
-	// ✅ NOUVEAU : Charger les matériels sélectionnés pour chaque pièce
-	async function loadSelectedMaterials() {
-		for (const item of items) {
-			if (item.type === 'folder' && item.pieceId) {
-				try {
-					const response = await fetch(`/api/pieces/${item.pieceId}/select-material`);
-					if (response.ok) {
-						const result = await response.json();
-						selectedMaterials[item.pieceId] = result.materialId;
+	// ✅ NOUVEAU : Charger les informations des matériels sélectionnés (AFFICHAGE SEUL)
+	async function loadSelectedMaterialsInfo() {
+		if (!items || items.length === 0) return;
+
+		isLoadingMaterials = true;
+
+		try {
+			for (const item of items) {
+				if (item.type === 'folder' && item.pieceId) {
+					// 1. Récupérer le matériel sélectionné pour cette pièce
+					const selectedResponse = await fetch(`/api/pieces/${item.pieceId}/select-material`);
+
+					if (selectedResponse.ok) {
+						const selectedResult = await selectedResponse.json();
+
+						if (selectedResult.materialId) {
+							// 2. Récupérer les infos du matériel sélectionné
+							const materialResponse = await fetch(`/api/materials/${selectedResult.materialId}`);
+
+							if (materialResponse.ok) {
+								const materialData = await materialResponse.json();
+								selectedMaterialInfo[item.pieceId] = materialData;
+
+								// 3. Récupérer les fichiers du matériel sélectionné
+								const filesResponse = await fetch(`/api/materials/${selectedResult.materialId}/files`);
+
+								if (filesResponse.ok) {
+									const files = await filesResponse.json();
+									selectedMaterialFiles[item.pieceId] = Array.isArray(files) ? files : [];
+								} else {
+									selectedMaterialFiles[item.pieceId] = [];
+								}
+							}
+						} else {
+							selectedMaterialInfo[item.pieceId] = null;
+							selectedMaterialFiles[item.pieceId] = [];
+						}
 					} else {
-						selectedMaterials[item.pieceId] = null;
+						selectedMaterialInfo[item.pieceId] = null;
+						selectedMaterialFiles[item.pieceId] = [];
 					}
-				} catch (error) {
-					console.error('Error loading selected material for piece:', item.pieceId, error);
-					selectedMaterials[item.pieceId] = null;
 				}
 			}
-		}
-		selectedMaterials = { ...selectedMaterials };
-	}
 
-	// ✅ NOUVEAU : Sélectionner un matériel pour une pièce
-	async function selectMaterial(pieceId: number, materialId: number | null) {
-		try {
-			console.log(`🎵 Selecting material ${materialId} for piece ${pieceId}`);
-
-			const response = await fetch(`/api/pieces/${pieceId}/select-material`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ materialId })
-			});
-
-			if (response.ok) {
-				selectedMaterials[pieceId] = materialId;
-				selectedMaterials = { ...selectedMaterials };
-
-				// Notifier le parent de la mise à jour
-				dispatch('materialSelected', { pieceId, materialId });
-
-				console.log(`✅ Material selection updated for piece ${pieceId}`);
-			} else {
-				console.error('Failed to select material:', response.status);
-				alert('Erreur lors de la sélection du matériel');
-			}
+			// Force reactivity
+			selectedMaterialInfo = { ...selectedMaterialInfo };
+			selectedMaterialFiles = { ...selectedMaterialFiles };
 		} catch (error) {
-			console.error('Error selecting material:', error);
-			alert('Erreur lors de la sélection du matériel');
-		}
-	}
-
-	async function loadMaterialsForItems() {
-		for (const item of items) {
-			if (item.type === 'folder' && item.pieceId && !loadedPieces.has(item.pieceId)) {
-				await loadMaterialsWithRealFileCount(item.pieceId);
-				loadedPieces.add(item.pieceId);
-			}
-		}
-		materialsData = { ...materialsData };
-	}
-
-	async function loadMaterialsWithRealFileCount(pieceId: number) {
-		if (materialsData[pieceId]) return materialsData[pieceId];
-
-		try {
-			console.log(`📦 Loading materials with file count for piece: ${pieceId}`);
-
-			const response = await fetch(`/api/materials/piece/${pieceId}`);
-			if (response.ok) {
-				const materials = await response.json();
-				console.log(`📦 Loaded ${materials.length} materials for piece ${pieceId}`);
-
-				const materialPromises = materials.map(async (material) => {
-					try {
-						const backupCount = material.files_count || material.files?.length || 0;
-
-						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
-						if (filesResponse.ok) {
-							const files = await filesResponse.json();
-							material.files = Array.isArray(files) ? files : [];
-							material.files_count = material.files.length;
-						} else {
-							material.files_count = backupCount;
-						}
-
-						return material;
-					} catch (error) {
-						console.error(`Error loading files for material ${material.id}:`, error);
-						material.files_count = material.files_count || material.files?.length || 0;
-						return material;
-					}
-				});
-
-				const processedMaterials = await Promise.all(materialPromises);
-				materialsData[pieceId] = processedMaterials;
-				return processedMaterials;
-			}
-		} catch (error) {
-			console.error('Error loading materials for piece:', pieceId, error);
+			// Ignore errors silently
 		}
 
-		return [];
-	}
-
-	function getTotalFilesCount(pieceId: number): number {
-		const materials = materialsData[pieceId] || [];
-		const total = materials.reduce((total, material) => {
-			const count = material.files_count || 0;
-			return total + count;
-		}, 0);
-
-		console.log(`📊 Total files for piece ${pieceId}: ${total}`);
-		return total;
-	}
-
-	// ✅ NOUVEAU : Obtenir les fichiers du matériel sélectionné uniquement
-	function getSelectedMaterialFiles(pieceId: number): any[] {
-		const selectedMaterialId = selectedMaterials[pieceId];
-		if (!selectedMaterialId || !materialsData[pieceId]) return [];
-
-		const selectedMaterial = materialsData[pieceId].find(m => m.id === selectedMaterialId);
-		return selectedMaterial?.files || [];
+		isLoadingMaterials = false;
 	}
 
 	function formatFileSize(bytes: number): string {
@@ -284,44 +221,6 @@
 		}
 	}
 
-	async function deleteMaterialFile(fileId: number, fileName: string, materialId: number) {
-		if (!confirm(`Êtes-vous sûr de vouloir supprimer "${fileName}" ?`)) {
-			return;
-		}
-
-		try {
-			const response = await fetch(`/api/filesystem/files/${fileId}`, {
-				method: 'DELETE'
-			});
-
-			if (response.ok) {
-				for (const pieceId in materialsData) {
-					const materials = materialsData[pieceId];
-					const material = materials.find(m => m.id === materialId);
-
-					if (material && material.files) {
-						const fileIndex = material.files.findIndex(f => f.id === fileId);
-						if (fileIndex !== -1) {
-							material.files.splice(fileIndex, 1);
-							material.files_count = material.files.length;
-							console.log(`🗑️ Updated file count for material ${material.name}: ${material.files_count}`);
-						}
-					}
-				}
-
-				materialsData = { ...materialsData };
-				dispatch('refresh');
-
-			} else {
-				console.error('Delete failed:', response.status);
-				alert('Erreur lors de la suppression');
-			}
-		} catch (error) {
-			console.error('Error deleting material file:', error);
-			alert('Erreur lors de la suppression: ' + error.message);
-		}
-	}
-
 	async function deleteItem(item: FileSystemItem) {
 		if (confirm(`Êtes-vous sûr de vouloir supprimer "${item.name}" ?`)) {
 			try {
@@ -382,77 +281,13 @@
 		showPreview = true;
 	}
 
-	async function toggleMaterialExpansion(materialId: number, pieceId: number) {
-		if (expandedMaterials.has(materialId)) {
-			expandedMaterials.delete(materialId);
+	function togglePieceExpansion(pieceId: number) {
+		if (expandedPieces.has(pieceId)) {
+			expandedPieces.delete(pieceId);
 		} else {
-			expandedMaterials.add(materialId);
+			expandedPieces.add(pieceId);
 		}
-		expandedMaterials = new Set(expandedMaterials);
-	}
-
-	function openMaterialUploader(materialId: number) {
-		showMaterialUploader[materialId] = true;
-		showMaterialUploader = { ...showMaterialUploader };
-	}
-
-	function closeMaterialUploader(materialId: number) {
-		showMaterialUploader[materialId] = false;
-		showMaterialUploader = { ...showMaterialUploader };
-	}
-
-	async function handleMaterialFileUpload(materialId: number, files: FileList) {
-		if (!files || files.length === 0) return;
-
-		console.log('📤 Uploading files to material:', materialId);
-
-		const formData = new FormData();
-		Array.from(files).forEach((file) => {
-			formData.append('files', file);
-		});
-
-		try {
-			const response = await fetch(`/api/materials/${materialId}/files`, {
-				method: 'POST',
-				body: formData
-			});
-
-			const responseData = await response.json();
-
-			if (response.ok && responseData.success) {
-				console.log('✅ Upload successful to material');
-
-				for (const pieceId in materialsData) {
-					const materials = materialsData[pieceId];
-					const material = materials.find(m => m.id === materialId);
-
-					if (material) {
-						try {
-							const filesResponse = await fetch(`/api/materials/${materialId}/files`);
-							if (filesResponse.ok) {
-								const updatedFiles = await filesResponse.json();
-								material.files = updatedFiles;
-								material.files_count = Array.isArray(updatedFiles) ? updatedFiles.length : 0;
-								console.log(`📁 Updated material ${material.name} file count: ${material.files_count}`);
-							}
-						} catch (error) {
-							console.error('Error reloading files after upload:', error);
-						}
-					}
-				}
-
-				materialsData = { ...materialsData };
-				dispatch('refresh');
-				closeMaterialUploader(materialId);
-
-			} else {
-				console.error('❌ Upload failed:', responseData);
-				alert('Erreur lors de l\'upload: ' + (responseData.error || 'Erreur inconnue'));
-			}
-		} catch (error) {
-			console.error('❌ Upload error:', error);
-			alert('Erreur lors de l\'upload: ' + error.message);
-		}
+		expandedPieces = new Set(expandedPieces);
 	}
 
 	async function downloadMaterialFile(fileId: number, fileName: string) {
@@ -491,12 +326,14 @@
 		showPreview = true;
 	}
 
-	function handleMaterialFileInput(materialId: number, event: Event) {
-		const input = event.target as HTMLInputElement;
-		if (input.files && input.files.length > 0) {
-			handleMaterialFileUpload(materialId, input.files);
-			input.value = '';
-		}
+	// ✅ Obtenir le matériel sélectionné pour une pièce
+	function getSelectedMaterial(pieceId: number): any | null {
+		return selectedMaterialInfo[pieceId] || null;
+	}
+
+	// ✅ Obtenir les fichiers du matériel sélectionné
+	function getSelectedMaterialFiles(pieceId: number): any[] {
+		return selectedMaterialFiles[pieceId] || [];
 	}
 </script>
 
@@ -510,9 +347,9 @@
 	{:else}
 		<div class="grid gap-2">
 			{#each items as item}
-				{@const materialsList = materialsData[item.pieceId] || item.materials || []}
-				{@const selectedMaterialId = selectedMaterials[item.pieceId]}
-				{@const selectedMaterialFiles = getSelectedMaterialFiles(item.pieceId)}
+				{@const selectedMaterial = getSelectedMaterial(item.pieceId)}
+				{@const selectedFiles = getSelectedMaterialFiles(item.pieceId)}
+				{@const isExpanded = expandedPieces.has(item.pieceId)}
 
 				<div class="bg-gray-50 rounded-lg border border-gray-200 hover:border-[#6B9AD9] transition-all duration-200">
 					<!-- Élément principal -->
@@ -533,13 +370,11 @@
 											{formatFileSize(item.size || 0)}
 										{:else}
 											Dossier
-											{#if materialsList.length > 0}
-												• {materialsList.length} matériel{materialsList.length !== 1 ? 's' : ''}
-												{#if selectedMaterialId}
-													• Matériel sélectionné: {selectedMaterialFiles.length} fichier{selectedMaterialFiles.length !== 1 ? 's' : ''}
-												{:else}
-													• Aucun matériel sélectionné
-												{/if}
+											{#if selectedMaterial}
+												• Matériel: {selectedMaterial.name}
+												• {selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}
+											{:else}
+												• Aucun matériel sélectionné
 											{/if}
 										{/if}
 									</p>
@@ -589,178 +424,132 @@
 						{/if}
 					</div>
 
-					<!-- ✅ NOUVELLE SECTION : Sélection de matériel avec checkbox -->
-					{#if showMaterials && item.type === 'folder' && item.pieceId && materialsData[item.pieceId]}
-						{@const materials = materialsData[item.pieceId]}
-						{#if materials.length > 0}
-							<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-								<div class="p-3">
-									<div class="flex items-center justify-between mb-3">
-										<h5 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
-											<Package size={14} class="text-blue-600" />
-											Sélectionner le matériel pour cette pièce
-										</h5>
-										{#if selectedMaterialId}
+					<!-- ✅ SECTION AFFICHAGE DU MATÉRIEL SÉLECTIONNÉ (SANS CHECKBOX) -->
+					{#if showMaterials && item.type === 'folder' && item.pieceId}
+						<div class="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+							<div class="p-3">
+								<div class="flex items-center justify-between mb-3">
+									<h5 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+										<Package size={14} class="text-blue-600" />
+										Matériel sélectionné pour cette pièce
+									</h5>
+
+									{#if selectedMaterial}
+										<div class="flex items-center gap-2">
 											<span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-												✓ Matériel sélectionné
+												✓ {selectedMaterial.name}
 											</span>
-										{:else}
+											<button
+												class="text-xs text-blue-600 hover:text-blue-800"
+												on:click={() => togglePieceExpansion(item.pieceId)}
+											>
+												{#if isExpanded}
+													<ChevronDown size={16} />
+												{:else}
+													<ChevronRight size={16} />
+												{/if}
+											</button>
+										</div>
+									{:else}
+										<div class="flex items-center gap-2">
 											<span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
 												⚠ Aucun matériel sélectionné
 											</span>
+											<Info size={14} class="text-gray-400" />
+										</div>
+									{/if}
+								</div>
+
+								{#if selectedMaterial}
+									<!-- Informations du matériel sélectionné -->
+									<div class="bg-white border border-blue-200 rounded-lg p-3 mb-3">
+										<div class="flex items-center justify-between">
+											<div class="flex-1">
+												<h6 class="font-medium text-gray-800">{selectedMaterial.name}</h6>
+												<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
+													<span class="font-semibold {selectedFiles.length > 0 ? 'text-green-600' : 'text-orange-600'}">
+														{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}
+														{#if selectedFiles.length > 0}
+															✓
+														{:else}
+															⚠
+														{/if}
+													</span>
+													{#if selectedMaterial.edition}
+														<span>Édition: {selectedMaterial.edition}</span>
+													{/if}
+													{#if selectedMaterial.editor}
+														<span>Éditeur: {selectedMaterial.editor}</span>
+													{/if}
+												</div>
+											</div>
+										</div>
+
+										{#if selectedMaterial.description}
+											<p class="text-sm text-gray-600 mt-2">{selectedMaterial.description}</p>
 										{/if}
 									</div>
 
-									<div class="space-y-2">
-										{#each materials as material}
-											<div class="bg-white border border-blue-200 rounded-lg overflow-hidden {selectedMaterialId === material.id ? 'ring-2 ring-blue-500' : ''}">
-												<div class="p-3">
-													<div class="flex items-center justify-between">
-														<div class="flex items-center gap-3 flex-1">
-															<!-- ✅ CHECKBOX POUR SÉLECTION UNIQUE -->
-															<button
-																class="flex items-center gap-2 p-1 hover:bg-gray-100 rounded transition-colors"
-																on:click={() => selectMaterial(item.pieceId, selectedMaterialId === material.id ? null : material.id)}
-															>
-																{#if selectedMaterialId === material.id}
-																	<CheckCircle class="text-blue-600" size={20} />
-																{:else}
-																	<Circle class="text-gray-400" size={20} />
-																{/if}
-															</button>
-
-															<div class="flex-1">
-																<div class="flex items-center gap-2">
-																	<h6 class="font-medium text-gray-800">{material.name}</h6>
-																	{#if material.is_default}
-																		<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-																			Défaut
-																		</span>
-																	{/if}
-																	{#if selectedMaterialId === material.id}
-																		<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-																			Sélectionné
-																		</span>
-																	{/if}
-																</div>
-																<div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-																	<span class="font-semibold {material.files_count > 0 ? 'text-green-600' : 'text-orange-600'}">
-																		{material.files_count || 0} fichier{(material.files_count || 0) !== 1 ? 's' : ''}
-																		{#if material.files_count > 0}
-																			✓
-																		{:else}
-																			⚠
-																		{/if}
-																	</span>
-																	{#if material.edition}
-																		<span>Édition: {material.edition}</span>
-																	{/if}
-																	{#if material.editor}
-																		<span>Éditeur: {material.editor}</span>
-																	{/if}
-																</div>
-															</div>
-														</div>
-
-														<div class="flex items-center gap-1">
-															<input
-																type="file"
-																multiple
-																accept=".pdf,.musicxml,.mxl,.mid,.midi,.jpg,.jpeg,.png,.doc,.docx,.txt,.zip"
-																style="display: none;"
-																id="material-upload-{material.id}"
-																on:change={(e) => handleMaterialFileInput(material.id, e)}
+									<!-- Fichiers du matériel sélectionné -->
+									{#if isExpanded && selectedFiles.length > 0}
+										<div class="bg-blue-25 border border-blue-100 rounded-lg p-3">
+											<h6 class="text-sm font-medium text-gray-700 mb-2">
+												Fichiers disponibles ({selectedFiles.length})
+											</h6>
+											<div class="space-y-2">
+												{#each selectedFiles as file}
+													<div class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
+														<div class="flex items-center gap-2 flex-1 min-w-0">
+															<svelte:component
+																this={getFileIcon({...file, type: 'file'})}
+																size={16}
+																class={getFileColor({...file, type: 'file'})}
 															/>
+															<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
+															<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
+														</div>
+
+														<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 															<button
-																class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-																on:click={() => document.getElementById(`material-upload-${material.id}`)?.click()}
-																title="Ajouter des fichiers"
+																class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+																on:click={() => previewMaterialFile(file)}
+																title="Prévisualiser"
 															>
-																<Upload size={14} />
+																<Eye size={14} />
+															</button>
+															<button
+																class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+																on:click={() => downloadMaterialFile(file.id, file.name)}
+																title="Télécharger"
+															>
+																<Download size={14} />
 															</button>
 														</div>
 													</div>
-
-													{#if material.description}
-														<p class="text-sm text-gray-600 mt-2">{material.description}</p>
-													{/if}
-												</div>
-
-												<!-- Fichiers du matériel SEULEMENT si sélectionné -->
-												{#if selectedMaterialId === material.id && expandedMaterials.has(material.id)}
-													<div class="border-t border-blue-100 bg-blue-25">
-														{#if material.files && material.files.length > 0}
-															<div class="p-3 space-y-2">
-																{#each material.files as file}
-																	<div class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-blue-300 transition-colors group">
-																		<div class="flex items-center gap-2 flex-1 min-w-0">
-																			<svelte:component
-																				this={getFileIcon({...file, type: 'file'})}
-																				size={16}
-																				class={getFileColor({...file, type: 'file'})}
-																			/>
-																			<span class="text-sm font-medium text-gray-700 truncate">{file.name}</span>
-																			<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
-																		</div>
-
-																		<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-																			<button
-																				class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-																				on:click={() => previewMaterialFile(file)}
-																				title="Prévisualiser"
-																			>
-																				<Eye size={14} />
-																			</button>
-																			<button
-																				class="p-1 text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-																				on:click={() => downloadMaterialFile(file.id, file.name)}
-																				title="Télécharger"
-																			>
-																				<Download size={14} />
-																			</button>
-																			<button
-																				class="p-1 text-gray-600 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-																				on:click={() => deleteMaterialFile(file.id, file.name, material.id)}
-																				title="Supprimer"
-																			>
-																				<Trash2 size={14} />
-																			</button>
-																		</div>
-																	</div>
-																{/each}
-															</div>
-														{:else}
-															<div class="p-4 text-center text-gray-500">
-																<FileText class="mx-auto mb-2" size={24} />
-																<p class="text-sm">Aucun fichier dans ce matériel</p>
-															</div>
-														{/if}
-													</div>
-												{/if}
-
-												<!-- Bouton pour expand/collapse les fichiers SEULEMENT si sélectionné -->
-												{#if selectedMaterialId === material.id}
-													<div class="border-t border-blue-100 bg-blue-25 p-2">
-														<button
-															class="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1"
-															on:click={() => toggleMaterialExpansion(material.id, item.pieceId)}
-														>
-															{#if expandedMaterials.has(material.id)}
-																<ChevronDown size={16} />
-																Masquer les fichiers
-															{:else}
-																<ChevronRight size={16} />
-																Voir les fichiers ({material.files_count || 0})
-															{/if}
-														</button>
-													</div>
-												{/if}
+												{/each}
 											</div>
-										{/each}
+										</div>
+									{:else if isExpanded && selectedFiles.length === 0}
+										<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
+											<FileText class="mx-auto mb-2" size={24} />
+											<p class="text-sm">Aucun fichier dans ce matériel</p>
+											<p class="text-xs text-gray-400 mt-1">
+												Ajoutez des fichiers depuis la gestion des matériels
+											</p>
+										</div>
+									{/if}
+								{:else}
+									<!-- Message quand aucun matériel n'est sélectionné -->
+									<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+										<Package class="mx-auto mb-2 text-gray-400" size={24} />
+										<p class="text-sm font-medium">Aucun matériel sélectionné</p>
+										<p class="text-xs text-gray-400 mt-1">
+											Rendez-vous dans la gestion des matériels pour sélectionner un matériel pour cette pièce
+										</p>
 									</div>
-								</div>
+								{/if}
 							</div>
-						{/if}
+						</div>
 					{/if}
 				</div>
 			{/each}

@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/MinimalMaterialsManager.svelte -->
+<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - Version centralisée avec sélection -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import {
@@ -9,10 +9,15 @@
 		Trash2,
 		Star,
 		Edit3,
-		Upload
+		Upload,
+		CheckCircle,
+		Circle,
+		Eye
 	} from 'lucide-svelte';
 
 	const dispatch = createEventDispatcher();
+
+	export let projectId: number | null = null; // ✅ NOUVEAU : Projet context
 
 	let materials: any[] = [];
 	let pieces: any[] = [];
@@ -27,6 +32,9 @@
 		notes: '',
 		is_default: false
 	};
+
+	// ✅ NOUVEAU : État pour les matériels sélectionnés par pièce
+	let selectedMaterials: Record<number, number | null> = {};
 
 	onMount(async () => {
 		await loadPieces();
@@ -51,57 +59,91 @@
 			selectedPiece = piece;
 			console.log(`🔄 Loading materials for piece: ${piece.name}`);
 
+			// 1. Charger les matériels de la pièce
 			const response = await fetch(`/api/materials/piece/${piece.id}`);
 			if (response.ok) {
 				const materialsData = await response.json();
 				console.log(`📦 Loaded ${materialsData.length} materials from API`);
 
-				// ✅ SOLUTION DÉFINITIVE : Charger les fichiers réels en parallèle
+				// Charger les fichiers réels pour chaque matériel
 				const materialPromises = materialsData.map(async (material) => {
 					try {
-						// Garder le count original comme fallback
 						const originalCount = material.files_count || material.files?.length || 0;
-
-						// Essayer de récupérer les fichiers réels
 						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
 						if (filesResponse.ok) {
 							const files = await filesResponse.json();
 							material.files = Array.isArray(files) ? files : [];
 							material.files_count = material.files.length;
 						} else {
-							// Fallback vers les données originales
 							material.files_count = originalCount;
 							material.files = material.files || [];
 						}
-
 						return material;
 					} catch (error) {
 						console.error(`Error loading files for material ${material.id}:`, error);
-						// En cas d'erreur, utiliser les données existantes
 						material.files_count = material.files_count || material.files?.length || 0;
 						return material;
 					}
 				});
 
-				// Attendre le traitement de tous les matériels
 				materials = await Promise.all(materialPromises);
-
-				console.log(`✅ Final materials with file counts:`,
-					materials.map(m => ({
-						name: m.name,
-						files_count: m.files_count
-					}))
-				);
-
-				// Forcer la réactivité
 				materials = [...materials];
 			} else {
-				console.error(`❌ Failed to load materials for piece ${piece.id}`);
 				materials = [];
 			}
+
+			// 2. ✅ NOUVEAU : Charger le matériel sélectionné pour cette pièce
+			await loadSelectedMaterialForPiece(piece.id);
+
 		} catch (error) {
 			console.error('Error loading materials for piece:', piece.id, error);
 			materials = [];
+		}
+	}
+
+	// ✅ NOUVEAU : Charger le matériel sélectionné pour une pièce
+	async function loadSelectedMaterialForPiece(pieceId: number) {
+		try {
+			const response = await fetch(`/api/pieces/${pieceId}/select-material`);
+			if (response.ok) {
+				const result = await response.json();
+				selectedMaterials[pieceId] = result.materialId;
+			} else {
+				selectedMaterials[pieceId] = null;
+			}
+			selectedMaterials = { ...selectedMaterials }; // Force reactivity
+		} catch (error) {
+			console.error('Error loading selected material for piece:', pieceId, error);
+			selectedMaterials[pieceId] = null;
+		}
+	}
+
+	// ✅ NOUVEAU : Sélectionner un matériel pour une pièce
+	async function selectMaterial(pieceId: number, materialId: number | null) {
+		try {
+			const response = await fetch(`/api/pieces/${pieceId}/select-material`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ materialId })
+			});
+
+			if (response.ok) {
+				selectedMaterials[pieceId] = materialId;
+				selectedMaterials = { ...selectedMaterials };
+
+				// Dispatcher l'événement pour notifier les autres composants
+				dispatch('materialsUpdated');
+
+				// Forcer le rechargement des données dans tous les composants
+				window.dispatchEvent(new CustomEvent('materialSelectionChanged', {
+					detail: { pieceId, materialId }
+				}));
+			} else {
+				alert('Erreur lors de la sélection du matériel');
+			}
+		} catch (error) {
+			console.error('Error selecting material:', error);
+			alert('Erreur lors de la sélection du matériel');
 		}
 	}
 
@@ -184,6 +226,47 @@
 	function goBackToPieces() {
 		selectedPiece = null;
 		materials = [];
+		selectedMaterials = {};
+	}
+
+	// ✅ NOUVEAU : Upload de fichier
+	async function handleFileUpload(material: any, event: Event) {
+		const input = event.target as HTMLInputElement;
+		if (!input.files || input.files.length === 0) return;
+
+		const formData = new FormData();
+		Array.from(input.files).forEach(file => {
+			formData.append('files', file);
+		});
+
+		try {
+			const response = await fetch(`/api/materials/${material.id}/files`, {
+				method: 'POST',
+				body: formData
+			});
+
+			if (response.ok) {
+				console.log('✅ Upload successful!');
+				await loadMaterialsForPiece(selectedPiece);
+				dispatch('materialsUpdated');
+			} else {
+				const error = await response.json();
+				alert('Erreur lors de l\'upload: ' + (error.message || 'Erreur inconnue'));
+			}
+		} catch (error) {
+			console.error('Error uploading files:', error);
+			alert('Erreur lors de l\'upload des fichiers');
+		}
+
+		// Reset input
+		input.value = '';
+	}
+
+	// ✅ NOUVEAU : Obtenir le matériel sélectionné
+	function getSelectedMaterial(pieceId: number): any | null {
+		const materialId = selectedMaterials[pieceId];
+		if (!materialId) return null;
+		return materials.find(m => m.id === materialId) || null;
 	}
 </script>
 
@@ -232,7 +315,7 @@
 			{/if}
 		</div>
 	{:else}
-		<!-- Gestion des matériels de la pièce sélectionnée -->
+		<!-- ✅ NOUVELLE VERSION : Gestion des matériels avec sélection -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 			<div class="flex items-center justify-between mb-6">
 				<div>
@@ -242,8 +325,25 @@
 					>
 						← Retour aux pièces
 					</button>
-					<h2 class="text-2xl font-bold text-gray-700 uppercase">Matériels</h2>
+					<h2 class="text-2xl font-bold text-gray-700 uppercase">Matériels & Sélection</h2>
 					<p class="text-gray-500 mt-1">{getPieceName(selectedPiece)}</p>
+
+					<!-- ✅ STATUT DE SÉLECTION -->
+					{#if getSelectedMaterial(selectedPiece.id)}
+						<div class="mt-2 flex items-center gap-2 text-sm">
+							<CheckCircle class="text-green-600" size={16} />
+							<span class="text-green-600 font-medium">
+								Matériel sélectionné: {getSelectedMaterial(selectedPiece.id).name}
+							</span>
+						</div>
+					{:else}
+						<div class="mt-2 flex items-center gap-2 text-sm">
+							<Circle class="text-orange-600" size={16} />
+							<span class="text-orange-600 font-medium">
+								Aucun matériel sélectionné
+							</span>
+						</div>
+					{/if}
 				</div>
 
 				<button
@@ -255,7 +355,7 @@
 				</button>
 			</div>
 
-			<!-- Liste des matériels -->
+			<!-- Liste des matériels avec sélection -->
 			{#if materials.length === 0}
 				<div class="text-center py-8">
 					<Package class="mx-auto mb-4 text-gray-400" size={48} />
@@ -270,60 +370,103 @@
 			{:else}
 				<div class="space-y-4">
 					{#each materials as material}
-						<div class="border border-gray-200 rounded-lg p-4 hover:border-[#6B9AD9] transition-all duration-200 {material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : ''}">
+						{@const isSelected = selectedMaterials[selectedPiece.id] === material.id}
+
+						<div class="border border-gray-200 rounded-lg p-4 hover:border-[#6B9AD9] transition-all duration-200 {
+							isSelected ? 'ring-2 ring-blue-500 bg-blue-50' :
+							material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : 'bg-white'
+						}">
 							<div class="flex items-start justify-between">
-								<div class="flex-1 min-w-0">
-									<div class="flex items-center gap-2 mb-2">
-										<h3 class="text-lg font-semibold text-gray-800">{material.name}</h3>
-										{#if material.is_default}
-											<Star class="text-yellow-500 fill-current" size={16} />
-											<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Par défaut</span>
-										{/if}
+								<div class="flex items-start gap-4 flex-1">
+									<!-- ✅ CHECKBOX DE SÉLECTION -->
+									<div class="pt-1">
+										<button
+											class="p-1 hover:bg-gray-100 rounded transition-colors"
+											on:click={() => selectMaterial(selectedPiece.id, isSelected ? null : material.id)}
+											title={isSelected ? 'Désélectionner ce matériel' : 'Sélectionner ce matériel'}
+										>
+											{#if isSelected}
+												<CheckCircle class="text-blue-600" size={24} />
+											{:else}
+												<Circle class="text-gray-400" size={24} />
+											{/if}
+										</button>
 									</div>
 
-									{#if material.description}
-										<p class="text-sm text-gray-600 mb-3">{material.description}</p>
-									{/if}
+									<div class="flex-1 min-w-0">
+										<div class="flex items-center gap-2 mb-2">
+											<h3 class="text-lg font-semibold text-gray-800">{material.name}</h3>
+											{#if material.is_default}
+												<Star class="text-yellow-500 fill-current" size={16} />
+												<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Par défaut</span>
+											{/if}
+											{#if isSelected}
+												<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">✓ Sélectionné</span>
+											{/if}
+										</div>
 
-									<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-										{#if material.edition}
+										{#if material.description}
+											<p class="text-sm text-gray-600 mb-3">{material.description}</p>
+										{/if}
+
+										<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+											{#if material.edition}
+												<div>
+													<span class="font-medium text-gray-700">Édition :</span>
+													<p class="text-gray-600">{material.edition}</p>
+												</div>
+											{/if}
+											{#if material.editor}
+												<div>
+													<span class="font-medium text-gray-700">Éditeur :</span>
+													<p class="text-gray-600">{material.editor}</p>
+												</div>
+											{/if}
 											<div>
-												<span class="font-medium text-gray-700">Édition :</span>
-												<p class="text-gray-600">{material.edition}</p>
+												<span class="font-medium text-gray-700">Créé le :</span>
+												<p class="text-gray-600">{formatDate(material.createdAt)}</p>
+											</div>
+											<div>
+												<span class="font-medium text-gray-700">Fichiers :</span>
+												<p class="text-gray-600 font-semibold {material.files_count > 0 ? 'text-green-600' : 'text-orange-600'}">
+													{material.files_count || 0}
+													{#if material.files_count > 0}
+														<span class="text-xs text-green-500">✓</span>
+													{:else}
+														<span class="text-xs text-orange-500">⚠</span>
+													{/if}
+												</p>
+											</div>
+										</div>
+
+										{#if material.notes}
+											<div class="mt-3 p-2 bg-blue-50 rounded text-sm">
+												<span class="font-medium text-blue-800">Notes :</span>
+												<span class="text-blue-700">{material.notes}</span>
 											</div>
 										{/if}
-										{#if material.editor}
-											<div>
-												<span class="font-medium text-gray-700">Éditeur :</span>
-												<p class="text-gray-600">{material.editor}</p>
-											</div>
-										{/if}
-										<div>
-											<span class="font-medium text-gray-700">Créé le :</span>
-											<p class="text-gray-600">{formatDate(material.createdAt)}</p>
-										</div>
-										<div>
-											<span class="font-medium text-gray-700">Fichiers :</span>
-											<p class="text-gray-600 font-semibold {material.files_count > 0 ? 'text-green-600' : 'text-orange-600'}">
-												{material.files_count || 0}
-												{#if material.files_count > 0}
-													<span class="text-xs text-green-500">✓</span>
-												{:else}
-													<span class="text-xs text-orange-500">⚠</span>
-												{/if}
-											</p>
-										</div>
 									</div>
-
-									{#if material.notes}
-										<div class="mt-3 p-2 bg-blue-50 rounded text-sm">
-											<span class="font-medium text-blue-800">Notes :</span>
-											<span class="text-blue-700">{material.notes}</span>
-										</div>
-									{/if}
 								</div>
 
+								<!-- Actions -->
 								<div class="flex items-center gap-2 ml-4">
+									<!-- Upload de fichiers -->
+									<input
+										type="file"
+										multiple
+										accept=".pdf,.musicxml,.mxl,.mid,.midi,.jpg,.jpeg,.png,.doc,.docx,.txt,.zip"
+										style="display: none;"
+										id="upload-{material.id}"
+										on:change={(e) => handleFileUpload(material, e)}
+									/>
+									<button
+										class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+										on:click={() => document.getElementById(`upload-${material.id}`)?.click()}
+										title="Ajouter des fichiers"
+									>
+										<Upload size={18} />
+									</button>
+
 									<button
 										class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
 										on:click={() => deleteMaterial(material)}
