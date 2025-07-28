@@ -1,7 +1,7 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte - Design uniforme -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte - Design IDENTIQUE aux General Files -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { Music, Image, Video, FileText, Folder, Plus, Upload, ChevronLeft, Package } from 'lucide-svelte';
+	import { Music, Image, Video, FileText, Folder, Plus, Upload, ChevronLeft, Package, Database } from 'lucide-svelte';
 	import type { ProjectFileStructure, FileSystemItem } from '$lib/types/FileSystem';
 	import FileSystemExplorer from './FileSystemExplorer.svelte';
 	import FileUploader from './FileUploader.svelte';
@@ -294,10 +294,10 @@
 	$: customGridCols = isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3';
 </script>
 
-<!-- Main Container -->
+<!-- ✅ DESIGN IDENTIQUE : Container principal avec même style que General Files -->
 <div class="bg-[#E7E7E7] p-4 min-h-screen space-y-4">
 	{#if isLoading}
-		<!-- Loading State -->
+		<!-- ✅ DESIGN IDENTIQUE : Loading State -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 			<div class="flex justify-center items-center h-64">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
@@ -305,7 +305,7 @@
 			</div>
 		</div>
 	{:else}
-		<!-- Tabs Section -->
+		<!-- ✅ DESIGN IDENTIQUE : Tabs Section avec même style -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 			<div class="border-b border-gray-200 mb-6">
 				<nav class="flex {isMobile ? 'flex-col space-y-2' : 'space-x-8'}">
@@ -345,7 +345,7 @@
 					on:materialsUpdated={handleMaterialsUpdated}
 				/>
 			{:else if currentFolder}
-				<!-- Folder Navigation -->
+				<!-- ✅ DESIGN IDENTIQUE : Folder Navigation avec même style que General Files -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mb-4">
 					<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-6 gap-4">
 						<div class="flex items-center gap-3 {isMobile ? 'flex-wrap' : ''}">
@@ -393,16 +393,16 @@
 					</div>
 				</div>
 
-				<!-- File Explorer -->
+				<!-- ✅ DESIGN IDENTIQUE : File Explorer -->
 				<FileSystemExplorer
 					items={currentFolder.children || []}
 					on:itemClick={(e) => handleItemClick(e.detail)}
 					on:refresh={handleRefresh}
 				/>
 			{:else}
-				<!-- Root Files View -->
+				<!-- ✅ DESIGN IDENTIQUE : Root Files View avec même style exact que General Files -->
 				<div class="space-y-4">
-					<!-- Header -->
+					<!-- ✅ DESIGN IDENTIQUE : Header identique -->
 					<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-6 gap-4">
 						<div class="flex items-center gap-3">
 							<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
@@ -425,7 +425,7 @@
 						</button>
 					</div>
 
-					<!-- Default Folders -->
+					<!-- ✅ DESIGN IDENTIQUE : Default Folders avec même style -->
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 						<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
 							<Folder class="text-[#6B9AD9]" size={20} />
@@ -465,7 +465,7 @@
 						</div>
 					</div>
 
-					<!-- Custom Folders -->
+					<!-- ✅ DESIGN IDENTIQUE : Custom Folders -->
 					{#if fileStructure?.customFolders && fileStructure.customFolders.length > 0}
 						<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 							<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
@@ -495,7 +495,7 @@
 						</div>
 					{/if}
 
-					<!-- Upload to Root -->
+					<!-- ✅ DESIGN IDENTIQUE : Upload to Root -->
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 						<div class="text-center">
 							<div class="w-16 h-16 bg-[#6B9AD9] bg-opacity-10 rounded-[10px] flex items-center justify-center mx-auto mb-4">
@@ -525,8 +525,9 @@
 	/>
 {/if}
 
+<!-- ✅ DESIGN IDENTIQUE : Styles CSS identiques -->
 <style>
-    /* Mobile-specific responsive adjustments */
+    /* Mobile-specific responsive adjustments - EXACT COPY from files page */
     @media (max-width: 768px) {
         :global(.grid-cols-4) {
             grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -551,7 +552,7 @@
         }
     }
 
-    /* Tablet adjustments */
+    /* Tablet adjustments - EXACT COPY */
     @media (min-width: 769px) and (max-width: 1024px) {
         :global(.grid-cols-4) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -561,7 +562,7 @@
         }
     }
 
-    /* Improve touch targets on mobile */
+    /* Improve touch targets on mobile - EXACT COPY */
     @media (max-width: 768px) {
         button {
             min-height: 44px;
