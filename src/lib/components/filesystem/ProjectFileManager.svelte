@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte - Design IDENTIQUE aux General Files -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte - CORRECTION : Passer projectId au MinimalMaterialsManager -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Music, Image, Video, FileText, Folder, Plus, Upload, ChevronLeft, Package, Database } from 'lucide-svelte';
@@ -21,6 +21,9 @@
 	let isMobile = false;
 	let isTablet = false;
 	let windowWidth = 0;
+
+	// ✅ CORRECTION : Extraire le projectId du projet
+	$: projectId = project?.id || null;
 
 	const defaultFolders = [
 		{ name: 'Scores', icon: Music, color: 'bg-green-500' },
@@ -340,8 +343,9 @@
 			</div>
 
 			{#if activeTab === 'materials'}
-				<!-- Materials Manager -->
+				<!-- ✅ CORRECTION : Materials Manager avec projectId -->
 				<MinimalMaterialsManager
+					{projectId}
 					on:materialsUpdated={handleMaterialsUpdated}
 				/>
 			{:else if currentFolder}
@@ -396,6 +400,7 @@
 				<!-- ✅ DESIGN IDENTIQUE : File Explorer -->
 				<FileSystemExplorer
 					items={currentFolder.children || []}
+					{projectId}
 					on:itemClick={(e) => handleItemClick(e.detail)}
 					on:refresh={handleRefresh}
 				/>

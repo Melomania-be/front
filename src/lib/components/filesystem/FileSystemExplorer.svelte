@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - Design uniforme avec auditions -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - VERSION SIMPLIFIÉE SANS CACHE -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -24,7 +24,6 @@
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import type { Material } from '$lib/types/Material';
 	import FilePreview from './FilePreview.svelte';
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
 	const dispatch = createEventDispatcher();
@@ -40,11 +39,11 @@
 	let showPreview = false;
 	let previewFile: FileSystemItem | null = null;
 	let expandedPieces = new Set<number>();
-	let selectedMaterialFiles: { [pieceId: number]: any[] } = {};
-	let selectedMaterialInfo: { [pieceId: number]: any } = {};
-	let isLoadingMaterials = false;
 	let isMobile = false;
 	let windowWidth = 0;
+
+	// ✅ SOLUTION SIMPLE : Pas de cache persistant - recharger à chaque fois
+	let materialsLoading = new Set<number>();
 
 	// Responsive detection
 	const checkMobile = () => {
@@ -54,91 +53,61 @@
 		}
 	};
 
-	onMount(async () => {
-		checkMobile();
-		if (browser) {
-			window.addEventListener('resize', checkMobile);
+	// ✅ SOLUTION SIMPLE : Charger les matériaux à la demande pour chaque pièce
+	async function loadMaterialForPiece(pieceId: number): Promise<{ material: any, files: any[] }> {
+		if (materialsLoading.has(pieceId)) {
+			console.log(`⏳ Already loading material for piece ${pieceId}`);
+			return { material: null, files: [] };
 		}
 
-		await loadSelectedMaterialsInfo();
-
-		// Listen for material selection changes
-		const handleMaterialChange = (event) => {
-			console.log('🔄 Material selection changed, reloading...');
-			loadSelectedMaterialsInfo();
-		};
-
-		window.addEventListener('materialSelectionChanged', handleMaterialChange);
-
-		return () => {
-			if (browser) {
-				window.removeEventListener('resize', checkMobile);
-			}
-			window.removeEventListener('materialSelectionChanged', handleMaterialChange);
-		};
-	});
-
-	// Load information about selected materials (READ-ONLY)
-	async function loadSelectedMaterialsInfo() {
-		if (!items || items.length === 0) return;
-
-		isLoadingMaterials = true;
-		console.log('🔄 Loading selected materials info for', items.length, 'items');
+		materialsLoading.add(pieceId);
+		console.log(`🔄 Loading material for piece ${pieceId}`);
 
 		try {
-			for (const item of items) {
-				if (item.type === 'folder' && item.pieceId) {
-					console.log(`🔍 Checking material for piece ${item.pieceId} (${item.name})`);
+			// 1. Get selected material for this piece
+			const selectedResponse = await fetch(`/api/pieces/${pieceId}/select-material`);
 
-					// 1. Get selected material for this piece
-					const selectedResponse = await fetch(`/api/pieces/${item.pieceId}/select-material`);
-
-					if (selectedResponse.ok) {
-						const selectedResult = await selectedResponse.json();
-						console.log(`📋 Selected material result for piece ${item.pieceId}:`, selectedResult);
-
-						if (selectedResult.materialId) {
-							// 2. Get selected material info
-							const materialResponse = await fetch(`/api/materials/${selectedResult.materialId}`);
-
-							if (materialResponse.ok) {
-								const materialData = await materialResponse.json();
-								selectedMaterialInfo[item.pieceId] = materialData;
-								console.log(`✅ Material info loaded for piece ${item.pieceId}:`, materialData.name);
-
-								// 3. Get selected material files
-								const filesResponse = await fetch(`/api/materials/${selectedResult.materialId}/files`);
-
-								if (filesResponse.ok) {
-									const files = await filesResponse.json();
-									selectedMaterialFiles[item.pieceId] = Array.isArray(files) ? files : [];
-									console.log(`📂 Files loaded for piece ${item.pieceId}:`, selectedMaterialFiles[item.pieceId].length);
-								} else {
-									selectedMaterialFiles[item.pieceId] = [];
-								}
-							}
-						} else {
-							console.log(`❌ No material selected for piece ${item.pieceId}`);
-							selectedMaterialInfo[item.pieceId] = null;
-							selectedMaterialFiles[item.pieceId] = [];
-						}
-					} else {
-						console.log(`❌ Error getting selected material for piece ${item.pieceId}`);
-						selectedMaterialInfo[item.pieceId] = null;
-						selectedMaterialFiles[item.pieceId] = [];
-					}
-				}
+			if (!selectedResponse.ok) {
+				console.log(`❌ No selected material found for piece ${pieceId}`);
+				return { material: null, files: [] };
 			}
 
-			// Force reactivity
-			selectedMaterialInfo = { ...selectedMaterialInfo };
-			selectedMaterialFiles = { ...selectedMaterialFiles };
-			console.log('🔄 Final selected materials state:', selectedMaterialInfo);
-		} catch (error) {
-			console.error('❌ Error loading selected materials:', error);
-		}
+			const selectedResult = await selectedResponse.json();
+			console.log(`📋 Selected material result for piece ${pieceId}:`, selectedResult);
 
-		isLoadingMaterials = false;
+			if (!selectedResult.materialId) {
+				console.log(`❌ No material selected for piece ${pieceId}`);
+				return { material: null, files: [] };
+			}
+
+			// 2. Get material info and files in parallel
+			const [materialResponse, filesResponse] = await Promise.all([
+				fetch(`/api/materials/${selectedResult.materialId}`),
+				fetch(`/api/materials/${selectedResult.materialId}/files`)
+			]);
+
+			let material = null;
+			let files = [];
+
+			if (materialResponse.ok) {
+				material = await materialResponse.json();
+				console.log(`✅ Material loaded for piece ${pieceId}:`, material.name);
+			}
+
+			if (filesResponse.ok) {
+				const filesData = await filesResponse.json();
+				files = Array.isArray(filesData) ? filesData : [];
+				console.log(`📂 Files loaded for piece ${pieceId}:`, files.length);
+			}
+
+			materialsLoading.delete(pieceId);
+			return { material, files };
+
+		} catch (error) {
+			console.error(`❌ Error loading material for piece ${pieceId}:`, error);
+			materialsLoading.delete(pieceId);
+			return { material: null, files: [] };
+		}
 	}
 
 	function formatFileSize(bytes: number): string {
@@ -358,8 +327,6 @@
 
 			if (response.ok) {
 				console.log('✅ File deleted successfully');
-				// Reload material files
-				await loadSelectedMaterialsInfo();
 				dispatch('refresh');
 			} else {
 				console.error('❌ Delete failed:', response.status);
@@ -387,18 +354,9 @@
 		showPreview = true;
 	}
 
-	// Get selected material for a piece
-	function getSelectedMaterial(pieceId: number): any | null {
-		const material = selectedMaterialInfo[pieceId] || null;
-		console.log(`🔍 Getting selected material for piece ${pieceId}:`, material?.name || 'None');
-		return material;
-	}
-
-	// Get selected material files
-	function getSelectedMaterialFiles(pieceId: number): any[] {
-		const files = selectedMaterialFiles[pieceId] || [];
-		console.log(`📂 Getting files for piece ${pieceId}:`, files.length);
-		return files;
+	if (browser) {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
 	}
 </script>
 
@@ -438,8 +396,6 @@
 
 		<div class="space-y-{isMobile ? '3' : '4'}">
 			{#each items as item}
-				{@const selectedMaterial = getSelectedMaterial(item.pieceId)}
-				{@const selectedFiles = getSelectedMaterialFiles(item.pieceId)}
 				{@const isExpanded = expandedPieces.has(item.pieceId)}
 
 				<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200">
@@ -485,11 +441,6 @@
 												{item.name.split('.').pop()?.toUpperCase() || 'FILE'}
 											{:else}
 												Folder
-												{#if selectedMaterial}
-													• Material: {selectedMaterial.name}
-												{:else if item.pieceId}
-													• No material selected
-												{/if}
 											{/if}
 										</span>
 									</div>
@@ -497,14 +448,9 @@
 										<span class="font-medium text-gray-700">Modified:</span>
 										<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'}">{formatDate(item.updatedAt)}</span>
 									</div>
-									{#if item.type === 'folder' && selectedFiles.length > 0}
-										<div class="min-w-0">
-											<span class="font-medium text-gray-700">Files:</span>
-											<span class="text-green-600 font-semibold {isMobile ? 'ml-2' : 'block'}">
-												{selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} ✓
-											</span>
-										</div>
-									{/if}
+									<div class="min-w-0">
+										<!-- Placeholder for material info -->
+									</div>
 								</div>
 							</div>
 						</div>
@@ -549,144 +495,168 @@
 						{/if}
 					</div>
 
-					<!-- SELECTED MATERIAL DISPLAY SECTION -->
+					<!-- ✅ SOLUTION SIMPLE : Material section avec chargement à la demande -->
 					{#if showMaterials && item.type === 'folder' && item.pieceId}
 						<div class="border-t-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden">
 							<div class="p-{isMobile ? '3' : '4'}">
-								<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-4 gap-2">
+								<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-4 gap-3">
 									<h4 class="text-{isMobile ? 'sm' : 'base'} font-bold text-gray-700 flex items-center gap-2">
 										<Package size={isMobile ? 14 : 16} class="text-blue-600" />
 										SELECTED MATERIAL FOR THIS PIECE
 									</h4>
 
-									{#if selectedMaterial}
-										<div class="flex items-center gap-2">
-											<span class="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-lg font-bold border border-green-300 break-words">
-												✓ {selectedMaterial.name}
-											</span>
-											<button
-												class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 p-1"
-												on:click={() => togglePieceExpansion(item.pieceId)}
-											>
-												{#if isExpanded}
-													<ChevronDown size={isMobile ? 12 : 16} />
-												{:else}
-													<ChevronRight size={isMobile ? 12 : 16} />
-												{/if}
-											</button>
-										</div>
-									{:else}
-										<div class="flex items-center gap-2">
-											<span class="text-xs text-orange-600 bg-orange-100 px-3 py-1 rounded-lg font-bold border border-orange-300">
-												⚠ NO MATERIAL SELECTED
-											</span>
-											<Info size={isMobile ? 12 : 14} class="text-gray-400" />
-										</div>
-									{/if}
+									<button
+										class="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:border-[#6B9AD9] hover:text-[#6B9AD9] transition-colors font-semibold text-{isMobile ? 'sm' : 'base'} {isMobile ? 'w-full justify-center' : ''}"
+										on:click={() => togglePieceExpansion(item.pieceId)}
+									>
+										{#if isExpanded}
+											<ChevronDown size={16} />
+											<span>Hide Details</span>
+										{:else}
+											<ChevronRight size={16} />
+											<span>Show Details</span>
+										{/if}
+									</button>
 								</div>
 
-								{#if selectedMaterial}
-									<!-- Selected material information -->
-									<div class="bg-white border-2 border-blue-300 rounded-[8px] p-{isMobile ? '3' : '4'} mb-4 overflow-hidden">
-										<div class="flex items-center justify-between">
-											<div class="flex-1 min-w-0">
-												<h5 class="font-bold text-gray-800 {isMobile ? 'text-sm' : ''} truncate" title={selectedMaterial.name}>{selectedMaterial.name}</h5>
-												<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center gap-4'} mt-2 text-xs text-gray-500">
-													<span class="font-bold {selectedFiles.length > 0 ? 'text-green-600' : 'text-orange-600'} flex items-center gap-1">
-														{selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
-														{#if selectedFiles.length > 0}
-															<span class="text-green-500">✓</span>
-														{:else}
-															<span class="text-orange-500">⚠</span>
-														{/if}
-													</span>
-													{#if selectedMaterial.edition && !isMobile}
-														<span class="break-words">Edition: {selectedMaterial.edition}</span>
-													{/if}
-													{#if selectedMaterial.editor && !isMobile}
-														<span class="break-words">Publisher: {selectedMaterial.editor}</span>
-													{/if}
-												</div>
-											</div>
+								<!-- ✅ SOLUTION SIMPLE : Chargement à la demande quand on clique -->
+								{#if isExpanded}
+									{#await loadMaterialForPiece(item.pieceId)}
+										<!-- Loading state -->
+										<div class="p-6 text-center">
+											<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+											<p class="text-sm text-gray-600">Loading material...</p>
 										</div>
-
-										{#if selectedMaterial.description && !isMobile}
-											<div class="mt-3 p-2 bg-blue-50 rounded text-sm border border-blue-200 overflow-hidden">
-												<span class="font-medium text-blue-800">Description:</span>
-												<span class="text-blue-700 break-words">{selectedMaterial.description}</span>
-											</div>
-										{/if}
-									</div>
-
-									<!-- Selected material files with enhanced actions -->
-									{#if isExpanded && selectedFiles.length > 0}
-										<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-{isMobile ? '3' : '4'} overflow-hidden">
-											<h5 class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 mb-3 flex items-center gap-2">
-												<FileText size={14} class="text-blue-600" />
-												AVAILABLE FILES ({selectedFiles.length})
-											</h5>
-											<div class="space-y-{isMobile ? '2' : '3'} overflow-hidden">
-												{#each selectedFiles as file}
-													<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-white border-2 border-gray-300 rounded-[8px] hover:border-blue-400 transition-colors group min-w-0">
-														<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
-															<div class="w-8 h-8 bg-gray-100 rounded-[6px] border border-gray-300 flex items-center justify-center flex-shrink-0">
-																<svelte:component
-																	this={getFileIcon({...file, type: 'file'})}
-																	size={isMobile ? 14 : 16}
-																	class={getFileColor({...file, type: 'file'})}
-																/>
-															</div>
-															<div class="flex-1 min-w-0">
-																<span class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 truncate block" title={file.name}>{file.name}</span>
-																<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
-															</div>
-														</div>
-
-														<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity flex-shrink-0">
-															<!-- ✅ BOUTON PREVIEW -->
-															<button
-																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
-																on:click={() => previewMaterialFile(file)}
-																title="Preview"
-															>
-																<Eye size={isMobile ? 12 : 14} />
-															</button>
-															<button
-																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-green-600 rounded-[6px] hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
-																on:click={() => downloadMaterialFile(file.id, file.name)}
-																title="Download"
-															>
-																<Download size={isMobile ? 12 : 14} />
-															</button>
-															<button
-																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-red-600 rounded-[6px] hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
-																on:click={() => deleteMaterialFile(file.id, file.name)}
-																title="Delete"
-															>
-																<X size={isMobile ? 12 : 14} />
-															</button>
+									{:then {material, files}}
+										{#if material}
+											<!-- Selected material information -->
+											<div class="bg-white border-2 border-blue-300 rounded-[8px] p-{isMobile ? '3' : '4'} mb-4 overflow-hidden">
+												<div class="flex items-center justify-between">
+													<div class="flex-1 min-w-0">
+														<h5 class="font-bold text-gray-800 {isMobile ? 'text-sm' : ''} truncate" title={material.name}>{material.name}</h5>
+														<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center gap-4'} mt-2 text-xs text-gray-500">
+															<span class="font-bold {files.length > 0 ? 'text-green-600' : 'text-orange-600'} flex items-center gap-1">
+																{files.length} file{files.length !== 1 ? 's' : ''}
+																{#if files.length > 0}
+																	<span class="text-green-500">✓</span>
+																{:else}
+																	<span class="text-orange-500">⚠</span>
+																{/if}
+															</span>
+															{#if material.edition && !isMobile}
+																<span class="break-words">Edition: {material.edition}</span>
+															{/if}
+															{#if material.editor && !isMobile}
+																<span class="break-words">Publisher: {material.editor}</span>
+															{/if}
 														</div>
 													</div>
-												{/each}
+												</div>
+
+												{#if material.description && !isMobile}
+													<div class="mt-3 p-2 bg-blue-50 rounded text-sm border border-blue-200 overflow-hidden">
+														<span class="font-medium text-blue-800">Description:</span>
+														<span class="text-blue-700 break-words">{material.description}</span>
+													</div>
+												{/if}
 											</div>
+
+											<!-- Files section -->
+											{#if files.length > 0}
+												<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-{isMobile ? '3' : '4'} overflow-hidden">
+													<h5 class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 mb-3 flex items-center gap-2">
+														<FileText size={14} class="text-blue-600" />
+														AVAILABLE FILES ({files.length})
+													</h5>
+													<div class="space-y-{isMobile ? '2' : '3'} overflow-hidden">
+														{#each files as file}
+															<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-white border-2 border-gray-300 rounded-[8px] hover:border-blue-400 transition-colors group min-w-0">
+																<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
+																	<div class="w-8 h-8 bg-gray-100 rounded-[6px] border border-gray-300 flex items-center justify-center flex-shrink-0">
+																		<svelte:component
+																			this={getFileIcon({...file, type: 'file'})}
+																			size={isMobile ? 14 : 16}
+																			class={getFileColor({...file, type: 'file'})}
+																		/>
+																	</div>
+																	<div class="flex-1 min-w-0">
+																		<span class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 truncate block" title={file.name}>{file.name}</span>
+																		<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
+																	</div>
+																</div>
+
+																<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity flex-shrink-0">
+																	<button
+																		class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
+																		on:click={() => previewMaterialFile(file)}
+																		title="Preview"
+																	>
+																		<Eye size={isMobile ? 12 : 14} />
+																	</button>
+																	<button
+																		class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-green-600 rounded-[6px] hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
+																		on:click={() => downloadMaterialFile(file.id, file.name)}
+																		title="Download"
+																	>
+																		<Download size={isMobile ? 12 : 14} />
+																	</button>
+																	<button
+																		class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-red-600 rounded-[6px] hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+																		on:click={() => deleteMaterialFile(file.id, file.name)}
+																		title="Delete"
+																	>
+																		<X size={isMobile ? 12 : 14} />
+																	</button>
+																</div>
+															</div>
+														{/each}
+													</div>
+												</div>
+											{:else}
+												<div class="p-6 text-center text-gray-500 bg-gray-50 border-2 border-gray-300 rounded-[8px]">
+													<FileText class="mx-auto mb-2" size={isMobile ? 24 : 32} />
+													<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO FILES IN THIS MATERIAL</p>
+													<p class="text-xs text-gray-400 mt-1">
+														Add files from material management
+													</p>
+												</div>
+											{/if}
+										{:else}
+											<!-- No material selected -->
+											<div class="p-{isMobile ? '4' : '6'} text-center text-gray-500 bg-gray-50 border-2 border-dashed border-gray-400 rounded-[8px] overflow-hidden">
+												<Package class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
+												<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO MATERIAL SELECTED</p>
+												<p class="text-xs text-gray-400 mt-1 break-words">
+													Go to material management to select a material for this piece
+												</p>
+											</div>
+										{/if}
+									{:catch error}
+										<!-- Error state -->
+										<div class="p-6 text-center text-red-500 bg-red-50 border-2 border-red-300 rounded-[8px]">
+											<p class="text-sm font-bold">Error loading material</p>
+											<p class="text-xs mt-1">{error.message}</p>
 										</div>
-									{:else if isExpanded && selectedFiles.length === 0}
-										<div class="p-6 text-center text-gray-500 bg-gray-50 border-2 border-gray-300 rounded-[8px]">
-											<FileText class="mx-auto mb-2" size={isMobile ? 24 : 32} />
-											<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO FILES IN THIS MATERIAL</p>
-											<p class="text-xs text-gray-400 mt-1">
-												Add files from material management
-											</p>
-										</div>
-									{/if}
+									{/await}
 								{:else}
-									<!-- Message when no material is selected -->
-									<div class="p-{isMobile ? '4' : '6'} text-center text-gray-500 bg-gray-50 border-2 border-dashed border-gray-400 rounded-[8px] overflow-hidden">
-										<Package class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
-										<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO MATERIAL SELECTED</p>
-										<p class="text-xs text-gray-400 mt-1 break-words">
-											Go to material management to select a material for this piece
-										</p>
+									<!-- Collapsed state - Design professionnel -->
+									<div class="bg-gray-50 border-2 border-gray-300 rounded-[8px] p-{isMobile ? '4' : '6'} text-center">
+										<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-{isMobile ? '3' : '4'}">
+											<div class="flex items-center gap-2 text-gray-600">
+												<Package size={18} class="text-gray-500" />
+												<span class="text-sm font-medium">Material information available</span>
+											</div>
+											{#if !isMobile}
+												<div class="text-gray-400">•</div>
+											{/if}
+											<button
+												class="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:border-[#6B9AD9] hover:text-[#6B9AD9] transition-colors font-semibold text-sm {isMobile ? 'w-full justify-center' : ''}"
+												on:click={() => togglePieceExpansion(item.pieceId)}
+											>
+												<ChevronRight size={14} />
+												<span>Show Details</span>
+											</button>
+										</div>
 									</div>
 								{/if}
 							</div>

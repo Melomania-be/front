@@ -7,8 +7,8 @@
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/files/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/files/+server.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +61,11 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\Java\front\src\lib\components\callsheet" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -82,6 +87,7 @@
       <workItem from="1753141113086" duration="24395000" />
       <workItem from="1753374859465" duration="8757000" />
       <workItem from="1753456813138" duration="4312000" />
+      <workItem from="1753791465892" duration="2909000" />
     </task>
     <servers />
   </component>

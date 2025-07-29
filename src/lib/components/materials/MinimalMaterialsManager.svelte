@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - Avec prévisualisation intégrée -->
+<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - Design IDENTIQUE à General Files -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import {
@@ -8,7 +8,6 @@
 		FileText,
 		Trash2,
 		Star,
-		Edit3,
 		Upload,
 		CheckCircle,
 		Circle,
@@ -16,9 +15,15 @@
 		Download,
 		X,
 		ChevronDown,
-		ChevronRight
+		ChevronRight,
+		CloudUpload,
+		File,
+		Folder,
+		Image,
+		Video
 	} from 'lucide-svelte';
 	import FilePreview from '../filesystem/FilePreview.svelte';
+	import FileUploader from '../filesystem/FileUploader.svelte';
 	import { browser } from '$app/environment';
 
 	const dispatch = createEventDispatcher();
@@ -30,12 +35,15 @@
 	let selectedPiece: any = null;
 	let isLoading = true;
 	let showCreateForm = false;
+	let showUploader = false;
+	let selectedMaterialForUpload: any = null;
 	let isMobile = false;
 	let isTablet = false;
 	let windowWidth = 0;
-	let expandedMaterials = new Set<number>(); // Track which materials show files
+	let expandedMaterials = new Set<number>();
 	let showPreview = false;
 	let previewFile: any = null;
+
 	let newMaterialData = {
 		name: '',
 		description: '',
@@ -48,7 +56,7 @@
 	// State for selected materials per piece
 	let selectedMaterials: Record<number, number | null> = {};
 
-	// Enhanced responsive detection
+	// Enhanced responsive detection - IDENTIQUE à General Files
 	const checkResponsive = () => {
 		if (browser) {
 			windowWidth = window.innerWidth;
@@ -75,14 +83,35 @@
 
 	async function loadPieces() {
 		try {
-			const response = await fetch('/api/pieces?limit=1000&page=1&filter=&orderBy=name&order=asc');
-			if (response.ok) {
-				const data = await response.json();
-				pieces = data.data || data || [];
-				console.log('✅ Loaded pieces:', pieces.length);
+			let pieces_data = [];
+
+			if (projectId) {
+				// ✅ CORRECTION : Si on a un projectId, charger seulement les pièces de ce projet
+				console.log('🔄 Loading pieces for project:', projectId);
+				const projectResponse = await fetch(`/api/projects/${projectId}`);
+				if (projectResponse.ok) {
+					const projectData = await projectResponse.json();
+					pieces_data = projectData.pieces || [];
+					console.log('✅ Loaded project pieces:', pieces_data.length);
+				} else {
+					console.error('❌ Failed to load project data');
+					pieces_data = [];
+				}
+			} else {
+				// ✅ Si pas de projectId, charger toutes les pièces (comportement général)
+				console.log('🔄 Loading all pieces (no project specified)');
+				const response = await fetch('/api/pieces?limit=1000&page=1&filter=&orderBy=name&order=asc');
+				if (response.ok) {
+					const data = await response.json();
+					pieces_data = data.data || data || [];
+					console.log('✅ Loaded all pieces:', pieces_data.length);
+				}
 			}
+
+			pieces = pieces_data;
 		} catch (error) {
 			console.error('Error loading pieces:', error);
+			pieces = [];
 		}
 	}
 
@@ -91,29 +120,28 @@
 			selectedPiece = piece;
 			console.log(`🔄 Loading materials for piece: ${piece.name}`);
 
-			// 1. Load piece materials
 			const response = await fetch(`/api/materials/piece/${piece.id}`);
 			if (response.ok) {
 				const materialsData = await response.json();
 				console.log(`📦 Loaded ${materialsData.length} materials from API`);
 
-				// Load actual files for each material
+				// Load files for each material
 				const materialPromises = materialsData.map(async (material) => {
 					try {
-						const originalCount = material.files_count || material.files?.length || 0;
 						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
 						if (filesResponse.ok) {
 							const files = await filesResponse.json();
 							material.files = Array.isArray(files) ? files : [];
 							material.files_count = material.files.length;
 						} else {
-							material.files_count = originalCount;
-							material.files = material.files || [];
+							material.files = [];
+							material.files_count = 0;
 						}
 						return material;
 					} catch (error) {
 						console.error(`Error loading files for material ${material.id}:`, error);
-						material.files_count = material.files_count || material.files?.length || 0;
+						material.files = [];
+						material.files_count = 0;
 						return material;
 					}
 				});
@@ -134,7 +162,6 @@
 				materials = [];
 			}
 
-			// 2. Load selected material for this piece
 			await loadSelectedMaterialForPiece(piece.id);
 
 		} catch (error) {
@@ -143,7 +170,6 @@
 		}
 	}
 
-	// Load selected material for a piece with better error handling
 	async function loadSelectedMaterialForPiece(pieceId: number) {
 		try {
 			console.log(`🔍 Loading selected material for piece ${pieceId}`);
@@ -156,7 +182,7 @@
 				console.log(`❌ No selected material found for piece ${pieceId}`);
 				selectedMaterials[pieceId] = null;
 			}
-			selectedMaterials = { ...selectedMaterials }; // Force reactivity
+			selectedMaterials = { ...selectedMaterials };
 		} catch (error) {
 			console.error('Error loading selected material for piece:', pieceId, error);
 			selectedMaterials[pieceId] = null;
@@ -164,7 +190,6 @@
 		}
 	}
 
-	// Select a material for a piece with better feedback
 	async function selectMaterial(pieceId: number, materialId: number | null) {
 		try {
 			console.log(`🎯 Selecting material ${materialId} for piece ${pieceId}`);
@@ -179,10 +204,8 @@
 				selectedMaterials = { ...selectedMaterials };
 				console.log('✅ Material selection updated successfully');
 
-				// Dispatch event to notify other components
 				dispatch('materialsUpdated');
 
-				// Force reload in all components
 				window.dispatchEvent(new CustomEvent('materialSelectionChanged', {
 					detail: { pieceId, materialId }
 				}));
@@ -229,7 +252,6 @@
 				};
 				dispatch('materialsUpdated');
 
-				// Auto-select the new material if it's set as default
 				if (newMaterial.is_default) {
 					await selectMaterial(selectedPiece.id, newMaterial.id);
 				}
@@ -254,7 +276,6 @@
 			});
 
 			if (response.ok) {
-				// If this was the selected material, unselect it
 				if (selectedMaterials[selectedPiece.id] === material.id) {
 					await selectMaterial(selectedPiece.id, null);
 				}
@@ -272,32 +293,95 @@
 		}
 	}
 
-	async function deleteMaterialFile(fileId: number, fileName: string) {
-		if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
-			return;
-		}
+	// ✅ IDENTIQUE à General Files : File management functions
+	function formatFileSize(bytes: number): string {
+		if (bytes === 0) return '0 B';
+		const k = 1024;
+		const sizes = ['B', 'KB', 'MB', 'GB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+	}
 
-		try {
-			console.log('🗑️ Deleting file:', fileId, fileName);
-			const response = await fetch(`/api/files/${fileId}`, {
-				method: 'DELETE'
-			});
-
-			if (response.ok) {
-				console.log('✅ File deleted successfully');
-				// Reload materials for current piece
-				if (selectedPiece) {
-					await loadMaterialsForPiece(selectedPiece);
-				}
-				dispatch('materialsUpdated');
-			} else {
-				console.error('❌ Delete failed:', response.status);
-				alert('Error deleting file');
-			}
-		} catch (error) {
-			console.error('❌ Error deleting file:', error);
-			alert('Error deleting file');
+	function getFileIcon(fileName: string) {
+		const extension = fileName.split('.').pop()?.toLowerCase();
+		switch (extension) {
+			case 'pdf':
+			case 'doc':
+			case 'docx':
+				return FileText;
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+			case 'webp':
+			case 'svg':
+			case 'bmp':
+			case 'tiff':
+				return Image;
+			case 'mp3':
+			case 'wav':
+			case 'flac':
+			case 'aac':
+			case 'ogg':
+			case 'm4a':
+				return Music;
+			case 'mp4':
+			case 'avi':
+			case 'mov':
+			case 'mkv':
+			case 'webm':
+				return Video;
+			default:
+				return File;
 		}
+	}
+
+	function getFileColor(fileName: string): string {
+		const extension = fileName.split('.').pop()?.toLowerCase();
+		switch (extension) {
+			case 'pdf':
+				return 'text-red-600';
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+			case 'webp':
+				return 'text-green-600';
+			case 'mp3':
+			case 'wav':
+			case 'flac':
+				return 'text-purple-600';
+			case 'mp4':
+			case 'avi':
+			case 'mov':
+				return 'text-orange-600';
+			default:
+				return 'text-gray-700';
+		}
+	}
+
+	function formatDate(date: string | Date): string {
+		return new Date(date).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	function previewMaterialFile(file: any) {
+		previewFile = {
+			id: file.id,
+			name: file.name,
+			type: 'file',
+			path: file.path,
+			size: file.size,
+			mimeType: file.type || '',
+			createdAt: new Date(file.createdAt),
+			updatedAt: new Date(file.updatedAt)
+		};
+		showPreview = true;
 	}
 
 	async function downloadMaterialFile(fileId: number, fileName: string) {
@@ -325,12 +409,69 @@
 		}
 	}
 
-	function formatDate(date: string | Date): string {
-		return new Date(date).toLocaleDateString('en-US', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric'
+	async function deleteMaterialFile(fileId: number, fileName: string) {
+		if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
+			return;
+		}
+
+		try {
+			console.log('🗑️ Deleting file:', fileId, fileName);
+			const response = await fetch(`/api/files/${fileId}`, {
+				method: 'DELETE'
+			});
+
+			if (response.ok) {
+				console.log('✅ File deleted successfully');
+				await loadMaterialsForPiece(selectedPiece);
+				dispatch('materialsUpdated');
+			} else {
+				console.error('❌ Delete failed:', response.status);
+				alert('Error deleting file');
+			}
+		} catch (error) {
+			console.error('❌ Error deleting file:', error);
+			alert('Error deleting file');
+		}
+	}
+
+	// Upload functions - IDENTIQUE à General Files
+	function openUploader(material: any) {
+		selectedMaterialForUpload = material;
+		showUploader = true;
+		console.log('📤 Opening uploader for material:', material.name);
+	}
+
+	async function handleFileUpload(files: FileList) {
+		if (!selectedMaterialForUpload) return;
+
+		console.log('📤 Uploading files to material:', selectedMaterialForUpload.name);
+
+		const formData = new FormData();
+		Array.from(files).forEach(file => {
+			formData.append('files', file);
 		});
+
+		try {
+			const response = await fetch(`/api/materials/${selectedMaterialForUpload.id}/files`, {
+				method: 'POST',
+				body: formData
+			});
+
+			if (response.ok) {
+				console.log('✅ Upload successful!');
+				await loadMaterialsForPiece(selectedPiece);
+				showUploader = false;
+				selectedMaterialForUpload = null;
+				dispatch('materialsUpdated');
+			} else {
+				console.error('❌ Upload failed:', response.status);
+				const error = await response.json();
+				alert('Upload error: ' + (error.message || 'Unknown error'));
+			}
+		} catch (error) {
+			console.error('❌ Upload error:', error);
+			alert('Error uploading files');
+		}
 	}
 
 	function getPieceName(piece: any): string {
@@ -344,42 +485,6 @@
 		expandedMaterials = new Set();
 	}
 
-	// File upload
-	async function handleFileUpload(material: any, event: Event) {
-		const input = event.target as HTMLInputElement;
-		if (!input.files || input.files.length === 0) return;
-
-		const formData = new FormData();
-		Array.from(input.files).forEach(file => {
-			formData.append('files', file);
-		});
-
-		try {
-			console.log('📤 Uploading files to material:', material.name);
-			const response = await fetch(`/api/materials/${material.id}/files`, {
-				method: 'POST',
-				body: formData
-			});
-
-			if (response.ok) {
-				console.log('✅ Upload successful!');
-				await loadMaterialsForPiece(selectedPiece);
-				dispatch('materialsUpdated');
-			} else {
-				const error = await response.json();
-				console.error('❌ Upload failed:', error);
-				alert('Upload error: ' + (error.message || 'Unknown error'));
-			}
-		} catch (error) {
-			console.error('❌ Error uploading files:', error);
-			alert('Error uploading files');
-		}
-
-		// Reset input
-		input.value = '';
-	}
-
-	// Get selected material with proper logging
 	function getSelectedMaterial(pieceId: number): any | null {
 		const materialId = selectedMaterials[pieceId];
 		if (!materialId) {
@@ -391,7 +496,6 @@
 		return material;
 	}
 
-	// Toggle material file expansion
 	function toggleMaterialExpansion(materialId: number) {
 		if (expandedMaterials.has(materialId)) {
 			expandedMaterials.delete(materialId);
@@ -401,90 +505,68 @@
 		expandedMaterials = new Set(expandedMaterials);
 	}
 
-	function formatFileSize(bytes: number): string {
-		if (bytes === 0) return '0 B';
-		const k = 1024;
-		const sizes = ['B', 'KB', 'MB', 'GB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-	}
-
-	function getFileIcon(fileName: string) {
-		const extension = fileName.split('.').pop()?.toLowerCase();
-		switch (extension) {
-			case 'pdf':
-				return '📄';
-			case 'jpg':
-			case 'jpeg':
-			case 'png':
-			case 'gif':
-			case 'webp':
-				return '🖼️';
-			case 'mp3':
-			case 'wav':
-			case 'flac':
-			case 'aac':
-				return '🎵';
-			case 'mp4':
-			case 'avi':
-			case 'mov':
-			case 'mkv':
-				return '🎬';
-			default:
-				return '📄';
-		}
-	}
-
-	// ✅ NOUVELLE FONCTION : Prévisualiser un fichier
-	function previewMaterialFile(file: any) {
-		previewFile = {
-			id: file.id,
-			name: file.name,
-			type: 'file',
-			path: file.path,
-			size: file.size,
-			mimeType: file.type || '',
-			createdAt: new Date(file.createdAt),
-			updatedAt: new Date(file.updatedAt)
-		};
-		showPreview = true;
-	}
-
-	// Dynamic grid for responsive design
+	// Dynamic grid for responsive design - IDENTIQUE à General Files
 	$: gridCols = isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3';
 </script>
 
-<div class="space-y-{isMobile ? '3' : '6'} {isMobile ? 'px-1' : ''} overflow-hidden">
+<!-- ✅ STRUCTURE IDENTIQUE à General Files -->
+<div class="space-y-{isMobile ? '3' : '4'} {isMobile ? 'px-1' : ''} overflow-hidden">
 	{#if isLoading}
-		<div class="flex justify-center items-center h-64">
-			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
+		<!-- ✅ IDENTIQUE à General Files : Loading State -->
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
+			<div class="flex justify-center items-center h-64">
+				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
+				<span class="ml-4 text-gray-600 font-semibold">Loading pieces...</span>
+			</div>
 		</div>
 	{:else if !selectedPiece}
-		<!-- Piece selection - Mobile optimized -->
+		<!-- ✅ IDENTIQUE à General Files : Piece selection -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '6'}">
-			<div class="mb-{isMobile ? '4' : '6'}">
-				<h2 class="text-{isMobile ? 'lg' : '2xl'} font-bold text-gray-700 uppercase {isMobile ? 'text-center' : ''}">MATERIAL MANAGEMENT</h2>
-				<p class="text-gray-500 mt-1 {isMobile ? 'text-sm text-center' : ''}">Select a piece to manage its materials</p>
+			<div class="flex items-center space-x-3 mb-{isMobile ? '4' : '6'}">
+				<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
+					<Package class="w-5 h-5 text-white" />
+				</div>
+				<div>
+					<h1 class="font-bold text-lg">MATERIAL MANAGEMENT</h1>
+					<p class="text-sm text-gray-600">Select a piece to manage its materials</p>
+				</div>
 			</div>
 
 			{#if pieces.length === 0}
-				<div class="text-center py-8">
-					<Music class="mx-auto mb-4 text-gray-400" size={isMobile ? 32 : 48} />
-					<p class="text-gray-500 {isMobile ? 'text-sm' : ''}">No pieces available</p>
+				<!-- ✅ IDENTIQUE à General Files : Empty state -->
+				<div class="text-center py-{isMobile ? '8' : '12'}">
+					<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
+						<Music class="text-gray-400" size={isMobile ? 32 : 48} />
+					</div>
+					<h3 class="font-bold text-lg text-gray-700 mb-2">
+						{#if projectId}
+							NO PIECES IN THIS PROJECT
+						{:else}
+							NO PIECES FOUND
+						{/if}
+					</h3>
+					<p class="text-gray-500 {isMobile ? 'text-sm' : ''}">
+						{#if projectId}
+							Add pieces to this project to manage their materials
+						{:else}
+							Create pieces first to manage their materials
+						{/if}
+					</p>
 				</div>
 			{:else}
-				<div class="grid {gridCols} gap-{isMobile ? '2' : '4'}">
+				<!-- ✅ IDENTIQUE à General Files : Grid layout -->
+				<div class="grid {gridCols} gap-{isMobile ? '3' : '4'}">
 					{#each pieces as piece}
 						<button
-							class="p-{isMobile ? '3' : '4'} bg-gradient-to-br from-white to-gray-50 border-2 border-[#E7E7E7] rounded-xl hover:border-[#6B9AD9] transition-all duration-300 text-left group"
+							class="p-{isMobile ? '4' : '6'} bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-[10px] hover:border-[#6B9AD9] transition-all duration-300 text-left group"
 							on:click={() => loadMaterialsForPiece(piece)}
 						>
-							<div class="flex items-center gap-{isMobile ? '2' : '3'}">
-								<div class="p-{isMobile ? '2' : '3'} bg-blue-500 text-white rounded-lg group-hover:scale-110 transition-transform">
-									<Music size={isMobile ? 16 : 24} />
+							<div class="flex items-center gap-{isMobile ? '3' : '4'}">
+								<div class="p-{isMobile ? '2' : '3'} bg-blue-500 text-white rounded-[8px] group-hover:scale-110 transition-transform">
+									<Music size={isMobile ? 20 : 24} />
 								</div>
 								<div class="flex-1 min-w-0">
-									<h3 class="font-semibold {isMobile ? 'text-sm' : 'text-lg'} text-gray-700 truncate">{piece.name}</h3>
+									<h3 class="font-bold {isMobile ? 'text-base' : 'text-lg'} text-gray-700 truncate">{piece.name}</h3>
 									<p class="text-{isMobile ? 'xs' : 'sm'} text-gray-500 truncate">
 										{piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'}
 									</p>
@@ -499,75 +581,101 @@
 			{/if}
 		</div>
 	{:else}
-		<!-- Material management with corrected selection display and visible files -->
-		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '6'} overflow-hidden">
+		<!-- ✅ IDENTIQUE à General Files : Material management -->
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '4'} overflow-hidden">
+			<!-- ✅ IDENTIQUE à General Files : Header avec navigation -->
 			<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-{isMobile ? '4' : '6'} gap-{isMobile ? '3' : '4'}">
-				<div>
+				<div class="flex items-center gap-3 {isMobile ? 'flex-wrap' : ''}">
 					<button
-						class="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-2 {isMobile ? 'text-sm' : ''}"
+						class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'text-sm' : ''}"
 						on:click={goBackToPieces}
 					>
 						← Back to Pieces
 					</button>
-					<h2 class="text-{isMobile ? 'lg' : '2xl'} font-bold text-gray-700 uppercase {isMobile ? 'text-center' : ''}">MATERIALS & SELECTION</h2>
-					<p class="text-gray-500 mt-1 {isMobile ? 'text-sm text-center' : ''} break-words">{getPieceName(selectedPiece)}</p>
-
-					<!-- Selection status with proper reactivity -->
-					{#if selectedPiece}
-						{@const currentSelectedMaterial = getSelectedMaterial(selectedPiece.id)}
-						{#if currentSelectedMaterial}
-							<div class="mt-2 flex items-center gap-2 text-sm {isMobile ? 'justify-center' : ''}">
-								<CheckCircle class="text-green-600" size={16} />
-								<span class="text-green-600 font-medium break-words">
-									Selected Material: {currentSelectedMaterial.name}
-								</span>
-							</div>
-						{:else}
-							<div class="mt-2 flex items-center gap-2 text-sm {isMobile ? 'justify-center' : ''}">
-								<Circle class="text-orange-600" size={16} />
-								<span class="text-orange-600 font-medium">
-									No material selected
-								</span>
-							</div>
-						{/if}
+					{#if !isMobile}
+						<div class="h-6 w-px bg-gray-300"></div>
 					{/if}
+					<div>
+						<h2 class="font-bold text-lg text-gray-700">MATERIALS & SELECTION</h2>
+						<p class="text-sm text-gray-500 break-words">{getPieceName(selectedPiece)}</p>
+
+						<!-- ✅ Selection status -->
+						{#if selectedPiece}
+							{@const currentSelectedMaterial = getSelectedMaterial(selectedPiece.id)}
+							{#if currentSelectedMaterial}
+								<div class="mt-2 flex items-center gap-2 text-sm {isMobile ? 'justify-start' : ''}">
+									<CheckCircle class="text-green-600" size={16} />
+									<span class="text-green-600 font-medium break-words">
+										Selected: {currentSelectedMaterial.name}
+									</span>
+								</div>
+							{:else}
+								<div class="mt-2 flex items-center gap-2 text-sm {isMobile ? 'justify-start' : ''}">
+									<Circle class="text-orange-600" size={16} />
+									<span class="text-orange-600 font-medium">
+										No material selected
+									</span>
+								</div>
+							{/if}
+						{/if}
+					</div>
 				</div>
 
 				<button
-					class="flex items-center gap-2 px-{isMobile ? '4' : '6'} py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
+					class="flex items-center gap-2 px-{isMobile ? '4' : '6'} py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
 					on:click={() => showCreateForm = true}
 				>
 					<Plus size={20} />
 					<span class="{isMobile ? 'text-sm' : ''}">New Material</span>
 				</button>
 			</div>
+		</div>
 
-			<!-- Materials list with selection and visible files -->
-			{#if materials.length === 0}
-				<div class="text-center py-8">
-					<Package class="mx-auto mb-4 text-gray-400" size={isMobile ? 32 : 48} />
-					<p class="text-gray-500 mb-4 {isMobile ? 'text-sm' : ''}">No materials created for this piece</p>
+		{#if materials.length === 0}
+			<!-- ✅ IDENTIQUE à General Files : Empty State -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
+				<div class="text-center py-{isMobile ? '8' : '12'}">
+					<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
+						<Package class="text-gray-400" size={isMobile ? 32 : 48} />
+					</div>
+					<h3 class="font-bold text-lg text-gray-700 mb-2">NO MATERIALS CREATED</h3>
+					<p class="text-gray-500 {isMobile ? 'text-sm' : ''} mb-4">Create the first material for this piece</p>
 					<button
-						class="text-[#6B9AD9] hover:underline {isMobile ? 'text-sm' : ''}"
+						class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'w-full justify-center' : 'mx-auto'}"
 						on:click={() => showCreateForm = true}
 					>
-						Create the first material
+						<Plus size={20} />
+						<span class="{isMobile ? 'text-sm' : ''}">Create First Material</span>
 					</button>
 				</div>
-			{:else}
-				<div class="space-y-{isMobile ? '3' : '4'} overflow-hidden">
+			</div>
+		{:else}
+			<!-- ✅ IDENTIQUE à General Files : Materials List -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+				<div class="flex items-center space-x-3 mb-6">
+					<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
+						<Package class="w-5 h-5 text-white" />
+					</div>
+					<div>
+						<h1 class="font-bold text-lg">MATERIALS & FILES ({materials.length})</h1>
+						<p class="text-sm text-gray-600">Click on items to manage or upload files</p>
+					</div>
+				</div>
+
+				<div class="space-y-{isMobile ? '3' : '4'}">
 					{#each materials as material}
 						{@const isSelected = selectedMaterials[selectedPiece.id] === material.id}
 						{@const isExpanded = expandedMaterials.has(material.id)}
 
-						<div class="border border-gray-200 rounded-lg p-{isMobile ? '3' : '4'} hover:border-[#6B9AD9] transition-all duration-200 {
+						<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200 {
 							isSelected ? 'ring-2 ring-blue-500 bg-blue-50' :
-							material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : 'bg-white'
-						} overflow-hidden">
-							<div class="flex items-start justify-between">
-								<div class="flex items-start gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
-									<!-- Selection checkbox -->
-									<div class="pt-1">
+							material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : ''
+						}">
+							<!-- ✅ IDENTIQUE à General Files : Main Item -->
+							<div class="flex items-center justify-between p-{isMobile ? '3' : '4'} cursor-pointer group">
+								<div class="flex items-center gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
+									<!-- ✅ Selection checkbox comme dans General Files -->
+									<div class="flex-shrink-0">
 										<button
 											class="p-1 hover:bg-gray-100 rounded transition-colors"
 											on:click={() => selectMaterial(selectedPiece.id, isSelected ? null : material.id)}
@@ -581,270 +689,340 @@
 										</button>
 									</div>
 
+									<!-- ✅ IDENTIQUE à General Files : Material icon -->
+									<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
+										<Package size={isMobile ? 20 : 24} class="text-purple-600" />
+									</div>
+
+									<!-- ✅ IDENTIQUE à General Files : Item Info -->
 									<div class="flex-1 min-w-0 overflow-hidden">
-										<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-2 mb-2">
-											<h3 class="text-{isMobile ? 'base' : 'lg'} font-semibold text-gray-800 truncate">{material.name}</h3>
-											<div class="flex items-center gap-2 {isMobile ? '' : 'ml-auto'}">
+										<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-2">
+											<div class="flex items-center gap-2">
+												<h3 class="font-bold text-gray-900 truncate" title={material.name}>{material.name}</h3>
 												{#if material.is_default}
 													<Star class="text-yellow-500 fill-current" size={14} />
-													<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Default</span>
 												{/if}
 												{#if isSelected}
 													<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">✓ Selected</span>
 												{/if}
 											</div>
+											{#if !isMobile}
+												<div class="flex items-center gap-2 text-xs">
+													<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold border border-purple-300">
+														{material.files_count || 0} file{material.files_count !== 1 ? 's' : ''}
+													</span>
+												</div>
+											{/if}
 										</div>
 
-										{#if material.description && !isMobile}
-											<p class="text-sm text-gray-600 mb-3 break-words">{material.description}</p>
-										{/if}
-
-										<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-4 gap-4'} text-sm mb-3 overflow-hidden">
-											{#if material.edition}
-												<div class="min-w-0">
-													<span class="font-medium text-gray-700">Edition:</span>
-													<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''} break-words">{material.edition}</p>
-												</div>
-											{/if}
-											{#if material.editor}
-												<div class="min-w-0">
-													<span class="font-medium text-gray-700">Publisher:</span>
-													<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''} break-words">{material.editor}</p>
-												</div>
-											{/if}
+										<!-- ✅ IDENTIQUE à General Files : Details Grid -->
+										<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-3 gap-4'} text-sm overflow-hidden">
+											<div class="min-w-0">
+												<span class="font-medium text-gray-700">Type:</span>
+												<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'} break-words">
+													Material
+													{#if material.edition}
+														• {material.edition}
+													{/if}
+												</span>
+											</div>
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Created:</span>
-												<p class="text-gray-600 {isMobile ? 'inline ml-1' : ''}">{formatDate(material.createdAt)}</p>
+												<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'}">{formatDate(material.createdAt)}</span>
 											</div>
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Files:</span>
-												<p class="text-gray-600 font-semibold {material.files_count > 0 ? 'text-green-600' : 'text-orange-600'} {isMobile ? 'inline ml-1' : ''}">
-													{material.files_count || 0}
-													{#if material.files_count > 0}
-														<span class="text-xs text-green-500">✓</span>
-													{:else}
-														<span class="text-xs text-orange-500">⚠</span>
-													{/if}
-												</p>
+												<span class="text-green-600 font-semibold {isMobile ? 'ml-2' : 'block'}">
+													{material.files_count || 0} file{material.files_count !== 1 ? 's' : ''}
+													{#if material.files_count > 0}✓{/if}
+												</span>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- ✅ IDENTIQUE à General Files : Actions -->
+								{#if !isMobile}
+									<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+										<button
+											class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
+											on:click|stopPropagation={() => openUploader(material)}
+											title="Upload Files"
+										>
+											<Upload size={16} />
+										</button>
+
+										<button
+											class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+											on:click|stopPropagation={() => deleteMaterial(material)}
+											title="Delete"
+										>
+											<Trash2 size={16} />
+										</button>
+									</div>
+								{/if}
+							</div>
+
+							<!-- ✅ IDENTIQUE à General Files : Files section expansible -->
+							{#if material.files && material.files.length > 0}
+								<div class="border-t-2 border-gray-300 bg-gradient-to-r from-purple-50 to-blue-50 overflow-hidden">
+									<div class="p-{isMobile ? '3' : '4'}">
+										<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-4 gap-2">
+											<h4 class="text-{isMobile ? 'sm' : 'base'} font-bold text-gray-700 flex items-center gap-2">
+												<FileText size={isMobile ? 14 : 16} class="text-purple-600" />
+												MATERIAL FILES ({material.files.length})
+											</h4>
+
+											<div class="flex items-center gap-2">
+												<span class="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-lg font-bold border border-green-300">
+													✓ {material.files.length} file{material.files.length !== 1 ? 's' : ''}
+												</span>
+												{#if !isMobile}
+													<button
+														class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 p-1"
+														on:click={() => toggleMaterialExpansion(material.id)}
+													>
+														{#if isExpanded}
+															<ChevronDown size={16} />
+														{:else}
+															<ChevronRight size={16} />
+														{/if}
+													</button>
+												{/if}
 											</div>
 										</div>
 
-										<!-- Files section - Always visible or expandable -->
-										{#if material.files && material.files.length > 0}
-											<div class="border-t pt-3 overflow-hidden">
-												<div class="flex items-center justify-between mb-2">
-													<h4 class="text-{isMobile ? 'sm' : 'sm'} font-medium text-gray-700">Files ({material.files.length})</h4>
-													{#if !isMobile}
-														<button
-															class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-															on:click={() => toggleMaterialExpansion(material.id)}
-														>
-															{#if isExpanded}
-																<ChevronDown size={14} />
-																Hide
-															{:else}
-																<ChevronRight size={14} />
-																Show
-															{/if}
-														</button>
-													{/if}
-												</div>
-
-												{#if isMobile || isExpanded}
-													<div class="space-y-{isMobile ? '1' : '2'} overflow-hidden">
-														{#each material.files as file}
-															<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-gray-50 rounded hover:bg-gray-100 transition-colors min-w-0">
-																<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
-																	<span class="text-lg">{getFileIcon(file.name)}</span>
-																	<div class="flex-1 min-w-0">
-																		<span class="text-{isMobile ? 'xs' : 'sm'} text-gray-700 truncate block" title={file.name}>{file.name}</span>
-																		<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
-																	</div>
-																</div>
-																<div class="flex items-center gap-1 flex-shrink-0">
-																	<!-- ✅ BOUTON PREVIEW -->
-																	<button
-																		class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-																		on:click={() => previewMaterialFile(file)}
-																		title="Preview"
-																	>
-																		<Eye size={isMobile ? 12 : 14} />
-																	</button>
-																	<button
-																		class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
-																		on:click={() => downloadMaterialFile(file.id, file.name)}
-																		title="Download"
-																	>
-																		<Download size={isMobile ? 12 : 14} />
-																	</button>
-																	<button
-																		class="p-{isMobile ? '1' : '1.5'} text-gray-600 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-																		on:click={() => deleteMaterialFile(file.id, file.name)}
-																		title="Delete"
-																	>
-																		<X size={isMobile ? 12 : 14} />
-																	</button>
-																</div>
+										{#if isMobile || isExpanded}
+											<div class="space-y-{isMobile ? '2' : '3'} overflow-hidden">
+												{#each material.files as file}
+													<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-white border-2 border-gray-300 rounded-[8px] hover:border-purple-400 transition-colors group min-w-0">
+														<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
+															<div class="w-8 h-8 bg-gray-100 rounded-[6px] border border-gray-300 flex items-center justify-center flex-shrink-0">
+																<svelte:component
+																	this={getFileIcon(file.name)}
+																	size={isMobile ? 14 : 16}
+																	class={getFileColor(file.name)}
+																/>
 															</div>
-														{/each}
-													</div>
-												{/if}
-											</div>
-										{/if}
+															<div class="flex-1 min-w-0">
+																<span class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 truncate block" title={file.name}>{file.name}</span>
+																<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
+															</div>
+														</div>
 
-										{#if material.notes && !isMobile}
-											<div class="mt-3 p-2 bg-blue-50 rounded text-sm overflow-hidden">
-												<span class="font-medium text-blue-800">Notes:</span>
-												<span class="text-blue-700 break-words">{material.notes}</span>
+														<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity flex-shrink-0">
+															<button
+																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
+																on:click={() => previewMaterialFile(file)}
+																title="Preview"
+															>
+																<Eye size={isMobile ? 12 : 14} />
+															</button>
+															<button
+																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-green-600 rounded-[6px] hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
+																on:click={() => downloadMaterialFile(file.id, file.name)}
+																title="Download"
+															>
+																<Download size={isMobile ? 12 : 14} />
+															</button>
+															<button
+																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-red-600 rounded-[6px] hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+																on:click={() => deleteMaterialFile(file.id, file.name)}
+																title="Delete"
+															>
+																<X size={isMobile ? 12 : 14} />
+															</button>
+														</div>
+													</div>
+												{/each}
+											</div>
+
+											<!-- ✅ Upload button in files section -->
+											<div class="mt-4 pt-3 border-t border-gray-200">
+												<button
+													class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md {isMobile ? 'w-full justify-center' : ''}"
+													on:click={() => openUploader(material)}
+												>
+													<CloudUpload size={16} />
+													<span class="font-medium {isMobile ? 'text-sm' : ''}">Add More Files</span>
+												</button>
 											</div>
 										{/if}
 									</div>
 								</div>
-
-								<!-- Actions -->
-								<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-{isMobile ? '1' : '2'} ml-{isMobile ? '2' : '4'} flex-shrink-0">
-									<!-- File upload -->
-									<input
-										type="file"
-										multiple
-										accept=".pdf,.musicxml,.mxl,.mid,.midi,.jpg,.jpeg,.png,.doc,.docx,.txt,.zip"
-										style="display: none;"
-										id="upload-{material.id}"
-										on:change={(e) => handleFileUpload(material, e)}
-									/>
-									<button
-										class="p-{isMobile ? '1.5' : '2'} text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-										on:click={() => document.getElementById(`upload-${material.id}`)?.click()}
-										title="Add files"
-									>
-										<Upload size={isMobile ? 16 : 18} />
-									</button>
-
-									<button
-										class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-										on:click={() => deleteMaterial(material)}
-										title="Delete"
-									>
-										<Trash2 size={isMobile ? 16 : 18} />
-									</button>
+							{:else}
+								<!-- ✅ IDENTIQUE à General Files : Empty files section -->
+								<div class="border-t-2 border-gray-300 bg-gray-50 overflow-hidden">
+									<div class="p-{isMobile ? '4' : '6'} text-center">
+										<FileText class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
+										<p class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-600 mb-2">NO FILES IN THIS MATERIAL</p>
+										<p class="text-xs text-gray-400 mb-4">Upload files to this material</p>
+										<button
+											class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'w-full justify-center' : 'mx-auto'}"
+											on:click={() => openUploader(material)}
+										>
+											<Upload size={16} />
+											<span class="{isMobile ? 'text-sm' : ''}">Upload Files</span>
+										</button>
+									</div>
 								</div>
-							</div>
+							{/if}
 						</div>
 					{/each}
 				</div>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	{/if}
 </div>
 
-<!-- Creation modal - Mobile optimized -->
+<!-- ✅ IDENTIQUE à General Files : Creation modal -->
 {#if showCreateForm}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-{isMobile ? '2' : '4'}">
-		<div class="bg-white rounded-lg shadow-2xl w-full max-w-{isMobile ? 'sm' : '2xl'} max-h-[90vh] overflow-y-auto">
-			<div class="p-{isMobile ? '4' : '6'}">
-				<h3 class="text-{isMobile ? 'lg' : 'xl'} font-bold text-gray-800 mb-4">
-					New Material for "{selectedPiece?.name}"
-				</h3>
-
-				<div class="space-y-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">
-							Material Name *
-						</label>
-						<input
-							type="text"
-							bind:value={newMaterialData.name}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent"
-							placeholder="e.g. Main material, Concert version"
-							required
-						/>
-					</div>
-
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">
-							Description
-						</label>
-						<textarea
-							bind:value={newMaterialData.description}
-							rows={isMobile ? "2" : "3"}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent resize-vertical"
-							placeholder="Material description..."
-						></textarea>
-					</div>
-
-					<div class="grid grid-cols-1 {isMobile ? '' : 'md:grid-cols-2'} gap-4">
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
-								Edition
-							</label>
-							<input
-								type="text"
-								bind:value={newMaterialData.edition}
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent"
-								placeholder="e.g. Urtext, Peters"
-							/>
+		<div class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+			<!-- ✅ IDENTIQUE : Header -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-t-[10px] p-4">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
+							<Plus size={20} class="text-white" />
 						</div>
-
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
-								Publisher
-							</label>
-							<input
-								type="text"
-								bind:value={newMaterialData.editor}
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent"
-								placeholder="Publishing house"
-							/>
+							<h1 class="font-bold text-lg">NEW MATERIAL</h1>
+							<p class="text-sm text-gray-600">Create material for "{selectedPiece?.name}"</p>
 						</div>
 					</div>
-
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">
-							Notes
-						</label>
-						<textarea
-							bind:value={newMaterialData.notes}
-							rows={isMobile ? "2" : "3"}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent resize-vertical"
-							placeholder="Bowings, modifications..."
-						></textarea>
-					</div>
-
-					<label class="flex items-center">
-						<input
-							type="checkbox"
-							bind:checked={newMaterialData.is_default}
-							class="w-4 h-4 text-[#6B9AD9] bg-gray-100 border-gray-300 rounded focus:ring-[#6B9AD9] focus:ring-2"
-						/>
-						<span class="ml-2 text-sm text-gray-700">
-							Set as default material for this piece
-						</span>
-					</label>
-				</div>
-
-				<div class="flex {isMobile ? 'flex-col' : 'items-center justify-end'} gap-3 mt-6">
 					<button
-						type="button"
-						class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors {isMobile ? 'w-full' : ''}"
+						class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors"
 						on:click={() => showCreateForm = false}
 					>
-						Cancel
+						<X size={20} />
 					</button>
-					<button
-						type="button"
-						class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors {isMobile ? 'w-full' : ''}"
-						on:click={createMaterial}
-						disabled={!newMaterialData.name.trim()}
-					>
-						Create
-					</button>
+				</div>
+			</div>
+
+			<!-- ✅ IDENTIQUE : Content -->
+			<div class="p-4 space-y-4">
+				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+					<div class="space-y-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								Material Name *
+							</label>
+							<input
+								type="text"
+								bind:value={newMaterialData.name}
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors"
+								placeholder="e.g. Main material, Concert version"
+								required
+							/>
+						</div>
+
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								Description
+							</label>
+							<textarea
+								bind:value={newMaterialData.description}
+								rows={isMobile ? "2" : "3"}
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors resize-vertical"
+								placeholder="Material description..."
+							></textarea>
+						</div>
+
+						<div class="grid grid-cols-1 {isMobile ? '' : 'md:grid-cols-2'} gap-4">
+							<div>
+								<label class="block text-sm font-medium text-gray-700 mb-2">
+									Edition
+								</label>
+								<input
+									type="text"
+									bind:value={newMaterialData.edition}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors"
+									placeholder="e.g. Urtext, Peters"
+								/>
+							</div>
+
+							<div>
+								<label class="block text-sm font-medium text-gray-700 mb-2">
+									Publisher
+								</label>
+								<input
+									type="text"
+									bind:value={newMaterialData.editor}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors"
+									placeholder="Publishing house"
+								/>
+							</div>
+						</div>
+
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">
+								Notes
+							</label>
+							<textarea
+								bind:value={newMaterialData.notes}
+								rows={isMobile ? "2" : "3"}
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors resize-vertical"
+								placeholder="Bowings, modifications..."
+							></textarea>
+						</div>
+
+						<label class="flex items-center">
+							<input
+								type="checkbox"
+								bind:checked={newMaterialData.is_default}
+								class="w-4 h-4 text-[#6B9AD9] bg-gray-100 border-gray-300 rounded focus:ring-[#6B9AD9] focus:ring-2"
+							/>
+							<span class="ml-2 text-sm text-gray-700">
+								Set as default material for this piece
+							</span>
+						</label>
+					</div>
+				</div>
+
+				<!-- ✅ IDENTIQUE : Footer Actions -->
+				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+					<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
+						<div class="text-sm text-gray-600 font-semibold">
+							Material will be created for "{selectedPiece?.name}"
+						</div>
+
+						<div class="flex {isMobile ? 'flex-col w-full gap-2' : 'gap-3'}">
+							<button
+								class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
+								on:click={() => showCreateForm = false}
+							>
+								Cancel
+							</button>
+
+							<button
+								class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile ? 'w-full' : ''}"
+								disabled={!newMaterialData.name.trim()}
+								on:click={createMaterial}
+							>
+								<Plus size={16} />
+								Create Material
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 {/if}
 
-<!-- ✅ MODAL DE PRÉVISUALISATION -->
+<!-- ✅ IDENTIQUE à General Files : Upload modal -->
+{#if showUploader && selectedMaterialForUpload}
+	<FileUploader
+		on:upload={(e) => handleFileUpload(e.detail)}
+		on:cancel={() => {
+			showUploader = false;
+			selectedMaterialForUpload = null;
+		}}
+	/>
+{/if}
+
+<!-- ✅ IDENTIQUE à General Files : Preview modal -->
 {#if showPreview && previewFile}
 	<FilePreview
 		fileId={previewFile.id}
@@ -857,44 +1035,43 @@
 	/>
 {/if}
 
+<!-- ✅ IDENTIQUE à General Files : CSS Styles -->
 <style>
-    /* Enhanced mobile responsiveness */
+    /* Mobile-specific responsive adjustments - EXACT COPY from files page */
     @media (max-width: 768px) {
+        :global(.md\:grid-cols-3) {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
         :global(.md\:grid-cols-2) {
             grid-template-columns: repeat(1, minmax(0, 1fr));
         }
-        :global(.lg\:grid-cols-3) {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
-        :global(.md\:grid-cols-4) {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
 
-        :global(.space-y-6) > :not([hidden]) ~ :not([hidden]) {
+        :global(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
             margin-top: 0.75rem;
         }
 
-        :global(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
+        :global(.space-y-3) > :not([hidden]) ~ :not([hidden]) {
             margin-top: 0.5rem;
         }
 
-        :global(.space-y-3) > :not([hidden]) ~ :not([hidden]) {
-            margin-top: 0.375rem;
+        :global(.space-y-2) > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.5rem;
         }
 
         :global(.gap-4) {
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
         :global(.gap-3) {
-            gap: 0.375rem;
+            gap: 0.5rem;
         }
 
         :global(.gap-2) {
             gap: 0.25rem;
         }
 
-        /* Improve touch targets */
+        /* Improve touch targets on mobile */
         button {
             min-height: 44px;
         }
@@ -908,10 +1085,15 @@
             transition: none;
         }
 
-        /* Prevent text overflow */
+        .group-hover\:opacity-100 {
+            opacity: 1;
+        }
+
+        /* Force text wrapping and prevent overflow */
         .break-words {
             word-wrap: break-word;
             word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .truncate {
@@ -929,20 +1111,32 @@
         }
     }
 
-    /* Tablet adjustments */
+    /* Tablet adjustments - EXACT COPY */
     @media (min-width: 769px) and (max-width: 1024px) {
         :global(.lg\:grid-cols-3) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        :global(.md\:grid-cols-4) {
+        :global(.md\:grid-cols-3) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
-    /* Force text wrapping */
+    /* Force text wrapping globally */
     .break-words {
         word-wrap: break-word;
         word-break: break-word;
         overflow-wrap: break-word;
+    }
+
+    /* Smooth transitions for all interactive elements */
+    button, .group {
+        transition: all 200ms ease-in-out;
+    }
+
+    /* Ensure modal is properly centered on all screen sizes */
+    .fixed.inset-0 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
