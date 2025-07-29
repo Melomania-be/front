@@ -1,15 +1,74 @@
+<!--src/lib/components/callsheet/ProgramSection.svelte - Version simplifiée sans infos matériel-->
 <script lang="ts">
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import Accordion from '$lib/components/Accordion.svelte';
-	import { Download, Music, FileText, Eye, AlertCircle, Clock } from 'lucide-svelte';
+	import { Download, Music, FileText, Eye, AlertCircle, ChevronDown, ChevronRight } from 'lucide-svelte';
 	import FilePreview from '$lib/components/filesystem/FilePreview.svelte';
+	import { onMount } from 'svelte';
 
 	export let callsheet: Callsheet;
 
 	let showPreview = false;
-	let previewFile: { id: number; name: string; type: string } | null = null;
+	let currentPreviewFile: { id: number; name: string; type: string } | null = null;
 	let downloadingFiles = new Set<number>();
 	let downloadErrors = new Map<number, string>();
+	let expandedPieces = new Set<number>();
+	let searchQuery = '';
+
+	// ✅ NOUVEAU : Stocker uniquement les fichiers des matériels sélectionnés pour chaque pièce
+	let selectedMaterialFiles: Record<number, any[]> = {};
+	let isLoadingMaterials = false;
+
+	// Charger uniquement les fichiers des matériels sélectionnés pour chaque pièce
+	onMount(async () => {
+		await loadSelectedMaterialFiles();
+	});
+
+	// ✅ NOUVELLE FONCTION : Charger uniquement les fichiers des matériels sélectionnés
+	async function loadSelectedMaterialFiles() {
+		if (!callsheet.project?.pieces) return;
+
+		isLoadingMaterials = true;
+
+		try {
+			for (const piece of callsheet.project.pieces) {
+				console.log(`📦 Loading files for piece: ${piece.name} (ID: ${piece.id})`);
+
+				// 1. Récupérer le matériel sélectionné pour cette pièce
+				const selectedResponse = await fetch(`/api/pieces/${piece.id}/select-material`);
+
+				if (selectedResponse.ok) {
+					const selectedResult = await selectedResponse.json();
+
+					if (selectedResult.materialId) {
+						// 2. Récupérer directement les fichiers du matériel sélectionné
+						const filesResponse = await fetch(`/api/materials/${selectedResult.materialId}/files`);
+
+						if (filesResponse.ok) {
+							const files = await filesResponse.json();
+							selectedMaterialFiles[piece.id] = Array.isArray(files) ? files : [];
+							console.log(`✅ Loaded ${selectedMaterialFiles[piece.id].length} files for piece ${piece.name}`);
+						} else {
+							selectedMaterialFiles[piece.id] = [];
+						}
+					} else {
+						console.log(`⚠️ No material selected for piece ${piece.name}`);
+						selectedMaterialFiles[piece.id] = [];
+					}
+				} else {
+					console.log(`❌ Failed to get selected material for piece ${piece.id}`);
+					selectedMaterialFiles[piece.id] = [];
+				}
+			}
+
+			console.log('📊 Final selected material files:', selectedMaterialFiles);
+			selectedMaterialFiles = { ...selectedMaterialFiles }; // Force reactivity
+		} catch (error) {
+			console.error('Error loading selected material files:', error);
+		}
+
+		isLoadingMaterials = false;
+	}
 
 	// Fonction utilitaire pour formater la taille des fichiers
 	function formatFileSize(bytes: number | null | undefined): string {
@@ -17,11 +76,11 @@
 		const k = 1024;
 		const sizes = ['B', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 	}
 
 	// Fonction améliorée de téléchargement avec loading state
-	async function downloadScore(fileId: number, fileName: string) {
+	async function downloadFile(fileId: number, fileName: string) {
 		if (downloadingFiles.has(fileId)) return;
 
 		downloadingFiles.add(fileId);
@@ -59,8 +118,8 @@
 		}
 	}
 
-	function previewScore(fileId: number, fileName: string, fileType: string = '') {
-		previewFile = { id: fileId, name: fileName, type: fileType };
+	function previewFile(fileId: number, fileName: string, fileType: string = '') {
+		currentPreviewFile = { id: fileId, name: fileName, type: fileType };
 		showPreview = true;
 	}
 
@@ -68,12 +127,16 @@
 		const extension = fileName.split('.').pop()?.toLowerCase();
 		switch (extension) {
 			case 'pdf':
+			case 'doc':
+			case 'docx':
 				return FileText;
 			case 'jpg':
 			case 'jpeg':
 			case 'png':
 			case 'gif':
 			case 'webp':
+			case 'svg':
+			case 'tiff':
 				return Eye;
 			case 'mp3':
 			case 'wav':
@@ -85,60 +148,31 @@
 		}
 	}
 
-	function getFileTypeLabel(fileName: string): string {
-		const extension = fileName.split('.').pop()?.toLowerCase();
-		switch (extension) {
-			case 'pdf':
-				return 'PDF';
-			case 'jpg':
-			case 'jpeg':
-			case 'png':
-			case 'gif':
-			case 'webp':
-				return 'Image';
-			case 'mp3':
-			case 'wav':
-			case 'flac':
-			case 'aac':
-				return 'Audio';
-			case 'mid':
-			case 'midi':
-				return 'MIDI';
-			default:
-				return 'Score';
-		}
-	}
-
+	// ✅ TOUJOURS retourner la couleur grise pour les fichiers
 	function getFileColor(fileName: string) {
 		return 'text-gray-700 bg-gray-100 border-gray-300';
 	}
 
-	// Fonction pour regrouper et organiser les fichiers
-	function organizeFiles(piece: any) {
-		const allFiles = [];
-
-		// Fichiers du dossier
-		if (piece.folder?.files) {
-			allFiles.push(...piece.folder.files.map(f => ({ ...f, source: 'folder' })));
+	function togglePieceExpansion(pieceId: number) {
+		if (expandedPieces.has(pieceId)) {
+			expandedPieces.delete(pieceId);
+		} else {
+			expandedPieces.add(pieceId);
 		}
+		expandedPieces = new Set(expandedPieces);
+	}
 
-		// Fichiers directs
-		if (piece.files) {
-			allFiles.push(...piece.files.map(f => ({ ...f, source: 'direct' })));
-		}
+	// Filtrage par recherche
+	function filterFiles(files: any[], query: string) {
+		if (!query.trim()) return files;
+		return files.filter(file =>
+			file.name.toLowerCase().includes(query.toLowerCase())
+		);
+	}
 
-		// Trier par nom et type
-		return allFiles.sort((a, b) => {
-			// D'abord par extension (PDF en premier)
-			const extA = a.name.split('.').pop()?.toLowerCase() || '';
-			const extB = b.name.split('.').pop()?.toLowerCase() || '';
-
-			if (extA === 'pdf' && extB !== 'pdf') return -1;
-			if (extA !== 'pdf' && extB === 'pdf') return 1;
-
-			// Puis par nom
-			return a.name.localeCompare(b.name);
-		});
+	// ✅ NOUVELLE FONCTION : Obtenir les fichiers du matériel sélectionné pour une pièce
+	function getSelectedMaterialFiles(pieceId: number): any[] {
+		return selectedMaterialFiles[pieceId] || [];
 	}
 
 	// Auto-clear errors after 5 seconds
@@ -152,133 +186,186 @@
 	}
 </script>
 
-<div class="mb-10 py-8 text-center">
-	<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-4">
-		Program and Scores
-	</h2>
-
-	<div class="overflow-x-auto border border-gray-300 dark:border-gray-600 rounded-xl max-w-5xl mx-auto">
-		<table class="min-w-[600px] w-full table-auto text-left text-sm">
-			<thead class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white">
-			<tr>
-				<th class="px-4 sm:px-6 py-3 font-semibold">Composer</th>
-				<th class="px-4 sm:px-6 py-3 font-semibold">Piece</th>
-				<th class="px-4 sm:px-6 py-3 font-semibold">Scores</th>
-			</tr>
-			</thead>
-			<tbody class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white">
-			{#each callsheet.project?.pieces || [] as piece}
-				{@const organizedFiles = organizeFiles(piece)}
-				<tr class="border-t border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
-					<td class="px-4 sm:px-6 py-4 align-top">
-						<div class="font-medium">{piece.composer.shortName}</div>
-						<div class="text-sm text-gray-500 dark:text-gray-400">{piece.composer.longName}</div>
-					</td>
-					<td class="px-4 sm:px-6 py-4 align-top">
-						<div class="font-medium">{piece.name}</div>
-						{#if piece.opus}
-							<div class="text-sm text-gray-500 dark:text-gray-400">Op. {piece.opus}</div>
-						{/if}
-						{#if piece.yearOfComposition}
-							<div class="text-sm text-gray-500 dark:text-gray-400">({piece.yearOfComposition})</div>
-						{/if}
-					</td>
-					<td class="px-4 sm:px-6 py-4 align-top">
-						{#if organizedFiles.length > 0}
-							<div class="space-y-2">
-								{#each organizedFiles as file}
-									{@const isDownloading = downloadingFiles.has(file.id)}
-									{@const downloadError = downloadErrors.get(file.id)}
-
-									<div class="flex items-center gap-2 p-2 {getFileColor(file.name)} rounded-lg border hover:shadow-sm transition-all duration-200">
-										<div class="flex-shrink-0">
-											<svelte:component this={getFileIcon(file.name)} size={16} />
-										</div>
-										<div class="flex-1 min-w-0">
-											<div class="text-sm font-medium truncate" title={file.name}>
-												{file.name}
-											</div>
-											{#if file.size}
-												<div class="text-xs text-gray-500">
-													{formatFileSize(file.size)}
-												</div>
-											{/if}
-										</div>
-										<div class="flex gap-1">
-											<button
-												class="p-1.5 hover:bg-white hover:bg-opacity-70 rounded transition-colors disabled:opacity-50"
-												on:click={() => previewScore(file.id, file.name, file.type || '')}
-												disabled={isDownloading}
-												title="Preview"
-											>
-												<Eye size={14} />
-											</button>
-											<button
-												class="p-1.5 hover:bg-white hover:bg-opacity-70 rounded transition-colors disabled:opacity-50"
-												on:click={() => downloadScore(file.id, file.name)}
-												disabled={isDownloading}
-												title="Download"
-											>
-												{#if isDownloading}
-													<div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
-												{:else}
-													<Download size={14} />
-												{/if}
-											</button>
-										</div>
-									</div>
-
-									{#if downloadError}
-										<div class="text-xs text-red-600 dark:text-red-400 mt-1">
-											Error: {downloadError}
-										</div>
-									{/if}
-								{/each}
-							</div>
-						{:else}
-							<div class="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-lg">
-								<Music size={14} class="text-gray-400" />
-								<span class="text-sm text-gray-500 dark:text-gray-400">No scores available</span>
-							</div>
-						{/if}
-					</td>
-				</tr>
-			{/each}
-			</tbody>
-		</table>
+<div class="mb-10 py-8">
+	<div class="text-center mb-6">
+		<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-2">
+			Program and Materials
+		</h2>
+		<p class="text-sm text-gray-600 dark:text-gray-400">
+			Access all musical materials and scores for this project
+		</p>
 	</div>
 
-	{#if callsheet.project?.pieces && callsheet.project.pieces.length === 0}
-		<div class="mt-8 text-center">
-			<Music class="mx-auto mb-4 text-gray-400" size={48} />
-			<p class="text-gray-500 dark:text-gray-400">No pieces in this project</p>
+	{#if isLoadingMaterials}
+		<div class="flex justify-center items-center h-32">
+			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+		</div>
+	{:else if callsheet.project?.pieces && callsheet.project.pieces.length > 0}
+		<div class="max-w-6xl mx-auto space-y-2">
+			{#each callsheet.project.pieces as piece}
+				{@const selectedFiles = getSelectedMaterialFiles(piece.id)}
+				{@const filteredFiles = filterFiles(selectedFiles, searchQuery)}
+				{@const isExpanded = expandedPieces.has(piece.id)}
+
+				<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+					<!-- En-tête de la pièce - FOCUS SUR LA PIÈCE UNIQUEMENT -->
+					<div class="p-3 sm:p-2 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+						<button
+							class="w-full flex items-center justify-between text-left hover:bg-white hover:bg-opacity-50 rounded p-2 transition-colors"
+							on:click={() => togglePieceExpansion(piece.id)}
+						>
+							<div class="flex-1 min-w-0">
+								<div class="flex items-center gap-3">
+									<div class="flex-shrink-0">
+										{#if isExpanded}
+											<ChevronDown size={16} class="text-gray-600 dark:text-gray-300" />
+										{:else}
+											<ChevronRight size={16} class="text-gray-600 dark:text-gray-300" />
+										{/if}
+									</div>
+									<div class="flex-1 min-w-0">
+										<!-- ✅ FOCUS : Informations de la pièce uniquement -->
+										<h3 class="font-semibold text-lg text-gray-900 dark:text-white truncate">
+											{piece.name}
+										</h3>
+										<div class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1">
+											<span>{piece.composer.shortName}</span>
+											{#if piece.opus}
+												<span>Op. {piece.opus}</span>
+											{/if}
+											{#if piece.yearOfComposition}
+												<span>({piece.yearOfComposition})</span>
+											{/if}
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- ✅ SIMPLE : Juste le nombre de fichiers -->
+							<div class="flex items-center gap-2 text-sm flex-shrink-0">
+								{#if selectedFiles.length > 0}
+									<div class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+										<FileText size={14} />
+										<span>{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}</span>
+									</div>
+								{:else}
+									<div class="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full">
+										<AlertCircle size={14} />
+										<span>Aucun fichier</span>
+									</div>
+								{/if}
+							</div>
+						</button>
+					</div>
+
+					<!-- Contenu expandable -->
+					{#if isExpanded}
+						<div class="p-4">
+							{#if filteredFiles.length === 0}
+								<div class="text-center py-8">
+									<FileText class="mx-auto mb-4 text-gray-400" size={48} />
+									<p class="text-gray-500 dark:text-gray-400">
+										{searchQuery ? 'Aucun fichier ne correspond à votre recherche' : 'Aucun fichier disponible pour cette pièce'}
+									</p>
+									<p class="text-sm text-gray-400 mt-2">
+										Sélectionnez un matériel dans la gestion des fichiers
+									</p>
+								</div>
+							{:else}
+								<!-- ✅ SIMPLE : Grille de fichiers avec couleur grise -->
+								<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+									{#each filteredFiles as file}
+										{@const isDownloading = downloadingFiles.has(file.id)}
+										{@const downloadError = downloadErrors.get(file.id)}
+
+										<div class="flex items-center gap-3 p-3 {getFileColor(file.name)} rounded-lg border hover:shadow-sm transition-all duration-200">
+											<div class="flex-shrink-0">
+												<svelte:component this={getFileIcon(file.name)} size={18} />
+											</div>
+											<div class="flex-1 min-w-0">
+												<div class="text-sm font-medium truncate" title={file.name}>
+													{file.name}
+												</div>
+												{#if file.size}
+													<div class="text-xs text-gray-500 mt-1">
+														{formatFileSize(file.size)}
+													</div>
+												{/if}
+												{#if file.instrument_part}
+													<div class="mt-1">
+														<span class="inline-block px-2 py-0.5 bg-gray-200 rounded text-xs">
+															{file.instrument_part}
+														</span>
+													</div>
+												{/if}
+											</div>
+											<div class="flex gap-1 flex-shrink-0">
+												<button
+													class="p-1.5 hover:bg-white hover:bg-opacity-70 rounded transition-colors disabled:opacity-50"
+													on:click={() => previewFile(file.id, file.name, file.type || '')}
+													disabled={isDownloading}
+													title="Preview"
+												>
+													<Eye size={16} />
+												</button>
+												<button
+													class="p-1.5 hover:bg-white hover:bg-opacity-70 rounded transition-colors disabled:opacity-50"
+													on:click={() => downloadFile(file.id, file.name)}
+													disabled={isDownloading}
+													title="Download"
+												>
+													{#if isDownloading}
+														<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+													{:else}
+														<Download size={16} />
+													{/if}
+												</button>
+											</div>
+										</div>
+
+										{#if downloadError}
+											<div class="col-span-full text-sm text-red-600 dark:text-red-400 px-3">
+												Error: {downloadError}
+											</div>
+										{/if}
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	{:else}
+		<div class="text-center py-12">
+			<Music class="mx-auto mb-4 text-gray-400" size={64} />
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No pieces in this project</h3>
+			<p class="text-gray-500 dark:text-gray-400">Add pieces to the project to see materials and scores here.</p>
 		</div>
 	{/if}
 </div>
 
 <!-- File Preview Modal -->
-{#if showPreview && previewFile}
+{#if showPreview && currentPreviewFile}
 	<FilePreview
-		fileId={previewFile.id}
-		fileName={previewFile.name}
-		fileType={previewFile.type}
+		fileId={currentPreviewFile.id}
+		fileName={currentPreviewFile.name}
+		fileType={currentPreviewFile.type}
 		onClose={() => {
 			showPreview = false;
-			previewFile = null;
+			currentPreviewFile = null;
 		}}
 	/>
 {/if}
 
 <style>
-    /* Amélioration responsive des boutons */
-    @media (max-width: 640px) {
-        .truncate {
-            max-width: 120px;
-        }
+    /* Transitions fluides */
+    .transition-all {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Smooth transitions */
-    .transition-all {
-        transition: all 0.2s ease;
+    /* Amélioration des hover states */
+    .hover\:shadow-sm:hover {
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
 </style>

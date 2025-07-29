@@ -1,3 +1,4 @@
+// F:\Java\front\src\routes\api\pieces\+server.ts
 import { getToken } from '$lib/server/authentification';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
