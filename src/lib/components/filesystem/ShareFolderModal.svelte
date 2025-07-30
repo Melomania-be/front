@@ -55,7 +55,7 @@
 				shareData = null;
 				showRevokeConfirm = false;
 
-				// Optionnel: fermer le modal après révocation
+				// Close modal after revocation
 				setTimeout(() => {
 					close();
 				}, 1000);
@@ -300,7 +300,7 @@
 					<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
 						<p class="text-sm text-red-800">
 							<strong>Warning:</strong> Revoking this link will immediately block access for anyone who has it.
-							They will no longer be able to view the shared folder.
+							They will no longer be able to view the shared folder and will see a "Link Revoked" message.
 						</p>
 					</div>
 

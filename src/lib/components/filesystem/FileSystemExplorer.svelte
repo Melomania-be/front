@@ -21,7 +21,8 @@
 		Info,
 		X,
 		Share2,
-		ShieldOff
+		ShieldOff,
+		AlertTriangle
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import type { Material } from '$lib/types/Material';
@@ -47,7 +48,10 @@
 
 	let showShareModal = false;
 	let folderToShare: FileSystemItem | null = null;
-	let sharedFolders = new Set<number>(); // Tracker les dossiers partagés
+	let sharedFolders = new Set<number>();
+	let showRevokeConfirm = false;
+	let folderToRevoke: FileSystemItem | null = null;
+	let isRevoking = false;
 
 	let materialsLoading = new Set<number>();
 
@@ -58,7 +62,7 @@
 		}
 	};
 
-	// Charger l'état des partages pour les dossiers
+	// Load share status for folders
 	async function checkSharedStatus() {
 		for (const item of items) {
 			if (item.type === 'folder') {
@@ -80,7 +84,7 @@
 		sharedFolders = new Set(sharedFolders);
 	}
 
-	// Vérifier le statut de partage au chargement
+	// Check share status on load
 	$: if (items.length > 0) {
 		checkSharedStatus();
 	}
@@ -223,26 +227,37 @@
 		}
 	}
 
-	async function revokeShare(folder: FileSystemItem) {
-		if (!confirm(`Are you sure you want to revoke the share link for "${folder.name}"? This will immediately block access for anyone who has the link.`)) {
-			return;
-		}
+	function revokeShare(folder: FileSystemItem) {
+		folderToRevoke = folder;
+		showRevokeConfirm = true;
+	}
 
+	async function confirmRevokeShare() {
+		if (!folderToRevoke || isRevoking) return;
+
+		isRevoking = true;
 		try {
-			const response = await fetch(`/api/filesystem/folders/${folder.id}/share`, {
+			const response = await fetch(`/api/filesystem/folders/${folderToRevoke.id}/share`, {
 				method: 'DELETE'
 			});
 
 			if (response.ok) {
-				sharedFolders.delete(folder.id);
+				sharedFolders.delete(folderToRevoke.id);
 				sharedFolders = new Set(sharedFolders);
-				alert('Share link revoked successfully');
+				showRevokeConfirm = false;
+				folderToRevoke = null;
 			} else {
 				alert('Failed to revoke share link');
 			}
 		} catch (error) {
 			alert('Error revoking share link');
 		}
+		isRevoking = false;
+	}
+
+	function cancelRevokeShare() {
+		showRevokeConfirm = false;
+		folderToRevoke = null;
 	}
 
 	function handleShareModalClose() {
@@ -826,6 +841,70 @@
 		isVisible={showShareModal}
 		on:close={handleShareModalClose}
 	/>
+{/if}
+
+<!-- Revoke Confirmation Modal -->
+{#if showRevokeConfirm && folderToRevoke}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+		<div class="bg-white rounded-[10px] shadow-2xl max-w-md w-full">
+			<!-- Header -->
+			<div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-orange-50">
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 bg-red-500 rounded-[8px] flex items-center justify-center">
+						<ShieldOff size={20} class="text-white" />
+					</div>
+					<div>
+						<h1 class="font-bold text-lg text-gray-800">REVOKE SHARE LINK</h1>
+						<p class="text-sm text-gray-600">This action cannot be undone</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<div class="bg-red-50 border-2 border-red-200 rounded-[8px] p-4 mb-6">
+					<div class="flex items-start gap-3">
+						<div class="w-8 h-8 bg-red-100 rounded-[6px] flex items-center justify-center flex-shrink-0 mt-0.5">
+							<AlertTriangle class="text-red-600" size={16} />
+						</div>
+						<div>
+							<h4 class="font-bold text-red-800 mb-2">Are you sure you want to revoke the share link for "{folderToRevoke.name}"?</h4>
+							<p class="text-sm text-red-700 mb-3">
+								This will immediately block access for anyone who has the link. Users trying to access this shared folder will see a "Link Revoked" message.
+							</p>
+							<p class="text-sm text-red-600 font-medium">
+								They will need to contact administrators for access.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Actions -->
+				<div class="flex {isMobile ? 'flex-col gap-3' : 'gap-3'}">
+					<button
+						class="flex-1 px-4 py-3 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border-2 border-gray-300 hover:border-gray-400 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
+						on:click={cancelRevokeShare}
+						disabled={isRevoking}
+					>
+						Cancel
+					</button>
+					<button
+						class="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center gap-2 border-2 border-red-600 {isMobile ? 'w-full' : ''}"
+						on:click={confirmRevokeShare}
+						disabled={isRevoking}
+					>
+						{#if isRevoking}
+							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+							Revoking...
+						{:else}
+							<ShieldOff size={16} />
+							Revoke Link
+						{/if}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 {/if}
 
 <svelte:window on:click={() => showContextMenu = false} />

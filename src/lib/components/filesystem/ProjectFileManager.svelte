@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/ProjectFileManager.svelte - CORRECTION : Passer projectId au MinimalMaterialsManager -->
+<!-- src/lib/components/filesystem/ProjectFileManager.svelte -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Music, Image, Video, FileText, Folder, Plus, Upload, ChevronLeft, Package, Database } from 'lucide-svelte';
@@ -22,7 +22,7 @@
 	let isTablet = false;
 	let windowWidth = 0;
 
-	// ✅ CORRECTION : Extraire le projectId du projet
+	// Extract the projectId from the project
 	$: projectId = project?.id || null;
 
 	const defaultFolders = [
@@ -297,10 +297,10 @@
 	$: customGridCols = isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3';
 </script>
 
-<!-- ✅ DESIGN IDENTIQUE : Container principal avec même style que General Files -->
+<!-- Container principal with same style as General Files -->
 <div class="bg-[#E7E7E7] p-4 min-h-screen space-y-4">
 	{#if isLoading}
-		<!-- ✅ DESIGN IDENTIQUE : Loading State -->
+		<!-- Loading State -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 			<div class="flex justify-center items-center h-64">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
@@ -308,7 +308,7 @@
 			</div>
 		</div>
 	{:else}
-		<!-- ✅ DESIGN IDENTIQUE : Tabs Section avec même style -->
+		<!-- Tabs Section with same style -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 			<div class="border-b border-gray-200 mb-6">
 				<nav class="flex {isMobile ? 'flex-col space-y-2' : 'space-x-8'}">
@@ -343,13 +343,13 @@
 			</div>
 
 			{#if activeTab === 'materials'}
-				<!-- ✅ CORRECTION : Materials Manager avec projectId -->
+				<!-- Materials Manager with projectId -->
 				<MinimalMaterialsManager
 					{projectId}
 					on:materialsUpdated={handleMaterialsUpdated}
 				/>
 			{:else if currentFolder}
-				<!-- ✅ DESIGN IDENTIQUE : Folder Navigation avec même style que General Files -->
+				<!-- Folder Navigation with same style as General Files -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mb-4">
 					<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-6 gap-4">
 						<div class="flex items-center gap-3 {isMobile ? 'flex-wrap' : ''}">
@@ -397,7 +397,7 @@
 					</div>
 				</div>
 
-				<!-- ✅ DESIGN IDENTIQUE : File Explorer -->
+				<!-- File Explorer -->
 				<FileSystemExplorer
 					items={currentFolder.children || []}
 					{projectId}
@@ -405,9 +405,9 @@
 					on:refresh={handleRefresh}
 				/>
 			{:else}
-				<!-- ✅ DESIGN IDENTIQUE : Root Files View avec même style exact que General Files -->
+				<!-- Root Files View with same style exact as General Files -->
 				<div class="space-y-4">
-					<!-- ✅ DESIGN IDENTIQUE : Header identique -->
+					<!-- Header identical -->
 					<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-6 gap-4">
 						<div class="flex items-center gap-3">
 							<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
@@ -430,7 +430,7 @@
 						</button>
 					</div>
 
-					<!-- ✅ DESIGN IDENTIQUE : Default Folders avec même style -->
+					<!-- Default Folders with same style -->
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 						<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
 							<Folder class="text-[#6B9AD9]" size={20} />
@@ -470,7 +470,7 @@
 						</div>
 					</div>
 
-					<!-- ✅ DESIGN IDENTIQUE : Custom Folders -->
+					<!-- Custom Folders -->
 					{#if fileStructure?.customFolders && fileStructure.customFolders.length > 0}
 						<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 							<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
@@ -500,7 +500,7 @@
 						</div>
 					{/if}
 
-					<!-- ✅ DESIGN IDENTIQUE : Upload to Root -->
+					<!-- Upload to Root -->
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 						<div class="text-center">
 							<div class="w-16 h-16 bg-[#6B9AD9] bg-opacity-10 rounded-[10px] flex items-center justify-center mx-auto mb-4">
@@ -530,7 +530,7 @@
 	/>
 {/if}
 
-<!-- ✅ DESIGN IDENTIQUE : Styles CSS identiques -->
+<!-- CSS Styles identical -->
 <style>
     /* Mobile-specific responsive adjustments - EXACT COPY from files page */
     @media (max-width: 768px) {

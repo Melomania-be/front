@@ -2,8 +2,8 @@
     import '../app.css';
     import { page } from '$app/stores';
     import Fa from 'svelte-fa';
-    import { 
-        faProjectDiagram, 
+    import {
+        faProjectDiagram,
         faAddressBook,
         faUsers,
         faEnvelope,
@@ -85,11 +85,11 @@
 {#if data.connected}
     <nav class="bg-white border-gray-200 dark:bg-gray-900">
         <div class="max-w-screen-xl mx-auto p-4 navbar-container">
-            <button 
-                data-collapse-toggle="navbar-default" 
-                type="button" 
-                class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" 
-                aria-controls="navbar-default" 
+            <button
+                data-collapse-toggle="navbar-default"
+                type="button"
+                class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                aria-controls="navbar-default"
                 aria-expanded="false"
                 on:click={toggleMenu}
             >
@@ -131,7 +131,7 @@
     import { page } from '$app/stores';
     import Fa from 'svelte-fa';
     import {
-        faProjectDiagram, 
+        faProjectDiagram,
         faAddressBook,
         faUsers,
         faEnvelope,
@@ -165,7 +165,7 @@
 
     let isMobile = false;
 	let screenDirection : "horizontal" | "vertical" = "vertical";
-   
+
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1320;
@@ -203,7 +203,7 @@
             <ul class="space-y-2">
                 {#each menu as item}
                     <li>
-                        <a 
+                        <a
                             href={item.href}
                             on:click={()=>{if (isMobile){showSidebar=false}}}
                             class="flex items-center p-2 text-white font-medium dark:text-gray-300 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-all"
@@ -232,7 +232,7 @@
     <!-- Main content -->
     <div class="bg-white w-screen ml-0 {!isMobile ? "pl-64" : "" }">
         <!-- Mobile toggle button -->
-        <button 
+        <button
             class="{!isMobile ? "hidden" : ""} p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
             on:click={toggleSidebar}
         >

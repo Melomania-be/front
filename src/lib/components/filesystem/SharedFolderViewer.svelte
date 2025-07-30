@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/SharedFolderViewer.svelte - Avec gestion révocation -->
+<!-- src/lib/components/filesystem/SharedFolderViewer.svelte -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
@@ -15,7 +15,8 @@
 		ExternalLink,
 		Shield,
 		AlertTriangle,
-		Lock
+		Lock,
+		XCircle
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import FilePreview from './FilePreview.svelte';
@@ -50,7 +51,7 @@
 				isRevoked = false;
 
 				if (currentFolder && currentFolder.children) {
-					// Le dossier a du contenu
+					// Folder has content
 				} else {
 					if (currentFolder) {
 						currentFolder.children = [];
@@ -62,9 +63,9 @@
 				error = 'Shared folder not found or link has expired';
 			} else if (response.status === 403) {
 				const errorData = await response.json().catch(() => ({}));
-				if (errorData.error?.includes('deactivated') || errorData.error?.includes('expired')) {
+				if (errorData.revoked || errorData.error?.includes('revoked') || errorData.error?.includes('expired')) {
 					isRevoked = true;
-					error = 'This share link has been revoked or expired';
+					error = errorData.error || 'This share link has been revoked or expired';
 				} else {
 					error = 'Access denied to this shared folder';
 				}
@@ -93,9 +94,9 @@
 				buildBreadcrumbs(currentFolder);
 			} else if (response.status === 403) {
 				const errorData = await response.json().catch(() => ({}));
-				if (errorData.error?.includes('deactivated') || errorData.error?.includes('expired')) {
+				if (errorData.revoked || errorData.error?.includes('revoked') || errorData.error?.includes('expired')) {
 					isRevoked = true;
-					error = 'This share link has been revoked';
+					error = errorData.error || 'This share link has been revoked';
 					return;
 				}
 				alert('Access denied to this folder');
@@ -150,9 +151,9 @@
 					URL.revokeObjectURL(url);
 				} else if (response.status === 403) {
 					const errorData = await response.json().catch(() => ({}));
-					if (errorData.error?.includes('deactivated') || errorData.error?.includes('expired')) {
+					if (errorData.revoked || errorData.error?.includes('revoked') || errorData.error?.includes('expired')) {
 						isRevoked = true;
-						error = 'This share link has been revoked';
+						error = errorData.error || 'This share link has been revoked';
 						return;
 					}
 					alert('Download failed - Access denied');
@@ -246,7 +247,7 @@
 				<div class="flex items-center gap-3">
 					<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
 						{#if isRevoked}
-							<Lock size={20} class="text-white" />
+							<XCircle size={20} class="text-white" />
 						{:else}
 							<Shield size={20} class="text-white" />
 						{/if}
@@ -297,18 +298,21 @@
 			<!-- Revoked State -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div class="text-center py-12">
-					<div class="w-16 h-16 bg-orange-100 rounded-[10px] flex items-center justify-center mx-auto mb-4">
-						<Lock class="text-orange-600" size={48} />
+					<div class="w-20 h-20 bg-red-100 rounded-[10px] flex items-center justify-center mx-auto mb-6">
+						<XCircle class="text-red-600" size={48} />
 					</div>
-					<h3 class="font-bold text-lg text-orange-700 mb-2">SHARE LINK REVOKED</h3>
-					<p class="text-orange-600 mb-4">This share link has been revoked by the owner and is no longer accessible.</p>
-					<div class="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
-						<div class="flex items-start gap-3">
-							<AlertTriangle class="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
+					<h3 class="font-bold text-2xl text-red-700 mb-4">SHARE LINK REVOKED</h3>
+					<p class="text-red-600 mb-6 text-lg">This share link has been revoked by the administrator and is no longer accessible.</p>
+					<div class="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+						<div class="flex items-start gap-4">
+							<AlertTriangle class="text-red-600 flex-shrink-0 mt-1" size={24} />
 							<div class="text-left">
-								<h4 class="font-medium text-orange-800 mb-1">What happened?</h4>
-								<p class="text-sm text-orange-700">
+								<h4 class="font-bold text-red-800 mb-3 text-lg">What happened?</h4>
+								<p class="text-red-700 mb-4">
 									The person who shared this folder has revoked access. This means the content is no longer available through this link.
+								</p>
+								<p class="text-red-600 font-medium">
+									Please contact the administrators if you need access to this content.
 								</p>
 							</div>
 						</div>
