@@ -134,6 +134,33 @@
         }
     }
 
+     // Action 3: Accept New & Delete Existing (deletes the existing recruit, keeps the new recruit)
+    async function acceptNewAndDeleteExisting(alertId: number) {
+        isResolvingAlert = true;
+        try {
+            const res = await fetch(`/api/recruitment-alerts/${alertId}/accept-new-delete-existing`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                toast.success('Alert resolved: New recruit accepted, existing recruit deleted.');
+                unresolvedAlerts = unresolvedAlerts.filter(alert => alert.id !== alertId);
+                if (unresolvedAlerts.length === 0) {
+                    showAlertDialog = false;
+                }
+            } else {
+                const errorText = await res.text();
+                toast.error(`Failed to resolve (accept new & delete existing): ${errorText}`);
+                console.error('Error resolving (accept new & delete existing):', errorText);
+            }
+        } catch (err) {
+            toast.error('Error communicating with server for resolution.');
+            console.error('Error resolving (accept new & delete existing):', err);
+        } finally {
+            isResolvingAlert = false;
+        }
+    }
+
     // Helper for navigation to recruitment detail (optional)
     function goToRecruitment(recruitmentId: number, projectId: number | null) {
         if (projectId) {
@@ -289,6 +316,17 @@
                                     <span class="animate-spin mr-2 h-4 w-4 border-b-2 border-white rounded-full"></span>
                                 {:else}
                                     Update Existing & Delete New
+                                {/if}
+                            </button>
+                             <button
+                                on:click={() => acceptNewAndDeleteExisting(alert.id)}
+                                disabled={isResolvingAlert}
+                                class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {#if isResolvingAlert}
+                                    <span class="animate-spin mr-2 h-4 w-4 border-b-2 border-white rounded-full"></span>
+                                {:else}
+                                    Accept New & Delete Existing
                                 {/if}
                             </button>
                         </div>
