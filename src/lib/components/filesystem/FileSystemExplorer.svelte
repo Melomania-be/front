@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - VERSION SIMPLIFIÉE SANS CACHE -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - VERSION COMPLÈTE AVEC PARTAGE -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -19,11 +19,13 @@
 		ChevronRight,
 		Plus,
 		Info,
-		X
+		X,
+		Share2  // ✅ AJOUT : Import de l'icône Share
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import type { Material } from '$lib/types/Material';
 	import FilePreview from './FilePreview.svelte';
+	import ShareFolderModal from './ShareFolderModal.svelte';  // ✅ AJOUT : Import du modal de partage
 	import { browser } from '$app/environment';
 
 	const dispatch = createEventDispatcher();
@@ -42,7 +44,11 @@
 	let isMobile = false;
 	let windowWidth = 0;
 
-	// ✅ SOLUTION SIMPLE : Pas de cache persistant - recharger à chaque fois
+	// ✅ AJOUT : État pour le modal de partage
+	let showShareModal = false;
+	let folderToShare: FileSystemItem | null = null;
+
+	// Solution simple : Pas de cache persistant - recharger à chaque fois
 	let materialsLoading = new Set<number>();
 
 	// Responsive detection
@@ -53,7 +59,7 @@
 		}
 	};
 
-	// ✅ SOLUTION SIMPLE : Charger les matériaux à la demande pour chaque pièce
+	// Solution simple : Charger les matériaux à la demande pour chaque pièce
 	async function loadMaterialForPiece(pieceId: number): Promise<{ material: any, files: any[] }> {
 		if (materialsLoading.has(pieceId)) {
 			console.log(`⏳ Already loading material for piece ${pieceId}`);
@@ -193,6 +199,14 @@
 		selectedItem = item;
 		contextMenuPosition = { x: event.clientX, y: event.clientY };
 		showContextMenu = true;
+	}
+
+	// ✅ AJOUT : Fonction pour partager un dossier
+	function shareFolder(folder: FileSystemItem) {
+		if (folder.type === 'folder') {
+			folderToShare = folder;
+			showShareModal = true;
+		}
 	}
 
 	async function downloadFile(item: FileSystemItem) {
@@ -474,6 +488,15 @@
 									>
 										<Download size={16} />
 									</button>
+								{:else}
+									<!-- ✅ AJOUT : Bouton de partage pour les dossiers -->
+									<button
+										class="p-2 text-gray-600 hover:text-purple-600 rounded-lg hover:bg-purple-50 border border-transparent hover:border-purple-300 transition-colors"
+										on:click|stopPropagation={() => shareFolder(item)}
+										title="Share folder"
+									>
+										<Share2 size={16} />
+									</button>
 								{/if}
 
 								<button
@@ -495,7 +518,7 @@
 						{/if}
 					</div>
 
-					<!-- ✅ SOLUTION SIMPLE : Material section avec chargement à la demande -->
+					<!-- Material section avec chargement à la demande -->
 					{#if showMaterials && item.type === 'folder' && item.pieceId}
 						<div class="border-t-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden">
 							<div class="p-{isMobile ? '3' : '4'}">
@@ -519,7 +542,7 @@
 									</button>
 								</div>
 
-								<!-- ✅ SOLUTION SIMPLE : Chargement à la demande quand on clique -->
+								<!-- Chargement à la demande quand on clique -->
 								{#if isExpanded}
 									{#await loadMaterialForPiece(item.pieceId)}
 										<!-- Loading state -->
@@ -697,6 +720,18 @@
 				<Download size={16} />
 				Download
 			</button>
+		{:else}
+			<!-- ✅ AJOUT : Option de partage dans le menu contextuel -->
+			<button
+				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-purple-600 font-semibold"
+				on:click={() => {
+					shareFolder(selectedItem);
+					showContextMenu = false;
+				}}
+			>
+				<Share2 size={16} />
+				Share Folder
+			</button>
 		{/if}
 
 		<button
@@ -734,6 +769,18 @@
 		onClose={() => {
 			showPreview = false;
 			previewFile = null;
+		}}
+	/>
+{/if}
+
+<!-- ✅ AJOUT : Modal de partage -->
+{#if showShareModal && folderToShare}
+	<ShareFolderModal
+		folder={folderToShare}
+		isVisible={showShareModal}
+		on:close={() => {
+			showShareModal = false;
+			folderToShare = null;
 		}}
 	/>
 {/if}
