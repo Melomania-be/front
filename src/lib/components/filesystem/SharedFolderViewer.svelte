@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/SharedFolderViewer.svelte - VERSION CORRIGÉE -->
+<!-- src/lib/components/filesystem/SharedFolderViewer.svelte - Avec gestion révocation -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
@@ -13,7 +13,9 @@
 		Music,
 		Video,
 		ExternalLink,
-		Shield
+		Shield,
+		AlertTriangle,
+		Lock
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import FilePreview from './FilePreview.svelte';
@@ -27,32 +29,29 @@
 	let error = '';
 	let showPreview = false;
 	let previewFile: FileSystemItem | null = null;
+	let sharedRootFolder: FileSystemItem | null = null;
+	let isAtSharedRoot = true;
+	let isRevoked = false;
 
 	onMount(async () => {
-		console.log('🔍 SharedFolderViewer mounted with token:', token);
 		await loadSharedFolder();
 	});
 
 	async function loadSharedFolder() {
 		try {
-			console.log('🔄 Loading shared folder...');
 			const response = await fetch(`/api/filesystem/shared/${token}`);
-
-			console.log('📡 Response status:', response.status);
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log('✅ Shared folder data received:', data);
-
 				folderData = data;
 				currentFolder = data.folder;
+				sharedRootFolder = data.folder;
+				isAtSharedRoot = true;
+				isRevoked = false;
 
-				// ✅ CORRECTION : Vérifier si les children existent
 				if (currentFolder && currentFolder.children) {
-					console.log(`📂 Folder has ${currentFolder.children.length} children`);
+					// Le dossier a du contenu
 				} else {
-					console.log('⚠️ Folder has no children or children is undefined');
-					// S'assurer que children est un tableau vide
 					if (currentFolder) {
 						currentFolder.children = [];
 					}
@@ -62,51 +61,66 @@
 			} else if (response.status === 404) {
 				error = 'Shared folder not found or link has expired';
 			} else if (response.status === 403) {
-				error = 'Access denied to this shared folder';
+				const errorData = await response.json().catch(() => ({}));
+				if (errorData.error?.includes('deactivated') || errorData.error?.includes('expired')) {
+					isRevoked = true;
+					error = 'This share link has been revoked or expired';
+				} else {
+					error = 'Access denied to this shared folder';
+				}
 			} else {
 				error = 'Failed to load shared folder';
 			}
 		} catch (err) {
 			error = 'Network error loading shared folder';
-			console.error('❌ Error loading shared folder:', err);
 		}
 		isLoading = false;
 	}
 
 	async function navigateToSubfolder(subfolder: FileSystemItem) {
 		try {
-			console.log('🔄 Navigating to subfolder:', subfolder.name);
 			const response = await fetch(`/api/filesystem/shared/${token}/folder/${subfolder.id}`);
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log('✅ Subfolder data received:', data);
-
 				currentFolder = data;
+				isAtSharedRoot = false;
 
-				// ✅ CORRECTION : S'assurer que children existe
 				if (!currentFolder.children) {
 					currentFolder.children = [];
 				}
 
 				buildBreadcrumbs(currentFolder);
-			} else {
-				console.error('❌ Failed to load subfolder');
+			} else if (response.status === 403) {
+				const errorData = await response.json().catch(() => ({}));
+				if (errorData.error?.includes('deactivated') || errorData.error?.includes('expired')) {
+					isRevoked = true;
+					error = 'This share link has been revoked';
+					return;
+				}
+				alert('Access denied to this folder');
 			}
 		} catch (err) {
-			console.error('❌ Error navigating to subfolder:', err);
+			console.error('Error navigating to subfolder:', err);
 		}
 	}
 
 	function buildBreadcrumbs(folder: FileSystemItem) {
-		// ✅ CORRECTION : Construction simple des breadcrumbs
-		breadcrumbs = [{ id: folder.id, name: folder.name }];
+		breadcrumbs = [];
+
+		if (sharedRootFolder) {
+			breadcrumbs.push({ id: sharedRootFolder.id, name: sharedRootFolder.name });
+
+			if (!isAtSharedRoot && folder && folder.id !== sharedRootFolder.id) {
+				breadcrumbs.push({ id: folder.id, name: folder.name });
+			}
+		}
 	}
 
 	function goBack() {
-		// ✅ CORRECTION : Retour simple au dossier racine
-		if (folderData && folderData.folder) {
-			currentFolder = folderData.folder;
+		if (sharedRootFolder && currentFolder && currentFolder.id !== sharedRootFolder.id) {
+			currentFolder = sharedRootFolder;
+			isAtSharedRoot = true;
 			buildBreadcrumbs(currentFolder);
 		}
 	}
@@ -123,7 +137,6 @@
 	async function downloadFile(item: FileSystemItem) {
 		if (item.type === 'file') {
 			try {
-				console.log('📥 Downloading file:', item.name);
 				const response = await fetch(`/api/filesystem/shared/${token}/download/${item.id}`);
 				if (response.ok) {
 					const blob = await response.blob();
@@ -135,13 +148,18 @@
 					a.click();
 					document.body.removeChild(a);
 					URL.revokeObjectURL(url);
-					console.log('✅ Download completed');
+				} else if (response.status === 403) {
+					const errorData = await response.json().catch(() => ({}));
+					if (errorData.error?.includes('deactivated') || errorData.error?.includes('expired')) {
+						isRevoked = true;
+						error = 'This share link has been revoked';
+						return;
+					}
+					alert('Download failed - Access denied');
 				} else {
-					console.error('❌ Download failed:', response.status);
 					alert('Download failed');
 				}
 			} catch (error) {
-				console.error('❌ Error downloading file:', error);
 				alert('Download failed');
 			}
 		}
@@ -227,14 +245,30 @@
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-3">
 					<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
-						<Shield size={20} class="text-white" />
+						{#if isRevoked}
+							<Lock size={20} class="text-white" />
+						{:else}
+							<Shield size={20} class="text-white" />
+						{/if}
 					</div>
 					<div>
-						<h1 class="font-bold text-xl text-gray-800">SHARED FOLDER</h1>
-						<p class="text-sm text-gray-600">Read-only access</p>
+						<h1 class="font-bold text-xl text-gray-800">
+							{#if isRevoked}
+								SHARE LINK REVOKED
+							{:else}
+								SHARED FOLDER
+							{/if}
+						</h1>
+						<p class="text-sm text-gray-600">
+							{#if isRevoked}
+								Access has been revoked
+							{:else}
+								Read-only access
+							{/if}
+						</p>
 					</div>
 				</div>
-				{#if folderData}
+				{#if folderData && !isRevoked}
 					<div class="text-sm text-gray-500 flex items-center gap-4">
 						<div class="flex items-center gap-1">
 							<Calendar size={14} />
@@ -259,6 +293,28 @@
 					<span class="ml-4 text-gray-600 font-semibold">Loading shared folder...</span>
 				</div>
 			</div>
+		{:else if isRevoked}
+			<!-- Revoked State -->
+			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
+				<div class="text-center py-12">
+					<div class="w-16 h-16 bg-orange-100 rounded-[10px] flex items-center justify-center mx-auto mb-4">
+						<Lock class="text-orange-600" size={48} />
+					</div>
+					<h3 class="font-bold text-lg text-orange-700 mb-2">SHARE LINK REVOKED</h3>
+					<p class="text-orange-600 mb-4">This share link has been revoked by the owner and is no longer accessible.</p>
+					<div class="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
+						<div class="flex items-start gap-3">
+							<AlertTriangle class="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
+							<div class="text-left">
+								<h4 class="font-medium text-orange-800 mb-1">What happened?</h4>
+								<p class="text-sm text-orange-700">
+									The person who shared this folder has revoked access. This means the content is no longer available through this link.
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		{:else if error}
 			<!-- Error State -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
@@ -272,8 +328,8 @@
 				</div>
 			</div>
 		{:else}
-			<!-- ✅ CORRECTION : Breadcrumbs seulement si pas au niveau racine -->
-			{#if breadcrumbs.length > 0 && currentFolder && currentFolder.id !== folderData.folder.id}
+			<!-- Breadcrumbs -->
+			{#if !isAtSharedRoot && breadcrumbs.length > 1}
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mb-4">
 					<div class="flex items-center gap-3">
 						<button
@@ -281,13 +337,18 @@
 							on:click={goBack}
 						>
 							<ArrowLeft size={16} />
-							Back to {folderData.folder.name}
+							Back to {sharedRootFolder?.name || 'Shared Folder'}
 						</button>
 						<div class="h-6 w-px bg-gray-300"></div>
 						<nav class="flex items-center gap-2">
-							<span class="text-gray-500">{folderData.folder.name}</span>
-							<span class="text-gray-400">/</span>
-							<span class="text-[#6B9AD9] font-semibold">{currentFolder.name}</span>
+							{#each breadcrumbs as breadcrumb, i}
+								<span class="text-gray-700 font-semibold {i === breadcrumbs.length - 1 ? 'text-[#6B9AD9]' : ''}">
+									{breadcrumb.name}
+								</span>
+								{#if i < breadcrumbs.length - 1}
+									<span class="text-gray-400">/</span>
+								{/if}
+							{/each}
 						</nav>
 					</div>
 				</div>
@@ -303,6 +364,12 @@
 						<div>
 							<h1 class="font-bold text-lg">{currentFolder.name}</h1>
 							<p class="text-sm text-gray-600">{currentFolder.children.length} item{currentFolder.children.length !== 1 ? 's' : ''}</p>
+
+							{#if !isAtSharedRoot && sharedRootFolder}
+								<p class="text-xs text-blue-600 mt-1">
+									Subfolder of "{sharedRootFolder.name}"
+								</p>
+							{/if}
 						</div>
 					</div>
 
@@ -397,7 +464,7 @@
 					</div>
 				</div>
 			{:else}
-				<!-- ✅ CORRECTION : Empty folder avec debug info -->
+				<!-- Empty folder -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 					<div class="text-center py-12">
 						<div class="w-16 h-16 bg-gray-100 rounded-[10px] flex items-center justify-center mx-auto mb-4">
@@ -405,19 +472,6 @@
 						</div>
 						<h3 class="font-bold text-lg text-gray-700 mb-2">FOLDER IS EMPTY</h3>
 						<p class="text-gray-500">This shared folder doesn't contain any files or subfolders.</p>
-
-						<!-- ✅ DEBUG INFO -->
-						{#if currentFolder}
-							<div class="mt-4 p-3 bg-gray-100 rounded text-xs text-left">
-								<strong>Debug Info:</strong><br>
-								Folder ID: {currentFolder.id}<br>
-								Folder Name: {currentFolder.name}<br>
-								Children Count: {currentFolder.children ? currentFolder.children.length : 'undefined'}<br>
-								Children Type: {typeof currentFolder.children}<br>
-								Project ID: {currentFolder.projectId || 'null'}<br>
-								Piece ID: {currentFolder.pieceId || 'null'}
-							</div>
-						{/if}
 					</div>
 				</div>
 			{/if}
@@ -426,7 +480,7 @@
 </div>
 
 <!-- Preview Modal -->
-{#if showPreview && previewFile}
+{#if showPreview && previewFile && !isRevoked}
 	<FilePreview
 		fileId={previewFile.id}
 		fileName={previewFile.name}
@@ -441,7 +495,6 @@
 {/if}
 
 <style>
-    /* Mobile responsiveness */
     @media (max-width: 768px) {
         .md\:grid-cols-3 {
             grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -451,12 +504,10 @@
             gap: 0.75rem;
         }
 
-        /* Improve touch targets */
         button {
             min-height: 44px;
         }
 
-        /* Force text wrapping */
         .break-words {
             word-wrap: break-word;
             word-break: break-word;

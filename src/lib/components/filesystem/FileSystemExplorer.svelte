@@ -1,4 +1,4 @@
-<!-- src/lib/components/filesystem/FileSystemExplorer.svelte - VERSION COMPLÈTE AVEC PARTAGE -->
+<!-- src/lib/components/filesystem/FileSystemExplorer.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -20,12 +20,13 @@
 		Plus,
 		Info,
 		X,
-		Share2  // ✅ AJOUT : Import de l'icône Share
+		Share2,
+		ShieldOff
 	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 	import type { Material } from '$lib/types/Material';
 	import FilePreview from './FilePreview.svelte';
-	import ShareFolderModal from './ShareFolderModal.svelte';  // ✅ AJOUT : Import du modal de partage
+	import ShareFolderModal from './ShareFolderModal.svelte';
 	import { browser } from '$app/environment';
 
 	const dispatch = createEventDispatcher();
@@ -44,14 +45,12 @@
 	let isMobile = false;
 	let windowWidth = 0;
 
-	// ✅ AJOUT : État pour le modal de partage
 	let showShareModal = false;
 	let folderToShare: FileSystemItem | null = null;
+	let sharedFolders = new Set<number>(); // Tracker les dossiers partagés
 
-	// Solution simple : Pas de cache persistant - recharger à chaque fois
 	let materialsLoading = new Set<number>();
 
-	// Responsive detection
 	const checkMobile = () => {
 		if (browser) {
 			windowWidth = window.innerWidth;
@@ -59,34 +58,53 @@
 		}
 	};
 
-	// Solution simple : Charger les matériaux à la demande pour chaque pièce
+	// Charger l'état des partages pour les dossiers
+	async function checkSharedStatus() {
+		for (const item of items) {
+			if (item.type === 'folder') {
+				try {
+					const response = await fetch(`/api/filesystem/folders/${item.id}/share-status`);
+					if (response.ok) {
+						const data = await response.json();
+						if (data.isShared) {
+							sharedFolders.add(item.id);
+						} else {
+							sharedFolders.delete(item.id);
+						}
+					}
+				} catch (error) {
+					// Ignore errors for share status check
+				}
+			}
+		}
+		sharedFolders = new Set(sharedFolders);
+	}
+
+	// Vérifier le statut de partage au chargement
+	$: if (items.length > 0) {
+		checkSharedStatus();
+	}
+
 	async function loadMaterialForPiece(pieceId: number): Promise<{ material: any, files: any[] }> {
 		if (materialsLoading.has(pieceId)) {
-			console.log(`⏳ Already loading material for piece ${pieceId}`);
 			return { material: null, files: [] };
 		}
 
 		materialsLoading.add(pieceId);
-		console.log(`🔄 Loading material for piece ${pieceId}`);
 
 		try {
-			// 1. Get selected material for this piece
 			const selectedResponse = await fetch(`/api/pieces/${pieceId}/select-material`);
 
 			if (!selectedResponse.ok) {
-				console.log(`❌ No selected material found for piece ${pieceId}`);
 				return { material: null, files: [] };
 			}
 
 			const selectedResult = await selectedResponse.json();
-			console.log(`📋 Selected material result for piece ${pieceId}:`, selectedResult);
 
 			if (!selectedResult.materialId) {
-				console.log(`❌ No material selected for piece ${pieceId}`);
 				return { material: null, files: [] };
 			}
 
-			// 2. Get material info and files in parallel
 			const [materialResponse, filesResponse] = await Promise.all([
 				fetch(`/api/materials/${selectedResult.materialId}`),
 				fetch(`/api/materials/${selectedResult.materialId}/files`)
@@ -97,20 +115,17 @@
 
 			if (materialResponse.ok) {
 				material = await materialResponse.json();
-				console.log(`✅ Material loaded for piece ${pieceId}:`, material.name);
 			}
 
 			if (filesResponse.ok) {
 				const filesData = await filesResponse.json();
 				files = Array.isArray(filesData) ? filesData : [];
-				console.log(`📂 Files loaded for piece ${pieceId}:`, files.length);
 			}
 
 			materialsLoading.delete(pieceId);
 			return { material, files };
 
 		} catch (error) {
-			console.error(`❌ Error loading material for piece ${pieceId}:`, error);
 			materialsLoading.delete(pieceId);
 			return { material: null, files: [] };
 		}
@@ -201,12 +216,40 @@
 		showContextMenu = true;
 	}
 
-	// ✅ AJOUT : Fonction pour partager un dossier
 	function shareFolder(folder: FileSystemItem) {
 		if (folder.type === 'folder') {
 			folderToShare = folder;
 			showShareModal = true;
 		}
+	}
+
+	async function revokeShare(folder: FileSystemItem) {
+		if (!confirm(`Are you sure you want to revoke the share link for "${folder.name}"? This will immediately block access for anyone who has the link.`)) {
+			return;
+		}
+
+		try {
+			const response = await fetch(`/api/filesystem/folders/${folder.id}/share`, {
+				method: 'DELETE'
+			});
+
+			if (response.ok) {
+				sharedFolders.delete(folder.id);
+				sharedFolders = new Set(sharedFolders);
+				alert('Share link revoked successfully');
+			} else {
+				alert('Failed to revoke share link');
+			}
+		} catch (error) {
+			alert('Error revoking share link');
+		}
+	}
+
+	function handleShareModalClose() {
+		showShareModal = false;
+		folderToShare = null;
+		// Refresh shared status after modal closes
+		checkSharedStatus();
 	}
 
 	async function downloadFile(item: FileSystemItem) {
@@ -224,11 +267,9 @@
 					document.body.removeChild(a);
 					URL.revokeObjectURL(url);
 				} else {
-					console.error('Download failed:', response.status);
 					alert('Error downloading file');
 				}
 			} catch (error) {
-				console.error('Error downloading file:', error);
 				alert('Download error: ' + error.message);
 			}
 		}
@@ -245,11 +286,9 @@
 				if (response.ok) {
 					dispatch('refresh');
 				} else {
-					console.error('Delete failed:', response.status);
 					alert('Error deleting item');
 				}
 			} catch (error) {
-				console.error('Error deleting item:', error);
 				alert('Delete error: ' + error.message);
 			}
 		}
@@ -269,11 +308,9 @@
 				if (response.ok) {
 					dispatch('refresh');
 				} else {
-					console.error('Rename failed:', response.status);
 					alert('Error renaming item');
 				}
 			} catch (error) {
-				console.error('Error renaming item:', error);
 				alert('Rename error: ' + error.message);
 			}
 		}
@@ -305,7 +342,6 @@
 
 	async function downloadMaterialFile(fileId: number, fileName: string) {
 		try {
-			console.log('📥 Downloading file:', fileId, fileName);
 			const response = await fetch(`/api/files/download/${fileId}`);
 			if (response.ok) {
 				const blob = await response.blob();
@@ -317,13 +353,10 @@
 				a.click();
 				document.body.removeChild(a);
 				URL.revokeObjectURL(url);
-				console.log('✅ Download completed');
 			} else {
-				console.error('❌ Download failed:', response.status);
 				alert('Download error');
 			}
 		} catch (error) {
-			console.error('❌ Error downloading material file:', error);
 			alert('Download error');
 		}
 	}
@@ -334,20 +367,16 @@
 		}
 
 		try {
-			console.log('🗑️ Deleting file:', fileId, fileName);
 			const response = await fetch(`/api/files/${fileId}`, {
 				method: 'DELETE'
 			});
 
 			if (response.ok) {
-				console.log('✅ File deleted successfully');
 				dispatch('refresh');
 			} else {
-				console.error('❌ Delete failed:', response.status);
 				alert('Error deleting file');
 			}
 		} catch (error) {
-			console.error('❌ Error deleting file:', error);
 			alert('Delete error: ' + error.message);
 		}
 	}
@@ -375,7 +404,6 @@
 </script>
 
 {#if items.length === 0}
-	<!-- Empty State - Design Uniforme -->
 	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 		<div class="text-center py-{isMobile ? '8' : '12'}">
 			<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
@@ -396,7 +424,6 @@
 		</div>
 	</div>
 {:else}
-	<!-- Files List - Design Uniforme -->
 	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 		<div class="flex items-center space-x-3 mb-6">
 			<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
@@ -411,9 +438,9 @@
 		<div class="space-y-{isMobile ? '3' : '4'}">
 			{#each items as item}
 				{@const isExpanded = expandedPieces.has(item.pieceId)}
+				{@const isShared = sharedFolders.has(item.id)}
 
-				<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200">
-					<!-- Main Item -->
+				<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200 {isShared ? 'ring-2 ring-purple-300' : ''}">
 					<div
 						class="flex items-center justify-between p-{isMobile ? '3' : '4'} cursor-pointer group"
 						on:click={() => handleItemClick(item)}
@@ -422,15 +449,21 @@
 						tabindex="0"
 					>
 						<div class="flex items-center gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
-							<!-- Icon -->
 							<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
 								<svelte:component this={getFileIcon(item)} size={isMobile ? 20 : 24} class={getFileColor(item)} />
 							</div>
 
-							<!-- File Info -->
 							<div class="flex-1 min-w-0 overflow-hidden">
 								<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-2">
-									<h3 class="font-bold text-gray-900 truncate" title={item.name}>{item.name}</h3>
+									<div class="flex items-center gap-2">
+										<h3 class="font-bold text-gray-900 truncate" title={item.name}>{item.name}</h3>
+										{#if isShared}
+											<span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded border border-purple-300 flex items-center gap-1">
+												<Share2 size={10} />
+												Shared
+											</span>
+										{/if}
+									</div>
 									{#if !isMobile}
 										<div class="flex items-center gap-2 text-xs">
 											{#if item.type === 'file'}
@@ -446,7 +479,6 @@
 									{/if}
 								</div>
 
-								<!-- Details Grid -->
 								<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-3 gap-4'} text-sm overflow-hidden">
 									<div class="min-w-0">
 										<span class="font-medium text-gray-700">Type:</span>
@@ -463,13 +495,15 @@
 										<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'}">{formatDate(item.updatedAt)}</span>
 									</div>
 									<div class="min-w-0">
-										<!-- Placeholder for material info -->
+										{#if isShared}
+											<span class="font-medium text-purple-700">Status:</span>
+											<span class="text-purple-600 {isMobile ? 'ml-2' : 'block'} text-xs">Publicly shared</span>
+										{/if}
 									</div>
 								</div>
 							</div>
 						</div>
 
-						<!-- Actions -->
 						{#if showActions && !isMobile}
 							<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 								{#if item.type === 'file'}
@@ -489,14 +523,23 @@
 										<Download size={16} />
 									</button>
 								{:else}
-									<!-- ✅ AJOUT : Bouton de partage pour les dossiers -->
-									<button
-										class="p-2 text-gray-600 hover:text-purple-600 rounded-lg hover:bg-purple-50 border border-transparent hover:border-purple-300 transition-colors"
-										on:click|stopPropagation={() => shareFolder(item)}
-										title="Share folder"
-									>
-										<Share2 size={16} />
-									</button>
+									{#if isShared}
+										<button
+											class="p-2 text-purple-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+											on:click|stopPropagation={() => revokeShare(item)}
+											title="Revoke share"
+										>
+											<ShieldOff size={16} />
+										</button>
+									{:else}
+										<button
+											class="p-2 text-gray-600 hover:text-purple-600 rounded-lg hover:bg-purple-50 border border-transparent hover:border-purple-300 transition-colors"
+											on:click|stopPropagation={() => shareFolder(item)}
+											title="Share folder"
+										>
+											<Share2 size={16} />
+										</button>
+									{/if}
 								{/if}
 
 								<button
@@ -518,7 +561,6 @@
 						{/if}
 					</div>
 
-					<!-- Material section avec chargement à la demande -->
 					{#if showMaterials && item.type === 'folder' && item.pieceId}
 						<div class="border-t-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden">
 							<div class="p-{isMobile ? '3' : '4'}">
@@ -542,17 +584,14 @@
 									</button>
 								</div>
 
-								<!-- Chargement à la demande quand on clique -->
 								{#if isExpanded}
 									{#await loadMaterialForPiece(item.pieceId)}
-										<!-- Loading state -->
 										<div class="p-6 text-center">
 											<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
 											<p class="text-sm text-gray-600">Loading material...</p>
 										</div>
 									{:then {material, files}}
 										{#if material}
-											<!-- Selected material information -->
 											<div class="bg-white border-2 border-blue-300 rounded-[8px] p-{isMobile ? '3' : '4'} mb-4 overflow-hidden">
 												<div class="flex items-center justify-between">
 													<div class="flex-1 min-w-0">
@@ -584,7 +623,6 @@
 												{/if}
 											</div>
 
-											<!-- Files section -->
 											{#if files.length > 0}
 												<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-{isMobile ? '3' : '4'} overflow-hidden">
 													<h5 class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -645,7 +683,6 @@
 												</div>
 											{/if}
 										{:else}
-											<!-- No material selected -->
 											<div class="p-{isMobile ? '4' : '6'} text-center text-gray-500 bg-gray-50 border-2 border-dashed border-gray-400 rounded-[8px] overflow-hidden">
 												<Package class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
 												<p class="text-{isMobile ? 'xs' : 'sm'} font-bold">NO MATERIAL SELECTED</p>
@@ -655,14 +692,12 @@
 											</div>
 										{/if}
 									{:catch error}
-										<!-- Error state -->
 										<div class="p-6 text-center text-red-500 bg-red-50 border-2 border-red-300 rounded-[8px]">
 											<p class="text-sm font-bold">Error loading material</p>
 											<p class="text-xs mt-1">{error.message}</p>
 										</div>
 									{/await}
 								{:else}
-									<!-- Collapsed state - Design professionnel -->
 									<div class="bg-gray-50 border-2 border-gray-300 rounded-[8px] p-{isMobile ? '4' : '6'} text-center">
 										<div class="flex {isMobile ? 'flex-col' : 'items-center'} gap-{isMobile ? '3' : '4'}">
 											<div class="flex items-center gap-2 text-gray-600">
@@ -721,17 +756,30 @@
 				Download
 			</button>
 		{:else}
-			<!-- ✅ AJOUT : Option de partage dans le menu contextuel -->
-			<button
-				class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-purple-600 font-semibold"
-				on:click={() => {
-					shareFolder(selectedItem);
-					showContextMenu = false;
-				}}
-			>
-				<Share2 size={16} />
-				Share Folder
-			</button>
+			{@const isSharedItem = sharedFolders.has(selectedItem.id)}
+			{#if isSharedItem}
+				<button
+					class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-red-600 font-semibold"
+					on:click={() => {
+						revokeShare(selectedItem);
+						showContextMenu = false;
+					}}
+				>
+					<ShieldOff size={16} />
+					Revoke Share
+				</button>
+			{:else}
+				<button
+					class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-purple-600 font-semibold"
+					on:click={() => {
+						shareFolder(selectedItem);
+						showContextMenu = false;
+					}}
+				>
+					<Share2 size={16} />
+					Share Folder
+				</button>
+			{/if}
 		{/if}
 
 		<button
@@ -760,7 +808,6 @@
 	</div>
 {/if}
 
-<!-- Preview modal -->
 {#if showPreview && previewFile}
 	<FilePreview
 		fileId={previewFile.id}
@@ -773,22 +820,17 @@
 	/>
 {/if}
 
-<!-- ✅ AJOUT : Modal de partage -->
 {#if showShareModal && folderToShare}
 	<ShareFolderModal
 		folder={folderToShare}
 		isVisible={showShareModal}
-		on:close={() => {
-			showShareModal = false;
-			folderToShare = null;
-		}}
+		on:close={handleShareModalClose}
 	/>
 {/if}
 
 <svelte:window on:click={() => showContextMenu = false} />
 
 <style>
-    /* Enhanced mobile responsiveness */
     @media (max-width: 768px) {
         :global(.md\:grid-cols-3) {
             grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -810,12 +852,10 @@
             gap: 0.375rem;
         }
 
-        /* Improve touch targets */
         button {
             min-height: 44px;
         }
 
-        /* Force text wrapping and prevent overflow */
         .break-words {
             word-wrap: break-word;
             word-break: break-word;
@@ -837,7 +877,6 @@
         }
     }
 
-    /* Force text wrapping globally */
     .break-words {
         word-wrap: break-word;
         word-break: break-word;
