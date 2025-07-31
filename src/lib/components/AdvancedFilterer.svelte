@@ -120,16 +120,16 @@
 			<div class="flex gap-2">
 				{#if instrumentFamily.length !== 0 }
 					{#if !isMobile}
-						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend :
+						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend : 
 							{#each instrumentFamily as family}
-								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
 							{/each}
 						</p>
 					{:else}
-						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center	">
-							{#each instrumentFamily as family}
-								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
-							{/each}
+						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center">
+						{#each instrumentFamily as family}
+							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
+						{/each}
 						</div>
 					{/if}
 				{/if}

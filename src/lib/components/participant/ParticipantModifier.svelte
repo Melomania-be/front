@@ -349,7 +349,9 @@
 							<h2 class="font-bold text-lg text-gray-500 uppercase">Accounting</h2>
 							<div class="flex-1 rounded-full border-2 h-[1px] ml-3 border-gray-400"></div>
 						</div>
-						<AccountingTable accountings={participantAccountings} bind:categories showStatistic={false}></AccountingTable>
+						{#if currentParticipant}
+						<AccountingTable accountings={participantAccountings} bind:categories showStatistic={false} showAttachments={false} bind:currentParticipant></AccountingTable>
+						{/if}
 					</div>
 				{/if}
 			</div>
