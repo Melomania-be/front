@@ -411,7 +411,7 @@
 				>Add New</button
 			>
 			</div>
-			<div class="grid {isMobile ? "grid-cols-2" : "grid-cols-3"}  gap-3 justify-center m-2 mt-4">
+			<div class="grid {isMobile ? "grid-cols-2" : "grid-cols-2"}  gap-3 justify-center m-2 mt-4">
 				{#if categories}
 					{#each categories as cat}
 						<div class="flex justify-center">
@@ -436,10 +436,12 @@
 			</div>
 		</div>
 	</div>
-	<div class="bg-white border-gray-400 border-2 rounded-xl p-4">
+	<div>
 		<AccountingTable bind:accountings bind:categories></AccountingTable>
 	</div>
 </div>
+
+
 
 {#if isMobile}
 	<ProjectPhoneDisplayer {project} selectedTab={6} />

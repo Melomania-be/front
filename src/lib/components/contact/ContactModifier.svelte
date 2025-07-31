@@ -64,7 +64,7 @@
 </script>
 
 <div
-	class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+	class="relative max-w-xxl bg-white border-2 border-gray-500 rounded-xl dark:bg-gray-800 dark:border-gray-700"
 >
 	{#if mode === 'modify'}
 		<div class="absolute top-0 right-0 p-1">

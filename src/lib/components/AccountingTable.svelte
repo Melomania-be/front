@@ -2,12 +2,37 @@
 	import type { Accounting } from '$lib/types/Accounting';
 	import Fa from 'svelte-fa';
 	import {
+		faArrowsDownToLine,
+		faDownload,
+		faEye,
 		faPenToSquare,
 		faSort,
 		faSortDown,
 		faSortUp,
+		faTrashCan,
+		faTriangleExclamation,
 		faXmark
 	} from '@fortawesome/free-solid-svg-icons';
+	import {
+		File,
+		Folder,
+		Download,
+		Trash2,
+		Edit3,
+		MoreVertical,
+		Music,
+		Image,
+		Video,
+		FileText,
+		Eye,
+		Upload,
+		ChevronDown,
+		ChevronRight,
+		Plus,
+		Info,
+		X,
+		ArrowDownToLine
+	} from 'lucide-svelte';
 	import type { ExpenseCategory } from '$lib/types/ExpenseCategory';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
@@ -18,6 +43,31 @@
 	import { browser } from '$app/environment';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import type { Project } from '$lib/types/Project';
+	import FileUploader from './filesystem/FileUploader.svelte';
+	import { Package } from 'lucide-svelte';
+	import FileSystemExplorer from './filesystem/FileSystemExplorer.svelte';
+	import type { FileSystemItem } from '$lib/types/FileSystem';
+	import FilePreview from './filesystem/FilePreview.svelte';
+	import type { CustomParticipant } from '$lib/types/CustomParticipant';
+	import type { Participant } from '$lib/types/Participant';
+
+	type Files = {
+		id: number;
+		name: string;
+		type: string;
+		path: string;
+		content: string;
+		createdAt: string;
+		updatedAt: string;
+	};
+
+	type Folders = {
+		id: number;
+		name: string;
+		files: Files[];
+		createdAt: string;
+		updatedAt: string;
+	};
 
 	export let accountings: Accounting[];
 
@@ -25,14 +75,37 @@
 
 	export let showStatistic = true;
 
+	export let showAttachments = true;
+
+	export let currentParticipant: Participant | CustomParticipant;
+
+	export let contact;
+
+	export let showProject = false;
+
+	export let projectConcerts: Map<number, Date> = new Map();
+
 	const projectId = get(page).params.id;
+	const today = new Date();
 
 	let popUpAdd = false;
 	let updateMode = false;
+	let updateAttachmentMode = false;
 
 	function showPopUpAdd() {
 		popUpAdd = true;
 		fetchContacts();
+		if (currentParticipant) {
+			AccountingpaymentToIndiv = true;
+			AccountingcontactId = currentParticipant.contact.id;
+			AccountingNamecontactSelected =
+				currentParticipant.contact.firstName + ' ' + currentParticipant.contact.lastName;
+		}
+		if (contact) {
+			AccountingpaymentToIndiv = true;
+			AccountingcontactId = contact.id;
+			AccountingNamecontactSelected = contact.firstName + ' ' + contact.lastName;
+		}
 	}
 
 	let AccountingName: string | null = null;
@@ -42,10 +115,14 @@
 	let AccountingAmount: number | null = null;
 	let AccountingId: number | null = null;
 	let AccountingpaymentToIndiv: boolean = false;
+	let AccountingAttachments: number[] = [];
 
 	let AccountingcontactId: Number | null = null;
 	let AccountingNamecontactSelected: string = '';
-	let AccountingIsMusicianFee : boolean = true;
+	let AccountingIsMusicianFee: boolean = true;
+
+	let showPreview = false;
+	let previewFile: FileSystemItem | null = null;
 
 	let isMobile = false;
 
@@ -62,9 +139,56 @@
 		};
 	});
 
+	let allFiles: Files[] = [];
+	let accountingFolder: Folders;
+
+	let categoriesToDisplay = categories;
+
+	$: if (AccountingpaymentToIndiv) {
+		categoriesToDisplay = categories.filter((cat) => cat.id === 1 || cat.id === 2);
+	} else {
+		categoriesToDisplay = categories;
+	}
+
+	onMount(async () => {
+		let response = await fetch('/api/folders', {
+			method: 'GET'
+		});
+
+		let data = await response.json();
+
+		const allFolders = data;
+
+		if (allFolders.find((f: Folders) => f.name == 'Accountings Attachments')) {
+			accountingFolder = allFolders.find((f: Folders) => f.name == 'Accountings Attachments');
+		} else {
+			const folderName = 'Accountings Attachments';
+			let response = await fetch('/api/folders', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ name: folderName })
+			});
+
+			if (response.status >= 400 && response.status < 500) {
+				const jsonResponse = await response.json();
+				const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+				alert(error);
+			}
+
+			if (response.status >= 500) {
+				alert('Server error');
+			}
+		}
+		console.log(accountingFolder);
+		console.log(allFiles);
+		fetchAccountingFolder();
+		console.log(folder);
+	});
+
 	async function addAccounting() {
 		if (!AccountingAmount || !AccountingName) {
-			console.log('blblblbl');
 			return;
 		}
 		console.log(AccountingpaymentToIndiv);
@@ -87,11 +211,22 @@
 			AccountingName = 'Payment ' + AccountingNamecontactSelected + ' : ' + AccountingName;
 		}
 
+		if (AccountingpaymentToIndiv) {
+			if (AccountingCategory == 1) {
+				AccountingIsMusicianFee = true;
+			} else {
+				AccountingIsMusicianFee = false;
+			}
+		}
+
 		if (!AccountingpaymentToIndiv) {
 			AccountingNamecontactSelected = '';
 			AccountingcontactId = null;
 			AccountingIsMusicianFee = false;
 		}
+		console.log(AccountingAttachments);
+		console.log('juste avant : ', accountingFolder);
+		let attachment = AccountingAttachments.join('/');
 
 		if (updateMode) {
 			payload = {
@@ -102,13 +237,14 @@
 				amount: AccountingAmount,
 				category_id: +AccountingCategory,
 				contact_id: AccountingcontactId,
+				attachment: attachment,
 				is_individual_payment: AccountingpaymentToIndiv,
-				is_musician_fee : AccountingIsMusicianFee,
+				is_musician_fee: AccountingIsMusicianFee,
 				project: {
 					id: +projectId
 				}
 			};
-			console.log(payload);
+			console.log('payload', payload);
 		} else {
 			payload = {
 				name: AccountingName,
@@ -117,8 +253,9 @@
 				amount: AccountingAmount,
 				category_id: +AccountingCategory,
 				contact_id: AccountingcontactId,
+				attachment: attachment,
 				is_individual_payment: AccountingpaymentToIndiv,
-				is_musician_fee : AccountingIsMusicianFee,
+				is_musician_fee: AccountingIsMusicianFee,
 				project: {
 					id: +projectId
 				}
@@ -152,7 +289,9 @@
 				accountingsDisplayed = accountings;
 			}
 
-			resetInput();
+			if (!updateAttachmentMode) {
+				resetInput();
+			}
 		} catch (error) {
 			console.error('Erreur réseau :', error);
 		}
@@ -168,12 +307,87 @@
 		AccountingNamecontactSelected = '';
 		AccountingcontactId = null;
 		AccountingIsMusicianFee = true;
+		AccountingAttachments = [];
 		popUpAdd = false;
 		updateMode = false;
+		selectedFiles = [];
+		selectedAttachements = [];
 	}
 
-	async function deleteAccounting() {
+	async function deleteItem(item: FileSystemItem) {
 		try {
+			let d = true;
+			if (!accountingDeletion) {
+				d = confirm(`Are you sure you want to delete "${item.name}"?`);
+			}
+			if (!d) return;
+
+			if (AccountingAttachments) {
+				AccountingAttachments = AccountingAttachments.filter((a) => a !== item.id);
+				console.log('att', AccountingAttachments);
+				addAccounting();
+			}
+
+			if (!updateMode) {
+				for (const acc of accountings) {
+					console.log('ZHAEOZEH');
+					if (acc.attachment) {
+						const att = acc.attachment.split('/').map(Number);
+						if (att.find((a) => a == item.id)) {
+							AccountingAttachments = att.filter((a) => a !== item.id);
+							AccountingName = acc.name;
+							const match = acc.name.match(/^Payment\s(.+?)\s*:\s*(.+)$/);
+							if (match) {
+								AccountingpaymentToIndiv = true;
+								AccountingNamecontactSelected = match[1].trim();
+								AccountingName = match[2].trim();
+							} else {
+								AccountingName = acc.name;
+							}
+							if (acc.billDate) {
+								AccountingBillDate = acc.billDate;
+							}
+							if (acc.paymentDate) {
+								AccountingPaymentDate = acc.paymentDate;
+							}
+							AccountingAmount = acc.amount;
+							AccountingCategory = acc.categoryId;
+							AccountingIsMusicianFee = acc.isMusicianFee;
+							AccountingId = acc.id;
+							updateMode = true;
+
+							addAccounting();
+						}
+					}
+				}
+			}
+
+			const endpoint = item.type === 'file' ? 'files' : 'folders';
+			const response = await fetch(`/api/filesystem/${endpoint}/${item.id}`, {
+				method: 'DELETE'
+			});
+
+			if (response.ok) {
+				fetchAccountingFolder();
+			} else {
+				console.error('Delete failed:', response.status);
+				alert('Error deleting item');
+			}
+		} catch (error) {
+			console.error('Error deleting item:', error);
+			alert('Delete error: ' + error.message);
+		}
+	}
+
+	let accountingDeletion = false;
+
+	async function deleteAccounting() {
+		accountingDeletion = true;
+		try {
+			const confirmed = window.confirm('Are you sure you want to delete this accounting?');
+
+			if (!confirmed) return;
+
 			const res = await fetch(`/api/projects/${projectId}/management/accounting/${AccountingId}`, {
 				method: 'DELETE',
 				headers: {
@@ -183,33 +397,41 @@
 
 			if (!res.ok) {
 				console.error('Erreur lors de la suppression');
+				alert('An error occurred while deleting the item.');
 				return;
 			}
-
-			accountings = accountings.filter((acc) => acc.id !== AccountingId);
-
-			resetInput();
+			alert('Accounting entry deleted successfully.');
+			if (folder.children) {
+				let files = folder.children.filter((child) => AccountingAttachments.includes(child.id));
+				for (const file of files) {
+					deleteItem(file);
+				}
+			}
+			window.location.reload();
 		} catch (error) {
 			console.error('Erreur réseau :', error);
 		}
+		accountingDeletion = false;
 	}
 
-	let paid: number = 0;
-	let toPaid: number = 0;
-	let income: number = 0;
+	let totalBalance = 0;
+	let currentBalance = 0;
+	let incomingMoney = 0;
 
 	$: if (accountings) {
-		paid = 0;
-		toPaid = 0;
-		income = 0;
+		totalBalance = 0;
+		currentBalance = 0;
+		incomingMoney = 0;
+
 		for (const acc of accountings) {
-			if (acc.amount > 0) {
-				income += Number(acc.amount);
+			const amount = Number(acc.amount);
+			totalBalance += amount;
+
+			if (acc.paymentDate) {
+				currentBalance += amount;
 			} else {
-				if (acc.paymentDate) {
-					paid += Number(acc.amount);
-				} else {
-					toPaid += Number(acc.amount);
+				if (amount > 0) {
+					incomingMoney += amount;
 				}
 			}
 		}
@@ -233,16 +455,6 @@
 	}
 
 	let sorting: string = 'id';
-	let nameSortingIcon = faSort;
-	let billDateSortingIcon = faSort;
-	let paymentDateSortingIcon = faSort;
-	let amountSortingIcon = faSort;
-	let categorySortingIcon = faSort;
-	let nameIconColor = '#6b7280';
-	let billDateIconColor = '#6b7280';
-	let paymentDateIconColor = '#6b7280';
-	let amountIconColor = '#6b7280';
-	let categoryIconColor = '#6b7280';
 
 	function sortAccountingsBy(key: keyof Accounting, ascending = true) {
 		console.log(sorting);
@@ -337,10 +549,484 @@
 		displayedContacts = [...filteredContacts];
 	}
 
-	function isPaymentToIndiv(str: string): boolean {
-		return /^Payment\s.+\s:\s.+$/.test(str);
+	let submited = false;
+
+	async function handleGeneralUpload(files: FileList) {
+		const formData = new FormData();
+
+		// Add files
+		if (files.length === 1) {
+			formData.append('file', files[0]);
+		} else {
+			Array.from(files).forEach((file) => {
+				formData.append('files', file);
+			});
+		}
+
+		if (accountingFolder) {
+			formData.append('parentId', accountingFolder.id.toString());
+		}
+
+		try {
+			console.log('Uploading to general files...');
+			const response = await fetch('/api/filesystem/upload', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = await response.json();
+
+			if (response.ok && result.success) {
+				console.log('General upload successful:', result.message);
+
+				showGeneralUploader = false;
+			} else {
+				console.error('General upload failed:', result.error);
+				alert('Upload failed: ' + (result.error || 'Unknown error'));
+			}
+		} catch (error) {
+			console.error('Error uploading general files:', error);
+			alert('Error uploading files: ' + error.message);
+		}
 	}
+
+	async function submitFiles() {
+		var fd = new FormData();
+
+		if (!selectedFiles) {
+			alert('Please select a file');
+			return;
+		}
+
+		if (accountingFolder) {
+			fd.append('parentId', accountingFolder.id.toString());
+		}
+
+		if (selectedFiles.length === 1) {
+			fd.append('file', selectedFiles[0]);
+		} else {
+			for (let i = 0; i < selectedFiles.length; i++) {
+				fd.append('files', selectedFiles[i]);
+			}
+		}
+
+		let response = await fetch('/api/filesystem/upload', {
+			method: 'POST',
+			body: fd
+		});
+
+		if (response.ok) {
+			submited = true;
+			const uploadedFiles = await response.json(); // Array de fichiers avec id
+			console.log('Uploaded files:', uploadedFiles);
+			for (const file of uploadedFiles.files) {
+				AccountingAttachments.push(file.id);
+			}
+			accountingFolder.files.push(...uploadedFiles.files);
+
+			const request = await fetch(`/api/folders/`, {
+				method: 'POST',
+				body: JSON.stringify({ ...accountingFolder })
+			});
+
+			if (request.status >= 400 && request.status < 500) {
+				const jsonResponse = await request.json();
+				const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+				alert(error);
+			}
+
+			if (request.status >= 500) {
+				alert('Server error');
+			}
+			console.log('fichier ajouté! ', accountingFolder);
+		}
+
+		if (response.status >= 400 && response.status < 500) {
+			const jsonResponse = await response.json();
+			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+			alert(error);
+		}
+
+		if (response.status >= 500) {
+			alert('Server error');
+		}
+	}
+
+	let selectedFiles: File[] = [];
+
+	function handleFileChange(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const files = input.files;
+
+		if (files) {
+			selectedFiles = Array.from(files);
+		}
+	}
+
+	function removeFile(index: number) {
+		selectedFiles = selectedFiles.filter((_, i) => i !== index);
+	}
+
+	let popUpAttachement = false;
+	let selectedAttachements: Files[] = [];
+
+	async function downloadFile(file: Files) {
+		const response = await fetch(`/api/files/${file.id}`, {
+			method: 'GET'
+		});
+
+		if (response.status >= 400 && response.status < 500) {
+			const jsonResponse = await response.json();
+			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+			alert(error);
+		}
+
+		if (response.status >= 500) {
+			alert('Server error');
+		}
+
+		if (response.status === 200) {
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+
+			a.href = window.URL.createObjectURL(
+				new Blob([blob], {
+					type: file.type
+				})
+			);
+			a.download = file.name;
+			document.body.appendChild(a);
+			a.click();
+			window.URL.revokeObjectURL(url);
+
+			document.body.removeChild(a);
+		}
+	}
+
+	async function deleteFile(file: Files) {
+		const request = await fetch(`/api/files/${file.id}`, {
+			method: 'DELETE'
+		});
+
+		if (request.status >= 400 && request.status < 500) {
+			const jsonResponse = await request.json();
+			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+			alert(error);
+		}
+
+		if (request.status >= 500) {
+			alert('Server error');
+		}
+	}
+
+	let showGeneralUploader = false;
+
+	let folder: FileSystemItem = {
+		id: 0,
+		name: '',
+		type: 'folder',
+		path: '',
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		children: [],
+		materials: []
+	};
+
+	async function fetchAccountingFolder() {
+		try {
+			const response = await fetch(`/api/filesystem/folders/${accountingFolder.id}/contents`);
+			if (response.ok) {
+				const contents = await response.json();
+
+				if (folder.name === 'Scores') {
+					const enrichedContents = await Promise.all(
+						contents.map(async (item) => {
+							if (item.type === 'folder' && item.pieceId) {
+								try {
+									const materialsResponse = await fetch(`/api/materials/piece/${item.pieceId}`);
+									if (materialsResponse.ok) {
+										const materials = await materialsResponse.json();
+										item.materials = materials;
+									}
+								} catch (error) {
+									console.error('Error loading materials for piece:', item.pieceId, error);
+									item.materials = [];
+								}
+							}
+							return item;
+						})
+					);
+
+					folder.children = enrichedContents.map((item) => ({
+						...item,
+						updatedAt: new Date(item.updatedAt),
+						createdAt: new Date(item.createdAt)
+					}));
+				} else {
+					folder.children = contents.map((item) => ({
+						...item,
+						updatedAt: new Date(item.updatedAt),
+						createdAt: new Date(item.createdAt)
+					}));
+				}
+
+				folder = { ...folder };
+			}
+		} catch (error) {
+			console.error('Error loading folder contents:', error);
+		}
+	}
+
+	async function handleGeneralRefresh() {
+		if (folder) {
+			await fetchAccountingFolder();
+		}
+	}
+
+	function previewFileFunction(item: FileSystemItem) {
+		previewFile = item;
+		showPreview = true;
+	}
+
+	async function downloadFileFunction(item: FileSystemItem) {
+		if (item.type === 'file') {
+			try {
+				const response = await fetch(`/api/files/download/${item.id}`);
+				if (response.ok) {
+					const blob = await response.blob();
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = item.name;
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					URL.revokeObjectURL(url);
+				} else {
+					console.error('Download failed:', response.status);
+					alert('Error downloading file');
+				}
+			} catch (error) {
+				console.error('Error downloading file:', error);
+				alert('Download error: ' + error.message);
+			}
+		}
+	}
+
+	async function renameItem(item: FileSystemItem) {
+		const newName = prompt('New name:', item.name);
+		if (newName && newName !== item.name) {
+			try {
+				const endpoint = item.type === 'file' ? 'files' : 'folders';
+				const response = await fetch(`/api/filesystem/${endpoint}/${item.id}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ name: newName })
+				});
+
+				if (response.ok) {
+					window.location.reload();
+				} else {
+					console.error('Rename failed:', response.status);
+					alert('Error renaming item');
+				}
+			} catch (error) {
+				console.error('Error renaming item:', error);
+				alert('Rename error: ' + error.message);
+			}
+		}
+	}
+
+	function formatFileSize(bytes: number): string {
+		if (bytes === 0) return '0 B';
+		const k = 1024;
+		const sizes = ['B', 'KB', 'MB', 'GB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+	}
+
+	function getFileIcon(item: FileSystemItem) {
+		if (item.type === 'folder') return Folder;
+
+		const extension = item.name.split('.').pop()?.toLowerCase();
+		switch (extension) {
+			case 'pdf':
+			case 'doc':
+			case 'docx':
+				return FileText;
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+			case 'webp':
+			case 'svg':
+			case 'tiff':
+				return Image;
+			case 'mp3':
+			case 'wav':
+			case 'flac':
+			case 'aac':
+			case 'ogg':
+			case 'm4a':
+				return Music;
+			case 'mp4':
+			case 'avi':
+			case 'mov':
+			case 'mkv':
+			case 'webm':
+				return Video;
+			default:
+				return File;
+		}
+	}
+
+	function getFileColor(item: FileSystemItem): string {
+		if (item.type === 'folder') return 'text-blue-600';
+
+		const extension = item.name.split('.').pop()?.toLowerCase();
+		switch (extension) {
+			case 'pdf':
+				return 'text-red-600';
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+			case 'webp':
+				return 'text-green-600';
+			case 'mp3':
+			case 'wav':
+			case 'flac':
+				return 'text-purple-600';
+			case 'mp4':
+			case 'avi':
+			case 'mov':
+				return 'text-orange-600';
+			default:
+				return 'text-gray-700';
+		}
+	}
+
+	async function fetchProject(projectId: number) {
+		if (projectConcerts.has(projectId)) return;
+
+		const response = await fetch(`/api/projects/${projectId}`);
+		if (!response.ok) return;
+
+		const data = await response.json();
+
+		if (Array.isArray(data.concerts) && data.concerts.length > 0) {
+			const sortedConcerts = data.concerts
+				.map((c) => new Date(c.startDate))
+				.sort((a, b) => b.getTime() - a.getTime());
+
+			projectConcerts.set(projectId, sortedConcerts[0]);
+			projectConcerts = new Map(projectConcerts);
+		}
+	}
+
+	onMount(() => {
+		fetchProject(Number(projectId));
+		console.log(projectConcerts);
+	});
 </script>
+
+{#if popUpAttachement}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+		<div
+			class="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center h-[80%] {isMobile
+				? 'w-[90%]'
+				: 'w-[60%]'} relative"
+		>
+			<button
+				on:click={() => {
+					popUpAttachement = false;
+					resetInput();
+					updateAttachmentMode = false;
+				}}
+				class="absolute top-2 right-3"
+			>
+				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
+			</button>
+			<h2 class="text-xl text-gray-500 font-bold mb-8 uppercase">{AccountingName}</h2>
+			<div class="w-full p-4">
+				<div class="gap-4 flex flex-col">
+					{#if accountingFolder && folder.children}
+						{#each folder.children.filter( (child) => AccountingAttachments.includes(child.id) ) as file}
+							<div class="flex w-full border-2 rounded-full p-2 px-4">
+								<div class="flex w-[60%] items-center">
+									<div
+										class="flex-shrink-0 w-10 h-10 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center"
+									>
+										<svelte:component
+											this={getFileIcon(file)}
+											size={isMobile ? 20 : 24}
+											class={getFileColor(file)}
+										/>
+									</div>
+									<div class={isMobile ? 'text-xs gap-2 h-14' : 'flex w-full'}>
+										<h3
+											class="font-bold text-gray-500 truncate text-sm py-2 {isMobile
+												? ' w-[20vw]'
+												: ''}"
+											title={file.name}
+										>
+											{file.name}
+										</h3>
+										<span
+											class="bg-blue-100 text-blue-800 h-8 ml-auto {isMobile
+												? 'text-xs'
+												: 'text-sm'} mr-0 px-2 py-1 rounded font-semibold border border-blue-300"
+										>
+											{formatFileSize(file.size || 0)}
+										</span>
+									</div>
+								</div>
+								<div class="grid grid-cols-3 ml-auto mr-0">
+									<button
+										class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+										on:click={() => {
+											previewFileFunction(file);
+										}}
+									>
+										<Fa icon={faEye} class="text-[16px]" style="color: #6b7280;" />
+									</button>
+
+									<button
+										class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+										on:click={() => {
+											downloadFileFunction(file);
+										}}
+									>
+										<Fa icon={faDownload} class="text-[16px]" style="color: #6b7280;" />
+									</button>
+									<!--
+						<button
+							class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+							on:click={() => {
+								renameItem(file);
+							}}
+						>
+							<Edit3 size={16} />
+						</button>
+						-->
+									<button
+										class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-400 flex items-center gap-2 font-semibold"
+										on:click={() => {
+											deleteItem(file);
+										}}
+									>
+										<Fa icon={faTrashCan} class="text-[16px]" style="color: #f87171;" />
+									</button>
+								</div>
+							</div>
+						{/each}
+					{/if}
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
 
 {#if popUpAdd}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -359,7 +1045,7 @@
 				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
 			</button>
 			<h2 class="text-xl text-gray-500 font-bold mb-8">New</h2>
-			<div class="h-full w-full flex">
+			<div class="h-full w-full flex overflow-y-auto">
 				<div class="flex flex-col gap-2 items-center w-full">
 					<div class="flex gap-2 text-gray-500 items-center font-semibold">
 						<input
@@ -369,10 +1055,9 @@
 						/>
 						<span>Payment to individual </span>
 					</div>
-					<div class="w-full h-full {AccountingpaymentToIndiv ? 'flex' : ''}">
+					<div class="w-full h-full h-max-[40%] {isMobile ? 'mb-2' : 'flex'}">
 						<div class="flex flex-1 flex-col w-full items-center">
 							<!--NAME-->
-
 							<div
 								class="flex flex-col {isMobile
 									? 'w-[70%]'
@@ -482,33 +1167,62 @@
 									class="p-2 px-3 border-2 border-gray-500 rounded-xl focus:outline-none"
 									required
 								>
-									{#each categories as cat}
+									{#each categoriesToDisplay as cat}
 										<option value={cat.id}>{cat.name}</option>
 									{/each}
 								</select>
 							</div>
-							{#if AccountingpaymentToIndiv}
-								<div class="flex items-center gap-2 text-gray-500 font-semibold">
+							<div class="border-2 rounded-xl p-4 border-gray-500 w-[80%] h-min mb-1">
+								<p class="font-bold uppercase text-gray-600">Upload files</p>
+								<label
+									for="files"
+									class="block w-full p-6 text-center border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-gray-600 transition-colors duration-300"
+								>
+									Click or drag files here to upload
 									<input
-										type="radio"
-										bind:group={AccountingIsMusicianFee}
-										value={true}
-										class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+										id="files"
+										multiple
+										type="file"
+										class="hidden"
+										on:change={handleFileChange}
 									/>
-									<div class="mr-6">Musician Fee</div>
-									<input
-										type="radio"
-										bind:group={AccountingIsMusicianFee}
-										value={false}
-										class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
-									/>
-									<div>Additional Expenses </div>
-								</div>
-							{/if}
+								</label>
+
+								{#if selectedFiles.length > 0}
+									<div class="mt-2 text-gray-600 italic">
+										Selected files:
+										<div class="grid grid-cols-1 gap-4">
+											{#each selectedFiles as file, index}
+												<div class="border-2 rounded-xl border-gray-500 p-2 flex gap-4">
+													<p>{file.name}</p>
+													<button
+														class="rounded-lg bg-red-400 text-white p-1 px-2 ml-auto mr-0"
+														on:click={() => removeFile(index)}
+													>
+														<Fa icon={faTrashCan} class="text-[16px]" style="color: white;" />
+													</button>
+												</div>
+											{/each}
+										</div>
+									</div>
+								{:else}
+									<div class="mt-2 text-gray-500 italic">No files selected</div>
+								{/if}
+								<button
+									class="p-1 mt-4 px-3 bg-blue-400 text-white rounded-lg font-semibold"
+									type="submit"
+									on:click={submitFiles}>Submit</button
+								>
+								{#if submited}
+									<span class="text-green-600">✅ File Submited </span>
+								{/if}
+							</div>
 						</div>
 						{#if AccountingpaymentToIndiv}
 							<div
-								class="border-2 max-h-full h-full min-h-64 border-gray-500 rounded-full flex"
+								class="border-2 {isMobile
+									? 'mb-2'
+									: 'max-h-full h-full min-h-64'} border-gray-500 rounded-full flex"
 							></div>
 							<div class="flex-1 flex flex-col justify-center items-center h-full">
 								<!--PERSON NAME-->
@@ -588,6 +1302,7 @@
 					on:click={() => {
 						popUpAdd = false;
 						addAccounting();
+						window.location.reload();
 					}}
 				>
 					{#if updateMode}
@@ -602,10 +1317,9 @@
 {/if}
 
 {#if categories}
-	<div class="grid grid-cols-1 w-full">
-		{#if showStatistic}
+	<div class="grid grid-cols-1 w-full border-2 rounded-xl border-gray-400 p-4 bg-white mb-4">
 		<div class="flex mb-6">
-			<div class=" {isMobile ? 'w-[60%]' : 'w-[70%]'}">
+			<div class=" {isMobile ? 'w-[60%] text-sm' : 'w-[70%]'}">
 				{#if accountings && showStatistic}
 					<div
 						class="h-auto w-full items-center flex {isMobile
@@ -613,13 +1327,14 @@
 							: ''} gap-4 text-gray-600 font-bold"
 					>
 						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
-							Paid : <span class="text-blue-500">{-paid} €</span>
+							Total Balance :
+							<span class="text-blue-500">{totalBalance} €</span>
 						</div>
 						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
-							To be paid : <span class="text-red-500"> {-toPaid} € </span>
+							Current Balance : <span class="text-red-500"> {currentBalance} € </span>
 						</div>
 						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
-							Income : <span class="text-green-500">{income} €</span>
+							Incoming Money : <span class="text-green-500">{incomingMoney} €</span>
 						</div>
 					</div>
 				{/if}
@@ -632,34 +1347,36 @@
 				>Add New</button
 			>
 		</div>
-		
-			<div class="w-full mb-2">
-				<div class="flex items-center {isMobile ? 'w-full' : 'w-[40%]'}  relative">
-					<input
-						value={search}
-						on:input={(e) => filterAccountings(e.target.value)}
-						type="text"
-						placeholder="Search..."
-						class="w-full px-4 py-2 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-					/>
-					<button
-						class="absolute right-4"
-						on:click={() => {
-							search = '';
-							filterAccountings('');
-						}}
-					>
-						<Fa icon={faXmark} class="text-[16px]" style="color: #9ca3af;" />
-					</button>
-				</div>
+
+		<div class="w-full mb-2">
+			<div class="flex items-center {isMobile ? 'w-full' : 'w-[40%]'}  relative">
+				<input
+					value={search}
+					on:input={(e) => filterAccountings(e.target.value)}
+					type="text"
+					placeholder="Search..."
+					class="w-full px-4 py-2 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+				/>
+				<button
+					class="absolute right-4"
+					on:click={() => {
+						search = '';
+						filterAccountings('');
+					}}
+				>
+					<Fa icon={faXmark} class="text-[16px]" style="color: #9ca3af;" />
+				</button>
 			</div>
-		{/if}
+		</div>
 		<div class="overflow-x-auto mt-2">
 			<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 				<thead
 					class="text-xs text-gray-700 uppercase border-b-2 border-gray-300 text-center dark:bg-gray-700 dark:text-gray-400 h-8"
 				>
 					<tr class="font-semibold text-md">
+						{#if showProject}
+							<th class="min-w-20 text-left">Project</th>
+						{/if}
 						<th class="min-w-60">
 							<div class="flex relative items-center">
 								<p>Name</p>
@@ -830,6 +1547,7 @@
 								</button>
 							</div>
 						</th>
+						<th>Attachments</th>
 						<th>Action</th>
 					</tr>
 				</thead>
@@ -838,10 +1556,22 @@
 						{#each accountingsDisplayed as accounting}
 							<tr
 								class="font-semibold text-gray-400 {accounting.isIndividualPayment
-									? (accounting.isMusicianFee ? 'bg-blue-100' : 'bg-orange-100' )
+									? accounting.isMusicianFee
+										? 'bg-blue-100'
+										: 'bg-orange-100'
 									: ''}"
 							>
-								<td>{accounting.name}</td>
+								{#if showProject}
+									<td class="p-1 w-4">{accounting.projectId}</td>
+								{/if}
+								<td class="flex gap-2 items-center">
+									{#if projectConcerts.get(accounting.projectId) < today}
+										<Fa icon={faTriangleExclamation} class="text-[14px]" style="color: #ef4444;" />
+										<span class="text-red-500">{accounting.name}</span>
+									{:else}
+										<span>{accounting.name}</span>
+									{/if}
+								</td>
 								<td class="p-1">{accounting.billDate ? accounting.billDate : 'unknown'}</td>
 								<td class="p-1">{accounting.paymentDate ? accounting.paymentDate : 'unpaid'}</td>
 								<td class="p-1">
@@ -863,6 +1593,50 @@
 										<p class="text-gray-400">x</p>
 									{/if}
 								</td>
+								<td>
+									{#if accounting.attachment}
+										<button
+											class="flex justify-center w-full"
+											on:click={() => {
+												popUpAttachement = true;
+												const match = accounting.name.match(/^Payment\s(.+?)\s*:\s*(.+)$/);
+												if (match) {
+													AccountingpaymentToIndiv = true;
+													AccountingNamecontactSelected = match[1].trim();
+													AccountingName = match[2].trim();
+												} else {
+													AccountingName = accounting.name;
+												}
+												if (accounting.billDate) {
+													AccountingBillDate = accounting.billDate;
+												}
+												if (accounting.paymentDate) {
+													AccountingPaymentDate = accounting.paymentDate;
+												}
+												AccountingAmount = accounting.amount;
+												AccountingCategory = accounting.categoryId;
+												AccountingIsMusicianFee = accounting.isMusicianFee;
+												AccountingId = accounting.id;
+												updateMode = true;
+												updateAttachmentMode = true;
+												if (accounting.attachment) {
+													AccountingAttachments = accounting.attachment.split('/').map(Number);
+													console.log(AccountingAttachments);
+													for (const att of AccountingAttachments) {
+														let file;
+														if (accountingFolder.files.find((f) => f.id === att)) {
+															file = accountingFolder.files.find((f) => f.id === att);
+															selectedAttachements.push(file);
+														}
+													}
+													console.log(selectedAttachements);
+												}
+											}}
+										>
+											<Fa icon={faEye} class="text-[16px]" style="color: #6B9AD9;" />
+										</button>
+									{/if}
+								</td>
 								<td class="flex justify-center p-1 items-center">
 									<button
 										on:click={() => {
@@ -881,9 +1655,12 @@
 											if (accounting.paymentDate) {
 												AccountingPaymentDate = accounting.paymentDate;
 											}
+											if (accounting.attachment) {
+												AccountingAttachments = accounting.attachment.split('/').map(Number);
+											}
 											AccountingAmount = accounting.amount;
 											AccountingCategory = accounting.categoryId;
-											AccountingIsMusicianFee = accounting.isMusicianFee
+											AccountingIsMusicianFee = accounting.isMusicianFee;
 											AccountingId = accounting.id;
 											popUpAdd = true;
 											updateMode = true;
@@ -898,5 +1675,99 @@
 				</tbody>
 			</table>
 		</div>
+	</div>
+{/if}
+
+<!-- Preview modal -->
+{#if showPreview && previewFile}
+	<FilePreview
+		fileId={previewFile.id}
+		fileName={previewFile.name}
+		fileType={previewFile.mimeType || ''}
+		onClose={() => {
+			showPreview = false;
+			previewFile = null;
+		}}
+	/>
+{/if}
+
+{#if accountingFolder && folder.children && showAttachments}
+	<div class="bg-white border-2 rounded-xl border-gray-400 p-4">
+		<h2 class="uppercase font-bold mb-8">Attachments</h2>
+		{#if folder.children.length}
+			<div class="gap-4 flex flex-col">
+				{#each folder.children as file}
+					<div class="flex w-full border-2 rounded-full p-2 px-4">
+						<div class="flex w-[60%] items-center">
+							<div
+								class="flex-shrink-0 w-10 h-10 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center"
+							>
+								<svelte:component
+									this={getFileIcon(file)}
+									size={isMobile ? 20 : 24}
+									class={getFileColor(file)}
+								/>
+							</div>
+							<div class={isMobile ? 'text-xs gap-2 h-14' : 'flex w-full'}>
+								<h3
+									class="font-bold text-gray-500 truncate text-sm py-2 {isMobile
+										? ' w-[20vw]'
+										: ''}"
+									title={file.name}
+								>
+									{file.name}
+								</h3>
+								<span
+									class="bg-blue-100 text-blue-800 h-8 ml-auto {isMobile
+										? 'text-xs'
+										: 'text-sm'} mr-0 px-2 py-1 rounded font-semibold border border-blue-300"
+								>
+									{formatFileSize(file.size || 0)}
+								</span>
+							</div>
+						</div>
+						<div class="grid grid-cols-3 ml-auto mr-0">
+							<button
+								class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+								on:click={() => {
+									previewFileFunction(file);
+								}}
+							>
+								<Fa icon={faEye} class="text-[16px]" style="color: #6b7280;" />
+							</button>
+
+							<button
+								class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+								on:click={() => {
+									downloadFileFunction(file);
+								}}
+							>
+								<Fa icon={faDownload} class="text-[16px]" style="color: #6b7280;" />
+							</button>
+							<!--
+						<button
+							class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+							on:click={() => {
+								renameItem(file);
+							}}
+						>
+							<Edit3 size={16} />
+						</button>
+						-->
+							<button
+								class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-400 flex items-center gap-2 font-semibold"
+								on:click={() => {
+									deleteItem(file);
+								}}
+							>
+								<Fa icon={faTrashCan} class="text-[16px]" style="color: #f87171;" />
+							</button>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else}
+			<div class="text-gray-500 text-center mb-8 font-semibold">No Attachments</div>
+		{/if}
 	</div>
 {/if}

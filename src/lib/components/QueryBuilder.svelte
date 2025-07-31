@@ -25,6 +25,11 @@
 
 	export let selectedLevelInstruments: [number, string | null][];
 
+	function getLevelForInstrument(id: number): string | null {
+		const found = selectedLevelInstruments.find(([instrumentId]) => instrumentId === id);
+		return found ? found[1] : "";
+	}
+
 	let instruments: Instrument[] = [];
 	
 
@@ -346,6 +351,7 @@
 							<p>{instrument.name}</p>
 							{#if selectedInstrumentIds.has(instrument.id)}
 								<select class="border-2 rounded-lg border-gray-400"
+								value={getLevelForInstrument(instrument.id)}
 								on:change={(e) => handleLevelChange(instrument.id, e.target.value)}>
 									<option class="" value={null}>none</option>
 									{#each levels as level}
@@ -423,7 +429,7 @@
 				>
 				<Button
 					on:click={() => {triggerSearch() ; popUpFilter = false; document.body.style.overflow = '';}}
-					class="w-[30%] px-4 py-2 my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
+					class=" {isMobile ? "w-[40%]" : "w-[30%] px-4 py-2"} my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
 				>
 					Search
 				</Button>
