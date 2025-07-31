@@ -57,7 +57,6 @@
 		};
 
 		fetchData();
-		contactsToDisplay = contacts
 	});
 
 	async function fetchData() {
@@ -84,6 +83,7 @@
 				};
 			});
 			meta = data.meta;
+			contactsToDisplay = contacts
 
 			dataHolder = {
 				data: [],
@@ -411,7 +411,7 @@
 			<span> Show Instruments</span>
 		</div>
 		{#if newList.contacts.length > 0}
-			<div class="grid grid-cols-3 gap-4">
+			<div class="grid {isMobile ? "" : "grid-cols-3"} gap-4">
 				{#each newList.contacts as contact}
 					<div>
 						<div class="border-2 border-gray-400 rounded-xl p-4 h-auto flex items-center">
@@ -460,10 +460,33 @@
 	</div>
 	<div class="col-span-4 border-2 border-gray-500 rounded-xl p-4 bg-white m-4">
 		{#if dataHolder}
+			{#if !isMobile}
+			<div class="flex w-full">
 			<button
 				class="m-2 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 				on:click={addToList}>Add to List</button
 			>
+			<div class="flex gap-2 ml-auto">
+				{#if instrumentFamily.length !== 0 }
+						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend : 
+							{#each instrumentFamily as family}
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
+							{/each}
+						</p>
+				{/if}
+			</div>
+			</div>
+			{:else}
+					<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center">
+						{#each instrumentFamily as family}
+							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
+						{/each}
+					</div>
+					<button
+					class="m-2 mt-6 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+					on:click={addToList}>Add to List</button
+				>
+			{/if}
 			<SimpleFilterer
 				bind:data={dataHolder}
 				bind:meta

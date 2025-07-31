@@ -92,7 +92,7 @@
 				id="default-search"
 				bind:value={options.filter}
 				on:keypress={(event) => (event.key === 'Enter' ? dispatchOptionsUpdated() : null)}
-				class="block w-full p-4 ps-10 text-sm  border border-gray-300 rounded-full"
+				class="block w-full p-4 ps-10 text-sm  border-2 border-gray-300 rounded-full"
 				placeholder="Search for {data.columns.join(', ')}..."
 				required
 			/>
@@ -102,7 +102,7 @@
 					options.page = meta.firstPage;
 					dispatchOptionsUpdated();
 				}}
-				class="text-white absolute end-3 bottom-2 bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+				class="text-white absolute end-3 bottom-2.5 bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 				>Search</button
 			>
 		</div>
