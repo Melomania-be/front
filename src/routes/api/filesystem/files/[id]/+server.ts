@@ -8,7 +8,7 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 	try {
 		console.log('🗑️ Attempting to delete file:', params.id);
 
-		/*
+		
 		// ✅ VÉRIFICATION : S'assurer que le fichier peut être supprimé
 		const checkResponse = await fetch(`${API_URL}/filesystem/files/${params.id}/check-deletion`, {
 			method: 'GET',
@@ -41,7 +41,7 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 			});
 		}
 
-		*/
+	
 
 		// ✅ Procéder à la suppression si le fichier est vraiment général
 		const response = await fetch(`${API_URL}/filesystem/files/${params.id}`, {
