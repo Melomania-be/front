@@ -381,7 +381,10 @@
 {/if}
 
 <div class="bg-[#E7E7E7] p-8 min-h-screen pb-[80px]">
-	<div class="flex gap-8 mb-4  {isMobile ? "flex-col" : "h-[50vh]	"}">
+	<div>
+		<AccountingTable bind:accountings bind:categories></AccountingTable>
+	</div>
+	<div class="flex gap-8 mb-4 mt-4  {isMobile ? "flex-col" : "h-auto"}">
 		<div class="flex-[2] flex flex-col border-2 rounded-xl bg-white border-gray-400">
 				<div class="flex rounded-b-xl w-full flex-1 {isMobile ? "flex-col" : ""}">
 					<div
@@ -404,7 +407,7 @@
 		</div>
 		<div class="bg-white border-gray-400 border-2 rounded-xl p-4 flex-[1]">
 			<div class="flex">
-			<h2 class="uppercase font-bold">category</h2>
+			<h2 class="uppercase font-bold">categories</h2>
 			<button
 				on:click={() => showPopUpAddCategory()}
 				class="bg-[#6B9AD9] px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
@@ -435,9 +438,6 @@
 				{/if}
 			</div>
 		</div>
-	</div>
-	<div>
-		<AccountingTable bind:accountings bind:categories></AccountingTable>
 	</div>
 </div>
 

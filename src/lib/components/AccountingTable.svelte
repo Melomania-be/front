@@ -3,6 +3,8 @@
 	import Fa from 'svelte-fa';
 	import {
 		faArrowsDownToLine,
+		faChevronDown,
+		faChevronUp,
 		faDownload,
 		faEye,
 		faPenToSquare,
@@ -50,6 +52,8 @@
 	import FilePreview from './filesystem/FilePreview.svelte';
 	import type { CustomParticipant } from '$lib/types/CustomParticipant';
 	import type { Participant } from '$lib/types/Participant';
+	import { slide } from 'svelte/transition';
+	import { tick } from 'svelte';
 
 	type Files = {
 		id: number;
@@ -414,27 +418,52 @@
 		accountingDeletion = false;
 	}
 
+	let totalExpenses = 0;
+	let currentExpenses = 0;
+	let futureExpenses = 0;
+
+	let totalIncomes = 0;
+	let currentIncomes = 0;
+	let futureIncomes = 0;
+
 	let totalBalance = 0;
 	let currentBalance = 0;
-	let incomingMoney = 0;
+	let futureBalance = 0;
 
 	$: if (accountings) {
-		totalBalance = 0;
-		currentBalance = 0;
-		incomingMoney = 0;
+		totalExpenses = 0;
+		currentExpenses = 0;
+		futureExpenses = 0;
+
+		totalIncomes = 0;
+		currentIncomes = 0;
+		futureIncomes = 0;
 
 		for (const acc of accountings) {
 			const amount = Number(acc.amount);
-			totalBalance += amount;
 
-			if (acc.paymentDate) {
-				currentBalance += amount;
+			if (amount < 0) {
+				// Dépense
+				totalExpenses += amount;
+				if (acc.paymentDate) {
+					currentExpenses += amount;
+				} else {
+					futureExpenses += amount;
+				}
 			} else {
-				if (amount > 0) {
-					incomingMoney += amount;
+				// Revenu
+				totalIncomes += amount;
+				if (acc.paymentDate) {
+					currentIncomes += amount;
+				} else {
+					futureIncomes += amount;
 				}
 			}
 		}
+
+		totalBalance = totalIncomes + totalExpenses; // dépenses sont négatives
+		currentBalance = currentIncomes + currentExpenses;
+		futureBalance = futureIncomes + futureExpenses;
 	}
 
 	let search = '';
@@ -734,6 +763,9 @@
 	};
 
 	async function fetchAccountingFolder() {
+		if (!accountingFolder || !accountingFolder.id) {
+			return;
+		}
 		try {
 			const response = await fetch(`/api/filesystem/folders/${accountingFolder.id}/contents`);
 			if (response.ok) {
@@ -929,6 +961,9 @@
 		fetchProject(Number(projectId));
 		console.log(projectConcerts);
 	});
+
+	let displayAttachments = false;
+	let chevronAttachments: IconDefinition = faChevronDown;
 </script>
 
 {#if popUpAttachement}
@@ -1031,7 +1066,7 @@
 {#if popUpAdd}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 		<div
-			class="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center {isMobile
+			class="bg-white p-6 rounded-xl max-h-[80vh] shadow-xl flex flex-col items-center {isMobile
 				? 'w-[90%]'
 				: 'w-[60%]'} {AccountingpaymentToIndiv ? 'h-[80%]' : 'h-auto'}  relative"
 		>
@@ -1224,7 +1259,7 @@
 									? 'mb-2'
 									: 'max-h-full h-full min-h-64'} border-gray-500 rounded-full flex"
 							></div>
-							<div class="flex-1 flex flex-col justify-center items-center h-full">
+							<div class="flex-1 flex flex-col justify-center items-center h-full mt-10">
 								<!--PERSON NAME-->
 								<div
 									class="flex flex-col {isMobile
@@ -1318,34 +1353,71 @@
 
 {#if categories}
 	<div class="grid grid-cols-1 w-full border-2 rounded-xl border-gray-400 p-4 bg-white mb-4">
+		{#if showStatistic}
+			<h1 class="font-bold text-lg mb-4">ACOUNTING</h1>
+		{/if}
 		<div class="flex mb-6">
 			<div class=" {isMobile ? 'w-[60%] text-sm' : 'w-[70%]'}">
 				{#if accountings && showStatistic}
 					<div
-						class="h-auto w-full items-center flex {isMobile
+						class="h-auto w-full items-center flex flex-cols {isMobile
 							? 'flex-col'
 							: ''} gap-4 text-gray-600 font-bold"
 					>
 						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
+							<div>
+							Total Expenses :
+							<span class="text-blue-500">{totalExpenses} €</span>
+							</div>
+							<div>
+							Current Expenses : 
+							<span class="text-red-500"> {currentExpenses} € </span>
+							</div>
+							<div>
+							Expenses To Come : 
+							<span class="text-green-500">{futureExpenses} €</span>
+							</div>
+						</div>
+						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
+							<div>
+							Total Incomes :
+							<span class="text-blue-500">{totalIncomes} €</span>
+							</div>
+							<div>
+							Current Incomes : 
+							<span class="text-red-500"> {currentIncomes} € </span>
+							</div>
+							<div>
+							Incomes To Come : 
+							<span class="text-green-500">{futureIncomes} €</span>
+							</div>
+						</div>
+						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
+							<div>
 							Total Balance :
 							<span class="text-blue-500">{totalBalance} €</span>
-						</div>
-						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
-							Current Balance : <span class="text-red-500"> {currentBalance} € </span>
-						</div>
-						<div class="border-2 w-full rounded-xl border-gray-400 p-2 px-4">
-							Incoming Money : <span class="text-green-500">{incomingMoney} €</span>
+							</div>
+							<div>
+							Current Balance : 
+							<span class="text-red-500"> {currentBalance} € </span>
+							</div>
+							<div>
+							Future Balance : 
+							<span class="text-green-500">{futureBalance} €</span>
+							</div>
 						</div>
 					</div>
 				{/if}
 			</div>
-			<button
-				on:click={() => showPopUpAdd()}
-				class="bg-[#6B9AD9] {isMobile
-					? 'h-10'
-					: ''} px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
-				>Add New</button
-			>
+			{#if !contact}
+				<button
+					on:click={() => showPopUpAdd()}
+					class="bg-[#6B9AD9] {isMobile
+						? 'h-10'
+						: ''} px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
+					>Add New</button
+				>
+			{/if}
 		</div>
 
 		<div class="w-full mb-2">
@@ -1564,10 +1636,24 @@
 								{#if showProject}
 									<td class="p-1 w-4">{accounting.projectId}</td>
 								{/if}
-								<td class="flex gap-2 items-center">
-									{#if projectConcerts.get(accounting.projectId) < today}
-										<Fa icon={faTriangleExclamation} class="text-[14px]" style="color: #ef4444;" />
-										<span class="text-red-500">{accounting.name}</span>
+								<td>
+									{#if projectConcerts.get(accounting.projectId) < today && !accounting.paymentDate && accounting.isIndividualPayment}
+										<div>
+											<div class="flex items-center gap-2">
+												<Fa
+													icon={faTriangleExclamation}
+													class="text-[14px]"
+													style="color: #ef4444;"
+												/>
+												<span class="text-red-500">{accounting.name}</span>
+											</div>
+											<div class="bg-red-100 border border-red-500 rounded-lg p-1 w-[85%] m-1">
+												<p class="text-[10px] leading-none text-red-500">
+													This payment hasn’t been made yet, but the date of the project's last
+													concert is past.
+												</p>
+											</div>
+										</div>
 									{:else}
 										<span>{accounting.name}</span>
 									{/if}
@@ -1693,58 +1779,75 @@
 
 {#if accountingFolder && folder.children && showAttachments}
 	<div class="bg-white border-2 rounded-xl border-gray-400 p-4">
-		<h2 class="uppercase font-bold mb-8">Attachments</h2>
-		{#if folder.children.length}
-			<div class="gap-4 flex flex-col">
-				{#each folder.children as file}
-					<div class="flex w-full border-2 rounded-full p-2 px-4">
-						<div class="flex w-[60%] items-center">
-							<div
-								class="flex-shrink-0 w-10 h-10 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center"
-							>
-								<svelte:component
-									this={getFileIcon(file)}
-									size={isMobile ? 20 : 24}
-									class={getFileColor(file)}
-								/>
-							</div>
-							<div class={isMobile ? 'text-xs gap-2 h-14' : 'flex w-full'}>
-								<h3
-									class="font-bold text-gray-500 truncate text-sm py-2 {isMobile
-										? ' w-[20vw]'
-										: ''}"
-									title={file.name}
-								>
-									{file.name}
-								</h3>
-								<span
-									class="bg-blue-100 text-blue-800 h-8 ml-auto {isMobile
-										? 'text-xs'
-										: 'text-sm'} mr-0 px-2 py-1 rounded font-semibold border border-blue-300"
-								>
-									{formatFileSize(file.size || 0)}
-								</span>
-							</div>
-						</div>
-						<div class="grid grid-cols-3 ml-auto mr-0">
-							<button
-								class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
-								on:click={() => {
-									previewFileFunction(file);
-								}}
-							>
-								<Fa icon={faEye} class="text-[16px]" style="color: #6b7280;" />
-							</button>
+		<div class="flex items-center gap-4">
+			<h1 class="font-bold text-lg mb-4">ATTACHMENTS</h1>
+			<button
+				class="mb-4"
+				on:click={() => {
+					displayAttachments = !displayAttachments;
+					if (chevronAttachments === faChevronDown) {
+						chevronAttachments = faChevronUp;
+					} else {
+						chevronAttachments = faChevronDown;
+					}
+				}}
+			>
+				<Fa icon={chevronAttachments} style="color : black" />
+			</button>
+		</div>
+		{#if displayAttachments}
+			<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
+				{#if folder.children.length}
+					<div class="gap-4 flex flex-col">
+						{#each folder.children as file}
+							<div class="flex w-full border-2 rounded-full p-2 px-4">
+								<div class="flex w-[60%] items-center">
+									<div
+										class="flex-shrink-0 w-10 h-10 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center"
+									>
+										<svelte:component
+											this={getFileIcon(file)}
+											size={isMobile ? 20 : 24}
+											class={getFileColor(file)}
+										/>
+									</div>
+									<div class={isMobile ? 'text-xs gap-2 h-14' : 'flex w-full'}>
+										<h3
+											class="font-bold text-gray-500 truncate text-sm py-2 {isMobile
+												? ' w-[20vw]'
+												: ''}"
+											title={file.name}
+										>
+											{file.name}
+										</h3>
+										<span
+											class="bg-blue-100 text-blue-800 h-8 ml-auto {isMobile
+												? 'text-xs'
+												: 'text-sm'} mr-0 px-2 py-1 rounded font-semibold border border-blue-300"
+										>
+											{formatFileSize(file.size || 0)}
+										</span>
+									</div>
+								</div>
+								<div class="grid grid-cols-3 ml-auto mr-0">
+									<button
+										class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+										on:click={() => {
+											previewFileFunction(file);
+										}}
+									>
+										<Fa icon={faEye} class="text-[16px]" style="color: #6b7280;" />
+									</button>
 
-							<button
-								class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
-								on:click={() => {
-									downloadFileFunction(file);
-								}}
-							>
-								<Fa icon={faDownload} class="text-[16px]" style="color: #6b7280;" />
-							</button>
-							<!--
+									<button
+										class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
+										on:click={() => {
+											downloadFileFunction(file);
+										}}
+									>
+										<Fa icon={faDownload} class="text-[16px]" style="color: #6b7280;" />
+									</button>
+									<!--
 						<button
 							class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700 font-semibold"
 							on:click={() => {
@@ -1754,20 +1857,22 @@
 							<Edit3 size={16} />
 						</button>
 						-->
-							<button
-								class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-400 flex items-center gap-2 font-semibold"
-								on:click={() => {
-									deleteItem(file);
-								}}
-							>
-								<Fa icon={faTrashCan} class="text-[16px]" style="color: #f87171;" />
-							</button>
-						</div>
+									<button
+										class="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-400 flex items-center gap-2 font-semibold"
+										on:click={() => {
+											deleteItem(file);
+										}}
+									>
+										<Fa icon={faTrashCan} class="text-[16px]" style="color: #f87171;" />
+									</button>
+								</div>
+							</div>
+						{/each}
 					</div>
-				{/each}
+				{:else}
+					<div class="text-gray-500 text-center mb-8 font-semibold">No Attachments</div>
+				{/if}
 			</div>
-		{:else}
-			<div class="text-gray-500 text-center mb-8 font-semibold">No Attachments</div>
 		{/if}
 	</div>
 {/if}
