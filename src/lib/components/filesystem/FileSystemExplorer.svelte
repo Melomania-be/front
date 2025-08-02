@@ -33,6 +33,8 @@
 	export let showMaterials = true;
 	export let projectId: number | null = null;
 
+	export let deleteAttachment : number | null = null;
+
 	let selectedItem: FileSystemItem | null = null;
 	let showContextMenu = false;
 	let contextMenuPosition = { x: 0, y: 0 };
@@ -229,6 +231,7 @@
 				});
 
 				if (response.ok) {
+					deleteAttachment = item.id;
 					dispatch('refresh');
 				} else {
 					console.error('Delete failed:', response.status);

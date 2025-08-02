@@ -10,6 +10,7 @@
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import type { Project } from '$lib/types/Project';
 	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
+	import type { Accounting } from '$lib/types/Accounting';
 	import { DivideSquare } from 'lucide-svelte';
 	import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
 	import type { Registration } from '$lib/types/Registration';
@@ -54,6 +55,9 @@
 
 	let dataHolder: TableData<Participant>;
 
+	let paymentsByContactMusicianFee: Record<number, number> = {};
+	let paymentsByContactAdditionnal: Record<number, number> = {};
+
 	onMount(() => {
 		checkMobile();
 		window.addEventListener('resize', checkMobile);
@@ -75,7 +79,9 @@
 		};
 
 		await fetchProject();
-		fetchData();
+		await fetchData();
+		await fetchAccountingContact();
+		console.log(accountings)
 
 		if (project?.participants) {
 			for (const p of project.participants) {
@@ -138,7 +144,49 @@
 			HeadTableForm[form.text] = false;
 		}
 		console.log(participants);
+
+		for (const acc of accountings) {
+			if(acc.isMusicianFee){
+				if (acc.contactId != null) {
+					// Initialise à 0 si c'est la première fois qu'on voit ce contact
+					if (!paymentsByContactMusicianFee[acc.contactId]) {
+						paymentsByContactMusicianFee[acc.contactId] = 0;
+					}
+
+					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
+					paymentsByContactMusicianFee[acc.contactId] += Number(acc.amount);
+				}
+				
+			}
+			else{
+				if (acc.contactId != null) {
+					// Initialise à 0 si c'est la première fois qu'on voit ce contact
+					if (!paymentsByContactAdditionnal[acc.contactId]) {
+						paymentsByContactAdditionnal[acc.contactId] = 0;
+					}
+
+					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
+					paymentsByContactAdditionnal[acc.contactId] += Number(acc.amount);
+				}
+				console.log(acc.amount)
+			}
+		}
+		console.log(paymentsByContactAdditionnal , paymentsByContactMusicianFee)
 	});
+
+	let accountings : Accounting[];
+
+	async function fetchAccountingContact(){
+
+		const response = await fetch(`/api/projects/${data.id}/management/accounting/participant`, {
+			method: 'GET'
+		});
+		if (!response.ok) {
+			return;
+		}
+
+		accountings = await response.json();
+	}
 
 	async function fetchProject() {
 		if (!data?.id) return;
@@ -383,6 +431,7 @@
 										<th class="px-4 py-2">{parseQuestionAndAnswers(colName)}</th>
 									{/if}
 								{/each}
+								<th class="px-4 py-2">Payment</th>
 							</tr>
 						</thead>
 
@@ -429,6 +478,23 @@
 											>
 										{/if}
 									{/each}
+									<td class="px-4 py-2 font-bold">
+										{#if participant.contact.id && (paymentsByContactMusicianFee.hasOwnProperty(participant.contact.id) || paymentsByContactAdditionnal.hasOwnProperty(participant.contact.id))}
+											{#if paymentsByContactMusicianFee.hasOwnProperty(participant.contact.id)}
+												<span class="text-blue-500 font-bold">{-paymentsByContactMusicianFee[participant.contact.id]} €</span>
+											{:else}
+												<span class="text-blue-500 font-bold">0 €</span>
+											{/if}
+											+
+											{#if paymentsByContactAdditionnal.hasOwnProperty(participant.contact.id)}
+											<span class="text-orange-500 font-bold">{-paymentsByContactAdditionnal[participant.contact.id]} €</span>
+											{:else}
+												<span class="text-orange-500 font-bold">0 €</span>
+											{/if}
+										{:else}
+											<span class="text-gray-400 font-semibold">0 €</span>
+										{/if}
+									</td>
 								</tr>
 							{/each}
 						</tbody>

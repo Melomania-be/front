@@ -5,7 +5,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 export default defineConfig({
 	plugins: [sveltekit()],
 	optimizeDeps: {
-		include: ['jspdf', 'jspdf-autotable']
+		include: ['svelte-chartjs','jspdf', 'jspdf-autotable']
 	},
 	build: {
 		rollupOptions: {
@@ -14,5 +14,8 @@ export default defineConfig({
 				globals: {}
 			}
 		}
+	},
+	ssr: {
+		noExternal: ['svelte-chartjs']
 	}
 });
