@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - Design IDENTIQUE à General Files -->
+<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - VERSION COMPLÈTE CORRIGÉE -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import {
@@ -65,10 +65,24 @@
 		}
 	};
 
+	// ✅ NOUVEAU : Auto-refresh périodique pour éviter la désynchronisation
+	let refreshInterval: NodeJS.Timer | null = null;
+
 	onMount(async () => {
 		checkResponsive();
 		if (browser) {
 			window.addEventListener('resize', checkResponsive);
+
+			// ✅ ÉCOUTER les changements de sélection matériel
+			window.addEventListener('materialSelectionChanged', handleMaterialSelectionChange);
+
+			// ✅ AUTO-REFRESH périodique (toutes les 30 secondes)
+			refreshInterval = setInterval(async () => {
+				if (selectedPiece && !showCreateForm && !showUploader) {
+					console.log('🔄 Auto-refreshing material selections...');
+					await loadSelectedMaterialForPiece(selectedPiece.id);
+				}
+			}, 30000);
 		}
 
 		await loadPieces();
@@ -77,9 +91,26 @@
 		return () => {
 			if (browser) {
 				window.removeEventListener('resize', checkResponsive);
+				window.removeEventListener('materialSelectionChanged', handleMaterialSelectionChange);
+
+				if (refreshInterval) {
+					clearInterval(refreshInterval);
+				}
 			}
 		};
 	});
+
+	// ✅ NOUVEAU : Gestionnaire d'événements de changement
+	function handleMaterialSelectionChange(event: CustomEvent) {
+		const { pieceId, materialId } = event.detail;
+
+		// Mettre à jour seulement si c'est la pièce actuelle
+		if (selectedPiece && selectedPiece.id === pieceId) {
+			console.log(`🔄 Updating selection for current piece ${pieceId}: ${materialId}`);
+			selectedMaterials[pieceId] = materialId;
+			selectedMaterials = { ...selectedMaterials };
+		}
+	}
 
 	async function loadPieces() {
 		try {
@@ -115,17 +146,24 @@
 		}
 	}
 
+	// ✅ CORRECTION : Améliorer loadMaterialsForPiece avec better error handling
 	async function loadMaterialsForPiece(piece: any) {
 		try {
 			selectedPiece = piece;
 			console.log(`🔄 Loading materials for piece: ${piece.name}`);
 
-			const response = await fetch(`/api/materials/piece/${piece.id}`);
-			if (response.ok) {
-				const materialsData = await response.json();
+			// ✅ PARALLEL loading pour de meilleures performances
+			const [materialsResponse, selectedMaterialPromise] = await Promise.allSettled([
+				fetch(`/api/materials/piece/${piece.id}`),
+				loadSelectedMaterialForPiece(piece.id)
+			]);
+
+			// Gérer les matériels
+			if (materialsResponse.status === 'fulfilled' && materialsResponse.value.ok) {
+				const materialsData = await materialsResponse.value.json();
 				console.log(`📦 Loaded ${materialsData.length} materials from API`);
 
-				// Load files for each material
+				// Load files for each material en parallèle
 				const materialPromises = materialsData.map(async (material) => {
 					try {
 						const filesResponse = await fetch(`/api/materials/${material.id}/files`);
@@ -159,64 +197,217 @@
 					expandedMaterials = new Set(expandedMaterials);
 				}
 			} else {
+				console.error('❌ Failed to load materials');
 				materials = [];
 			}
 
-			await loadSelectedMaterialForPiece(piece.id);
-
 		} catch (error) {
-			console.error('Error loading materials for piece:', piece.id, error);
+			console.error('❌ Error loading materials for piece:', piece.id, error);
 			materials = [];
+			selectedMaterials[piece.id] = null;
+			selectedMaterials = { ...selectedMaterials };
 		}
 	}
 
-	async function loadSelectedMaterialForPiece(pieceId: number) {
+	// ✅ CORRECTION : Fonction loadSelectedMaterialForPiece avec retry
+	async function loadSelectedMaterialForPiece(pieceId: number, retryCount = 0): Promise<void> {
 		try {
-			console.log(`🔍 Loading selected material for piece ${pieceId}`);
-			const response = await fetch(`/api/pieces/${pieceId}/select-material`);
+			console.log(`🔍 Loading selected material for piece ${pieceId} (attempt ${retryCount + 1})`);
+
+			// ✅ TIMEOUT CONTRÔLÉ
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+			const response = await fetch(`/api/pieces/${pieceId}/select-material`, {
+				signal: controller.signal
+			});
+
+			clearTimeout(timeoutId);
+
 			if (response.ok) {
+				const contentType = response.headers.get('content-type');
+
+				// ✅ VÉRIFIER que c'est du JSON valide
+				if (!contentType || !contentType.includes('application/json')) {
+					console.warn(`⚠️ Invalid response format for piece ${pieceId}:`, contentType);
+					selectedMaterials[pieceId] = null;
+					selectedMaterials = { ...selectedMaterials };
+					return;
+				}
+
 				const result = await response.json();
-				selectedMaterials[pieceId] = result.materialId;
-				console.log(`✅ Selected material for piece ${pieceId}:`, result.materialId);
+
+				// ✅ VALIDATION des données reçues
+				if (result && typeof result === 'object') {
+					selectedMaterials[pieceId] = result.materialId;
+					console.log(`✅ Selected material for piece ${pieceId}:`, result.materialId);
+				} else {
+					console.warn(`⚠️ Invalid data structure for piece ${pieceId}:`, result);
+					selectedMaterials[pieceId] = null;
+				}
 			} else {
-				console.log(`❌ No selected material found for piece ${pieceId}`);
+				console.log(`❌ No selected material found for piece ${pieceId} (${response.status})`);
 				selectedMaterials[pieceId] = null;
 			}
+
 			selectedMaterials = { ...selectedMaterials };
+
 		} catch (error) {
-			console.error('Error loading selected material for piece:', pieceId, error);
-			selectedMaterials[pieceId] = null;
-			selectedMaterials = { ...selectedMaterials };
+			console.error('❌ Error loading selected material for piece:', pieceId, error);
+
+			// ✅ GESTION SPÉCIFIQUE DES ERREURS
+			if (error.name === 'AbortError') {
+				console.warn(`⏰ Request timeout for piece ${pieceId}`);
+			} else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+				console.warn(`🌐 Network error for piece ${pieceId}`);
+			} else {
+				console.error(`💥 Unexpected error for piece ${pieceId}:`, error);
+			}
+
+			// ✅ RETRY logic plus intelligent
+			if (retryCount < 2 && error.name !== 'AbortError') {
+				console.log(`🔄 Retrying load for piece ${pieceId} in ${(retryCount + 1) * 2}s...`);
+				setTimeout(() => {
+					loadSelectedMaterialForPiece(pieceId, retryCount + 1);
+				}, (retryCount + 1) * 2000); // Délai progressif
+			} else {
+				selectedMaterials[pieceId] = null;
+				selectedMaterials = { ...selectedMaterials };
+			}
 		}
 	}
 
+	// ✅ CORRECTION : Fonction selectMaterial avec sauvegarde persistante
 	async function selectMaterial(pieceId: number, materialId: number | null) {
 		try {
 			console.log(`🎯 Selecting material ${materialId} for piece ${pieceId}`);
+
+			// ✅ IMPORTANT : Mettre à jour l'état local AVANT l'appel backend
+			const previousSelection = selectedMaterials[pieceId];
+			selectedMaterials[pieceId] = materialId;
+			selectedMaterials = { ...selectedMaterials };
+
+			// ✅ APPEL BACKEND avec timeout contrôlé
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
 			const response = await fetch(`/api/pieces/${pieceId}/select-material`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ materialId })
+				body: JSON.stringify({ materialId }),
+				signal: controller.signal
 			});
 
+			clearTimeout(timeoutId);
+
 			if (response.ok) {
-				selectedMaterials[pieceId] = materialId;
-				selectedMaterials = { ...selectedMaterials };
-				console.log('✅ Material selection updated successfully');
+				const contentType = response.headers.get('content-type');
 
-				dispatch('materialsUpdated');
+				// ✅ VÉRIFIER le format de réponse
+				if (!contentType || !contentType.includes('application/json')) {
+					console.error('❌ Invalid response format from backend');
+					throw new Error('Invalid response format');
+				}
 
-				window.dispatchEvent(new CustomEvent('materialSelectionChanged', {
-					detail: { pieceId, materialId }
-				}));
+				const result = await response.json();
+
+				// ✅ VALIDATION des données de réponse
+				if (result && result.success) {
+					console.log('✅ Material selection saved successfully');
+
+					// ✅ DISPATCH des événements pour synchronisation
+					dispatch('materialsUpdated');
+
+					// ✅ NOTIFICATION globale pour callsheets et status
+					window.dispatchEvent(new CustomEvent('materialSelectionChanged', {
+						detail: {
+							pieceId,
+							materialId,
+							pieceName: selectedPiece?.name,
+							timestamp: Date.now()
+						}
+					}));
+
+					// ✅ FORCER le rechargement des données si c'est un projet
+					if (projectId) {
+						await syncProjectMaterialSelections();
+					}
+				} else {
+					throw new Error(result?.error || 'Unknown backend error');
+				}
+
 			} else {
-				const errorData = await response.json();
-				console.error('❌ Error selecting material:', errorData);
-				alert('Error selecting material: ' + (errorData.message || 'Unknown error'));
+				// ✅ GESTION D'ERREUR BACKEND
+				let errorMessage = 'Backend error';
+				try {
+					const errorData = await response.json();
+					errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
+				} catch {
+					errorMessage = `HTTP ${response.status} ${response.statusText}`;
+				}
+
+				throw new Error(errorMessage);
 			}
 		} catch (error) {
-			console.error('❌ Error selecting material:', error);
-			alert('Error selecting material');
+			// ✅ ROLLBACK SYSTÉMATIQUE en cas d'erreur
+			console.error('❌ Error selecting material, rolling back:', error);
+			selectedMaterials[pieceId] = previousSelection;
+			selectedMaterials = { ...selectedMaterials };
+
+			// ✅ MESSAGES D'ERREUR SPÉCIFIQUES
+			let userMessage = 'Error selecting material';
+			if (error.name === 'AbortError') {
+				userMessage = 'Request timeout - please try again';
+			} else if (error.message.includes('Failed to fetch')) {
+				userMessage = 'Network error - check your connection';
+			} else if (error.message) {
+				userMessage = `Error: ${error.message}`;
+			}
+
+			alert(userMessage);
+		}
+	}
+
+	// ✅ NOUVEAU : Synchronisation avec le projet si applicable
+	async function syncProjectMaterialSelections() {
+		if (!projectId) return;
+
+		try {
+			console.log('🔄 Syncing project material selections...');
+
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s pour sync
+
+			const response = await fetch(`/api/projects/${projectId}/sync-material-selections`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				signal: controller.signal
+			});
+
+			clearTimeout(timeoutId);
+
+			if (response.ok) {
+				const contentType = response.headers.get('content-type');
+
+				if (contentType && contentType.includes('application/json')) {
+					const result = await response.json();
+					if (result.success) {
+						console.log('✅ Project material selections synced successfully');
+					} else {
+						console.warn('⚠️ Sync completed with warnings:', result.errors);
+					}
+				} else {
+					console.warn('⚠️ Sync response format invalid');
+				}
+			} else {
+				console.warn(`⚠️ Could not sync project selections: HTTP ${response.status}`);
+			}
+		} catch (error) {
+			if (error.name === 'AbortError') {
+				console.warn('⚠️ Sync timeout - continuing anyway');
+			} else {
+				console.warn('⚠️ Error syncing project selections:', error);
+			}
 		}
 	}
 
@@ -239,7 +430,7 @@
 			});
 
 			if (response.ok) {
-				const newMaterial = await response.json();
+				const result = await response.json();
 				await loadMaterialsForPiece(selectedPiece);
 				showCreateForm = false;
 				newMaterialData = {
@@ -252,8 +443,8 @@
 				};
 				dispatch('materialsUpdated');
 
-				if (newMaterial.is_default) {
-					await selectMaterial(selectedPiece.id, newMaterial.id);
+				if (result.material?.is_default) {
+					await selectMaterial(selectedPiece.id, result.material.id);
 				}
 			} else {
 				const error = await response.json();
