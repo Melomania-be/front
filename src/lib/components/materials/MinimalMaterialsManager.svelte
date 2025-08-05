@@ -718,7 +718,7 @@
 					<Package class="w-5 h-5 text-white" />
 				</div>
 				<div>
-					<h1 class="font-bold text-lg">MATERIAL MANAGEMENT</h1>
+					<h1 class="font-bold text-lg">SCORE MANAGEMENT</h1>
 					<p class="text-sm text-gray-600">Select a piece to manage its materials</p>
 				</div>
 			</div>

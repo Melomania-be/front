@@ -189,7 +189,7 @@
 <div class="mb-10 py-8">
 	<div class="text-center mb-6">
 		<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-2">
-			Program and Materials
+			Program and Scores
 		</h2>
 		<p class="text-sm text-gray-600 dark:text-gray-400">
 			Access all musical materials and scores for this project
