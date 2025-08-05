@@ -1,12 +1,10 @@
-// src/routes/api/materials/[id]/files/+server.ts - SOLUTION DÉFINITIVE
+// src/routes/api/materials/[id]/files/+server.ts - Solution définitive
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
     try {
-        console.log(`🔍 Getting files for material: ${params.id}`);
-
         // 1. Essayer d'abord la route dédiée files
         const filesRes = await fetch(`${API_URL}/materials/${params.id}/files`, {
             method: 'GET',
@@ -17,13 +15,10 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 
         if (filesRes.ok) {
             const files = await filesRes.json();
-            console.log(`✅ Found ${files.length} files via files route for material ${params.id}`);
             return filesRes;
         }
 
         // 2. Si pas de route dédiée, récupérer depuis le matériel complet
-        console.log(`📁 Files route not available, getting from material data...`);
-
         const materialRes = await fetch(`${API_URL}/materials/${params.id}`, {
             method: 'GET',
             headers: {
@@ -48,8 +43,6 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
                 ...file
             }));
 
-            console.log(`✅ Extracted ${processedFiles.length} files from material data for ${params.id}`);
-
             return new Response(JSON.stringify(processedFiles), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
@@ -57,14 +50,13 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
         }
 
         // 3. Fallback final
-        console.log(`⚠️ No data found for material ${params.id}, returning empty array`);
         return new Response(JSON.stringify([]), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error(`💥 Error loading files for material ${params.id}:`, error);
+        console.error(`Error loading files for material ${params.id}:`, error);
         return new Response(JSON.stringify([]), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
@@ -75,7 +67,6 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 export const POST: RequestHandler = async ({ params, cookies, request, fetch }) => {
     try {
         const formData = await request.formData();
-        console.log(`📤 Uploading files to material: ${params.id}`);
 
         const res = await fetch(`${API_URL}/materials/${params.id}/files`, {
             method: 'POST',
@@ -87,12 +78,12 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 
         if (!res.ok) {
             const errorText = await res.text();
-            console.error(`❌ Upload failed for material ${params.id}:`, errorText);
+            console.error(`Upload failed for material ${params.id}:`, errorText);
         }
 
         return res;
     } catch (error) {
-        console.error(`💥 Upload error for material ${params.id}:`, error);
+        console.error(`Upload error for material ${params.id}:`, error);
         return new Response(JSON.stringify({
             success: false,
             error: 'Upload failed',

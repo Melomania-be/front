@@ -1,48 +1,54 @@
+<!-- src/lib/components/filesystem/FilePreview.svelte -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { X, Download, ZoomIn, ZoomOut, RotateCw, Maximize2 } from 'lucide-svelte';
+	import { X, Download, ZoomIn, ZoomOut, RotateCw, Maximize2, Shield } from 'lucide-svelte';
 
 	export let fileId: number;
 	export let fileName: string;
 	export let fileType: string;
+	export let isShared = false;
+	export let shareToken = '';
 	export let onClose: () => void;
 
 	let isLoading = true;
 	let error = '';
 	let fileUrl = '';
+	let downloadUrl = '';
 	let zoom = 1;
 	let rotation = 0;
 	let fullscreen = false;
 
-	// Détecter le type de fichier
+	$: {
+		if (isShared && shareToken) {
+			fileUrl = `/api/filesystem/shared/${shareToken}/download/${fileId}`;
+			downloadUrl = `/api/filesystem/shared/${shareToken}/download/${fileId}`;
+		} else {
+			fileUrl = `/api/files/stream/${fileId}`;
+			downloadUrl = `/api/files/download/${fileId}`;
+		}
+	}
+
 	function getFileCategory(fileName: string, mimeType: string = '') {
 		const extension = fileName.split('.').pop()?.toLowerCase() || '';
 		const mime = mimeType.toLowerCase();
 
-		// Documents PDF
 		if (extension === 'pdf' || mime.includes('pdf')) return 'pdf';
 
-		// Images
 		if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(extension) ||
 			mime.startsWith('image/')) return 'image';
 
-		// Vidéos
 		if (['mp4', 'webm', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'm4v', '3gp', 'ogv'].includes(extension) ||
 			mime.startsWith('video/')) return 'video';
 
-		// Audio
 		if (['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma', 'opus', 'oga'].includes(extension) ||
 			mime.startsWith('audio/')) return 'audio';
 
-		// Documents Office
 		if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension) ||
 			mime.includes('officedocument') || mime.includes('msword') || mime.includes('ms-excel') || mime.includes('ms-powerpoint')) return 'office';
 
-		// Texte
 		if (['txt', 'rtf', 'md', 'csv'].includes(extension) ||
 			mime.startsWith('text/')) return 'text';
 
-		// Code
 		if (['html', 'css', 'js', 'ts', 'json', 'xml', 'sql', 'py', 'java', 'cpp', 'c', 'php'].includes(extension)) return 'code';
 
 		return 'unknown';
@@ -52,7 +58,6 @@
 
 	onMount(() => {
 		loadFile();
-		// Écouter l'événement de téléchargement personnalisé
 		document.addEventListener('download-file', downloadFile);
 		return () => {
 			document.removeEventListener('download-file', downloadFile);
@@ -61,7 +66,6 @@
 
 	async function loadFile() {
 		try {
-			fileUrl = `/api/files/stream/${fileId}`;
 			isLoading = false;
 		} catch (error) {
 			console.error('Error loading file:', error);
@@ -72,7 +76,7 @@
 
 	async function downloadFile() {
 		try {
-			const response = await fetch(`/api/files/download/${fileId}`);
+			const response = await fetch(downloadUrl);
 			if (response.ok) {
 				const blob = await response.blob();
 				const url = URL.createObjectURL(blob);
@@ -111,7 +115,6 @@
 		fullscreen = !fullscreen;
 	}
 
-	// Rendu conditionnel selon le type de fichier - VERSION CORRIGÉE pour Edge
 	function renderPreview() {
 		switch (fileCategory) {
 			case 'pdf':
@@ -331,10 +334,20 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between p-4 border-b border-gray-200">
 			<div class="flex items-center gap-3">
+				{#if isShared}
+					<div class="w-8 h-8 bg-purple-100 rounded-[6px] flex items-center justify-center">
+						<Shield size={16} class="text-purple-600" />
+					</div>
+				{/if}
 				<h2 class="text-xl font-bold text-gray-800 truncate">{fileName}</h2>
 				<span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
 					{fileCategory.toUpperCase()}
 				</span>
+				{#if isShared}
+					<span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded border border-purple-300">
+						SHARED FILE - READ ONLY
+					</span>
+				{/if}
 			</div>
 
 			<!-- Controls -->
@@ -416,7 +429,6 @@
 					</div>
 				</div>
 			{:else}
-				<!-- Rendu dynamique selon le type de fichier -->
 				<div class="w-full h-full">
 					{@html renderPreview()}
 				</div>

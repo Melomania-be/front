@@ -70,16 +70,13 @@
 			const response = await fetch('/api/filesystem/general');
 			if (response.ok) {
 				const data = await response.json();
-				console.log('✅ General files raw data:', data);
 
-				// ✅ CORRECTION : Adapter la structure des données
+				// Adapter la structure des données
 				generalFiles = Array.isArray(data) ? data.map(item => ({
 					...item,
 					updatedAt: new Date(item.updatedAt),
 					createdAt: new Date(item.createdAt)
 				})) : [];
-
-				console.log('✅ General files processed:', generalFiles);
 			}
 		} catch (error) {
 			console.error('Error loading general files:', error);
@@ -94,7 +91,7 @@
 		generalBreadcrumbs = [];
 	}
 
-	// ✅ CORRECTION : Navigation dans les dossiers généraux
+	// Navigation dans les dossiers généraux
 	async function navigateToGeneralFolder(folder: FileSystemItem) {
 		currentGeneralFolder = folder;
 		buildGeneralBreadcrumbs(folder);
@@ -111,7 +108,6 @@
 				}));
 				// Force reactivity
 				currentGeneralFolder = { ...currentGeneralFolder };
-				console.log('General folder contents loaded:', contents);
 			}
 		} catch (error) {
 			console.error('Error loading general folder contents:', error);
@@ -135,14 +131,13 @@
 	function goBackGeneral() {
 		if (generalBreadcrumbs.length > 1) {
 			// Navigate to parent folder - needs proper implementation
-			console.log('Going back in general files');
 		} else {
 			currentGeneralFolder = null;
 			generalBreadcrumbs = [];
 		}
 	}
 
-	// ✅ CORRECTION : Upload pour fichiers généraux
+	// Upload pour fichiers généraux
 	async function handleGeneralUpload(files: FileList) {
 		const formData = new FormData();
 
@@ -159,10 +154,8 @@
 		if (currentGeneralFolder) {
 			formData.append('parentId', currentGeneralFolder.id.toString());
 		}
-		// Note: pas de projectId pour les fichiers généraux
 
 		try {
-			console.log('Uploading to general files...');
 			const response = await fetch('/api/filesystem/upload', {
 				method: 'POST',
 				body: formData
@@ -171,8 +164,6 @@
 			const result = await response.json();
 
 			if (response.ok && result.success) {
-				console.log('General upload successful:', result.message);
-
 				// Refresh appropriately
 				if (currentGeneralFolder) {
 					await navigateToGeneralFolder(currentGeneralFolder);
@@ -191,7 +182,7 @@
 		}
 	}
 
-	// ✅ CORRECTION : Créer un dossier général
+	// Créer un dossier général
 	async function handleCreateGeneralFolder(name: string) {
 		try {
 			const body = { name };
@@ -223,9 +214,6 @@
 	function handleGeneralItemClick(item: FileSystemItem) {
 		if (item.type === 'folder') {
 			navigateToGeneralFolder(item);
-		} else {
-			// Handle file click
-			console.log('General file clicked:', item.name);
 		}
 	}
 
@@ -327,7 +315,7 @@
 		{:else}
 			<!-- General Files -->
 			{#if currentGeneralFolder}
-				<!-- ✅ AJOUT : Navigation dans les dossiers généraux -->
+				<!-- Navigation dans les dossiers généraux -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-6 gap-4">
 						<div class="flex items-center gap-3 {isMobile ? 'flex-wrap' : ''}">
@@ -379,7 +367,7 @@
 					on:refresh={handleGeneralRefresh}
 				/>
 			{:else}
-				<!-- ✅ CORRECTION : Vue racine des fichiers généraux -->
+				<!-- Vue racine des fichiers généraux -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-6 gap-4">
 						<div class="flex items-center gap-3">

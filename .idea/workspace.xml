@@ -8,7 +8,9 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ShareFolderModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ShareFolderModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/SharedFolderViewer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/SharedFolderViewer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/+layout.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/+layout.svelte" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,7 +20,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="dev" />
+        <entry key="$PROJECT_DIR$" value="material_file_front" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -48,7 +50,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;material__file__front&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;google__drive__front&quot;,
     &quot;last_opened_file_path&quot;: &quot;F:/Java/front&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -63,6 +65,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\Java\front\src\routes\api\filesystem\shared\[token]" />
       <recent name="F:\Java\front\src\lib\components\callsheet" />
     </key>
   </component>
@@ -87,7 +90,7 @@
       <workItem from="1753141113086" duration="24395000" />
       <workItem from="1753374859465" duration="8757000" />
       <workItem from="1753456813138" duration="4312000" />
-      <workItem from="1753791465892" duration="2909000" />
+      <workItem from="1753791465892" duration="8100000" />
     </task>
     <servers />
   </component>
