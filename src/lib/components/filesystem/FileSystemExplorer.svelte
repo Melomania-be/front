@@ -263,7 +263,6 @@
 	function handleShareModalClose() {
 		showShareModal = false;
 		folderToShare = null;
-		// Refresh shared status after modal closes
 		checkSharedStatus();
 	}
 
@@ -519,8 +518,9 @@
 							</div>
 						</div>
 
-						{#if showActions && !isMobile}
-							<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+						<!-- MOBILE-VISIBLE Actions -->
+						{#if showActions}
+							<div class="flex items-center gap-2 flex-shrink-0">
 								{#if item.type === 'file'}
 									<button
 										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
@@ -536,6 +536,22 @@
 										title="Download"
 									>
 										<Download size={16} />
+									</button>
+
+									<button
+										class="p-2 text-gray-600 hover:text-yellow-600 rounded-lg hover:bg-yellow-50 border border-transparent hover:border-yellow-300 transition-colors"
+										on:click|stopPropagation={() => renameItem(item)}
+										title="Rename"
+									>
+										<Edit3 size={16} />
+									</button>
+
+									<button
+										class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+										on:click|stopPropagation={() => deleteItem(item)}
+										title="Delete"
+									>
+										<Trash2 size={16} />
 									</button>
 								{:else}
 									{#if isShared}
@@ -555,23 +571,23 @@
 											<Share2 size={16} />
 										</button>
 									{/if}
+
+									<button
+										class="p-2 text-gray-600 hover:text-yellow-600 rounded-lg hover:bg-yellow-50 border border-transparent hover:border-yellow-300 transition-colors"
+										on:click|stopPropagation={() => renameItem(item)}
+										title="Rename"
+									>
+										<Edit3 size={16} />
+									</button>
+
+									<button
+										class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+										on:click|stopPropagation={() => deleteItem(item)}
+										title="Delete"
+									>
+										<Trash2 size={16} />
+									</button>
 								{/if}
-
-								<button
-									class="p-2 text-gray-600 hover:text-yellow-600 rounded-lg hover:bg-yellow-50 border border-transparent hover:border-yellow-300 transition-colors"
-									on:click|stopPropagation={() => renameItem(item)}
-									title="Rename"
-								>
-									<Edit3 size={16} />
-								</button>
-
-								<button
-									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
-									on:click|stopPropagation={() => deleteItem(item)}
-									title="Delete"
-								>
-									<Trash2 size={16} />
-								</button>
 							</div>
 						{/if}
 					</div>
@@ -661,7 +677,8 @@
 																	</div>
 																</div>
 
-																<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity flex-shrink-0">
+																<!-- MOBILE-VISIBLE material file actions -->
+																<div class="flex items-center gap-1 flex-shrink-0">
 																	<button
 																		class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
 																		on:click={() => previewMaterialFile(file)}

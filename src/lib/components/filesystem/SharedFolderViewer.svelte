@@ -380,13 +380,14 @@
 					<div class="space-y-4">
 						{#each currentFolder.children as item}
 							<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200">
-								<div
-									class="flex items-center justify-between p-4 cursor-pointer group"
-									on:click={() => handleItemClick(item)}
-									role="button"
-									tabindex="0"
-								>
-									<div class="flex items-center gap-4 flex-1 min-w-0">
+								<!-- Desktop Layout -->
+								<div class="hidden md:flex items-center justify-between p-4 cursor-pointer group">
+									<div
+										class="flex items-center gap-4 flex-1 min-w-0"
+										on:click={() => handleItemClick(item)}
+										role="button"
+										tabindex="0"
+									>
 										<!-- Icon -->
 										<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
 											<svelte:component this={getFileIcon(item)} size={24} class={getFileColor(item)} />
@@ -409,7 +410,7 @@
 												</div>
 											</div>
 
-											<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm overflow-hidden">
+											<div class="grid grid-cols-3 gap-4 text-sm overflow-hidden">
 												<div class="min-w-0">
 													<span class="font-medium text-gray-700">Type:</span>
 													<span class="text-gray-600 block break-words">
@@ -431,7 +432,7 @@
 										</div>
 									</div>
 
-									<!-- Actions -->
+									<!-- Desktop Actions -->
 									<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 										{#if item.type === 'file'}
 											<button
@@ -462,6 +463,91 @@
 											</button>
 										{/if}
 									</div>
+								</div>
+
+								<!-- Mobile Layout -->
+								<div class="md:hidden p-4 space-y-4">
+									<!-- Item Header -->
+									<div
+										class="flex items-center gap-4 cursor-pointer"
+										on:click={() => handleItemClick(item)}
+										role="button"
+										tabindex="0"
+									>
+										<!-- Icon -->
+										<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 transition-colors flex items-center justify-center">
+											<svelte:component this={getFileIcon(item)} size={24} class={getFileColor(item)} />
+										</div>
+
+										<!-- File Info -->
+										<div class="flex-1 min-w-0 overflow-hidden">
+											<div class="flex items-center justify-between mb-2">
+												<h3 class="font-bold text-gray-900 truncate" title={item.name}>{item.name}</h3>
+												<div class="flex items-center gap-2 text-xs">
+													{#if item.type === 'file'}
+														<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300">
+															{formatFileSize(item.size || 0)}
+														</span>
+													{:else}
+														<span class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold border border-green-300">
+															FOLDER
+														</span>
+													{/if}
+												</div>
+											</div>
+
+											<div class="space-y-2 text-sm">
+												<div>
+													<span class="font-medium text-gray-700">Type:</span>
+													<span class="text-gray-600 ml-2">
+														{#if item.type === 'file'}
+															{item.name.split('.').pop()?.toUpperCase() || 'FILE'}
+														{:else}
+															Folder
+														{/if}
+													</span>
+												</div>
+												<div>
+													<span class="font-medium text-gray-700">Modified:</span>
+													<span class="text-gray-600 ml-2">{formatDate(item.updatedAt)}</span>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<!-- Mobile Actions - TOUJOURS VISIBLES -->
+									{#if item.type === 'file'}
+										<div class="flex gap-3 pt-2 border-t border-gray-200">
+											<button
+												class="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-blue-600 bg-blue-50 rounded-lg border border-blue-300 font-semibold hover:bg-blue-100 transition-colors min-h-[44px]"
+												on:click={() => {
+													previewFile = item;
+													showPreview = true;
+												}}
+											>
+												<Eye size={18} />
+												Preview
+											</button>
+
+											<button
+												class="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-green-600 bg-green-50 rounded-lg border border-green-300 font-semibold hover:bg-green-100 transition-colors min-h-[44px]"
+												on:click={() => downloadFile(item)}
+											>
+												<Download size={18} />
+												Download
+											</button>
+										</div>
+									{:else}
+										<div class="pt-2 border-t border-gray-200">
+											<button
+												class="w-full flex items-center justify-center gap-2 py-3 px-4 text-blue-600 bg-blue-50 rounded-lg border border-blue-300 font-semibold hover:bg-blue-100 transition-colors min-h-[44px]"
+												on:click={() => navigateToSubfolder(item)}
+											>
+												<ExternalLink size={18} />
+												Open Folder
+											</button>
+										</div>
+									{/if}
 								</div>
 							</div>
 						{/each}
@@ -499,37 +585,23 @@
 {/if}
 
 <style>
-    @media (max-width: 768px) {
-        .md\:grid-cols-3 {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
+    .break-words {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
 
-        .gap-4 {
-            gap: 0.75rem;
-        }
+    .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-        button {
-            min-height: 44px;
-        }
+    .min-w-0 {
+        min-width: 0;
+    }
 
-        .break-words {
-            word-wrap: break-word;
-            word-break: break-word;
-            overflow-wrap: break-word;
-        }
-
-        .truncate {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .min-w-0 {
-            min-width: 0;
-        }
-
-        .overflow-hidden {
-            overflow: hidden;
-        }
+    .overflow-hidden {
+        overflow: hidden;
     }
 </style>

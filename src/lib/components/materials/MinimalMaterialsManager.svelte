@@ -1,4 +1,4 @@
-<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - VERSION COMPLÈTE CORRIGÉE -->
+<!-- src/lib/components/materials/MinimalMaterialsManager.svelte - MOBILE ACTIONS FIXED -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import {
@@ -56,7 +56,10 @@
 	// State for selected materials per piece
 	let selectedMaterials: Record<number, number | null> = {};
 
-	// Enhanced responsive detection - IDENTIQUE à General Files
+	// Auto-refresh périodique
+	let refreshInterval: NodeJS.Timer | null = null;
+
+	// Enhanced responsive detection
 	const checkResponsive = () => {
 		if (browser) {
 			windowWidth = window.innerWidth;
@@ -65,21 +68,17 @@
 		}
 	};
 
-	// ✅ NOUVEAU : Auto-refresh périodique pour éviter la désynchronisation
-	let refreshInterval: NodeJS.Timer | null = null;
-
 	onMount(async () => {
 		checkResponsive();
 		if (browser) {
 			window.addEventListener('resize', checkResponsive);
 
-			// ✅ ÉCOUTER les changements de sélection matériel
+			// Écouter les changements de sélection matériel
 			window.addEventListener('materialSelectionChanged', handleMaterialSelectionChange);
 
-			// ✅ AUTO-REFRESH périodique (toutes les 30 secondes)
+			// Auto-refresh périodique (toutes les 30 secondes)
 			refreshInterval = setInterval(async () => {
 				if (selectedPiece && !showCreateForm && !showUploader) {
-					console.log('🔄 Auto-refreshing material selections...');
 					await loadSelectedMaterialForPiece(selectedPiece.id);
 				}
 			}, 30000);
@@ -100,13 +99,12 @@
 		};
 	});
 
-	// ✅ NOUVEAU : Gestionnaire d'événements de changement
+	// Gestionnaire d'événements de changement
 	function handleMaterialSelectionChange(event: CustomEvent) {
 		const { pieceId, materialId } = event.detail;
 
 		// Mettre à jour seulement si c'est la pièce actuelle
 		if (selectedPiece && selectedPiece.id === pieceId) {
-			console.log(`🔄 Updating selection for current piece ${pieceId}: ${materialId}`);
 			selectedMaterials[pieceId] = materialId;
 			selectedMaterials = { ...selectedMaterials };
 		}
@@ -117,25 +115,20 @@
 			let pieces_data = [];
 
 			if (projectId) {
-				// ✅ CORRECTION : Si on a un projectId, charger seulement les pièces de ce projet
-				console.log('🔄 Loading pieces for project:', projectId);
+				// Si on a un projectId, charger seulement les pièces de ce projet
 				const projectResponse = await fetch(`/api/projects/${projectId}`);
 				if (projectResponse.ok) {
 					const projectData = await projectResponse.json();
 					pieces_data = projectData.pieces || [];
-					console.log('✅ Loaded project pieces:', pieces_data.length);
 				} else {
-					console.error('❌ Failed to load project data');
 					pieces_data = [];
 				}
 			} else {
-				// ✅ Si pas de projectId, charger toutes les pièces (comportement général)
-				console.log('🔄 Loading all pieces (no project specified)');
+				// Si pas de projectId, charger toutes les pièces
 				const response = await fetch('/api/pieces?limit=1000&page=1&filter=&orderBy=name&order=asc');
 				if (response.ok) {
 					const data = await response.json();
 					pieces_data = data.data || data || [];
-					console.log('✅ Loaded all pieces:', pieces_data.length);
 				}
 			}
 
@@ -146,13 +139,12 @@
 		}
 	}
 
-	// ✅ CORRECTION : Améliorer loadMaterialsForPiece avec better error handling
+	// Améliorer loadMaterialsForPiece avec better error handling
 	async function loadMaterialsForPiece(piece: any) {
 		try {
 			selectedPiece = piece;
-			console.log(`🔄 Loading materials for piece: ${piece.name}`);
 
-			// ✅ PARALLEL loading pour de meilleures performances
+			// Parallel loading pour de meilleures performances
 			const [materialsResponse, selectedMaterialPromise] = await Promise.allSettled([
 				fetch(`/api/materials/piece/${piece.id}`),
 				loadSelectedMaterialForPiece(piece.id)
@@ -161,7 +153,6 @@
 			// Gérer les matériels
 			if (materialsResponse.status === 'fulfilled' && materialsResponse.value.ok) {
 				const materialsData = await materialsResponse.value.json();
-				console.log(`📦 Loaded ${materialsData.length} materials from API`);
 
 				// Load files for each material en parallèle
 				const materialPromises = materialsData.map(async (material) => {
@@ -197,24 +188,22 @@
 					expandedMaterials = new Set(expandedMaterials);
 				}
 			} else {
-				console.error('❌ Failed to load materials');
+				console.error('Failed to load materials');
 				materials = [];
 			}
 
 		} catch (error) {
-			console.error('❌ Error loading materials for piece:', piece.id, error);
+			console.error('Error loading materials for piece:', piece.id, error);
 			materials = [];
 			selectedMaterials[piece.id] = null;
 			selectedMaterials = { ...selectedMaterials };
 		}
 	}
 
-	// ✅ CORRECTION : Fonction loadSelectedMaterialForPiece avec retry
+	// Fonction loadSelectedMaterialForPiece avec retry
 	async function loadSelectedMaterialForPiece(pieceId: number, retryCount = 0): Promise<void> {
 		try {
-			console.log(`🔍 Loading selected material for piece ${pieceId} (attempt ${retryCount + 1})`);
-
-			// ✅ TIMEOUT CONTRÔLÉ
+			// Timeout contrôlé
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
@@ -227,9 +216,9 @@
 			if (response.ok) {
 				const contentType = response.headers.get('content-type');
 
-				// ✅ VÉRIFIER que c'est du JSON valide
+				// Vérifier que c'est du JSON valide
 				if (!contentType || !contentType.includes('application/json')) {
-					console.warn(`⚠️ Invalid response format for piece ${pieceId}:`, contentType);
+					console.warn(`Invalid response format for piece ${pieceId}:`, contentType);
 					selectedMaterials[pieceId] = null;
 					selectedMaterials = { ...selectedMaterials };
 					return;
@@ -237,36 +226,33 @@
 
 				const result = await response.json();
 
-				// ✅ VALIDATION des données reçues
+				// Validation des données reçues
 				if (result && typeof result === 'object') {
 					selectedMaterials[pieceId] = result.materialId;
-					console.log(`✅ Selected material for piece ${pieceId}:`, result.materialId);
 				} else {
-					console.warn(`⚠️ Invalid data structure for piece ${pieceId}:`, result);
+					console.warn(`Invalid data structure for piece ${pieceId}:`, result);
 					selectedMaterials[pieceId] = null;
 				}
 			} else {
-				console.log(`❌ No selected material found for piece ${pieceId} (${response.status})`);
 				selectedMaterials[pieceId] = null;
 			}
 
 			selectedMaterials = { ...selectedMaterials };
 
 		} catch (error) {
-			console.error('❌ Error loading selected material for piece:', pieceId, error);
+			console.error('Error loading selected material for piece:', pieceId, error);
 
-			// ✅ GESTION SPÉCIFIQUE DES ERREURS
+			// Gestion spécifique des erreurs
 			if (error.name === 'AbortError') {
-				console.warn(`⏰ Request timeout for piece ${pieceId}`);
+				console.warn(`Request timeout for piece ${pieceId}`);
 			} else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-				console.warn(`🌐 Network error for piece ${pieceId}`);
+				console.warn(`Network error for piece ${pieceId}`);
 			} else {
-				console.error(`💥 Unexpected error for piece ${pieceId}:`, error);
+				console.error(`Unexpected error for piece ${pieceId}:`, error);
 			}
 
-			// ✅ RETRY logic plus intelligent
+			// Retry logic plus intelligent
 			if (retryCount < 2 && error.name !== 'AbortError') {
-				console.log(`🔄 Retrying load for piece ${pieceId} in ${(retryCount + 1) * 2}s...`);
 				setTimeout(() => {
 					loadSelectedMaterialForPiece(pieceId, retryCount + 1);
 				}, (retryCount + 1) * 2000); // Délai progressif
@@ -277,17 +263,15 @@
 		}
 	}
 
-	// ✅ CORRECTION : Fonction selectMaterial avec sauvegarde persistante
+	// Fonction selectMaterial avec sauvegarde persistante
 	async function selectMaterial(pieceId: number, materialId: number | null) {
 		try {
-			console.log(`🎯 Selecting material ${materialId} for piece ${pieceId}`);
-
-			// ✅ IMPORTANT : Mettre à jour l'état local AVANT l'appel backend
+			// Important : Mettre à jour l'état local AVANT l'appel backend
 			const previousSelection = selectedMaterials[pieceId];
 			selectedMaterials[pieceId] = materialId;
 			selectedMaterials = { ...selectedMaterials };
 
-			// ✅ APPEL BACKEND avec timeout contrôlé
+			// Appel backend avec timeout contrôlé
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
@@ -303,22 +287,20 @@
 			if (response.ok) {
 				const contentType = response.headers.get('content-type');
 
-				// ✅ VÉRIFIER le format de réponse
+				// Vérifier le format de réponse
 				if (!contentType || !contentType.includes('application/json')) {
-					console.error('❌ Invalid response format from backend');
+					console.error('Invalid response format from backend');
 					throw new Error('Invalid response format');
 				}
 
 				const result = await response.json();
 
-				// ✅ VALIDATION des données de réponse
+				// Validation des données de réponse
 				if (result && result.success) {
-					console.log('✅ Material selection saved successfully');
-
-					// ✅ DISPATCH des événements pour synchronisation
+					// Dispatch des événements pour synchronisation
 					dispatch('materialsUpdated');
 
-					// ✅ NOTIFICATION globale pour callsheets et status
+					// Notification globale pour callsheets et status
 					window.dispatchEvent(new CustomEvent('materialSelectionChanged', {
 						detail: {
 							pieceId,
@@ -328,7 +310,7 @@
 						}
 					}));
 
-					// ✅ FORCER le rechargement des données si c'est un projet
+					// Forcer le rechargement des données si c'est un projet
 					if (projectId) {
 						await syncProjectMaterialSelections();
 					}
@@ -337,7 +319,7 @@
 				}
 
 			} else {
-				// ✅ GESTION D'ERREUR BACKEND
+				// Gestion d'erreur backend
 				let errorMessage = 'Backend error';
 				try {
 					const errorData = await response.json();
@@ -349,12 +331,12 @@
 				throw new Error(errorMessage);
 			}
 		} catch (error) {
-			// ✅ ROLLBACK SYSTÉMATIQUE en cas d'erreur
-			console.error('❌ Error selecting material, rolling back:', error);
+			// Rollback systématique en cas d'erreur
+			console.error('Error selecting material, rolling back:', error);
 			selectedMaterials[pieceId] = previousSelection;
 			selectedMaterials = { ...selectedMaterials };
 
-			// ✅ MESSAGES D'ERREUR SPÉCIFIQUES
+			// Messages d'erreur spécifiques
 			let userMessage = 'Error selecting material';
 			if (error.name === 'AbortError') {
 				userMessage = 'Request timeout - please try again';
@@ -368,13 +350,11 @@
 		}
 	}
 
-	// ✅ NOUVEAU : Synchronisation avec le projet si applicable
+	// Synchronisation avec le projet si applicable
 	async function syncProjectMaterialSelections() {
 		if (!projectId) return;
 
 		try {
-			console.log('🔄 Syncing project material selections...');
-
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s pour sync
 
@@ -392,21 +372,21 @@
 				if (contentType && contentType.includes('application/json')) {
 					const result = await response.json();
 					if (result.success) {
-						console.log('✅ Project material selections synced successfully');
+						// Sync successful
 					} else {
-						console.warn('⚠️ Sync completed with warnings:', result.errors);
+						console.warn('Sync completed with warnings:', result.errors);
 					}
 				} else {
-					console.warn('⚠️ Sync response format invalid');
+					console.warn('Sync response format invalid');
 				}
 			} else {
-				console.warn(`⚠️ Could not sync project selections: HTTP ${response.status}`);
+				console.warn(`Could not sync project selections: HTTP ${response.status}`);
 			}
 		} catch (error) {
 			if (error.name === 'AbortError') {
-				console.warn('⚠️ Sync timeout - continuing anyway');
+				console.warn('Sync timeout - continuing anyway');
 			} else {
-				console.warn('⚠️ Error syncing project selections:', error);
+				console.warn('Error syncing project selections:', error);
 			}
 		}
 	}
@@ -484,7 +464,7 @@
 		}
 	}
 
-	// ✅ IDENTIQUE à General Files : File management functions
+	// File management functions
 	function formatFileSize(bytes: number): string {
 		if (bytes === 0) return '0 B';
 		const k = 1024;
@@ -577,7 +557,6 @@
 
 	async function downloadMaterialFile(fileId: number, fileName: string) {
 		try {
-			console.log('📥 Downloading file:', fileId, fileName);
 			const response = await fetch(`/api/files/download/${fileId}`);
 			if (response.ok) {
 				const blob = await response.blob();
@@ -589,13 +568,12 @@
 				a.click();
 				document.body.removeChild(a);
 				URL.revokeObjectURL(url);
-				console.log('✅ Download completed');
 			} else {
-				console.error('❌ Download failed:', response.status);
+				console.error('Download failed:', response.status);
 				alert('Download error');
 			}
 		} catch (error) {
-			console.error('❌ Error downloading file:', error);
+			console.error('Error downloading file:', error);
 			alert('Download error');
 		}
 	}
@@ -606,36 +584,31 @@
 		}
 
 		try {
-			console.log('🗑️ Deleting file:', fileId, fileName);
 			const response = await fetch(`/api/files/${fileId}`, {
 				method: 'DELETE'
 			});
 
 			if (response.ok) {
-				console.log('✅ File deleted successfully');
 				await loadMaterialsForPiece(selectedPiece);
 				dispatch('materialsUpdated');
 			} else {
-				console.error('❌ Delete failed:', response.status);
+				console.error('Delete failed:', response.status);
 				alert('Error deleting file');
 			}
 		} catch (error) {
-			console.error('❌ Error deleting file:', error);
+			console.error('Error deleting file:', error);
 			alert('Error deleting file');
 		}
 	}
 
-	// Upload functions - IDENTIQUE à General Files
+	// Upload functions
 	function openUploader(material: any) {
 		selectedMaterialForUpload = material;
 		showUploader = true;
-		console.log('📤 Opening uploader for material:', material.name);
 	}
 
 	async function handleFileUpload(files: FileList) {
 		if (!selectedMaterialForUpload) return;
-
-		console.log('📤 Uploading files to material:', selectedMaterialForUpload.name);
 
 		const formData = new FormData();
 		Array.from(files).forEach(file => {
@@ -649,18 +622,17 @@
 			});
 
 			if (response.ok) {
-				console.log('✅ Upload successful!');
 				await loadMaterialsForPiece(selectedPiece);
 				showUploader = false;
 				selectedMaterialForUpload = null;
 				dispatch('materialsUpdated');
 			} else {
-				console.error('❌ Upload failed:', response.status);
+				console.error('Upload failed:', response.status);
 				const error = await response.json();
 				alert('Upload error: ' + (error.message || 'Unknown error'));
 			}
 		} catch (error) {
-			console.error('❌ Upload error:', error);
+			console.error('Upload error:', error);
 			alert('Error uploading files');
 		}
 	}
@@ -679,11 +651,9 @@
 	function getSelectedMaterial(pieceId: number): any | null {
 		const materialId = selectedMaterials[pieceId];
 		if (!materialId) {
-			console.log(`❌ No material selected for piece ${pieceId}`);
 			return null;
 		}
 		const material = materials.find(m => m.id === materialId) || null;
-		console.log(`✅ Selected material for piece ${pieceId}:`, material?.name || 'Not found');
 		return material;
 	}
 
@@ -696,14 +666,13 @@
 		expandedMaterials = new Set(expandedMaterials);
 	}
 
-	// Dynamic grid for responsive design - IDENTIQUE à General Files
+	// Dynamic grid for responsive design
 	$: gridCols = isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3';
 </script>
 
-<!-- ✅ STRUCTURE IDENTIQUE à General Files -->
 <div class="space-y-{isMobile ? '3' : '4'} {isMobile ? 'px-1' : ''} overflow-hidden">
 	{#if isLoading}
-		<!-- ✅ IDENTIQUE à General Files : Loading State -->
+		<!-- Loading State -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 			<div class="flex justify-center items-center h-64">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9]"></div>
@@ -711,7 +680,7 @@
 			</div>
 		</div>
 	{:else if !selectedPiece}
-		<!-- ✅ IDENTIQUE à General Files : Piece selection -->
+		<!-- Piece selection -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '6'}">
 			<div class="flex items-center space-x-3 mb-{isMobile ? '4' : '6'}">
 				<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
@@ -724,7 +693,7 @@
 			</div>
 
 			{#if pieces.length === 0}
-				<!-- ✅ IDENTIQUE à General Files : Empty state -->
+				<!-- Empty state -->
 				<div class="text-center py-{isMobile ? '8' : '12'}">
 					<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
 						<Music class="text-gray-400" size={isMobile ? 32 : 48} />
@@ -745,7 +714,7 @@
 					</p>
 				</div>
 			{:else}
-				<!-- ✅ IDENTIQUE à General Files : Grid layout -->
+				<!-- Grid layout -->
 				<div class="grid {gridCols} gap-{isMobile ? '3' : '4'}">
 					{#each pieces as piece}
 						<button
@@ -772,9 +741,9 @@
 			{/if}
 		</div>
 	{:else}
-		<!-- ✅ IDENTIQUE à General Files : Material management -->
+		<!-- Material management -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '4'} overflow-hidden">
-			<!-- ✅ IDENTIQUE à General Files : Header avec navigation -->
+			<!-- Header avec navigation -->
 			<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-{isMobile ? '4' : '6'} gap-{isMobile ? '3' : '4'}">
 				<div class="flex items-center gap-3 {isMobile ? 'flex-wrap' : ''}">
 					<button
@@ -790,7 +759,7 @@
 						<h2 class="font-bold text-lg text-gray-700">MATERIALS & SELECTION</h2>
 						<p class="text-sm text-gray-500 break-words">{getPieceName(selectedPiece)}</p>
 
-						<!-- ✅ Selection status -->
+						<!-- Selection status -->
 						{#if selectedPiece}
 							{@const currentSelectedMaterial = getSelectedMaterial(selectedPiece.id)}
 							{#if currentSelectedMaterial}
@@ -823,7 +792,7 @@
 		</div>
 
 		{#if materials.length === 0}
-			<!-- ✅ IDENTIQUE à General Files : Empty State -->
+			<!-- Empty State -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div class="text-center py-{isMobile ? '8' : '12'}">
 					<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
@@ -841,7 +810,7 @@
 				</div>
 			</div>
 		{:else}
-			<!-- ✅ IDENTIQUE à General Files : Materials List -->
+			<!-- Materials List -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 				<div class="flex items-center space-x-3 mb-6">
 					<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
@@ -862,10 +831,10 @@
 							isSelected ? 'ring-2 ring-blue-500 bg-blue-50' :
 							material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : ''
 						}">
-							<!-- ✅ IDENTIQUE à General Files : Main Item -->
+							<!-- Main Item -->
 							<div class="flex items-center justify-between p-{isMobile ? '3' : '4'} cursor-pointer group">
 								<div class="flex items-center gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
-									<!-- ✅ Selection checkbox comme dans General Files -->
+									<!-- Selection checkbox -->
 									<div class="flex-shrink-0">
 										<button
 											class="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -880,12 +849,12 @@
 										</button>
 									</div>
 
-									<!-- ✅ IDENTIQUE à General Files : Material icon -->
+									<!-- Material icon -->
 									<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
 										<Package size={isMobile ? 20 : 24} class="text-purple-600" />
 									</div>
 
-									<!-- ✅ IDENTIQUE à General Files : Item Info -->
+									<!-- Item Info -->
 									<div class="flex-1 min-w-0 overflow-hidden">
 										<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-2">
 											<div class="flex items-center gap-2">
@@ -906,7 +875,7 @@
 											{/if}
 										</div>
 
-										<!-- ✅ IDENTIQUE à General Files : Details Grid -->
+										<!-- Details Grid -->
 										<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-3 gap-4'} text-sm overflow-hidden">
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Type:</span>
@@ -932,29 +901,27 @@
 									</div>
 								</div>
 
-								<!-- ✅ IDENTIQUE à General Files : Actions -->
-								{#if !isMobile}
-									<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-										<button
-											class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
-											on:click|stopPropagation={() => openUploader(material)}
-											title="Upload Files"
-										>
-											<Upload size={16} />
-										</button>
+								<!-- MOBILE-VISIBLE Actions on the right -->
+								<div class="flex items-center gap-2 flex-shrink-0">
+									<button
+										class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
+										on:click|stopPropagation={() => openUploader(material)}
+										title="Upload Files"
+									>
+										<Upload size={16} />
+									</button>
 
-										<button
-											class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
-											on:click|stopPropagation={() => deleteMaterial(material)}
-											title="Delete"
-										>
-											<Trash2 size={16} />
-										</button>
-									</div>
-								{/if}
+									<button
+										class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+										on:click|stopPropagation={() => deleteMaterial(material)}
+										title="Delete"
+									>
+										<Trash2 size={16} />
+									</button>
+								</div>
 							</div>
 
-							<!-- ✅ IDENTIQUE à General Files : Files section expansible -->
+							<!-- Files section expansible -->
 							{#if material.files && material.files.length > 0}
 								<div class="border-t-2 border-gray-300 bg-gradient-to-r from-purple-50 to-blue-50 overflow-hidden">
 									<div class="p-{isMobile ? '3' : '4'}">
@@ -1001,7 +968,8 @@
 															</div>
 														</div>
 
-														<div class="flex items-center gap-1 {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity flex-shrink-0">
+														<!-- MOBILE-ALWAYS-VISIBLE file actions -->
+														<div class="flex items-center gap-1 flex-shrink-0">
 															<button
 																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
 																on:click={() => previewMaterialFile(file)}
@@ -1028,7 +996,7 @@
 												{/each}
 											</div>
 
-											<!-- ✅ Upload button in files section -->
+											<!-- Upload button in files section -->
 											<div class="mt-4 pt-3 border-t border-gray-200">
 												<button
 													class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md {isMobile ? 'w-full justify-center' : ''}"
@@ -1042,7 +1010,7 @@
 									</div>
 								</div>
 							{:else}
-								<!-- ✅ IDENTIQUE à General Files : Empty files section -->
+								<!-- Empty files section -->
 								<div class="border-t-2 border-gray-300 bg-gray-50 overflow-hidden">
 									<div class="p-{isMobile ? '4' : '6'} text-center">
 										<FileText class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
@@ -1066,11 +1034,11 @@
 	{/if}
 </div>
 
-<!-- ✅ IDENTIQUE à General Files : Creation modal -->
+<!-- Creation modal -->
 {#if showCreateForm}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-{isMobile ? '2' : '4'}">
 		<div class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-			<!-- ✅ IDENTIQUE : Header -->
+			<!-- Header -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-t-[10px] p-4">
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-3">
@@ -1091,7 +1059,7 @@
 				</div>
 			</div>
 
-			<!-- ✅ IDENTIQUE : Content -->
+			<!-- Content -->
 			<div class="p-4 space-y-4">
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="space-y-4">
@@ -1171,7 +1139,7 @@
 					</div>
 				</div>
 
-				<!-- ✅ IDENTIQUE : Footer Actions -->
+				<!-- Footer Actions -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
 						<div class="text-sm text-gray-600 font-semibold">
@@ -1202,7 +1170,7 @@
 	</div>
 {/if}
 
-<!-- ✅ IDENTIQUE à General Files : Upload modal -->
+<!-- Upload modal -->
 {#if showUploader && selectedMaterialForUpload}
 	<FileUploader
 		on:upload={(e) => handleFileUpload(e.detail)}
@@ -1213,7 +1181,7 @@
 	/>
 {/if}
 
-<!-- ✅ IDENTIQUE à General Files : Preview modal -->
+<!-- Preview modal -->
 {#if showPreview && previewFile}
 	<FilePreview
 		fileId={previewFile.id}
@@ -1226,9 +1194,9 @@
 	/>
 {/if}
 
-<!-- ✅ IDENTIQUE à General Files : CSS Styles -->
+<!-- CSS Styles -->
 <style>
-    /* Mobile-specific responsive adjustments - EXACT COPY from files page */
+    /* Mobile-specific responsive adjustments */
     @media (max-width: 768px) {
         :global(.md\:grid-cols-3) {
             grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -1276,10 +1244,6 @@
             transition: none;
         }
 
-        .group-hover\:opacity-100 {
-            opacity: 1;
-        }
-
         /* Force text wrapping and prevent overflow */
         .break-words {
             word-wrap: break-word;
@@ -1302,7 +1266,7 @@
         }
     }
 
-    /* Tablet adjustments - EXACT COPY */
+    /* Tablet adjustments */
     @media (min-width: 769px) and (max-width: 1024px) {
         :global(.lg\:grid-cols-3) {
             grid-template-columns: repeat(2, minmax(0, 1fr));

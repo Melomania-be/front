@@ -1,4 +1,4 @@
-// src/routes/api/pieces/[pieceId]/select-material/+server.ts - VERSION CORRIGÉE
+// src/routes/api/pieces/[pieceId]/select-material/+server.ts - Version corrigée
 
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
@@ -9,9 +9,7 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 		const { materialId } = await request.json();
 		const pieceId = params.pieceId;
 
-		console.log(`🎯 Frontend: Selecting material ${materialId} for piece ${pieceId}`);
-
-		// ✅ APPEL BACKEND avec timeout et meilleure gestion d'erreur
+		// Appel backend avec timeout et meilleure gestion d'erreur
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
@@ -28,10 +26,10 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 		clearTimeout(timeoutId);
 
 		if (response.ok) {
-			// ✅ VÉRIFIER que la réponse est du JSON valide
+			// Vérifier que la réponse est du JSON valide
 			const contentType = response.headers.get('content-type');
 			if (!contentType || !contentType.includes('application/json')) {
-				console.error('❌ Frontend: Response is not JSON:', contentType);
+				console.error('Response is not JSON:', contentType);
 				return new Response(JSON.stringify({
 					success: false,
 					error: 'Invalid response format from backend'
@@ -42,7 +40,6 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 			}
 
 			const result = await response.json();
-			console.log('✅ Frontend: Material selection saved successfully');
 
 			return new Response(JSON.stringify(result), {
 				status: 200,
@@ -50,7 +47,7 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 			});
 		} else {
 			const errorText = await response.text();
-			console.error('❌ Frontend: Backend error selecting material:', errorText);
+			console.error('Backend error selecting material:', errorText);
 
 			return new Response(JSON.stringify({
 				success: false,
@@ -64,7 +61,7 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 		}
 
 	} catch (error) {
-		console.error('❌ Frontend: Error in material selection route:', error);
+		console.error('Error in material selection route:', error);
 
 		if (error.name === 'AbortError') {
 			return new Response(JSON.stringify({
@@ -92,9 +89,7 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 	try {
 		const pieceId = params.pieceId;
 
-		console.log(`🔍 Frontend: Getting selected material for piece ${pieceId}`);
-
-		// ✅ APPEL BACKEND avec timeout
+		// Appel backend avec timeout
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -109,10 +104,10 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		clearTimeout(timeoutId);
 
 		if (response.ok) {
-			// ✅ VÉRIFIER que la réponse est du JSON valide
+			// Vérifier que la réponse est du JSON valide
 			const contentType = response.headers.get('content-type');
 			if (!contentType || !contentType.includes('application/json')) {
-				console.error('❌ Frontend: Response is not JSON:', contentType);
+				console.error('Response is not JSON:', contentType);
 				return new Response(JSON.stringify({
 					materialId: null,
 					error: 'Invalid response format'
@@ -123,14 +118,12 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 			}
 
 			const result = await response.json();
-			console.log(`✅ Frontend: Retrieved material selection: ${result.materialId}`);
 
 			return new Response(JSON.stringify(result), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
 			});
 		} else {
-			console.warn(`⚠️ Frontend: No selection found for piece ${pieceId} (${response.status})`);
 			return new Response(JSON.stringify({ materialId: null }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
@@ -138,7 +131,7 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		}
 
 	} catch (error) {
-		console.error('❌ Frontend: Error getting material selection:', error);
+		console.error('Error getting material selection:', error);
 
 		if (error.name === 'AbortError') {
 			return new Response(JSON.stringify({

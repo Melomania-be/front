@@ -15,7 +15,7 @@
 	let expandedPieces = new Set<number>();
 	let searchQuery = '';
 
-	// ✅ NOUVEAU : Stocker uniquement les fichiers des matériels sélectionnés pour chaque pièce
+	// Stocker uniquement les fichiers des matériels sélectionnés pour chaque pièce
 	let selectedMaterialFiles: Record<number, any[]> = {};
 	let isLoadingMaterials = false;
 
@@ -24,7 +24,7 @@
 		await loadSelectedMaterialFiles();
 	});
 
-	// ✅ NOUVELLE FONCTION : Charger uniquement les fichiers des matériels sélectionnés
+	// Charger uniquement les fichiers des matériels sélectionnés
 	async function loadSelectedMaterialFiles() {
 		if (!callsheet.project?.pieces) return;
 
@@ -32,8 +32,6 @@
 
 		try {
 			for (const piece of callsheet.project.pieces) {
-				console.log(`📦 Loading files for piece: ${piece.name} (ID: ${piece.id})`);
-
 				// 1. Récupérer le matériel sélectionné pour cette pièce
 				const selectedResponse = await fetch(`/api/pieces/${piece.id}/select-material`);
 
@@ -47,21 +45,17 @@
 						if (filesResponse.ok) {
 							const files = await filesResponse.json();
 							selectedMaterialFiles[piece.id] = Array.isArray(files) ? files : [];
-							console.log(`✅ Loaded ${selectedMaterialFiles[piece.id].length} files for piece ${piece.name}`);
 						} else {
 							selectedMaterialFiles[piece.id] = [];
 						}
 					} else {
-						console.log(`⚠️ No material selected for piece ${piece.name}`);
 						selectedMaterialFiles[piece.id] = [];
 					}
 				} else {
-					console.log(`❌ Failed to get selected material for piece ${piece.id}`);
 					selectedMaterialFiles[piece.id] = [];
 				}
 			}
 
-			console.log('📊 Final selected material files:', selectedMaterialFiles);
 			selectedMaterialFiles = { ...selectedMaterialFiles }; // Force reactivity
 		} catch (error) {
 			console.error('Error loading selected material files:', error);
@@ -89,8 +83,6 @@
 		downloadErrors = downloadErrors;
 
 		try {
-			console.log(`Starting download for file ${fileId}: ${fileName}`);
-
 			const response = await fetch(`/api/files/download/${fileId}`);
 
 			if (!response.ok) {
@@ -106,8 +98,6 @@
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
-
-			console.log(`Download completed for: ${fileName}`);
 		} catch (error) {
 			console.error('Download error:', error);
 			downloadErrors.set(fileId, error.message);
@@ -148,7 +138,7 @@
 		}
 	}
 
-	// ✅ TOUJOURS retourner la couleur grise pour les fichiers
+	// Toujours retourner la couleur grise pour les fichiers
 	function getFileColor(fileName: string) {
 		return 'text-gray-700 bg-gray-100 border-gray-300';
 	}
@@ -170,7 +160,7 @@
 		);
 	}
 
-	// ✅ NOUVELLE FONCTION : Obtenir les fichiers du matériel sélectionné pour une pièce
+	// Obtenir les fichiers du matériel sélectionné pour une pièce
 	function getSelectedMaterialFiles(pieceId: number): any[] {
 		return selectedMaterialFiles[pieceId] || [];
 	}
@@ -208,7 +198,7 @@
 				{@const isExpanded = expandedPieces.has(piece.id)}
 
 				<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-					<!-- En-tête de la pièce - FOCUS SUR LA PIÈCE UNIQUEMENT -->
+					<!-- En-tête de la pièce - Focus sur la pièce uniquement -->
 					<div class="p-3 sm:p-2 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
 						<button
 							class="w-full flex items-center justify-between text-left hover:bg-white hover:bg-opacity-50 rounded p-2 transition-colors"
@@ -224,7 +214,7 @@
 										{/if}
 									</div>
 									<div class="flex-1 min-w-0">
-										<!-- ✅ FOCUS : Informations de la pièce uniquement -->
+										<!-- Focus : Informations de la pièce uniquement -->
 										<h3 class="font-semibold text-lg text-gray-900 dark:text-white truncate">
 											{piece.name}
 										</h3>
@@ -241,7 +231,7 @@
 								</div>
 							</div>
 
-							<!-- ✅ SIMPLE : Juste le nombre de fichiers -->
+							<!-- Simple : Juste le nombre de fichiers -->
 							<div class="flex items-center gap-2 text-sm flex-shrink-0">
 								{#if selectedFiles.length > 0}
 									<div class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
@@ -272,7 +262,7 @@
 									</p>
 								</div>
 							{:else}
-								<!-- ✅ SIMPLE : Grille de fichiers avec couleur grise -->
+								<!-- Simple : Grille de fichiers avec couleur grise -->
 								<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 									{#each filteredFiles as file}
 										{@const isDownloading = downloadingFiles.has(file.id)}
