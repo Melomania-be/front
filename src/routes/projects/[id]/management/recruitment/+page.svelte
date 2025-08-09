@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version complète corrigée -->
+<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version simplifiée et corrigée -->
 <script lang="ts">
 	import { page } from '$app/stores'
 	import { onMount } from 'svelte'
@@ -11,7 +11,7 @@
 	import RecruitmentRecommendations from '$lib/components/recruitment/RecruitmentRecommendations.svelte'
 	import ImportContactsModal from '$lib/components/recruitment/ImportContactsModal.svelte'
 	import AddManualContactModal from '$lib/components/recruitment/AddManualContactModal.svelte'
-	import { Plus, Upload, Users, Settings, TrendingUp, UserPlus } from 'lucide-svelte'
+	import { Plus, Upload, Users, Settings } from 'lucide-svelte'
 	import type { Project } from '$lib/types/Project'
 	import type { RecruitmentStats as StatsType, RecruitmentSettings as SettingsType } from '$lib/types'
 
@@ -20,7 +20,6 @@
 	let project: Project | undefined
 	let settings: SettingsType | undefined
 	let stats: StatsType | undefined
-	let pendingRecommendations: number = 0
 	let isMobile = false
 	let activeTab = 'contacts'
 	let loading = true
@@ -30,9 +29,6 @@
 	let showImportModal = false
 	let showAddManualModal = false
 	let showSettingsModal = false
-
-	// Auto-refresh avec intervalle raisonnable
-	let statsRefreshInterval: any
 
 	$: projectId = $page.params.id
 
@@ -50,12 +46,6 @@
 
 		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
 			await loadData()
-
-			// Auto-refresh modéré pour éviter le spam
-			statsRefreshInterval = setInterval(() => {
-				console.log('🔄 Auto-refreshing stats...')
-				fetchStats()
-			}, 30000) // 30 secondes
 		} else {
 			error = 'ID de projet manquant ou invalide'
 		}
@@ -64,9 +54,6 @@
 
 		return () => {
 			window.removeEventListener('resize', checkMobile)
-			if (statsRefreshInterval) {
-				clearInterval(statsRefreshInterval)
-			}
 		}
 	})
 
@@ -170,92 +157,66 @@
 				console.log('📊 Raw stats from API:', data)
 				console.log('📊 Processed stats:', newStats)
 
-				// Mise à jour intelligente des stats
-				if (!stats ||
-					stats.total !== newStats.total ||
-					stats.pending_recommendations !== newStats.pending_recommendations ||
-					JSON.stringify(stats.by_status) !== JSON.stringify(newStats.by_status)) {
-
-					stats = newStats
-					pendingRecommendations = stats.pending_recommendations
-					console.log('✅ Stats updated:', stats)
-				} else {
-					console.log('📊 Stats unchanged, no update needed')
-				}
+				stats = newStats
+				console.log('✅ Stats updated:', stats)
 			} else {
 				console.warn('⚠️ Could not fetch stats, status:', response.status)
-				if (!stats) {
-					stats = {
-						total: 0,
-						by_status: [],
-						pending_recommendations: 0
-					}
-					pendingRecommendations = 0
-				}
-			}
-		} catch (err) {
-			console.error('❌ Error fetching stats:', err)
-			if (!stats) {
 				stats = {
 					total: 0,
 					by_status: [],
 					pending_recommendations: 0
 				}
-				pendingRecommendations = 0
+			}
+		} catch (err) {
+			console.error('❌ Error fetching stats:', err)
+			stats = {
+				total: 0,
+				by_status: [],
+				pending_recommendations: 0
 			}
 		}
 	}
 
+	// ✅ CORRECTION : Handlers avec refresh immédiat
 	function handleSettingsUpdate() {
-		console.log('🔄 Refreshing after settings update...')
-		// Attendre un peu pour laisser le backend se mettre à jour
+		console.log('🔄 Settings updated, refreshing data...')
 		setTimeout(async () => {
-			await fetchSettings()
-			await fetchStats()
-		}, 500)
+			await Promise.all([fetchSettings(), fetchStats()])
+		}, 200)
 	}
 
 	function handleContactChange() {
-		console.log('🔄 Refreshing after contact change...')
-		// Refresh avec debouncing
-		setTimeout(() => {
-			fetchStats()
-		}, 1000)
+		console.log('🔄 Contact changed, refreshing stats...')
+		// ✅ Refresh immédiat des stats quand un contact change
+		fetchStats()
 	}
 
 	function handleRecommendationChange() {
-		console.log('🔄 Refreshing after recommendation change...')
-		setTimeout(() => {
-			fetchStats()
-		}, 1000)
+		console.log('🔄 Recommendation changed, refreshing stats...')
+		fetchStats()
 	}
 
-	// Valeurs sécurisées pour l'affichage
+	// ✅ CORRECTION : Handler pour l'ajout de contact manuel
+	function handleContactAdded(event) {
+		console.log('✅ New contact added:', event.detail)
+		// Refresh immédiat pour voir le nouveau contact
+		handleContactChange()
+	}
+
+	// ✅ CORRECTION : Handler pour l'import de contacts
+	function handleContactsImported(event) {
+		console.log('✅ Contacts imported:', event.detail)
+		// Refresh immédiat pour voir les nouveaux contacts
+		handleContactChange()
+	}
+
+	// Valeurs sécurisées pour l'affichage - simplifiées
 	$: safeStats = stats || { total: 0, by_status: [], pending_recommendations: 0 }
 	$: totalContacts = safeStats.total || 0
 	$: awaitingCount = safeStats.by_status?.find(s => s.status === 'awaiting_response')?.count || 0
 	$: recruitedCount = safeStats.by_status?.find(s => s.status === 'recruited')?.count || 0
 	$: pendingRecs = safeStats.pending_recommendations || 0
 	$: toFollowUpCount = safeStats.by_status?.find(s => s.status === 'to_follow_up')?.count || 0
-	$: notContactedCount = safeStats.by_status?.find(s => s.status === 'not_yet_contacted')?.count || 0
-
-	// Réactivité pour forcer les updates
-	$: if (stats) {
-		pendingRecommendations = stats.pending_recommendations
-	}
-
-	// Debug des stats
-	$: {
-		if (stats) {
-			console.log('📊 Current stats state:', {
-				total: totalContacts,
-				awaiting: awaitingCount,
-				recruited: recruitedCount,
-				pending_recs: pendingRecs,
-				by_status: safeStats.by_status
-			})
-		}
-	}
 </script>
 
 <svelte:head>
@@ -286,75 +247,10 @@
 	<ProjectHeadDisplayer {project} selectedTab={6} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
-		<!-- Header avec statistiques et actions -->
-		<div class="grid {isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'} gap-4 mb-6">
-			<!-- Statistiques rapides avec protection et debug -->
-			<div class="bg-white rounded-lg border-2 border-[#6B9AD9] p-4">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-sm text-gray-600 uppercase font-semibold">Total Contacts</p>
-						<p class="text-2xl font-bold text-[#6B9AD9]">{totalContacts}</p>
-						{#if totalContacts === 0}
-							<p class="text-xs text-gray-400">Aucun contact</p>
-						{/if}
-					</div>
-					<Users class="text-[#6B9AD9]" size={24} />
-				</div>
-			</div>
-
-			<div class="bg-white rounded-lg border-2 border-[#E35656] p-4">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-sm text-gray-600 uppercase font-semibold">En attente</p>
-						<p class="text-2xl font-bold text-[#E35656]">{awaitingCount}</p>
-						{#if toFollowUpCount > 0}
-							<p class="text-xs text-orange-600">+{toFollowUpCount} à relancer</p>
-						{/if}
-					</div>
-					<TrendingUp class="text-[#E35656]" size={24} />
-				</div>
-			</div>
-
-			<div class="bg-white rounded-lg border-2 border-[#28a745] p-4">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-sm text-gray-600 uppercase font-semibold">Recrutés</p>
-						<p class="text-2xl font-bold text-[#28a745]">{recruitedCount}</p>
-						{#if totalContacts > 0}
-							<p class="text-xs text-gray-600">{Math.round((recruitedCount / totalContacts) * 100)}% de succès</p>
-						{/if}
-					</div>
-					<UserPlus class="text-[#28a745]" size={24} />
-				</div>
-			</div>
-
-			<div class="bg-white rounded-lg border-2 border-[#ffc107] p-4">
-				<div class="flex items-center justify-between">
-					<div>
-						<p class="text-sm text-gray-600 uppercase font-semibold">Recommandations</p>
-						<p class="text-2xl font-bold text-[#ffc107]">{pendingRecs}</p>
-						{#if pendingRecs === 0}
-							<p class="text-xs text-gray-400">Aucune en attente</p>
-						{:else}
-							<p class="text-xs text-orange-600">En attente de traitement</p>
-						{/if}
-					</div>
-					<div class="relative">
-						<Users class="text-[#ffc107]" size={24} />
-						{#if pendingRecs > 0}
-							<div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-								{pendingRecs}
-							</div>
-						{/if}
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Actions principales -->
-		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-4 mb-6">
-			<div class="flex {isMobile ? 'flex-col gap-3' : 'items-center justify-between'}">
-				<h1 class="font-bold text-lg uppercase">Gestion du Recrutement</h1>
+		<!-- ✅ CORRECTION : Header simplifié avec une seule rangée de statistiques -->
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 mb-6">
+			<div class="flex {isMobile ? 'flex-col gap-4' : 'items-center justify-between'} mb-6">
+				<h1 class="font-bold text-2xl uppercase">Gestion du Recrutement</h1>
 
 				<div class="flex {isMobile ? 'flex-col' : 'flex-row'} gap-2">
 					<button
@@ -388,6 +284,29 @@
 						<Users size={16} />
 						Importer Projet
 					</button>
+				</div>
+			</div>
+
+			<!-- Statistiques rapides - une seule ligne -->
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+				<div class="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+					<p class="text-lg font-bold text-blue-600">{totalContacts}</p>
+					<p class="text-sm text-blue-600">Total Contacts</p>
+				</div>
+
+				<div class="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+					<p class="text-lg font-bold text-yellow-600">{awaitingCount + toFollowUpCount}</p>
+					<p class="text-sm text-yellow-600">En cours</p>
+				</div>
+
+				<div class="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+					<p class="text-lg font-bold text-green-600">{recruitedCount}</p>
+					<p class="text-sm text-green-600">Recrutés</p>
+				</div>
+
+				<div class="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+					<p class="text-lg font-bold text-purple-600">{pendingRecs}</p>
+					<p class="text-sm text-purple-600">Recommandations</p>
 				</div>
 			</div>
 		</div>
@@ -447,10 +366,7 @@
 		{/if}
 
 		{#if activeTab === 'stats' && !isMobile && stats}
-			<!-- Key pour forcer le re-render -->
-			{#key `${stats.total}-${stats.pending_recommendations}-${JSON.stringify(stats.by_status)}`}
-				<RecruitmentStats {stats} />
-			{/key}
+			<RecruitmentStats {stats} />
 		{/if}
 
 		<!-- Modals -->
@@ -467,7 +383,7 @@
 			<AddManualContactModal
 				{projectId}
 				on:close={() => showAddManualModal = false}
-				on:contactAdded={handleContactChange}
+				on:contactAdded={handleContactAdded}
 			/>
 		{/if}
 
@@ -475,7 +391,7 @@
 			<ImportContactsModal
 				{projectId}
 				on:close={() => showImportModal = false}
-				on:contactsImported={handleContactChange}
+				on:contactsImported={handleContactsImported}
 			/>
 		{/if}
 	</div>
@@ -483,23 +399,4 @@
 	{#if isMobile}
 		<ProjectPhoneDisplayer {project} selectedTab={6} />
 	{/if}
-{/if}
-
-<!-- Debug panel en développement -->
-{#if import.meta.env.DEV}
-	<div class="fixed bottom-4 right-4 bg-black text-white p-2 rounded text-xs max-w-xs">
-		<details>
-			<summary>Debug Stats</summary>
-			<pre>{JSON.stringify({
-				total: totalContacts,
-				awaiting: awaitingCount,
-				recruited: recruitedCount,
-				pending_recs: pendingRecs,
-				settings: settings ? {
-					days: settings.follow_up_days,
-					enabled: settings.auto_follow_up_enabled
-				} : null
-			}, null, 2)}</pre>
-		</details>
-	</div>
 {/if}

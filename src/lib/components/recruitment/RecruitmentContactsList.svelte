@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/RecruitmentContactsList.svelte - Version corrigée -->
+<!-- src/lib/components/recruitment/RecruitmentContactsList.svelte - Version complète corrigée -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { browser } from '$app/environment'
@@ -39,6 +39,7 @@
 	let selectedContacts: number[] = []
 	let showBulkActions = false
 	let isMobile = false
+	let isRefreshing = false
 
 	$: dataHolder = {
 		data: contacts,
@@ -63,8 +64,11 @@
 	}
 
 	async function fetchContacts() {
+		if (isRefreshing) return
+		isRefreshing = true
+
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`
-		optionInUrls += '&filter=' + options.filter
+		optionInUrls += '&filter=' + encodeURIComponent(options.filter)
 		optionInUrls += '&orderBy=' + options.orderBy
 		optionInUrls += '&order=' + options.order
 
@@ -79,7 +83,16 @@
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment${optionInUrls}`)
 			if (response.ok) {
 				const data = await response.json()
-				contacts = Array.isArray(data.data) ? data.data : []
+
+				// ✅ CORRECTION : S'assurer que tous les contacts ont des noms valides
+				const safeContacts = Array.isArray(data.data) ? data.data.map(contact => ({
+					...contact,
+					first_name: contact.first_name || 'Prénom',
+					last_name: contact.last_name || 'Nom',
+					display_name: `${contact.first_name || 'Prénom'} ${contact.last_name || 'Nom'}`.trim()
+				})) : []
+
+				contacts = safeContacts
 				meta = data.meta || {}
 				console.log('✅ Contacts loaded:', contacts.length)
 			} else {
@@ -91,6 +104,8 @@
 			console.error('❌ Error fetching contacts:', error)
 			contacts = []
 			meta = {}
+		} finally {
+			isRefreshing = false
 		}
 	}
 
@@ -107,6 +122,7 @@
 			})
 
 			if (response.ok) {
+				// ✅ CORRECTION : Refresh immédiat pour voir les changements
 				await fetchContacts()
 				dispatch('contactChange')
 			} else {
@@ -130,6 +146,7 @@
 			})
 
 			if (response.ok) {
+				// ✅ CORRECTION : Refresh immédiat pour voir les changements
 				await fetchContacts()
 				dispatch('contactChange')
 			} else {
@@ -202,14 +219,21 @@
 
 		console.log('📧 Preparing to send emails to:', emailContacts.length, 'contacts')
 		console.log('📧 Selected contact IDs:', selectedContacts)
-		console.log('📧 Email contacts:', emailContacts.map(c => ({ id: c.id, email: c.email, name: `${c.first_name} ${c.last_name}` })))
+		console.log('📧 Email contacts:', emailContacts.map(c => ({
+			id: c.id,
+			email: c.email,
+			name: `${c.first_name || ''} ${c.last_name || ''}`.trim()
+		})))
 
 		if (emailContacts.length === 0) {
 			alert('Aucun contact sélectionné n\'a d\'adresse email valide')
 			return
 		}
 
-		if (!confirm(`Envoyer un email de recrutement à ${emailContacts.length} contact(s) ?`)) {
+		// ✅ CORRECTION : Message d'avertissement pour la simulation
+		const confirmMessage = `SIMULATION : Envoyer un email de recrutement à ${emailContacts.length} contact(s) ?\n\n⚠️ En mode développement, les emails seront simulés (pas d'envoi réel).`
+
+		if (!confirm(confirmMessage)) {
 			return
 		}
 
@@ -227,12 +251,18 @@
 				const result = await response.json()
 				console.log('✅ Email result:', result)
 
+				// ✅ CORRECTION : Message adapté à la simulation
 				if (result.success) {
-					alert(`${result.summary?.sent || 0} emails envoyés avec succès sur ${emailContacts.length}`)
+					const message = result.simulation_mode ?
+						`SIMULATION : ${result.summary?.sent || 0} email(s) auraient été envoyés.\nLes status ont été mis à jour.` :
+						`${result.summary?.sent || 0} emails envoyés avec succès sur ${emailContacts.length}`
+
+					alert(message)
 				} else {
-					alert(`Emails envoyés: ${result.sent?.length || 0}, Échecs: ${result.failed?.length || 0}`)
+					alert(`Emails traités: ${result.sent?.length || 0}, Échecs: ${result.failed?.length || 0}`)
 				}
 
+				// ✅ CORRECTION : Refresh immédiat pour voir les changements de statut
 				await fetchContacts()
 				dispatch('contactChange')
 				clearSelection()
@@ -298,7 +328,7 @@
 		return days !== null && days >= settings.follow_up_days
 	}
 
-	// Protection contre les contacts undefined
+	// ✅ CORRECTION : Protection contre les contacts undefined
 	$: safeContacts = Array.isArray(contacts) ? contacts.filter(c => c && c.id) : []
 </script>
 
@@ -313,6 +343,7 @@
 					<button
 						on:click={selectAllContacts}
 						class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+						disabled={isRefreshing}
 					>
 						Tout sélectionner
 					</button>
@@ -338,25 +369,29 @@
 					<button
 						on:click={sendBulkEmails}
 						class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+						disabled={isRefreshing}
 					>
 						<Mail size={14} class="inline mr-1" />
-						Envoyer emails
+						Envoyer emails (SIMULATION)
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('awaiting_response')}
 						class="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700"
+						disabled={isRefreshing}
 					>
 						Marquer "En attente"
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('not_available')}
 						class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+						disabled={isRefreshing}
 					>
 						Marquer "Non disponible"
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('recruited')}
 						class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+						disabled={isRefreshing}
 					>
 						Marquer "Recruté"
 					</button>
@@ -364,6 +399,14 @@
 			</div>
 		{/if}
 	</div>
+
+	<!-- ✅ CORRECTION : Indicateur de chargement -->
+	{#if isRefreshing}
+		<div class="p-4 text-center">
+			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B9AD9] mx-auto mb-2"></div>
+			<p class="text-sm text-gray-600">Mise à jour en cours...</p>
+		</div>
+	{/if}
 
 	<SimpleFilterer
 		bind:data={dataHolder}
@@ -382,6 +425,7 @@
 							on:change={(e) => e.target.checked ? selectAllContacts() : clearSelection()}
 							checked={selectedContacts.length === safeContacts.length && safeContacts.length > 0}
 							class="rounded"
+							disabled={isRefreshing}
 						/>
 					</th>
 					<th class="px-4 py-3 text-left font-semibold">Contact</th>
@@ -404,11 +448,15 @@
 								checked={selectedContacts.includes(contact.id)}
 								on:change={() => toggleContactSelection(contact.id)}
 								class="rounded"
+								disabled={isRefreshing}
 							/>
 						</td>
 
 						<td class="px-4 py-3">
-							<div class="font-medium">{contact.first_name} {contact.last_name}</div>
+							<!-- ✅ CORRECTION : Affichage sécurisé des noms -->
+							<div class="font-medium">
+								{contact.first_name || 'Prénom'} {contact.last_name || 'Nom'}
+							</div>
 							<div class="text-sm text-gray-500 space-y-1">
 								{#if contact.email}
 									<div class="flex items-center gap-1">
@@ -497,7 +545,7 @@
 				</tbody>
 			</table>
 
-			{#if safeContacts.length === 0}
+			{#if safeContacts.length === 0 && !isRefreshing}
 				<div class="text-center py-8 text-gray-500">
 					<Users size={48} class="mx-auto mb-4 opacity-50" />
 					<p>Aucun contact de recrutement pour le moment.</p>

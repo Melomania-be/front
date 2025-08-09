@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/AddManualContactModal.svelte -->
+<!-- src/lib/components/recruitment/AddManualContactModal.svelte - Version corrigée -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, UserPlus, AlertTriangle } from 'lucide-svelte'
@@ -38,21 +38,27 @@
 	}
 
 	async function saveContact() {
-		// Validation
+		// ✅ CORRECTION : Validation renforcée
 		errors = {}
 
-		if (!formData.first_name.trim()) {
+		// Validation des champs requis avec trim
+		const firstName = formData.first_name.trim()
+		const lastName = formData.last_name.trim()
+
+		if (!firstName) {
 			errors.first_name = 'Le prénom est requis'
 		}
 
-		if (!formData.last_name.trim()) {
+		if (!lastName) {
 			errors.last_name = 'Le nom est requis'
 		}
 
+		// Validation de l'email si fourni
 		if (formData.email && !isValidEmail(formData.email)) {
 			errors.email = 'Format d\'email invalide'
 		}
 
+		// Au moins un moyen de contact est requis
 		if (!formData.email && !formData.phone && !formData.messenger) {
 			errors.contact = 'Au moins un moyen de contact est requis (email, téléphone ou messenger)'
 		}
@@ -64,22 +70,43 @@
 		saving = true
 
 		try {
+			// ✅ CORRECTION : S'assurer que les données envoyées sont propres
+			const cleanData = {
+				first_name: firstName,
+				last_name: lastName,
+				email: formData.email.trim() || null,
+				phone: formData.phone.trim() || null,
+				messenger: formData.messenger.trim() || null,
+				section_id: formData.section_id,
+				notes: formData.notes.trim() || null
+			}
+
+			console.log('💾 Saving contact with data:', cleanData)
+
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(formData)
+				body: JSON.stringify(cleanData)
 			})
 
 			if (response.ok) {
 				const newContact = await response.json()
+				console.log('✅ Contact created successfully:', newContact)
+
+				// ✅ CORRECTION : Émettre l'événement pour déclencher le refresh
 				dispatch('contactAdded', newContact)
-				dispatch('close')
+
+				// ✅ CORRECTION : Fermer la modal après un court délai pour laisser le temps au refresh
+				setTimeout(() => {
+					dispatch('close')
+				}, 100)
 			} else {
 				const errorData = await response.json()
-				alert(`Erreur: ${errorData.message || 'Impossible de créer le contact'}`)
+				console.error('❌ Error creating contact:', errorData)
+				alert(`Erreur: ${errorData.error || 'Impossible de créer le contact'}`)
 			}
 		} catch (error) {
-			console.error('Error saving contact:', error)
+			console.error('❌ Error saving contact:', error)
 			alert('Erreur lors de la sauvegarde du contact')
 		} finally {
 			saving = false
@@ -113,6 +140,22 @@
 		}
 		errors = {}
 	}
+
+	// ✅ CORRECTION : Validation en temps réel pour les champs requis
+	$: {
+		if (formData.first_name.trim() && errors.first_name) {
+			delete errors.first_name
+		}
+		if (formData.last_name.trim() && errors.last_name) {
+			delete errors.last_name
+		}
+		if ((formData.email || formData.phone || formData.messenger) && errors.contact) {
+			delete errors.contact
+		}
+		if (formData.email && isValidEmail(formData.email) && errors.email) {
+			delete errors.email
+		}
+	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -128,6 +171,7 @@
 			<button
 				on:click={closeModal}
 				class="text-gray-400 hover:text-gray-600 transition-colors"
+				disabled={saving}
 			>
 				<X size={24} />
 			</button>
@@ -150,6 +194,7 @@
 							bind:value={formData.first_name}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.first_name ? 'border-red-500' : 'border-gray-300'}"
 							placeholder="Prénom"
+							disabled={saving}
 						/>
 						{#if errors.first_name}
 							<p class="text-sm text-red-600 mt-1">{errors.first_name}</p>
@@ -166,6 +211,7 @@
 							bind:value={formData.last_name}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.last_name ? 'border-red-500' : 'border-gray-300'}"
 							placeholder="Nom"
+							disabled={saving}
 						/>
 						{#if errors.last_name}
 							<p class="text-sm text-red-600 mt-1">{errors.last_name}</p>
@@ -190,6 +236,7 @@
 							bind:value={formData.email}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.email ? 'border-red-500' : 'border-gray-300'}"
 							placeholder="exemple@email.com"
+							disabled={saving}
 						/>
 						{#if errors.email}
 							<p class="text-sm text-red-600 mt-1">{errors.email}</p>
@@ -206,6 +253,7 @@
 							bind:value={formData.phone}
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 							placeholder="+33 6 12 34 56 78"
+							disabled={saving}
 						/>
 					</div>
 
@@ -219,6 +267,7 @@
 							bind:value={formData.messenger}
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 							placeholder="@username ou lien Messenger"
+							disabled={saving}
 						/>
 					</div>
 
@@ -243,6 +292,7 @@
 						id="section"
 						bind:value={formData.section_id}
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						disabled={saving}
 					>
 						<option value={null}>Sélectionner une section</option>
 						{#each sections as section}
@@ -266,24 +316,25 @@
 						rows="3"
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						placeholder="Notes sur ce contact, contexte de rencontre, recommandation..."
+						disabled={saving}
 					></textarea>
 				</div>
 			</div>
 
 			<!-- Aperçu -->
-			{#if formData.first_name || formData.last_name}
+			{#if formData.first_name.trim() || formData.last_name.trim()}
 				<div class="bg-gray-50 rounded-lg p-4">
 					<h4 class="font-medium text-gray-900 mb-2">Aperçu du contact</h4>
 					<div class="text-sm space-y-1">
-						<p><span class="font-medium">Nom :</span> {formData.first_name} {formData.last_name}</p>
-						{#if formData.email}
-							<p><span class="font-medium">Email :</span> {formData.email}</p>
+						<p><span class="font-medium">Nom :</span> {formData.first_name.trim()} {formData.last_name.trim()}</p>
+						{#if formData.email.trim()}
+							<p><span class="font-medium">Email :</span> {formData.email.trim()}</p>
 						{/if}
-						{#if formData.phone}
-							<p><span class="font-medium">Téléphone :</span> {formData.phone}</p>
+						{#if formData.phone.trim()}
+							<p><span class="font-medium">Téléphone :</span> {formData.phone.trim()}</p>
 						{/if}
-						{#if formData.messenger}
-							<p><span class="font-medium">Messenger :</span> {formData.messenger}</p>
+						{#if formData.messenger.trim()}
+							<p><span class="font-medium">Messenger :</span> {formData.messenger.trim()}</p>
 						{/if}
 						{#if formData.section_id}
 							<p><span class="font-medium">Section :</span> {sections.find(s => s.id === formData.section_id)?.name}</p>
@@ -299,6 +350,7 @@
 				type="button"
 				on:click={clearForm}
 				class="px-4 py-2 text-gray-600 hover:text-gray-800"
+				disabled={saving}
 			>
 				Effacer le formulaire
 			</button>
@@ -315,7 +367,7 @@
 				<button
 					type="button"
 					on:click={saveContact}
-					disabled={saving}
+					disabled={saving || Object.keys(errors).length > 0}
 					class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2"
 				>
 					{#if saving}
