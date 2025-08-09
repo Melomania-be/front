@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version corrigée -->
+<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version avec synchronisation corrigée -->
 <script lang="ts">
 	import { page } from '$app/stores'
 	import { onMount } from 'svelte'
@@ -18,8 +18,8 @@
 	export let data
 
 	let project: Project | undefined
-	let settings: SettingsType
-	let stats: StatsType
+	let settings: SettingsType | undefined
+	let stats: StatsType | undefined
 	let pendingRecommendations: number = 0
 	let isMobile = false
 	let activeTab = 'contacts'
@@ -31,28 +31,42 @@
 	let showAddManualModal = false
 	let showSettingsModal = false
 
+	// Auto-refresh stats every 10 seconds pour garder sync
+	let statsRefreshInterval: any
+
 	$: projectId = $page.params.id
 
-	// Validation de l'ID du projet
+	// Protection robuste contre les IDs invalides
 	$: if (projectId && (projectId === 'undefined' || projectId === 'null' || isNaN(Number(projectId)))) {
+		console.error('❌ Invalid project ID:', projectId)
 		error = 'ID de projet invalide'
 		goto('/projects')
 	}
 
 	onMount(async () => {
+		console.log('🔄 Initializing recruitment page for project:', projectId)
 		checkMobile()
 		window.addEventListener('resize', checkMobile)
 
-		if (projectId && projectId !== 'undefined') {
+		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
 			await loadData()
+
+			// Démarrer l'auto-refresh des stats pour la synchronisation
+			statsRefreshInterval = setInterval(() => {
+				console.log('🔄 Auto-refreshing stats for sync...')
+				fetchStats()
+			}, 10000) // Refresh toutes les 10 secondes
 		} else {
-			error = 'ID de projet manquant'
+			error = 'ID de projet manquant ou invalide'
 		}
 
 		loading = false
 
 		return () => {
 			window.removeEventListener('resize', checkMobile)
+			if (statsRefreshInterval) {
+				clearInterval(statsRefreshInterval)
+			}
 		}
 	})
 
@@ -64,41 +78,50 @@
 
 	async function loadData() {
 		try {
+			console.log('📊 Loading recruitment data...')
 			await Promise.all([
 				fetchProject(),
 				fetchSettings(),
 				fetchStats()
 			])
+			console.log('✅ All data loaded successfully')
 		} catch (err) {
-			console.error('Error loading data:', err)
+			console.error('❌ Error loading data:', err)
 			error = 'Erreur lors du chargement des données'
 		}
 	}
 
 	async function fetchProject() {
 		try {
+			console.log('🔍 Fetching project data...')
 			const response = await fetch(`/api/projects/${projectId}`)
+
 			if (response.ok) {
 				project = await response.json()
+				console.log('✅ Project loaded:', project?.name)
 			} else if (response.status === 404) {
+				console.error('❌ Project not found')
 				error = 'Projet non trouvé'
 				goto('/projects')
 			} else {
 				throw new Error(`HTTP ${response.status}`)
 			}
 		} catch (err) {
-			console.error('Error fetching project:', err)
+			console.error('❌ Error fetching project:', err)
 			throw err
 		}
 	}
 
 	async function fetchSettings() {
 		try {
+			console.log('⚙️ Fetching recruitment settings...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/settings`)
+
 			if (response.ok) {
 				settings = await response.json()
+				console.log('✅ Settings loaded:', settings)
 			} else {
-				console.error('Error fetching settings:', response.status)
+				console.warn('⚠️ Could not fetch settings, using defaults')
 				// Créer des paramètres par défaut en cas d'erreur
 				settings = {
 					id: 0,
@@ -110,43 +133,107 @@
 				}
 			}
 		} catch (err) {
-			console.error('Error fetching settings:', err)
-			throw err
+			console.error('❌ Error fetching settings:', err)
+			// Utiliser des paramètres par défaut
+			settings = {
+				id: 0,
+				project_id: Number(projectId),
+				follow_up_days: 7,
+				auto_follow_up_enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			}
 		}
 	}
 
 	async function fetchStats() {
 		try {
+			console.log('📈 Fetching recruitment stats...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/stats`)
+
 			if (response.ok) {
-				stats = await response.json()
-				pendingRecommendations = stats.pending_recommendations
+				const data = await response.json()
+
+				// Protection maximale contre les données corrompues
+				const newStats = {
+					total: Number(data.total) || 0,
+					by_status: Array.isArray(data.by_status) ? data.by_status.filter(item => item && item.status) : [],
+					pending_recommendations: Number(data.pending_recommendations) || 0
+				}
+
+				// Mise à jour des stats seulement si elles ont vraiment changé
+				if (!stats ||
+					stats.total !== newStats.total ||
+					stats.pending_recommendations !== newStats.pending_recommendations ||
+					JSON.stringify(stats.by_status) !== JSON.stringify(newStats.by_status)) {
+
+					stats = newStats
+					pendingRecommendations = stats.pending_recommendations
+					console.log('✅ Stats updated:', stats)
+				}
 			} else {
-				console.error('Error fetching stats:', response.status)
+				console.warn('⚠️ Could not fetch stats, using defaults')
 				// Statistiques par défaut en cas d'erreur
+				if (!stats) {
+					stats = {
+						total: 0,
+						by_status: [],
+						pending_recommendations: 0
+					}
+					pendingRecommendations = 0
+				}
+			}
+		} catch (err) {
+			console.error('❌ Error fetching stats:', err)
+			// Statistiques par défaut seulement si pas encore définies
+			if (!stats) {
 				stats = {
 					total: 0,
 					by_status: [],
 					pending_recommendations: 0
 				}
+				pendingRecommendations = 0
 			}
-		} catch (err) {
-			console.error('Error fetching stats:', err)
-			throw err
 		}
 	}
 
 	function handleSettingsUpdate() {
+		console.log('🔄 Refreshing settings and stats after settings update...')
 		fetchSettings()
 		fetchStats()
 	}
 
 	function handleContactChange() {
+		console.log('🔄 Refreshing stats after contact change...')
+		// Refresh immédiat + trigger update dans les composants parents
 		fetchStats()
+
+		// Force le re-render des statistiques
+		setTimeout(() => {
+			stats = { ...stats }
+		}, 100)
 	}
 
 	function handleRecommendationChange() {
+		console.log('🔄 Refreshing stats after recommendation change...')
 		fetchStats()
+
+		// Force le re-render
+		setTimeout(() => {
+			stats = { ...stats }
+		}, 100)
+	}
+
+	// Valeurs sécurisées pour l'affichage avec synchronisation
+	$: safeStats = stats || { total: 0, by_status: [], pending_recommendations: 0 }
+	$: totalContacts = safeStats.total || 0
+	$: awaitingCount = safeStats.by_status?.find(s => s.status === 'awaiting_response')?.count || 0
+	$: recruitedCount = safeStats.by_status?.find(s => s.status === 'recruited')?.count || 0
+	$: pendingRecs = safeStats.pending_recommendations || 0
+
+	// Réactivité pour forcer les updates
+	$: if (stats) {
+		pendingRecommendations = stats.pending_recommendations
 	}
 </script>
 
@@ -178,61 +265,55 @@
 	<ProjectHeadDisplayer {project} selectedTab={6} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
-		<!-- Header avec statistiques et actions -->
+		<!-- Header avec statistiques et actions - Valeurs synchronisées -->
 		<div class="grid {isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'} gap-4 mb-6">
-			<!-- Statistiques rapides -->
-			{#if stats}
-				<div class="bg-white rounded-lg border-2 border-[#6B9AD9] p-4">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm text-gray-600 uppercase font-semibold">Total Contacts</p>
-							<p class="text-2xl font-bold text-[#6B9AD9]">{stats.total}</p>
-						</div>
-						<Users class="text-[#6B9AD9]" size={24} />
+			<!-- Statistiques rapides avec protection contre undefined et synchronisation -->
+			<div class="bg-white rounded-lg border-2 border-[#6B9AD9] p-4">
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm text-gray-600 uppercase font-semibold">Total Contacts</p>
+						<p class="text-2xl font-bold text-[#6B9AD9]">{totalContacts}</p>
 					</div>
+					<Users class="text-[#6B9AD9]" size={24} />
 				</div>
+			</div>
 
-				<div class="bg-white rounded-lg border-2 border-[#E35656] p-4">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm text-gray-600 uppercase font-semibold">En attente</p>
-							<p class="text-2xl font-bold text-[#E35656]">
-								{stats.by_status.find(s => s.status === 'awaiting_response')?.count || 0}
-							</p>
-						</div>
-						<TrendingUp class="text-[#E35656]" size={24} />
+			<div class="bg-white rounded-lg border-2 border-[#E35656] p-4">
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm text-gray-600 uppercase font-semibold">En attente</p>
+						<p class="text-2xl font-bold text-[#E35656]">{awaitingCount}</p>
 					</div>
+					<TrendingUp class="text-[#E35656]" size={24} />
 				</div>
+			</div>
 
-				<div class="bg-white rounded-lg border-2 border-[#28a745] p-4">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm text-gray-600 uppercase font-semibold">Recrutés</p>
-							<p class="text-2xl font-bold text-[#28a745]">
-								{stats.by_status.find(s => s.status === 'recruited')?.count || 0}
-							</p>
-						</div>
-						<UserPlus class="text-[#28a745]" size={24} />
+			<div class="bg-white rounded-lg border-2 border-[#28a745] p-4">
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm text-gray-600 uppercase font-semibold">Recrutés</p>
+						<p class="text-2xl font-bold text-[#28a745]">{recruitedCount}</p>
 					</div>
+					<UserPlus class="text-[#28a745]" size={24} />
 				</div>
+			</div>
 
-				<div class="bg-white rounded-lg border-2 border-[#ffc107] p-4">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm text-gray-600 uppercase font-semibold">Recommandations</p>
-							<p class="text-2xl font-bold text-[#ffc107]">{pendingRecommendations}</p>
-						</div>
-						<div class="relative">
-							<Users class="text-[#ffc107]" size={24} />
-							{#if pendingRecommendations > 0}
-								<div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-									{pendingRecommendations}
-								</div>
-							{/if}
-						</div>
+			<div class="bg-white rounded-lg border-2 border-[#ffc107] p-4">
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm text-gray-600 uppercase font-semibold">Recommandations</p>
+						<p class="text-2xl font-bold text-[#ffc107]">{pendingRecs}</p>
+					</div>
+					<div class="relative">
+						<Users class="text-[#ffc107]" size={24} />
+						{#if pendingRecs > 0}
+							<div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+								{pendingRecs}
+							</div>
+						{/if}
 					</div>
 				</div>
-			{/if}
+			</div>
 		</div>
 
 		<!-- Actions principales -->
@@ -284,7 +365,7 @@
 						class="px-6 py-3 font-semibold {activeTab === 'contacts' ? 'text-[#6B9AD9] border-b-2 border-[#6B9AD9]' : 'text-gray-600 hover:text-[#6B9AD9]'}"
 						on:click={() => activeTab = 'contacts'}
 					>
-						Contacts ({stats?.total || 0})
+						Contacts ({totalContacts})
 					</button>
 
 					<button
@@ -292,8 +373,8 @@
 						on:click={() => activeTab = 'recommendations'}
 					>
 						Recommandations
-						{#if pendingRecommendations > 0}
-							<span class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">{pendingRecommendations}</span>
+						{#if pendingRecs > 0}
+							<span class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">{pendingRecs}</span>
 						{/if}
 					</button>
 
@@ -308,7 +389,7 @@
 		{/if}
 
 		<!-- Contenu des onglets -->
-		{#if activeTab === 'contacts' || isMobile}
+		{#if (activeTab === 'contacts' || isMobile) && settings}
 			<RecruitmentContactsList
 				{projectId}
 				{settings}
@@ -321,7 +402,7 @@
 				{projectId}
 				on:recommendationChange={handleRecommendationChange}
 			/>
-		{:else if isMobile && pendingRecommendations > 0}
+		{:else if isMobile && pendingRecs > 0}
 			<div class="mt-6">
 				<RecruitmentRecommendations
 					{projectId}
@@ -330,8 +411,11 @@
 			</div>
 		{/if}
 
-		{#if activeTab === 'stats' && !isMobile}
-			<RecruitmentStats {stats} />
+		{#if activeTab === 'stats' && !isMobile && stats}
+			<!-- Key pour forcer le re-render du composant stats -->
+			{#key stats.total + stats.pending_recommendations + JSON.stringify(stats.by_status)}
+				<RecruitmentStats {stats} />
+			{/key}
 		{/if}
 
 		<!-- Modals -->

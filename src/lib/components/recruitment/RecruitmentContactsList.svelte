@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/RecruitmentContactsList.svelte -->
+<!-- src/lib/components/recruitment/RecruitmentContactsList.svelte - Version corrigée -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { browser } from '$app/environment'
@@ -79,11 +79,18 @@
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment${optionInUrls}`)
 			if (response.ok) {
 				const data = await response.json()
-				contacts = data.data
-				meta = data.meta
+				contacts = Array.isArray(data.data) ? data.data : []
+				meta = data.meta || {}
+				console.log('✅ Contacts loaded:', contacts.length)
+			} else {
+				console.error('❌ Failed to load contacts:', response.status)
+				contacts = []
+				meta = {}
 			}
 		} catch (error) {
-			console.error('Error fetching contacts:', error)
+			console.error('❌ Error fetching contacts:', error)
+			contacts = []
+			meta = {}
 		}
 	}
 
@@ -102,9 +109,13 @@
 			if (response.ok) {
 				await fetchContacts()
 				dispatch('contactChange')
+			} else {
+				console.error('❌ Failed to update contact status:', response.status)
+				alert('Erreur lors de la mise à jour du statut')
 			}
 		} catch (error) {
-			console.error('Error updating contact status:', error)
+			console.error('❌ Error updating contact status:', error)
+			alert('Erreur lors de la mise à jour du statut')
 		}
 	}
 
@@ -121,9 +132,13 @@
 			if (response.ok) {
 				await fetchContacts()
 				dispatch('contactChange')
+			} else {
+				console.error('❌ Failed to delete contact:', response.status)
+				alert('Erreur lors de la suppression')
 			}
 		} catch (error) {
-			console.error('Error deleting contact:', error)
+			console.error('❌ Error deleting contact:', error)
+			alert('Erreur lors de la suppression')
 		}
 	}
 
@@ -147,7 +162,10 @@
 	}
 
 	async function bulkUpdateStatus(status: string) {
-		if (selectedContacts.length === 0) return
+		if (!selectedContacts || selectedContacts.length === 0) {
+			alert('Aucun contact sélectionné')
+			return
+		}
 
 		try {
 			const promises = selectedContacts.map(contactId =>
@@ -156,17 +174,38 @@
 			await Promise.all(promises)
 			clearSelection()
 		} catch (error) {
-			console.error('Error bulk updating status:', error)
+			console.error('❌ Error bulk updating status:', error)
+			alert('Erreur lors de la mise à jour groupée')
 		}
 	}
 
 	async function sendBulkEmails() {
+		// Protection contre les valeurs undefined
+		if (!contacts || !Array.isArray(contacts)) {
+			console.error('❌ Contacts array is not available')
+			alert('Erreur: liste des contacts non disponible')
+			return
+		}
+
+		if (!selectedContacts || selectedContacts.length === 0) {
+			alert('Aucun contact sélectionné')
+			return
+		}
+
+		// Filtrer les contacts avec email de manière sécurisée
 		const emailContacts = contacts.filter(c =>
-			selectedContacts.includes(c.id) && c.email
+			c &&
+			selectedContacts.includes(c.id) &&
+			c.email &&
+			c.email.trim().length > 0
 		)
 
+		console.log('📧 Preparing to send emails to:', emailContacts.length, 'contacts')
+		console.log('📧 Selected contact IDs:', selectedContacts)
+		console.log('📧 Email contacts:', emailContacts.map(c => ({ id: c.id, email: c.email, name: `${c.first_name} ${c.last_name}` })))
+
 		if (emailContacts.length === 0) {
-			alert('Aucun contact sélectionné n\'a d\'adresse email')
+			alert('Aucun contact sélectionné n\'a d\'adresse email valide')
 			return
 		}
 
@@ -175,6 +214,7 @@
 		}
 
 		try {
+			console.log('📧 Sending bulk emails...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/send-emails`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -185,13 +225,25 @@
 
 			if (response.ok) {
 				const result = await response.json()
-				alert(`Emails envoyés: ${result.sent.length}, Échecs: ${result.failed.length}`)
+				console.log('✅ Email result:', result)
+
+				if (result.success) {
+					alert(`${result.summary?.sent || 0} emails envoyés avec succès sur ${emailContacts.length}`)
+				} else {
+					alert(`Emails envoyés: ${result.sent?.length || 0}, Échecs: ${result.failed?.length || 0}`)
+				}
+
 				await fetchContacts()
 				dispatch('contactChange')
 				clearSelection()
+			} else {
+				const errorData = await response.json()
+				console.error('❌ Email sending failed:', errorData)
+				alert(`Erreur lors de l'envoi des emails: ${errorData.error || 'Erreur inconnue'}`)
 			}
 		} catch (error) {
-			console.error('Error sending bulk emails:', error)
+			console.error('❌ Error sending bulk emails:', error)
+			alert('Erreur lors de l\'envoi des emails')
 		}
 	}
 
@@ -241,10 +293,13 @@
 	}
 
 	function shouldHighlightFollowUp(contact: RecruitmentContact): boolean {
-		if (contact.status !== 'awaiting_response' || !contact.contact_date) return false
+		if (!contact || contact.status !== 'awaiting_response' || !contact.contact_date || !settings) return false
 		const days = getDaysSinceContact(contact.contact_date)
 		return days !== null && days >= settings.follow_up_days
 	}
+
+	// Protection contre les contacts undefined
+	$: safeContacts = Array.isArray(contacts) ? contacts.filter(c => c && c.id) : []
 </script>
 
 <div class="bg-white border-2 border-[#8C8C8C] rounded-lg">
@@ -253,7 +308,7 @@
 			<h2 class="font-bold text-lg">Contacts de Recrutement</h2>
 
 			<!-- Actions de sélection -->
-			{#if contacts.length > 0}
+			{#if safeContacts.length > 0}
 				<div class="flex gap-2 {isMobile ? 'w-full' : ''}">
 					<button
 						on:click={selectAllContacts}
@@ -325,7 +380,7 @@
 						<input
 							type="checkbox"
 							on:change={(e) => e.target.checked ? selectAllContacts() : clearSelection()}
-							checked={selectedContacts.length === contacts.length && contacts.length > 0}
+							checked={selectedContacts.length === safeContacts.length && safeContacts.length > 0}
 							class="rounded"
 						/>
 					</th>
@@ -339,7 +394,7 @@
 				</tr>
 				</thead>
 				<tbody>
-				{#each contacts as contact (contact.id)}
+				{#each safeContacts as contact (contact.id)}
 					<tr
 						class="border-b hover:bg-gray-50 {shouldHighlightFollowUp(contact) ? 'bg-yellow-50' : ''} {contact.is_duplicate ? 'bg-orange-50' : ''}"
 					>
@@ -442,7 +497,7 @@
 				</tbody>
 			</table>
 
-			{#if contacts.length === 0}
+			{#if safeContacts.length === 0}
 				<div class="text-center py-8 text-gray-500">
 					<Users size={48} class="mx-auto mb-4 opacity-50" />
 					<p>Aucun contact de recrutement pour le moment.</p>
