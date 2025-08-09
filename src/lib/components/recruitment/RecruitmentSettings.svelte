@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/RecruitmentSettings.svelte -->
+<!-- src/lib/components/recruitment/RecruitmentSettings.svelte - Version complète corrigée -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
 	import { X, Settings, Info } from 'lucide-svelte'
@@ -9,17 +9,34 @@
 
 	const dispatch = createEventDispatcher()
 
+	// ✅ CORRECTION - Initialisation sécurisée avec valeurs par défaut
 	let localSettings = {
-		follow_up_days: settings.follow_up_days,
-		auto_follow_up_enabled: settings.auto_follow_up_enabled
+		follow_up_days: settings?.follow_up_days || 7,
+		auto_follow_up_enabled: settings?.auto_follow_up_enabled || true
+	}
+
+	// ✅ CORRECTION - Réinitialiser les settings locaux quand les settings changent
+	$: if (settings) {
+		localSettings = {
+			follow_up_days: settings.follow_up_days || 7,
+			auto_follow_up_enabled: settings.auto_follow_up_enabled || true
+		}
 	}
 
 	let saving = false
 
 	async function saveSettings() {
+		if (!projectId || projectId === 'undefined') {
+			console.error('❌ Invalid project ID for settings save')
+			alert('Erreur: ID de projet invalide')
+			return
+		}
+
 		saving = true
 
 		try {
+			console.log('💾 Saving settings:', localSettings)
+
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/settings`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
@@ -27,13 +44,18 @@
 			})
 
 			if (response.ok) {
-				dispatch('update')
+				const updatedSettings = await response.json()
+				console.log('✅ Settings saved successfully:', updatedSettings)
+
+				dispatch('update', updatedSettings)
 				dispatch('close')
 			} else {
-				alert('Erreur lors de la sauvegarde des paramètres')
+				const errorData = await response.json()
+				console.error('❌ Settings save failed:', errorData)
+				alert(`Erreur lors de la sauvegarde: ${errorData.error || 'Erreur inconnue'}`)
 			}
 		} catch (error) {
-			console.error('Error saving settings:', error)
+			console.error('❌ Error saving settings:', error)
 			alert('Erreur lors de la sauvegarde des paramètres')
 		} finally {
 			saving = false
@@ -49,6 +71,17 @@
 			closeModal()
 		}
 	}
+
+	// ✅ CORRECTION - Validation des valeurs numériques
+	function validateFollowUpDays(value: number) {
+		if (value < 1) {
+			localSettings.follow_up_days = 1
+		} else if (value > 30) {
+			localSettings.follow_up_days = 30
+		}
+	}
+
+	$: validateFollowUpDays(localSettings.follow_up_days)
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -64,6 +97,7 @@
 			<button
 				on:click={closeModal}
 				class="text-gray-400 hover:text-gray-600 transition-colors"
+				aria-label="Fermer"
 			>
 				<X size={24} />
 			</button>
@@ -82,15 +116,16 @@
 					<!-- Activation du suivi automatique -->
 					<div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
 						<div>
-							<label class="font-medium text-gray-900">
+							<label for="auto-follow-up" class="font-medium text-gray-900 cursor-pointer">
 								Activer le suivi automatique
 							</label>
-							<p class="text-sm text-gray-600">
+							<p class="text-sm text-gray-600 mt-1">
 								Les contacts en "attente de réponse" passeront automatiquement en "à relancer" après le délai configuré
 							</p>
 						</div>
 						<label class="relative inline-flex items-center cursor-pointer">
 							<input
+								id="auto-follow-up"
 								type="checkbox"
 								bind:checked={localSettings.auto_follow_up_enabled}
 								class="sr-only peer"
@@ -115,11 +150,12 @@
 								class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
 							/>
 							<span class="text-sm text-gray-600">
-                jour(s) après le premier contact
-              </span>
+								jour(s) après le premier contact
+							</span>
 						</div>
+						<!-- ✅ CORRECTION - Protection contre undefined -->
 						<p class="text-sm text-gray-500">
-							Si un contact est en "attente de réponse" depuis {localSettings.follow_up_days} jour(s),
+							Si un contact est en "attente de réponse" depuis {localSettings.follow_up_days || 7} jour(s),
 							il passera automatiquement en "à relancer"
 						</p>
 					</div>
@@ -144,18 +180,39 @@
 			<div class="bg-gray-50 rounded-lg p-4">
 				<h4 class="font-medium text-gray-900 mb-2">Aperçu des paramètres actuels</h4>
 				<div class="grid grid-cols-2 gap-4 text-sm">
+					<!-- ✅ CORRECTION - Protection contre undefined -->
 					<div>
 						<span class="text-gray-600">Suivi automatique :</span>
-						<span class="font-medium {settings.auto_follow_up_enabled ? 'text-green-600' : 'text-red-600'}">
-              {settings.auto_follow_up_enabled ? 'Activé' : 'Désactivé'}
-            </span>
+						<span class="font-medium {(settings?.auto_follow_up_enabled || false) ? 'text-green-600' : 'text-red-600'}">
+							{(settings?.auto_follow_up_enabled || false) ? 'Activé' : 'Désactivé'}
+						</span>
 					</div>
 					<div>
 						<span class="text-gray-600">Délai actuel :</span>
-						<span class="font-medium">{settings.follow_up_days} jour(s)</span>
+						<span class="font-medium">{settings?.follow_up_days || 7} jour(s)</span>
 					</div>
 				</div>
 			</div>
+
+			<!-- Aperçu des modifications -->
+			{#if settings && (localSettings.follow_up_days !== settings.follow_up_days || localSettings.auto_follow_up_enabled !== settings.auto_follow_up_enabled)}
+				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+					<div class="flex items-start gap-2">
+						<Info size={16} class="text-yellow-500 mt-0.5 flex-shrink-0" />
+						<div class="text-sm">
+							<p class="font-medium text-yellow-900 mb-1">Modifications en attente</p>
+							<div class="space-y-1 text-yellow-800">
+								{#if localSettings.follow_up_days !== settings.follow_up_days}
+									<p>• Délai de relance : {settings.follow_up_days} → {localSettings.follow_up_days} jour(s)</p>
+								{/if}
+								{#if localSettings.auto_follow_up_enabled !== settings.auto_follow_up_enabled}
+									<p>• Suivi automatique : {settings.auto_follow_up_enabled ? 'Activé' : 'Désactivé'} → {localSettings.auto_follow_up_enabled ? 'Activé' : 'Désactivé'}</p>
+								{/if}
+							</div>
+						</div>
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Footer -->
@@ -164,15 +221,15 @@
 				type="button"
 				on:click={closeModal}
 				disabled={saving}
-				class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+				class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
 			>
 				Annuler
 			</button>
 			<button
 				type="button"
 				on:click={saveSettings}
-				disabled={saving}
-				class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2"
+				disabled={saving || !projectId || projectId === 'undefined'}
+				class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 transition-colors flex items-center gap-2"
 			>
 				{#if saving}
 					<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -182,3 +239,18 @@
 		</div>
 	</div>
 </div>
+
+<style>
+    /* Style pour le toggle switch */
+    .peer:checked + div {
+        background-color: #3b82f6;
+    }
+
+    .peer:checked + div:after {
+        transform: translateX(100%);
+    }
+
+    .peer:focus + div {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+</style>
