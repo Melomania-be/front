@@ -93,13 +93,11 @@
 				const newContact = await response.json()
 				console.log('✅ Contact created successfully:', newContact)
 
-				// ✅ CORRECTION : Émettre l'événement pour déclencher le refresh
+				// ✅ CORRECTION : Émettre l'événement immédiatement avec le contact créé
 				dispatch('contactAdded', newContact)
 
-				// ✅ CORRECTION : Fermer la modal après un court délai pour laisser le temps au refresh
-				setTimeout(() => {
-					dispatch('close')
-				}, 100)
+				// ✅ CORRECTION : Fermer la modal immédiatement après succès
+				closeModal()
 			} else {
 				const errorData = await response.json()
 				console.error('❌ Error creating contact:', errorData)
@@ -114,6 +112,8 @@
 	}
 
 	function closeModal() {
+		// ✅ CORRECTION : Réinitialiser le formulaire proprement
+		clearForm()
 		dispatch('close')
 	}
 

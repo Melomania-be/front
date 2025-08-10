@@ -30,6 +30,9 @@
 	let showAddManualModal = false
 	let showSettingsModal = false
 
+	// ✅ RÉFÉRENCE AU COMPOSANT LISTE
+	let contactsListRef: any
+
 	$: projectId = $page.params.id
 
 	// Protection robuste contre les IDs invalides
@@ -177,11 +180,15 @@
 		}
 	}
 
-	// ✅ CORRECTION : Handlers avec refresh immédiat
+	// ✅ CORRECTION : Handlers avec refresh immédiat et utilisation de la référence
 	function handleSettingsUpdate() {
 		console.log('🔄 Settings updated, refreshing data...')
 		setTimeout(async () => {
 			await Promise.all([fetchSettings(), fetchStats()])
+			// Rafraîchir la liste des contacts
+			if (contactsListRef && contactsListRef.refreshContacts) {
+				contactsListRef.refreshContacts()
+			}
 		}, 200)
 	}
 
@@ -194,20 +201,36 @@
 	function handleRecommendationChange() {
 		console.log('🔄 Recommendation changed, refreshing stats...')
 		fetchStats()
+		// Rafraîchir aussi la liste des contacts
+		if (contactsListRef && contactsListRef.refreshContacts) {
+			contactsListRef.refreshContacts()
+		}
 	}
 
 	// ✅ CORRECTION : Handler pour l'ajout de contact manuel
 	function handleContactAdded(event) {
 		console.log('✅ New contact added:', event.detail)
 		// Refresh immédiat pour voir le nouveau contact
-		handleContactChange()
+		if (contactsListRef && contactsListRef.refreshContacts) {
+			contactsListRef.refreshContacts()
+		}
+		// Refresh des stats
+		fetchStats()
+		// Fermer la modal
+		showAddManualModal = false
 	}
 
 	// ✅ CORRECTION : Handler pour l'import de contacts
 	function handleContactsImported(event) {
 		console.log('✅ Contacts imported:', event.detail)
 		// Refresh immédiat pour voir les nouveaux contacts
-		handleContactChange()
+		if (contactsListRef && contactsListRef.refreshContacts) {
+			contactsListRef.refreshContacts()
+		}
+		// Refresh des stats
+		fetchStats()
+		// Fermer la modal
+		showImportModal = false
 	}
 
 	// Valeurs sécurisées pour l'affichage - simplifiées
@@ -344,7 +367,9 @@
 
 		<!-- Contenu des onglets -->
 		{#if (activeTab === 'contacts' || isMobile) && settings}
+			<!-- ✅ CORRECTION : Référence au composant liste -->
 			<RecruitmentContactsList
+				bind:this={contactsListRef}
 				{projectId}
 				{settings}
 				on:contactChange={handleContactChange}

@@ -63,6 +63,7 @@
 		}
 	}
 
+	// ✅ CORRECTION : Fonction fetchContacts avec meilleur gestion des erreurs
 	async function fetchContacts() {
 		if (isRefreshing) return
 		isRefreshing = true
@@ -80,7 +81,10 @@
 		}
 
 		try {
+			console.log('🔄 Fetching contacts from:', `/api/projects/${projectId}/management/recruitment${optionInUrls}`)
+
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment${optionInUrls}`)
+
 			if (response.ok) {
 				const data = await response.json()
 
@@ -97,6 +101,8 @@
 				console.log('✅ Contacts loaded:', contacts.length)
 			} else {
 				console.error('❌ Failed to load contacts:', response.status)
+				const errorText = await response.text()
+				console.error('Error details:', errorText)
 				contacts = []
 				meta = {}
 			}
@@ -107,6 +113,15 @@
 		} finally {
 			isRefreshing = false
 		}
+	}
+
+	// ✅ CORRECTION : Fonction déclenchée IMMÉDIATEMENT après une action réussie
+	function refreshContactsList() {
+		console.log('🔄 Refreshing contacts list immediately...')
+		// Refresh immédiat sans délai
+		fetchContacts()
+		// Notifier le parent que les contacts ont changé
+		dispatch('contactChange')
 	}
 
 	async function updateContactStatus(contactId: number, status: string, notes?: string) {
@@ -122,9 +137,8 @@
 			})
 
 			if (response.ok) {
-				// ✅ CORRECTION : Refresh immédiat pour voir les changements
-				await fetchContacts()
-				dispatch('contactChange')
+				// ✅ CORRECTION : Refresh immédiat après mise à jour réussie
+				refreshContactsList()
 			} else {
 				console.error('❌ Failed to update contact status:', response.status)
 				alert('Erreur lors de la mise à jour du statut')
@@ -146,9 +160,8 @@
 			})
 
 			if (response.ok) {
-				// ✅ CORRECTION : Refresh immédiat pour voir les changements
-				await fetchContacts()
-				dispatch('contactChange')
+				// ✅ CORRECTION : Refresh immédiat après suppression réussie
+				refreshContactsList()
 			} else {
 				console.error('❌ Failed to delete contact:', response.status)
 				alert('Erreur lors de la suppression')
@@ -196,6 +209,7 @@
 		}
 	}
 
+	// ✅ CORRECTION : Fonction sendBulkEmails améliorée avec meilleur gestion d'erreurs
 	async function sendBulkEmails() {
 		// Protection contre les valeurs undefined
 		if (!contacts || !Array.isArray(contacts)) {
@@ -263,8 +277,7 @@
 				}
 
 				// ✅ CORRECTION : Refresh immédiat pour voir les changements de statut
-				await fetchContacts()
-				dispatch('contactChange')
+				refreshContactsList()
 				clearSelection()
 			} else {
 				const errorData = await response.json()
@@ -275,6 +288,12 @@
 			console.error('❌ Error sending bulk emails:', error)
 			alert('Erreur lors de l\'envoi des emails')
 		}
+	}
+
+	// ✅ FONCTION EXPOSÉE : Pour rafraîchir la liste depuis le parent
+	export function refreshContacts() {
+		console.log('📢 External refresh request received')
+		refreshContactsList()
 	}
 
 	function getStatusColor(status: string): string {
@@ -372,7 +391,7 @@
 						disabled={isRefreshing}
 					>
 						<Mail size={14} class="inline mr-1" />
-						Envoyer emails (SIMULATION)
+						Envoyer emails
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('awaiting_response')}

@@ -4,7 +4,7 @@
 	import type { Registration } from '$lib/types/Registration';
 	import RegistrationShow from '$lib/components/registration/RegistrationShow.svelte';
 	import imageBackground from '$lib/assets/BackgrounImage.avif';
-	
+
 	let registration: Registration;
 	let projectId: number;
 

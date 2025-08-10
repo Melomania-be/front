@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/ImportContactsModal.svelte -->
+<!-- src/lib/components/recruitment/ImportContactsModal.svelte - Version corrigée -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, Upload, Search, Users, AlertTriangle, CheckCircle } from 'lucide-svelte'
@@ -89,6 +89,7 @@
 			if (response.ok) {
 				importResults = await response.json()
 
+				// ✅ CORRECTION : Émettre l'événement immédiatement après import réussi
 				if (importResults && importResults.imported.length > 0) {
 					dispatch('contactsImported', importResults)
 				}
