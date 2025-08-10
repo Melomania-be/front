@@ -1,5 +1,5 @@
-// src/lib/types/RecruitmentRecommendation.ts
-export type RecommendationStatus = 'pending' | 'ignored' | 'contacted_email' | 'contacted_manual'
+// src/lib/types/RecruitmentRecommendation.ts - Version complète corrigée
+export type RecommendationStatus = 'pending' | 'ignored' | 'contact_email' | 'contact_manual'
 
 export interface RecruitmentRecommendation {
 	id: number
@@ -18,6 +18,19 @@ export interface RecruitmentRecommendation {
 	created_at: string
 	updated_at: string
 
+	// ✅ AJOUT : Propriétés calculées optionnelles pour l'affichage
+	recommended_display_name?: string
+	formatted_created_at?: string
+	created_at_iso?: string
+	updated_at_iso?: string
+
 	// Relations
 	recruitment_contact?: RecruitmentContact
+	project?: {
+		id: number
+		name: string
+	}
 }
+
+// ✅ AJOUT : Import du type RecruitmentContact pour la relation
+import type { RecruitmentContact } from './RecruitmentContact'
