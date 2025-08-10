@@ -1,32 +1,34 @@
-<!-- src/lib/components/recruitment/RecommendationCard.svelte - Version complète corrigée -->
+<!-- src/lib/components/recruitment/RecommendationCard.svelte - Version corrigée -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
 	import { UserPlus, Mail, Phone, MessageCircle, Music, X, Calendar, User } from 'lucide-svelte'
 	import type { RecruitmentRecommendation, Section } from '$lib/types'
-	import RecommendationActionButton from './RecommendationActionButton.svelte'
 
 	export let recommendation: RecruitmentRecommendation
 	export let sections: Section[]
 
 	const dispatch = createEventDispatcher()
 
+	// ✅ CORRECTION : Gestion d'état pour les modals/actions
+	let showEmailModal = false
+	let showManualModal = false
+	let selectedSection: number | null = null
+	let notes = ''
+	let isProcessing = false
+
 	// ✅ FONCTION DE FORMATAGE DE DATE SÉCURISÉE
 	function formatDate(dateString: string | null | undefined): string {
 		if (!dateString) return 'Date inconnue'
 
 		try {
-			// Gérer différents formats de date possibles
 			let date: Date
 
 			if (typeof dateString === 'string') {
-				// Si c'est une chaîne, essayer de la parser
 				date = new Date(dateString)
 			} else {
-				// Si c'est déjà un objet Date
 				date = dateString as any
 			}
 
-			// Vérifier si la date est valide
 			if (isNaN(date.getTime())) {
 				console.warn('Invalid date:', dateString)
 				return 'Date invalide'
@@ -45,13 +47,74 @@
 		}
 	}
 
-	function handleAction(action: string, sectionId?: number, notes?: string) {
-		console.log('🎯 Handling recommendation action:', action, 'for recommendation:', recommendation?.id)
-		dispatch('handle', {
+	// ✅ CORRECTION : Fonction de gestion des actions simplifiée et debuggée
+	async function handleAction(action: string, sectionId?: number, actionNotes?: string) {
+		console.log('🎯 [RecommendationCard] Handling action:', {
 			action,
+			recommendationId: recommendation?.id,
 			sectionId,
-			notes
+			notes: actionNotes
 		})
+
+		if (isProcessing) {
+			console.log('⏳ Action already in progress, ignoring...')
+			return
+		}
+
+		isProcessing = true
+
+		try {
+			// ✅ CORRECTION : Émettre l'événement avec structure correcte
+			dispatch('handle', {
+				action,
+				sectionId: sectionId || null,
+				notes: actionNotes || ''
+			})
+
+			console.log('✅ [RecommendationCard] Event dispatched successfully')
+
+			// Fermer les modals après action
+			closeModals()
+		} catch (error) {
+			console.error('❌ [RecommendationCard] Error handling action:', error)
+		} finally {
+			isProcessing = false
+		}
+	}
+
+	// ✅ CORRECTION : Fonctions de gestion des modals
+	function showEmailAction() {
+		console.log('📧 Opening email modal for recommendation:', recommendation?.id)
+		selectedSection = null
+		notes = ''
+		showEmailModal = true
+		showManualModal = false
+	}
+
+	function showManualAction() {
+		console.log('👤 Opening manual modal for recommendation:', recommendation?.id)
+		selectedSection = null
+		notes = ''
+		showManualModal = true
+		showEmailModal = false
+	}
+
+	function closeModals() {
+		console.log('❌ Closing all modals')
+		showEmailModal = false
+		showManualModal = false
+		selectedSection = null
+		notes = ''
+	}
+
+	function confirmEmailAction() {
+		console.log('✅ Confirming email action with:', { selectedSection, notes })
+		handleAction('contacted_email', selectedSection, notes)
+	}
+
+	function confirmManualAction() {
+		console.log('✅ Confirming manual action with:', { selectedSection, notes })
+		handleAction('contacted_manual', selectedSection, notes)
 	}
 
 	// ✅ PROTECTION CONTRE LES VALEURS UNDEFINED/NULL
@@ -70,20 +133,20 @@
 		status: recommendation?.status || 'pending'
 	}
 
-	// ✅ VARIABLES CALCULÉES SÉCURISÉES
+	// Variables calculées sécurisées
 	$: displayName = `${safeRecommendation.recommended_first_name} ${safeRecommendation.recommended_last_name}`.trim()
 	$: recommenderName = safeRecommendation.recommender_name || 'Recommandeur anonyme'
 	$: hasContactInfo = !!(safeRecommendation.recommended_email || safeRecommendation.recommended_phone || safeRecommendation.recommended_messenger)
 	$: canContactByEmail = !!(safeRecommendation.recommended_email && safeRecommendation.recommended_email.includes('@'))
 
-	// ✅ FONCTION UTILITAIRE : Obtenir les initiales pour l'avatar
+	// Fonction utilitaire : Obtenir les initiales pour l'avatar
 	function getInitials(firstName: string, lastName: string): string {
 		const first = firstName?.charAt(0)?.toUpperCase() || 'P'
 		const last = lastName?.charAt(0)?.toUpperCase() || 'N'
 		return `${first}${last}`
 	}
 
-	// ✅ FONCTION UTILITAIRE : Obtenir la couleur de l'avatar basée sur le nom
+	// Fonction utilitaire : Obtenir la couleur de l'avatar basée sur le nom
 	function getAvatarColor(name: string): string {
 		const colors = [
 			'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500',
@@ -100,7 +163,7 @@
 <div class="border border-yellow-200 bg-yellow-50 rounded-lg p-6 transition-all duration-200 hover:shadow-md">
 	<div class="flex flex-col space-y-4">
 
-		<!-- ✅ EN-TÊTE AMÉLIORÉ avec avatar -->
+		<!-- En-tête avec avatar -->
 		<div class="flex items-start justify-between">
 			<div class="flex items-start gap-4 flex-1">
 				<!-- Avatar avec initiales -->
@@ -144,7 +207,7 @@
 			</div>
 		</div>
 
-		<!-- ✅ INFORMATIONS DE CONTACT AMÉLIORÉES -->
+		<!-- Informations de contact -->
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<div>
 				<h5 class="font-medium text-sm text-gray-700 mb-3 flex items-center gap-2">
@@ -202,7 +265,7 @@
 				{/if}
 			</div>
 
-			<!-- ✅ MESSAGE DE RECOMMANDATION -->
+			<!-- Message de recommandation -->
 			{#if safeRecommendation.recommendation_message}
 				<div>
 					<h5 class="font-medium text-sm text-gray-700 mb-3 flex items-center gap-2">
@@ -230,29 +293,29 @@
 			{/if}
 		</div>
 
-		<!-- ✅ ACTIONS AMÉLIORÉES -->
+		<!-- ✅ CORRECTION : Actions améliorées avec debug -->
 		<div class="border-t border-yellow-200 pt-4 mt-4">
 			<div class="flex flex-wrap gap-3">
 				<!-- Bouton Ignorer -->
 				<button
 					on:click={() => handleAction('ignore')}
-					class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+					disabled={isProcessing}
+					class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 disabled:opacity-50"
 				>
 					<X size={14} />
 					<span>Ignorer</span>
 				</button>
 
-				<!-- Contacter par email (si email disponible) -->
+				<!-- Contacter par email -->
 				{#if canContactByEmail}
-					<RecommendationActionButton
-						recommendation={recommendation}
-						{sections}
-						action="contact_email"
-						label="Contacter par email"
-						icon={Mail}
-						className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-						on:handle={(e) => handleAction(e.detail.action, e.detail.sectionId, e.detail.notes)}
-					/>
+					<button
+						on:click={showEmailAction}
+						disabled={isProcessing}
+						class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50"
+					>
+						<Mail size={14} />
+						<span>Contacter par email</span>
+					</button>
 				{:else}
 					<div class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed"
 							 title="Aucune adresse email fournie">
@@ -262,18 +325,17 @@
 				{/if}
 
 				<!-- Contacter manuellement -->
-				<RecommendationActionButton
-					recommendation={recommendation}
-					{sections}
-					action="contact_manual"
-					label="Contacter manuellement"
-					icon={UserPlus}
-					className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
-					on:handle={(e) => handleAction(e.detail.action, e.detail.sectionId, e.detail.notes)}
-				/>
+				<button
+					on:click={showManualAction}
+					disabled={isProcessing}
+					class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50"
+				>
+					<UserPlus size={14} />
+					<span>Contacter manuellement</span>
+				</button>
 			</div>
 
-			<!-- ✅ RÉSUMÉ DES ACTIONS POSSIBLES -->
+			<!-- Résumé des actions possibles -->
 			<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
 				<p class="text-xs text-blue-700 leading-relaxed">
 					💡 <strong>Actions disponibles :</strong>
@@ -284,6 +346,128 @@
 		</div>
 	</div>
 </div>
+
+<!-- ✅ CORRECTION : Modal pour contacter par email -->
+{#if showEmailModal}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+			<h3 class="text-lg font-semibold mb-4">Contacter par email</h3>
+			<p class="text-sm text-gray-600 mb-4">
+				Un email sera envoyé à <strong>{safeRecommendation.recommended_email}</strong>
+			</p>
+
+			<div class="space-y-4">
+				<!-- Sélection de section -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">
+						Section (optionnel)
+					</label>
+					<select
+						bind:value={selectedSection}
+						class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					>
+						<option value={null}>Sélectionner une section</option>
+						{#each sections as section}
+							<option value={section.id}>{section.name}</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Notes -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">
+						Notes (optionnel)
+					</label>
+					<textarea
+						bind:value={notes}
+						rows="2"
+						class="w-full px-3 py-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						placeholder="Notes sur ce contact..."
+					></textarea>
+				</div>
+			</div>
+
+			<!-- Actions du modal -->
+			<div class="flex justify-end gap-2 mt-6">
+				<button
+					on:click={closeModals}
+					disabled={isProcessing}
+					class="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+				>
+					Annuler
+				</button>
+				<button
+					on:click={confirmEmailAction}
+					disabled={isProcessing}
+					class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+				>
+					{isProcessing ? 'Traitement...' : 'Envoyer email'}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- ✅ CORRECTION : Modal pour contacter manuellement -->
+{#if showManualModal}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+			<h3 class="text-lg font-semibold mb-4">Contacter manuellement</h3>
+			<p class="text-sm text-gray-600 mb-4">
+				La personne sera ajoutée à votre liste de recrutement avec le statut "Pas encore contacté"
+			</p>
+
+			<div class="space-y-4">
+				<!-- Sélection de section -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">
+						Section (optionnel)
+					</label>
+					<select
+						bind:value={selectedSection}
+						class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					>
+						<option value={null}>Sélectionner une section</option>
+						{#each sections as section}
+							<option value={section.id}>{section.name}</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Notes -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">
+						Notes (optionnel)
+					</label>
+					<textarea
+						bind:value={notes}
+						rows="2"
+						class="w-full px-3 py-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						placeholder="Notes sur ce contact..."
+					></textarea>
+				</div>
+			</div>
+
+			<!-- Actions du modal -->
+			<div class="flex justify-end gap-2 mt-6">
+				<button
+					on:click={closeModals}
+					disabled={isProcessing}
+					class="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+				>
+					Annuler
+				</button>
+				<button
+					on:click={confirmManualAction}
+					disabled={isProcessing}
+					class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+				>
+					{isProcessing ? 'Traitement...' : 'Ajouter au recrutement'}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
     /* Animations pour les transitions */

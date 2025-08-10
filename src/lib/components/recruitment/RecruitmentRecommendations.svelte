@@ -1,10 +1,9 @@
-<!-- src/lib/components/recruitment/RecruitmentRecommendations.svelte -->
+<!-- src/lib/components/recruitment/RecruitmentRecommendations.svelte - Version corrigée -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { UserPlus, Mail, Phone, MessageCircle, Music, Clock, X, Check, Eye } from 'lucide-svelte'
 	import type { RecruitmentRecommendation, Section } from '$lib/types'
-	import RecommendationCard from '$lib/components/recruitment/RecommendationCard.svelte';
-
+	import RecommendationCard from '$lib/components/recruitment/RecommendationCard.svelte'
 
 	export let projectId: string
 
@@ -24,29 +23,53 @@
 
 	async function fetchRecommendations() {
 		try {
+			console.log('🔍 [RecruitmentRecommendations] Fetching recommendations for project:', projectId)
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/recommendations`)
 			if (response.ok) {
 				recommendations = await response.json()
+				console.log('✅ [RecruitmentRecommendations] Loaded recommendations:', recommendations.length)
+			} else {
+				console.error('❌ [RecruitmentRecommendations] Failed to fetch recommendations:', response.status)
 			}
 		} catch (error) {
-			console.error('Error fetching recommendations:', error)
+			console.error('❌ [RecruitmentRecommendations] Error fetching recommendations:', error)
 		}
 	}
 
 	async function fetchSections() {
 		try {
+			console.log('🔍 [RecruitmentRecommendations] Fetching sections...')
 			const response = await fetch('/api/sections')
 			if (response.ok) {
 				sections = await response.json()
+				console.log('✅ [RecruitmentRecommendations] Loaded sections:', sections.length)
 			}
 		} catch (error) {
-			console.error('Error fetching sections:', error)
+			console.error('❌ [RecruitmentRecommendations] Error fetching sections:', error)
 		}
 	}
 
-	async function handleRecommendation(recommendationId: number, action: string, sectionId?: number, notes?: string) {
+	// ✅ CORRECTION : Fonction de gestion des recommandations améliorée avec debug
+	async function handleRecommendation(event) {
+		const { action, sectionId, notes } = event.detail
+		const recommendation = event.target?.recommendation || recommendations.find(r => r.id)
+
+		console.log('🎯 [RecruitmentRecommendations] Handling recommendation:', {
+			action,
+			sectionId,
+			notes,
+			recommendationId: recommendation?.id
+		})
+
+		if (!recommendation) {
+			console.error('❌ [RecruitmentRecommendations] No recommendation found')
+			return
+		}
+
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/recommendations/${recommendationId}`, {
+			console.log('📡 [RecruitmentRecommendations] Sending API request...')
+
+			const response = await fetch(`/api/projects/${projectId}/management/recruitment/recommendations/${recommendation.id}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -57,14 +80,61 @@
 			})
 
 			if (response.ok) {
+				console.log('✅ [RecruitmentRecommendations] Recommendation handled successfully')
+
+				// Refresh des recommandations
 				await fetchRecommendations()
+
+				// Notifier le parent
 				dispatch('recommendationChange')
+
+				// Message de succès selon l'action
+				const actionMessages = {
+					'ignore': 'Recommandation ignorée',
+					'contacted_email': 'Email envoyé et contact ajouté au recrutement',
+					'contacted_manual': 'Contact ajouté au recrutement'
+				}
+
+				const message = actionMessages[action] || 'Action effectuée'
+				console.log(`✅ ${message}`)
+
+				// Optionnel : afficher une notification à l'utilisateur
+				if (typeof window !== 'undefined' && window.alert) {
+					// En production, remplacer par un système de notifications plus élégant
+					// alert(message)
+				}
 			} else {
-				alert('Erreur lors du traitement de la recommandation')
+				console.error('❌ [RecruitmentRecommendations] API request failed:', response.status)
+				const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+				alert(`Erreur lors du traitement: ${errorData.error || 'Erreur inconnue'}`)
 			}
 		} catch (error) {
-			console.error('Error handling recommendation:', error)
+			console.error('❌ [RecruitmentRecommendations] Error handling recommendation:', error)
 			alert('Erreur lors du traitement de la recommandation')
+		}
+	}
+
+	// ✅ CORRECTION : Handler pour les événements du RecommendationCard
+	function onRecommendationHandle(event) {
+		console.log('📨 [RecruitmentRecommendations] Received handle event from card:', event.detail)
+
+		// Trouver la recommandation correspondante
+		const recommendation = event.target?.recommendation
+		if (recommendation) {
+			// Ajouter la recommandation aux détails de l'événement
+			const enhancedEvent = {
+				detail: {
+					...event.detail,
+					recommendation
+				},
+				target: {
+					recommendation
+				}
+			}
+
+			handleRecommendation(enhancedEvent)
+		} else {
+			console.error('❌ [RecruitmentRecommendations] No recommendation found in event target')
 		}
 	}
 
@@ -122,11 +192,22 @@
 
 					<div class="space-y-4">
 						{#each pendingRecommendations as recommendation (recommendation.id)}
-							<RecommendationCard
-								{recommendation}
-								{sections}
-								on:handle={(e) => handleRecommendation(recommendation.id, e.detail.action, e.detail.sectionId, e.detail.notes)}
-							/>
+							<!-- ✅ CORRECTION : Passage correct de la recommandation et binding des événements -->
+							<div>
+								<RecommendationCard
+									{recommendation}
+									{sections}
+									on:handle={(event) => {
+										console.log('📨 Received handle event for recommendation:', recommendation.id)
+										// Créer un événement enrichi avec la recommandation
+										const enhancedEvent = {
+											detail: event.detail,
+											target: { recommendation }
+										}
+										handleRecommendation(enhancedEvent)
+									}}
+								/>
+							</div>
 						{/each}
 					</div>
 				</div>
