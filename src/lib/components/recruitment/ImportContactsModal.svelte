@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/ImportContactsModal.svelte - Version corrigée -->
+<!-- src/lib/components/recruitment/ImportContactsModal.svelte - Version complète corrigée -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, Upload, Search, Users, AlertTriangle, CheckCircle } from 'lucide-svelte'
@@ -14,6 +14,7 @@
 	let searching = false
 	let importing = false
 	let searchPerformed = false
+	let initialLoadPerformed = false // ✅ NOUVEAU FLAG
 
 	let importResults: {
 		imported: any[]
@@ -21,19 +22,69 @@
 		errors: string[]
 	} | null = null
 
+	// ✅ CORRECTION : Charger automatiquement les contacts au montage
+	onMount(async () => {
+		await loadInitialContacts()
+	})
+
+	// ✅ NOUVELLE FONCTION : Chargement initial automatique
+	async function loadInitialContacts() {
+		if (initialLoadPerformed) return
+
+		searching = true
+		initialLoadPerformed = true
+
+		try {
+			console.log('🔄 Loading initial contacts...')
+
+			const response = await fetch(`/api/projects/${projectId}/management/recruitment/search-contacts`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					filter: '', // Recherche vide pour avoir tous les contacts
+					criteria: {
+						name: '',
+						email: '',
+						instruments: '',
+						projects: ''
+					}
+				})
+			})
+
+			if (response.ok) {
+				const data = await response.json()
+				searchResults = data.data || data || []
+				searchPerformed = true
+				console.log('✅ Initial contacts loaded:', searchResults.length)
+			} else {
+				console.error('❌ Failed to load initial contacts')
+			}
+		} catch (error) {
+			console.error('❌ Error loading initial contacts:', error)
+		} finally {
+			searching = false
+		}
+	}
+
+	// ✅ FONCTION MODIFIÉE : Recherche spécifique
 	async function searchContacts() {
-		if (!searchQuery.trim()) return
+		if (!searchQuery.trim()) {
+			// Si recherche vide, recharger tous les contacts
+			await loadInitialContacts()
+			return
+		}
 
 		searching = true
 		searchPerformed = true
 
 		try {
+			console.log('🔍 Searching contacts with query:', searchQuery)
+
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/search-contacts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					filter: searchQuery,
-					// Critères de recherche avancés
 					criteria: {
 						name: searchQuery,
 						email: searchQuery,
@@ -46,9 +97,12 @@
 			if (response.ok) {
 				const data = await response.json()
 				searchResults = data.data || data || []
+				console.log('✅ Search completed:', searchResults.length, 'results')
+			} else {
+				console.error('❌ Search failed')
 			}
 		} catch (error) {
-			console.error('Error searching contacts:', error)
+			console.error('❌ Error searching contacts:', error)
 			alert('Erreur lors de la recherche de contacts')
 		} finally {
 			searching = false
@@ -78,6 +132,7 @@
 		importing = true
 
 		try {
+			console.log('📥 Importing selected contacts...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts/import`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -116,12 +171,14 @@
 		}
 	}
 
+	// ✅ FONCTION NOUVELLE : Reset et rechargement
 	function resetSearch() {
 		searchQuery = ''
-		searchResults = []
 		selectedContacts = []
 		searchPerformed = false
 		importResults = null
+		initialLoadPerformed = false
+		loadInitialContacts()
 	}
 
 	function getContactDisplay(contact: Contact): string {
@@ -170,7 +227,7 @@
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-900">Rechercher des contacts</h3>
 					<p class="text-sm text-gray-600">
-						Recherchez par nom, email, instrument ou projet pour trouver des contacts à importer.
+						Tous les contacts sont affichés par défaut. Utilisez la recherche pour filtrer par nom, email, instrument ou projet.
 					</p>
 
 					<div class="flex gap-2">
@@ -179,14 +236,14 @@
 							<input
 								type="text"
 								bind:value={searchQuery}
-								placeholder="Rechercher des contacts..."
+								placeholder="Filtrer les contacts (optionnel)..."
 								class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								on:keydown={(e) => e.key === 'Enter' && searchContacts()}
 							/>
 						</div>
 						<button
 							on:click={searchContacts}
-							disabled={!searchQuery.trim() || searching}
+							disabled={searching}
 							class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2"
 						>
 							{#if searching}
@@ -194,26 +251,32 @@
 							{:else}
 								<Search size={16} />
 							{/if}
-							{searching ? 'Recherche...' : 'Rechercher'}
+							{searching ? 'Recherche...' : 'Filtrer'}
 						</button>
 
-						{#if searchPerformed}
+						{#if searchQuery}
 							<button
 								on:click={resetSearch}
 								class="px-4 py-2 text-gray-600 hover:text-gray-800"
 							>
-								Nouvelle recherche
+								Réinitialiser
 							</button>
 						{/if}
 					</div>
 				</div>
 
-				<!-- Résultats de recherche -->
-				{#if searchPerformed}
+				<!-- ✅ INDICATEUR DE CHARGEMENT INITIAL -->
+				{#if searching && !searchPerformed}
+					<div class="text-center py-8">
+						<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
+						<p class="text-gray-600">Chargement des contacts...</p>
+					</div>
+				{:else}
+					<!-- Résultats -->
 					<div class="space-y-4">
 						<div class="flex items-center justify-between">
 							<h4 class="font-semibold text-gray-900">
-								Résultats de recherche ({searchResults.length})
+								Contacts disponibles ({searchResults.length})
 							</h4>
 
 							{#if searchResults.length > 0}
@@ -239,10 +302,15 @@
 						{#if searchResults.length === 0}
 							<div class="text-center py-8 text-gray-500">
 								<Users size={48} class="mx-auto mb-4 opacity-50" />
-								<p>Aucun contact trouvé pour cette recherche.</p>
-								<p class="text-sm">Essayez avec d'autres termes de recherche.</p>
+								{#if searchQuery}
+									<p>Aucun contact trouvé pour cette recherche.</p>
+									<p class="text-sm">Essayez avec d'autres termes de recherche.</p>
+								{:else}
+									<p>Aucun contact disponible dans la base de données.</p>
+								{/if}
 							</div>
 						{:else}
+							<!-- Tableau des contacts -->
 							<div class="border border-gray-200 rounded-lg overflow-hidden">
 								<div class="max-h-96 overflow-y-auto">
 									<table class="w-full text-sm">
