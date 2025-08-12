@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version simplifiée et corrigée -->
+<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version complète sans bouton import -->
 <script lang="ts">
 	import { page } from '$app/stores'
 	import { onMount } from 'svelte'
@@ -9,9 +9,8 @@
 	import RecruitmentContactsList from '$lib/components/recruitment/RecruitmentContactsList.svelte'
 	import RecruitmentStats from '$lib/components/recruitment/RecruitmentStats.svelte'
 	import RecruitmentRecommendations from '$lib/components/recruitment/RecruitmentRecommendations.svelte'
-	import ImportContactsModal from '$lib/components/recruitment/ImportContactsModal.svelte'
 	import AddManualContactModal from '$lib/components/recruitment/AddManualContactModal.svelte'
-	import { Plus, Upload, Users, Settings } from 'lucide-svelte'
+	import { Plus, Users, Settings } from 'lucide-svelte'
 	import type { Project } from '$lib/types/Project'
 	import type { RecruitmentStats as StatsType, RecruitmentSettings as SettingsType } from '$lib/types'
 
@@ -24,9 +23,9 @@
 	let activeTab = 'contacts'
 	let loading = true
 	let error = ''
+	let initialImportDone = false
 
 	// Modals
-	let showImportModal = false
 	let showAddManualModal = false
 	let showSettingsModal = false
 
@@ -49,6 +48,8 @@
 
 		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
 			await loadData()
+			// ✅ NOUVEAU : Auto-import de tous les contacts au montage
+			await autoImportAllContacts()
 		} else {
 			error = 'ID de projet manquant ou invalide'
 		}
@@ -78,6 +79,52 @@
 		} catch (err) {
 			console.error('❌ Error loading data:', err)
 			error = 'Erreur lors du chargement des données'
+		}
+	}
+
+	// ✅ NOUVELLE FONCTION : Auto-import de tous les contacts via la nouvelle route optimisée
+	async function autoImportAllContacts() {
+		if (initialImportDone) return
+
+		try {
+			console.log('🔄 Auto-importing all contacts from database using optimized route...')
+
+			// Utiliser la nouvelle route d'auto-import optimisée
+			const importResponse = await fetch(`/api/projects/${projectId}/management/recruitment/auto-import-all`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			})
+
+			if (importResponse.ok) {
+				const importResults = await importResponse.json()
+				console.log('✅ Auto-import completed:', {
+					total_contacts: importResults.total_contacts || 0,
+					new_imports: importResults.new_imports || 0,
+					already_imported: importResults.already_imported || 0,
+					errors: importResults.errors?.length || 0
+				})
+
+				// Afficher un message informatif si des contacts ont été importés
+				if (importResults.new_imports > 0) {
+					console.log(`📥 ${importResults.new_imports} nouveaux contacts importés automatiquement`)
+				}
+
+				// Rafraîchir la liste et les stats
+				if (contactsListRef && contactsListRef.refreshContacts) {
+					contactsListRef.refreshContacts()
+				}
+				fetchStats()
+			} else {
+				console.warn('⚠️ Auto-import failed, but continuing...')
+				const errorData = await importResponse.json().catch(() => ({}))
+				console.warn('Error details:', errorData)
+			}
+
+			initialImportDone = true
+		} catch (error) {
+			console.warn('⚠️ Error during auto-import:', error)
+			// Ne pas faire échouer le chargement de la page si l'auto-import échoue
+			initialImportDone = true
 		}
 	}
 
@@ -220,19 +267,6 @@
 		showAddManualModal = false
 	}
 
-	// ✅ CORRECTION : Handler pour l'import de contacts
-	function handleContactsImported(event) {
-		console.log('✅ Contacts imported:', event.detail)
-		// Refresh immédiat pour voir les nouveaux contacts
-		if (contactsListRef && contactsListRef.refreshContacts) {
-			contactsListRef.refreshContacts()
-		}
-		// Refresh des stats
-		fetchStats()
-		// Fermer la modal
-		showImportModal = false
-	}
-
 	// Valeurs sécurisées pour l'affichage - simplifiées
 	$: safeStats = stats || { total: 0, by_status: [], pending_recommendations: 0 }
 	$: totalContacts = safeStats.total || 0
@@ -270,11 +304,17 @@
 	<ProjectHeadDisplayer {project} selectedTab={6} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
-		<!-- ✅ CORRECTION : Header simplifié avec une seule rangée de statistiques -->
+		<!-- ✅ CORRECTION : Header simplifié SANS le bouton d'import -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 mb-6">
 			<div class="flex {isMobile ? 'flex-col gap-4' : 'items-center justify-between'} mb-6">
-				<h1 class="font-bold text-2xl uppercase">Gestion du Recrutement</h1>
+				<div>
+					<h1 class="font-bold text-2xl uppercase">Gestion du Recrutement</h1>
+					<p class="text-sm text-gray-600 mt-2">
+						Tous les contacts de la base de données sont automatiquement disponibles pour le recrutement
+					</p>
+				</div>
 
+				<!-- ✅ BOUTONS MODIFIÉS : Suppression du bouton "Importer Contacts" -->
 				<div class="flex {isMobile ? 'flex-col' : 'flex-row'} gap-2">
 					<button
 						on:click={() => showSettingsModal = true}
@@ -290,14 +330,6 @@
 					>
 						<Plus size={16} />
 						Ajouter Contact
-					</button>
-
-					<button
-						on:click={() => showImportModal = true}
-						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-					>
-						<Upload size={16} />
-						Importer Contacts
 					</button>
 
 					<button
@@ -409,14 +441,6 @@
 				{projectId}
 				on:close={() => showAddManualModal = false}
 				on:contactAdded={handleContactAdded}
-			/>
-		{/if}
-
-		{#if showImportModal}
-			<ImportContactsModal
-				{projectId}
-				on:close={() => showImportModal = false}
-				on:contactsImported={handleContactsImported}
 			/>
 		{/if}
 	</div>
