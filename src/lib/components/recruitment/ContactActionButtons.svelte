@@ -1,7 +1,7 @@
-<!-- src/lib/components/recruitment/ContactActionButtons.svelte -->
+<!-- src/lib/components/recruitment/ContactActionButtons.svelte - Version avec contacted_by -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
-	import { Mail, Phone, MessageCircle, Edit, Trash2, MoreVertical, CheckCircle, XCircle, Clock } from 'lucide-svelte'
+	import { Mail, Phone, MessageCircle, Edit, Trash2, MoreVertical, CheckCircle, XCircle, Clock, User } from 'lucide-svelte'
 	import type { RecruitmentContact } from '$lib/types'
 
 	export let contact: RecruitmentContact
@@ -10,14 +10,20 @@
 
 	let showDropdown = false
 	let notesModal = false
+	let contactedByModal = false // 🆕 Modal pour modifier contacted_by
 	let currentNotes = contact.notes || ''
+	let currentContactedBy = contact.contacted_by || '' // 🆕 État pour contacted_by
 
 	function toggleDropdown() {
 		showDropdown = !showDropdown
 	}
 
-	function updateStatus(status: string, notes?: string) {
-		dispatch('updateStatus', { status, notes })
+	function updateStatus(status: string, notes?: string, contactedBy?: string) {
+		const updateData: any = { status }
+		if (notes !== undefined) updateData.notes = notes
+		if (contactedBy !== undefined) updateData.contacted_by = contactedBy
+
+		dispatch('updateStatus', updateData)
 		showDropdown = false
 	}
 
@@ -34,9 +40,30 @@
 		showDropdown = false
 	}
 
+	// 🆕 Fonction pour ouvrir le modal contacted_by
+	function openContactedByModal() {
+		currentContactedBy = contact.contacted_by || ''
+		contactedByModal = true
+		showDropdown = false
+	}
+
 	function saveNotes() {
-		dispatch('updateStatus', { status: contact.status, notes: currentNotes })
+		dispatch('updateStatus', {
+			status: contact.status,
+			notes: currentNotes,
+			contacted_by: contact.contacted_by
+		})
 		notesModal = false
+	}
+
+	// 🆕 Fonction pour sauvegarder contacted_by
+	function saveContactedBy() {
+		dispatch('updateStatus', {
+			status: contact.status,
+			notes: contact.notes,
+			contacted_by: currentContactedBy
+		})
+		contactedByModal = false
 	}
 
 	function sendEmail() {
@@ -53,7 +80,6 @@
 
 	function openMessenger() {
 		if (contact.messenger) {
-			// Logique pour ouvrir Messenger - à adapter selon le format
 			window.open(`https://m.me/${contact.messenger}`, '_blank')
 		}
 	}
@@ -219,6 +245,15 @@
 					Modifier les notes
 				</button>
 
+				<!-- 🆕 Action pour modifier contacted_by -->
+				<button
+					on:click={openContactedByModal}
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+				>
+					<User size={14} />
+					Modifier "Contacté par"
+				</button>
+
 				<button
 					on:click={deleteContact}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-red-100 text-red-600 flex items-center gap-2"
@@ -254,6 +289,48 @@
 				</button>
 				<button
 					on:click={saveNotes}
+					class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
+				>
+					Sauvegarder
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- 🆕 Modal de modification "Contacté par" -->
+{#if contactedByModal}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+			<h3 class="text-lg font-semibold mb-4">
+				Modifier "Contacté par" - {contact.first_name} {contact.last_name}
+			</h3>
+
+			<div>
+				<label for="contacted_by_input" class="block text-sm font-medium text-gray-700 mb-2">
+					Personne qui a contacté
+				</label>
+				<input
+					id="contacted_by_input"
+					type="text"
+					bind:value={currentContactedBy}
+					placeholder="Nom de la personne qui a contacté..."
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				/>
+				<p class="text-xs text-gray-500 mt-1">
+					Indiquez le nom de la personne qui a pris contact avec ce candidat.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-2 mt-4">
+				<button
+					on:click={() => contactedByModal = false}
+					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+				>
+					Annuler
+				</button>
+				<button
+					on:click={saveContactedBy}
 					class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
 				>
 					Sauvegarder

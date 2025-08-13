@@ -31,6 +31,7 @@ export interface RecruitmentContact {
 	recommender_contact_id: number | null
 	is_duplicate: boolean
 	source: string | null
+	contacted_by?: string // 🆕 Nouveau champ
 	created_at: string
 	updated_at: string
 

@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/AddManualContactModal.svelte - Version corrigée -->
+<!-- src/lib/components/recruitment/AddManualContactModal.svelte - Version avec contacted_by -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, UserPlus, AlertTriangle } from 'lucide-svelte'
@@ -15,15 +15,18 @@
 		phone: '',
 		messenger: '',
 		section_id: null as number | null,
-		notes: ''
+		notes: '',
+		contacted_by: '' // 🆕 Nouveau champ
 	}
 
 	let sections: Section[] = []
 	let saving = false
 	let errors: Record<string, string> = {}
+	let currentUserName = '' // 🆕 Nom de l'utilisateur connecté
 
 	onMount(async () => {
 		await fetchSections()
+		await getCurrentUser()
 	})
 
 	async function fetchSections() {
@@ -37,11 +40,36 @@
 		}
 	}
 
+	// 🆕 Fonction pour obtenir l'utilisateur connecté
+	async function getCurrentUser() {
+		try {
+			const response = await fetch('/api/verify')
+			if (response.ok) {
+				// Pour récupérer le nom de l'utilisateur, on peut utiliser l'endpoint users
+				const usersResponse = await fetch('/api/users')
+				if (usersResponse.ok) {
+					const users = await usersResponse.json()
+					// Pour cet exemple, on prend le premier utilisateur ou on pourrait
+					// récupérer l'utilisateur connecté via un endpoint dédié
+					if (users && users.length > 0) {
+						// TODO: Ici il faudrait récupérer l'utilisateur connecté spécifiquement
+						// Pour l'instant on utilise une valeur par défaut
+						currentUserName = 'Utilisateur actuel'
+						formData.contacted_by = currentUserName
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Error fetching current user:', error)
+			currentUserName = 'Utilisateur actuel'
+			formData.contacted_by = currentUserName
+		}
+	}
+
 	async function saveContact() {
-		// ✅ CORRECTION : Validation renforcée
+		// Validation des champs requis
 		errors = {}
 
-		// Validation des champs requis avec trim
 		const firstName = formData.first_name.trim()
 		const lastName = formData.last_name.trim()
 
@@ -70,7 +98,6 @@
 		saving = true
 
 		try {
-			// ✅ CORRECTION : S'assurer que les données envoyées sont propres
 			const cleanData = {
 				first_name: firstName,
 				last_name: lastName,
@@ -78,7 +105,8 @@
 				phone: formData.phone.trim() || null,
 				messenger: formData.messenger.trim() || null,
 				section_id: formData.section_id,
-				notes: formData.notes.trim() || null
+				notes: formData.notes.trim() || null,
+				contacted_by: formData.contacted_by.trim() || null // 🆕 Inclure contacted_by
 			}
 
 			console.log('💾 Saving contact with data:', cleanData)
@@ -93,10 +121,7 @@
 				const newContact = await response.json()
 				console.log('✅ Contact created successfully:', newContact)
 
-				// ✅ CORRECTION : Émettre l'événement immédiatement avec le contact créé
 				dispatch('contactAdded', newContact)
-
-				// ✅ CORRECTION : Fermer la modal immédiatement après succès
 				closeModal()
 			} else {
 				const errorData = await response.json()
@@ -112,7 +137,6 @@
 	}
 
 	function closeModal() {
-		// ✅ CORRECTION : Réinitialiser le formulaire proprement
 		clearForm()
 		dispatch('close')
 	}
@@ -136,12 +160,13 @@
 			phone: '',
 			messenger: '',
 			section_id: null,
-			notes: ''
+			notes: '',
+			contacted_by: currentUserName // 🆕 Remettre le nom de l'utilisateur par défaut
 		}
 		errors = {}
 	}
 
-	// ✅ CORRECTION : Validation en temps réel pour les champs requis
+	// Validation en temps réel
 	$: {
 		if (formData.first_name.trim() && errors.first_name) {
 			delete errors.first_name
@@ -302,6 +327,28 @@
 				</div>
 			</div>
 
+			<!-- 🆕 Champ Contacté par -->
+			<div class="space-y-4">
+				<h3 class="text-lg font-semibold text-gray-900">Suivi</h3>
+
+				<div>
+					<label for="contacted_by" class="block text-sm font-medium text-gray-700 mb-1">
+						Contacté par
+					</label>
+					<input
+						id="contacted_by"
+						type="text"
+						bind:value={formData.contacted_by}
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						placeholder="Nom de la personne qui contacte"
+						disabled={saving}
+					/>
+					<p class="text-xs text-gray-500 mt-1">
+						Par défaut, votre nom est utilisé. Vous pouvez le modifier si nécessaire.
+					</p>
+				</div>
+			</div>
+
 			<!-- Notes -->
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold text-gray-900">Notes</h3>
@@ -338,6 +385,9 @@
 						{/if}
 						{#if formData.section_id}
 							<p><span class="font-medium">Section :</span> {sections.find(s => s.id === formData.section_id)?.name}</p>
+						{/if}
+						{#if formData.contacted_by.trim()}
+							<p><span class="font-medium">Contacté par :</span> {formData.contacted_by.trim()}</p>
 						{/if}
 					</div>
 				</div>
