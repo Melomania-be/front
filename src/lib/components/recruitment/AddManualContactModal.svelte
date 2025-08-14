@@ -23,10 +23,13 @@
 	let saving = false
 	let errors: Record<string, string> = {}
 	let currentUserName = '' // 🆕 Nom de l'utilisateur connecté
+	let loadingUser = true // 🆕 Indicateur de chargement
 
 	onMount(async () => {
+		console.log('🚀 AddManualContactModal mounted')
 		await fetchSections()
 		await getCurrentUser()
+		console.log('✅ Modal initialization complete. contacted_by =', formData.contacted_by)
 	})
 
 	async function fetchSections() {
@@ -42,27 +45,27 @@
 
 	// 🆕 Fonction pour obtenir l'utilisateur connecté
 	async function getCurrentUser() {
+		loadingUser = true
 		try {
-			const response = await fetch('/api/verify')
+			console.log('🔍 Fetching current user...')
+			const response = await fetch('/api/users/current')
 			if (response.ok) {
-				// Pour récupérer le nom de l'utilisateur, on peut utiliser l'endpoint users
-				const usersResponse = await fetch('/api/users')
-				if (usersResponse.ok) {
-					const users = await usersResponse.json()
-					// Pour cet exemple, on prend le premier utilisateur ou on pourrait
-					// récupérer l'utilisateur connecté via un endpoint dédié
-					if (users && users.length > 0) {
-						// TODO: Ici il faudrait récupérer l'utilisateur connecté spécifiquement
-						// Pour l'instant on utilise une valeur par défaut
-						currentUserName = 'Utilisateur actuel'
-						formData.contacted_by = currentUserName
-					}
-				}
+				const userData = await response.json()
+				console.log('✅ Current user data:', userData)
+				currentUserName = userData.fullName || userData.email || 'Utilisateur actuel'
+				formData.contacted_by = currentUserName
+				console.log('✅ Set contacted_by to:', currentUserName)
+			} else {
+				console.warn('⚠️ Failed to fetch current user, using default')
+				currentUserName = 'Utilisateur actuel'
+				formData.contacted_by = currentUserName
 			}
 		} catch (error) {
-			console.error('Error fetching current user:', error)
+			console.error('❌ Error fetching current user:', error)
 			currentUserName = 'Utilisateur actuel'
 			formData.contacted_by = currentUserName
+		} finally {
+			loadingUser = false
 		}
 	}
 
@@ -164,6 +167,7 @@
 			contacted_by: currentUserName // 🆕 Remettre le nom de l'utilisateur par défaut
 		}
 		errors = {}
+		console.log('🧹 Form cleared, contacted_by reset to:', currentUserName)
 	}
 
 	// Validation en temps réel
