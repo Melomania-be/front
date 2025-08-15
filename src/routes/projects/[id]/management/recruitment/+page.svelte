@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version complète sans bouton import -->
+<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version avec import avancé -->
 <script lang="ts">
 	import { page } from '$app/stores'
 	import { onMount } from 'svelte'
@@ -10,7 +10,8 @@
 	import RecruitmentStats from '$lib/components/recruitment/RecruitmentStats.svelte'
 	import RecruitmentRecommendations from '$lib/components/recruitment/RecruitmentRecommendations.svelte'
 	import AddManualContactModal from '$lib/components/recruitment/AddManualContactModal.svelte'
-	import { Plus, Users, Settings } from 'lucide-svelte'
+	import ImportContactsAdvancedModal from '$lib/components/recruitment/ImportContactsWorkingModal.svelte'
+	import { Plus, Users, Settings, Upload } from 'lucide-svelte'
 	import type { Project } from '$lib/types/Project'
 	import type { RecruitmentStats as StatsType, RecruitmentSettings as SettingsType } from '$lib/types'
 
@@ -27,6 +28,7 @@
 
 	// Modals
 	let showAddManualModal = false
+	let showImportAdvancedModal = false
 	let showSettingsModal = false
 
 	// ✅ RÉFÉRENCE AU COMPOSANT LISTE
@@ -48,7 +50,7 @@
 
 		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
 			await loadData()
-			// ✅ NOUVEAU : Auto-import de tous les contacts au montage
+			// Auto-import de tous les contacts au montage
 			await autoImportAllContacts()
 		} else {
 			error = 'ID de projet manquant ou invalide'
@@ -82,14 +84,12 @@
 		}
 	}
 
-	// ✅ NOUVELLE FONCTION : Auto-import de tous les contacts via la nouvelle route optimisée
 	async function autoImportAllContacts() {
 		if (initialImportDone) return
 
 		try {
 			console.log('🔄 Auto-importing all contacts from database using optimized route...')
 
-			// Utiliser la nouvelle route d'auto-import optimisée
 			const importResponse = await fetch(`/api/projects/${projectId}/management/recruitment/auto-import-all`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
@@ -104,26 +104,21 @@
 					errors: importResults.errors?.length || 0
 				})
 
-				// Afficher un message informatif si des contacts ont été importés
 				if (importResults.new_imports > 0) {
 					console.log(`📥 ${importResults.new_imports} nouveaux contacts importés automatiquement`)
 				}
 
-				// Rafraîchir la liste et les stats
 				if (contactsListRef && contactsListRef.refreshContacts) {
 					contactsListRef.refreshContacts()
 				}
 				fetchStats()
 			} else {
 				console.warn('⚠️ Auto-import failed, but continuing...')
-				const errorData = await importResponse.json().catch(() => ({}))
-				console.warn('Error details:', errorData)
 			}
 
 			initialImportDone = true
 		} catch (error) {
 			console.warn('⚠️ Error during auto-import:', error)
-			// Ne pas faire échouer le chargement de la page si l'auto-import échoue
 			initialImportDone = true
 		}
 	}
@@ -197,7 +192,6 @@
 			if (response.ok) {
 				const data = await response.json()
 
-				// Protection maximale contre les données corrompues
 				const newStats = {
 					total: Number(data.total) || 0,
 					by_status: Array.isArray(data.by_status) ? data.by_status.filter(item => item && item.status) : [],
@@ -227,12 +221,10 @@
 		}
 	}
 
-	// ✅ CORRECTION : Handlers avec refresh immédiat et utilisation de la référence
 	function handleSettingsUpdate() {
 		console.log('🔄 Settings updated, refreshing data...')
 		setTimeout(async () => {
 			await Promise.all([fetchSettings(), fetchStats()])
-			// Rafraîchir la liste des contacts
 			if (contactsListRef && contactsListRef.refreshContacts) {
 				contactsListRef.refreshContacts()
 			}
@@ -241,33 +233,37 @@
 
 	function handleContactChange() {
 		console.log('🔄 Contact changed, refreshing stats...')
-		// ✅ Refresh immédiat des stats quand un contact change
 		fetchStats()
 	}
 
 	function handleRecommendationChange() {
 		console.log('🔄 Recommendation changed, refreshing stats...')
 		fetchStats()
-		// Rafraîchir aussi la liste des contacts
 		if (contactsListRef && contactsListRef.refreshContacts) {
 			contactsListRef.refreshContacts()
 		}
 	}
 
-	// ✅ CORRECTION : Handler pour l'ajout de contact manuel
 	function handleContactAdded(event) {
 		console.log('✅ New contact added:', event.detail)
-		// Refresh immédiat pour voir le nouveau contact
 		if (contactsListRef && contactsListRef.refreshContacts) {
 			contactsListRef.refreshContacts()
 		}
-		// Refresh des stats
 		fetchStats()
-		// Fermer la modal
 		showAddManualModal = false
 	}
 
-	// Valeurs sécurisées pour l'affichage - simplifiées
+	// ✅ NOUVEAU : Handler pour l'import avancé
+	function handleContactsImported(event) {
+		console.log('✅ Contacts imported:', event.detail)
+		if (contactsListRef && contactsListRef.refreshContacts) {
+			contactsListRef.refreshContacts()
+		}
+		fetchStats()
+		showImportAdvancedModal = false
+	}
+
+	// Valeurs sécurisées pour l'affichage
 	$: safeStats = stats || { total: 0, by_status: [], pending_recommendations: 0 }
 	$: totalContacts = safeStats.total || 0
 	$: awaitingCount = safeStats.by_status?.find(s => s.status === 'awaiting_response')?.count || 0
@@ -304,17 +300,17 @@
 	<ProjectHeadDisplayer {project} selectedTab={6} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
-		<!-- ✅ CORRECTION : Header simplifié SANS le bouton d'import -->
+		<!-- Header avec nouveau bouton Import Avancé -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 mb-6">
 			<div class="flex {isMobile ? 'flex-col gap-4' : 'items-center justify-between'} mb-6">
 				<div>
 					<h1 class="font-bold text-2xl uppercase">Gestion du Recrutement</h1>
 					<p class="text-sm text-gray-600 mt-2">
-						Tous les contacts de la base de données sont automatiquement disponibles pour le recrutement
+						Importez des contacts depuis la base de données avec recherche avancée ou ajoutez-les manuellement
 					</p>
 				</div>
 
-				<!-- ✅ BOUTONS MODIFIÉS : Suppression du bouton "Importer Contacts" -->
+				<!-- ✅ BOUTONS AVEC NOUVEAU IMPORT AVANCÉ -->
 				<div class="flex {isMobile ? 'flex-col' : 'flex-row'} gap-2">
 					<button
 						on:click={() => showSettingsModal = true}
@@ -325,11 +321,19 @@
 					</button>
 
 					<button
+						on:click={() => showImportAdvancedModal = true}
+						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+					>
+						<Upload size={16} />
+						Importer Contacts
+					</button>
+
+					<button
 						on:click={() => showAddManualModal = true}
 						class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors flex items-center gap-2"
 					>
 						<Plus size={16} />
-						Ajouter Contact
+						Ajouter Manuel
 					</button>
 
 					<button
@@ -342,7 +346,7 @@
 				</div>
 			</div>
 
-			<!-- Statistiques rapides - une seule ligne -->
+			<!-- Statistiques rapides -->
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div class="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
 					<p class="text-lg font-bold text-blue-600">{totalContacts}</p>
@@ -399,7 +403,6 @@
 
 		<!-- Contenu des onglets -->
 		{#if (activeTab === 'contacts' || isMobile) && settings}
-			<!-- ✅ CORRECTION : Référence au composant liste -->
 			<RecruitmentContactsList
 				bind:this={contactsListRef}
 				{projectId}
@@ -441,6 +444,15 @@
 				{projectId}
 				on:close={() => showAddManualModal = false}
 				on:contactAdded={handleContactAdded}
+			/>
+		{/if}
+
+		<!-- ✅ NOUVEAU MODAL D'IMPORT AVANCÉ -->
+		{#if showImportAdvancedModal}
+			<ImportContactsAdvancedModal
+				{projectId}
+				on:close={() => showImportAdvancedModal = false}
+				on:contactsImported={handleContactsImported}
 			/>
 		{/if}
 	</div>
