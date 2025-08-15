@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/RecruitmentContactsList.svelte - Version unifiée avec design moderne -->
+<!-- src/lib/components/recruitment/RecruitmentContactsList.svelte -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { browser } from '$app/environment'
@@ -88,9 +88,9 @@
 
 				const safeContacts = Array.isArray(data.data) ? data.data.map(contact => ({
 					...contact,
-					first_name: contact.first_name || 'Prénom',
-					last_name: contact.last_name || 'Nom',
-					display_name: `${contact.first_name || 'Prénom'} ${contact.last_name || 'Nom'}`.trim(),
+					first_name: contact.first_name || 'First name',
+					last_name: contact.last_name || 'Last name',
+					display_name: `${contact.first_name || 'First name'} ${contact.last_name || 'Last name'}`.trim(),
 					contacted_by: contact.contacted_by || null
 				})) : []
 
@@ -128,15 +128,15 @@
 			if (response.ok) {
 				refreshContactsList()
 			} else {
-				alert('Erreur lors de la mise à jour du statut')
+				alert('Error updating status')
 			}
 		} catch (error) {
-			alert('Erreur lors de la mise à jour du statut')
+			alert('Error updating status')
 		}
 	}
 
 	async function deleteContact(contactId: number) {
-		if (!confirm('Êtes-vous sûr de vouloir supprimer ce contact du recrutement ?')) {
+		if (!confirm('Are you sure you want to remove this contact from recruitment?')) {
 			return
 		}
 
@@ -148,10 +148,10 @@
 			if (response.ok) {
 				refreshContactsList()
 			} else {
-				alert('Erreur lors de la suppression')
+				alert('Error deleting contact')
 			}
 		} catch (error) {
-			alert('Erreur lors de la suppression')
+			alert('Error deleting contact')
 		}
 	}
 
@@ -176,7 +176,7 @@
 
 	async function bulkUpdateStatus(status: string) {
 		if (!selectedContacts || selectedContacts.length === 0) {
-			alert('Aucun contact sélectionné')
+			alert('No contact selected')
 			return
 		}
 
@@ -187,18 +187,18 @@
 			await Promise.all(promises)
 			clearSelection()
 		} catch (error) {
-			alert('Erreur lors de la mise à jour groupée')
+			alert('Error updating contacts')
 		}
 	}
 
 	async function sendBulkEmails() {
 		if (!contacts || !Array.isArray(contacts)) {
-			alert('Erreur: liste des contacts non disponible')
+			alert('Error: contacts list not available')
 			return
 		}
 
 		if (!selectedContacts || selectedContacts.length === 0) {
-			alert('Aucun contact sélectionné')
+			alert('No contact selected')
 			return
 		}
 
@@ -210,11 +210,11 @@
 		)
 
 		if (emailContacts.length === 0) {
-			alert('Aucun contact sélectionné n\'a d\'adresse email valide')
+			alert('No selected contact has a valid email address')
 			return
 		}
 
-		const confirmMessage = `SIMULATION : Envoyer un email de recrutement à ${emailContacts.length} contact(s) ?\n\n⚠️ En mode développement, les emails seront simulés (pas d'envoi réel).`
+		const confirmMessage = `SIMULATION: Send recruitment email to ${emailContacts.length} contact(s)?\n\nIn development mode, emails will be simulated (no actual sending).`
 
 		if (!confirm(confirmMessage)) {
 			return
@@ -234,22 +234,22 @@
 
 				if (result.success) {
 					const message = result.simulation_mode ?
-						`SIMULATION : ${result.summary?.sent || 0} email(s) auraient été envoyés.\nLes status ont été mis à jour.` :
-						`${result.summary?.sent || 0} emails envoyés avec succès sur ${emailContacts.length}`
+						`SIMULATION: ${result.summary?.sent || 0} email(s) would have been sent.\nStatuses have been updated.` :
+						`${result.summary?.sent || 0} emails sent successfully out of ${emailContacts.length}`
 
 					alert(message)
 				} else {
-					alert(`Emails traités: ${result.sent?.length || 0}, Échecs: ${result.failed?.length || 0}`)
+					alert(`Emails processed: ${result.sent?.length || 0}, Failed: ${result.failed?.length || 0}`)
 				}
 
 				refreshContactsList()
 				clearSelection()
 			} else {
 				const errorData = await response.json()
-				alert(`Erreur lors de l'envoi des emails: ${errorData.error || 'Erreur inconnue'}`)
+				alert(`Error sending emails: ${errorData.error || 'Unknown error'}`)
 			}
 		} catch (error) {
-			alert('Erreur lors de l\'envoi des emails')
+			alert('Error sending emails')
 		}
 	}
 
@@ -285,13 +285,13 @@
 
 	function getStatusLabel(status: string): string {
 		const labels = {
-			'not_yet_contacted': 'Pas encore contacté',
-			'awaiting_response': 'En attente de réponse',
-			'to_follow_up': 'À relancer',
-			'not_available': 'Non disponible',
-			'pending_validation': 'En validation',
-			'cancelled': 'Annulé',
-			'recruited': 'Recruté'
+			'not_yet_contacted': 'Not yet contacted',
+			'awaiting_response': 'Awaiting response',
+			'to_follow_up': 'Follow up',
+			'not_available': 'Not available',
+			'pending_validation': 'Pending validation',
+			'cancelled': 'Cancelled',
+			'recruited': 'Recruited'
 		}
 		return labels[status] || status
 	}
@@ -317,18 +317,17 @@
 		try {
 			const date = new Date(contactDate)
 			if (isNaN(date.getTime())) {
-				return 'Date invalide'
+				return 'Invalid date'
 			}
-			return date.toLocaleDateString('fr-FR')
+			return date.toLocaleDateString('en-US')
 		} catch (error) {
-			return 'Date invalide'
+			return 'Invalid date'
 		}
 	}
 
 	$: safeContacts = Array.isArray(contacts) ? contacts.filter(c => c && c.id) : []
 </script>
 
-<!-- Design Unifié avec le même style que All Auditions -->
 <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 	<div class="flex items-center space-x-3 mb-4">
 		<div class="flex items-center justify-center w-10 h-10 bg-[#6B9AD9] rounded-[8px]">
@@ -337,7 +336,7 @@
 			</svg>
 		</div>
 		<div class="flex-1">
-			<h1 class="font-bold text-lg">CONTACTS DE RECRUTEMENT ({safeContacts.length})</h1>
+			<h1 class="font-bold text-lg">RECRUITMENT CONTACTS ({safeContacts.length})</h1>
 		</div>
 
 		{#if safeContacts.length > 0}
@@ -347,14 +346,14 @@
 					class="px-3 py-2 text-sm bg-[#6B9AD9] text-white rounded hover:bg-blue-600 font-semibold"
 					disabled={isRefreshing}
 				>
-					Tout sélectionner
+					Select all
 				</button>
 				{#if selectedContacts.length > 0}
 					<button
 						on:click={clearSelection}
 						class="px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 font-semibold"
 					>
-						Désélectionner ({selectedContacts.length})
+						Deselect ({selectedContacts.length})
 					</button>
 				{/if}
 			</div>
@@ -364,11 +363,11 @@
 	{#if isRefreshing}
 		<div class="p-4 text-center">
 			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B9AD9] mx-auto mb-2"></div>
-			<p class="text-sm text-gray-600">Mise à jour en cours...</p>
+			<p class="text-sm text-gray-600">Updating...</p>
 		</div>
 	{/if}
 
-	<!-- Actions groupées avec le style AUDITION DETAILS -->
+	<!-- Bulk actions -->
 	{#if showBulkActions}
 		<div class="mb-4 bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 			<div class="flex items-center space-x-3 mb-4">
@@ -378,8 +377,8 @@
 					</svg>
 				</div>
 				<div>
-					<h1 class="font-bold text-lg">ACTIONS GROUPÉES</h1>
-					<p class="text-sm text-gray-600 font-medium">{selectedContacts.length} contact(s) sélectionné(s)</p>
+					<h1 class="font-bold text-lg">BULK ACTIONS</h1>
+					<p class="text-sm text-gray-600 font-medium">{selectedContacts.length} contact(s) selected</p>
 				</div>
 			</div>
 
@@ -391,28 +390,28 @@
 						disabled={isRefreshing}
 					>
 						<Mail size={14} />
-						<span>Envoyer emails</span>
+						<span>Send emails</span>
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('awaiting_response')}
 						class="px-3 py-2 text-sm bg-yellow-600 text-white rounded-[6px] hover:bg-yellow-700 font-semibold"
 						disabled={isRefreshing}
 					>
-						En attente
+						Awaiting
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('not_available')}
 						class="px-3 py-2 text-sm bg-red-600 text-white rounded-[6px] hover:bg-red-700 font-semibold"
 						disabled={isRefreshing}
 					>
-						Non disponible
+						Not available
 					</button>
 					<button
 						on:click={() => bulkUpdateStatus('recruited')}
 						class="px-3 py-2 text-sm bg-green-600 text-white rounded-[6px] hover:bg-green-700 font-semibold"
 						disabled={isRefreshing}
 					>
-						Recruté
+						Recruited
 					</button>
 				</div>
 			</div>
@@ -424,8 +423,8 @@
 			<svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
 			</svg>
-			<h3 class="mt-2 text-sm font-medium text-gray-900">Aucun contact de recrutement</h3>
-			<p class="mt-1 text-sm text-gray-500">Commencez par ajouter des contacts manuellement ou en important depuis la base de données.</p>
+			<h3 class="mt-2 text-sm font-medium text-gray-900">No recruitment contacts</h3>
+			<p class="mt-1 text-sm text-gray-500">Start by adding contacts manually or importing from the database.</p>
 		</div>
 	{:else}
 		<SimpleFilterer
@@ -436,12 +435,12 @@
 			on:optionsUpdated={fetchContacts}
 		>
 			{#if isMobile}
-				<!-- Version Mobile avec Cards Design Unifié -->
+				<!-- Mobile version with cards -->
 				<div class="space-y-3">
 					{#each safeContacts as contact (contact.id)}
 						<div class="border-2 border-[#8C8C8C] rounded-[10px] p-4 hover:bg-gray-50 {shouldHighlightFollowUp(contact) ? 'bg-yellow-50' : ''} {contact.is_duplicate ? 'bg-orange-50' : ''}">
 
-							<!-- Header avec Sélection et Nom -->
+							<!-- Header with selection and name -->
 							<div class="flex items-start justify-between mb-3">
 								<div class="flex items-center space-x-3 flex-1 min-w-0">
 									<input
@@ -458,10 +457,10 @@
 									</div>
 									<div class="flex-1 min-w-0">
 										<h3 class="font-bold text-gray-900 truncate">
-											{contact.first_name || 'Prénom'} {contact.last_name || 'Nom'}
+											{contact.first_name || 'First name'} {contact.last_name || 'Last name'}
 										</h3>
 										<p class="text-sm text-blue-600 font-medium">
-											{contact.section?.name || 'Section non définie'}
+											{contact.section?.name || 'No section defined'}
 										</p>
 									</div>
 								</div>
@@ -471,7 +470,7 @@
 								/>
 							</div>
 
-							<!-- Informations de Contact avec le style AUDITION DETAILS -->
+							<!-- Contact information -->
 							<div class="mb-3">
 								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
 									<div class="flex items-center space-x-3 mb-3">
@@ -500,13 +499,13 @@
 											</div>
 										{/if}
 										{#if !contact.email && !contact.phone && !contact.messenger}
-											<p class="text-sm text-gray-500 italic">Aucune information de contact disponible</p>
+											<p class="text-sm text-gray-500 italic">No contact information available</p>
 										{/if}
 									</div>
 								</div>
 							</div>
 
-							<!-- Badges et Informations avec le style AUDITION DETAILS -->
+							<!-- Badges and information -->
 							<div class="mb-3">
 								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
 									<div class="flex items-center space-x-3 mb-3">
@@ -515,17 +514,17 @@
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"></path>
 											</svg>
 										</div>
-										<h3 class="font-bold text-sm text-gray-900 uppercase">INFORMATIONS</h3>
+										<h3 class="font-bold text-sm text-gray-900 uppercase">INFORMATION</h3>
 									</div>
 									<div class="space-y-2">
 										{#if contact.is_duplicate}
 											<div class="bg-orange-50 border-2 border-orange-200 rounded-[6px] p-2">
-												<span class="text-xs text-orange-700 font-bold">⚠️ Doublon potentiel</span>
+												<span class="text-xs text-orange-700 font-bold">Potential duplicate</span>
 											</div>
 										{/if}
 										{#if contact.recommended_by}
 											<div class="bg-blue-50 border-2 border-blue-200 rounded-[6px] p-2">
-												<span class="text-xs text-blue-700 font-bold">Recommandé par {contact.recommended_by}</span>
+												<span class="text-xs text-blue-700 font-bold">Recommended by {contact.recommended_by}</span>
 											</div>
 										{/if}
 										<div class="bg-gray-50 border-2 border-gray-200 rounded-[6px] p-2">
@@ -535,24 +534,24 @@
 												contact.source === 'recommendation' ? 'text-purple-700' :
 												'text-green-700'
 											}">
-												Source: {contact.source === 'database' ? 'Base de données' :
-												contact.source === 'manual' ? 'Manuel' :
-													contact.source === 'recommendation' ? 'Recommandation' :
-														contact.source || 'Autre'}
+												Source: {contact.source === 'database' ? 'Database' :
+												contact.source === 'manual' ? 'Manual' :
+													contact.source === 'recommendation' ? 'Recommendation' :
+														contact.source || 'Other'}
 											</span>
 										</div>
 									</div>
 								</div>
 							</div>
 
-							<!-- Grille d'Informations avec le style AUDITION DETAILS -->
+							<!-- Status & timing -->
 							<div class="mb-3">
 								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
 									<div class="flex items-center space-x-3 mb-3">
 										<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
 											<Clock size={14} class="text-white" />
 										</div>
-										<h3 class="font-bold text-sm text-gray-900 uppercase">STATUT & TIMING</h3>
+										<h3 class="font-bold text-sm text-gray-900 uppercase">STATUS & TIMING</h3>
 									</div>
 									<div class="grid grid-cols-2 gap-3">
 										<div class="bg-gray-50 border-2 border-gray-300 rounded-[6px] p-3">
@@ -560,10 +559,10 @@
 												<svg class="w-3 h-3 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
 												</svg>
-												<span class="text-xs font-bold text-gray-600 uppercase">Méthode</span>
+												<span class="text-xs font-bold text-gray-600 uppercase">Method</span>
 											</div>
 											<p class="text-sm font-bold text-gray-900 capitalize">
-												{contact.contact_method || 'Non définie'}
+												{contact.contact_method || 'Not defined'}
 											</p>
 										</div>
 										<div class="bg-gray-50 border-2 border-gray-300 rounded-[6px] p-3">
@@ -579,23 +578,23 @@
 												</p>
 												{#if getDaysSinceContact(contact.contact_date)}
 													<p class="text-xs text-gray-500 mt-1">
-														Il y a {getDaysSinceContact(contact.contact_date)} jour(s)
+														{getDaysSinceContact(contact.contact_date)} day(s) ago
 													</p>
 												{/if}
 											{:else}
-												<p class="text-sm font-bold text-gray-400">Non contacté</p>
+												<p class="text-sm font-bold text-gray-400">Not contacted</p>
 											{/if}
 										</div>
 									</div>
 								</div>
 							</div>
 
-							<!-- Contacté par -->
+							<!-- Contacted by -->
 							{#if contact.contacted_by}
 								<div class="mb-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-[8px]">
 									<div class="flex items-center">
 										<User size={14} class="text-blue-600 mr-2" />
-										<span class="text-sm font-bold text-blue-700">Contacté par: {contact.contacted_by}</span>
+										<span class="text-sm font-bold text-blue-700">Contacted by: {contact.contacted_by}</span>
 									</div>
 								</div>
 							{/if}
@@ -612,7 +611,7 @@
 					{/each}
 				</div>
 			{:else}
-				<!-- Version Desktop Table -->
+				<!-- Desktop table version -->
 				<div class="w-full overflow-x-auto">
 					<table class="w-full min-w-[1200px] text-sm text-left text-gray-500">
 						<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
@@ -628,10 +627,10 @@
 							</th>
 							<th class="px-4 py-3">Contact</th>
 							<th class="px-4 py-3">Section</th>
-							<th class="px-4 py-3">Statut</th>
-							<th class="px-4 py-3">Méthode</th>
-							<th class="px-4 py-3">Date contact</th>
-							<th class="px-4 py-3">Contacté par</th>
+							<th class="px-4 py-3">Status</th>
+							<th class="px-4 py-3">Method</th>
+							<th class="px-4 py-3">Contact date</th>
+							<th class="px-4 py-3">Contacted by</th>
 							<th class="px-4 py-3">Source</th>
 							<th class="px-4 py-3">Actions</th>
 						</tr>
@@ -658,7 +657,7 @@
 										</div>
 										<div>
 											<div class="font-medium text-gray-900">
-												{contact.first_name || 'Prénom'} {contact.last_name || 'Nom'}
+												{contact.first_name || 'First name'} {contact.last_name || 'Last name'}
 											</div>
 											<div class="text-sm text-gray-500 space-y-1">
 												{#if contact.email}
@@ -682,12 +681,12 @@
 											</div>
 											{#if contact.is_duplicate}
 												<div class="text-xs text-orange-600 font-medium mt-1">
-													⚠️ Doublon potentiel
+													Potential duplicate
 												</div>
 											{/if}
 											{#if contact.recommended_by}
 												<div class="text-xs text-blue-600 mt-1">
-													Recommandé par {contact.recommended_by}
+													Recommended by {contact.recommended_by}
 												</div>
 											{/if}
 										</div>
@@ -717,7 +716,7 @@
 											{formatContactDate(contact.contact_date)}
 											{#if getDaysSinceContact(contact.contact_date)}
 												<div class="text-xs text-gray-500">
-													Il y a {getDaysSinceContact(contact.contact_date)} jour(s)
+													{getDaysSinceContact(contact.contact_date)} day(s) ago
 												</div>
 											{/if}
 										</div>
@@ -736,7 +735,7 @@
 										</div>
 									{:else}
 										<div class="bg-gray-50 border border-gray-200 rounded-[4px] p-2">
-											<span class="text-gray-400 text-sm">Non défini</span>
+											<span class="text-gray-400 text-sm">Not defined</span>
 										</div>
 									{/if}
 								</td>
@@ -749,10 +748,10 @@
 											contact.source === 'recommendation' ? 'bg-purple-100 text-purple-700 border-purple-200' :
 											'bg-green-100 text-green-700 border-green-200'
 										}">
-											{contact.source === 'database' ? 'Base de données' :
-												contact.source === 'manual' ? 'Manuel' :
-													contact.source === 'recommendation' ? 'Recommandation' :
-														contact.source || 'Autre'}
+											{contact.source === 'database' ? 'Database' :
+												contact.source === 'manual' ? 'Manual' :
+													contact.source === 'recommendation' ? 'Recommendation' :
+														contact.source || 'Other'}
 										</span>
 									</div>
 								</td>

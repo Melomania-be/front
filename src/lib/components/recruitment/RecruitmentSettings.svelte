@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/RecruitmentSettings.svelte - Version complète corrigée -->
+<!-- src/lib/components/recruitment/RecruitmentSettings.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
 	import { X, Settings, Info } from 'lucide-svelte'
@@ -9,13 +9,11 @@
 
 	const dispatch = createEventDispatcher()
 
-	// ✅ CORRECTION - Initialisation sécurisée avec valeurs par défaut
 	let localSettings = {
 		follow_up_days: settings?.follow_up_days || 7,
 		auto_follow_up_enabled: settings?.auto_follow_up_enabled || true
 	}
 
-	// ✅ CORRECTION - Réinitialiser les settings locaux quand les settings changent
 	$: if (settings) {
 		localSettings = {
 			follow_up_days: settings.follow_up_days || 7,
@@ -27,16 +25,14 @@
 
 	async function saveSettings() {
 		if (!projectId || projectId === 'undefined') {
-			console.error('❌ Invalid project ID for settings save')
-			alert('Erreur: ID de projet invalide')
+			console.error('Invalid project ID for settings save')
+			alert('Error: Invalid project ID')
 			return
 		}
 
 		saving = true
 
 		try {
-			console.log('💾 Saving settings:', localSettings)
-
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/settings`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
@@ -45,18 +41,16 @@
 
 			if (response.ok) {
 				const updatedSettings = await response.json()
-				console.log('✅ Settings saved successfully:', updatedSettings)
-
 				dispatch('update', updatedSettings)
 				dispatch('close')
 			} else {
 				const errorData = await response.json()
-				console.error('❌ Settings save failed:', errorData)
-				alert(`Erreur lors de la sauvegarde: ${errorData.error || 'Erreur inconnue'}`)
+				console.error('Settings save failed:', errorData)
+				alert(`Error saving: ${errorData.error || 'Unknown error'}`)
 			}
 		} catch (error) {
-			console.error('❌ Error saving settings:', error)
-			alert('Erreur lors de la sauvegarde des paramètres')
+			console.error('Error saving settings:', error)
+			alert('Error saving settings')
 		} finally {
 			saving = false
 		}
@@ -72,7 +66,6 @@
 		}
 	}
 
-	// ✅ CORRECTION - Validation des valeurs numériques
 	function validateFollowUpDays(value: number) {
 		if (value < 1) {
 			localSettings.follow_up_days = 1
@@ -92,35 +85,35 @@
 		<div class="flex items-center justify-between p-6 border-b">
 			<div class="flex items-center gap-2">
 				<Settings class="text-[#6B9AD9]" size={24} />
-				<h2 class="text-xl font-semibold">Paramètres de Recrutement</h2>
+				<h2 class="text-xl font-semibold">Recruitment Settings</h2>
 			</div>
 			<button
 				on:click={closeModal}
 				class="text-gray-400 hover:text-gray-600 transition-colors"
-				aria-label="Fermer"
+				aria-label="Close"
 			>
 				<X size={24} />
 			</button>
 		</div>
 
-		<!-- Contenu -->
+		<!-- Content -->
 		<div class="p-6 space-y-6">
-			<!-- Suivi automatique -->
+			<!-- Automatic follow-up -->
 			<div class="space-y-4">
 				<div class="flex items-center gap-2">
-					<h3 class="text-lg font-semibold">Suivi Automatique</h3>
-					<Info size={16} class="text-gray-400" title="Configuration du suivi automatique des contacts" />
+					<h3 class="text-lg font-semibold">Automatic Follow-up</h3>
+					<Info size={16} class="text-gray-400" title="Automatic contact follow-up configuration" />
 				</div>
 
 				<div class="space-y-4">
-					<!-- Activation du suivi automatique -->
+					<!-- Enable automatic follow-up -->
 					<div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
 						<div>
 							<label for="auto-follow-up" class="font-medium text-gray-900 cursor-pointer">
-								Activer le suivi automatique
+								Enable automatic follow-up
 							</label>
 							<p class="text-sm text-gray-600 mt-1">
-								Les contacts en "attente de réponse" passeront automatiquement en "à relancer" après le délai configuré
+								Contacts in "awaiting response" will automatically change to "follow up" after the configured delay
 							</p>
 						</div>
 						<label class="relative inline-flex items-center cursor-pointer">
@@ -134,10 +127,10 @@
 						</label>
 					</div>
 
-					<!-- Délai de relance -->
+					<!-- Follow-up delay -->
 					<div class="space-y-2">
 						<label for="follow-up-days" class="block font-medium text-gray-900">
-							Délai avant relance (en jours)
+							Follow-up delay (in days)
 						</label>
 						<div class="flex items-center gap-4">
 							<input
@@ -150,63 +143,61 @@
 								class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
 							/>
 							<span class="text-sm text-gray-600">
-								jour(s) après le premier contact
+								day(s) after first contact
 							</span>
 						</div>
-						<!-- ✅ CORRECTION - Protection contre undefined -->
 						<p class="text-sm text-gray-500">
-							Si un contact est en "attente de réponse" depuis {localSettings.follow_up_days || 7} jour(s),
-							il passera automatiquement en "à relancer"
+							If a contact is "awaiting response" for {localSettings.follow_up_days || 7} day(s),
+							it will automatically change to "follow up"
 						</p>
 					</div>
 				</div>
 			</div>
 
-			<!-- Information sur l'impact -->
+			<!-- Impact information -->
 			<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 				<div class="flex items-start gap-2">
 					<Info size={16} class="text-blue-500 mt-0.5 flex-shrink-0" />
 					<div class="text-sm">
-						<p class="font-medium text-blue-900 mb-1">Impact des modifications</p>
+						<p class="font-medium text-blue-900 mb-1">Impact of changes</p>
 						<p class="text-blue-800">
-							La modification du délai de relance recalculera automatiquement le statut de tous les contacts
-							actuellement en "attente de réponse" en fonction de leur date de contact initial.
+							Modifying the follow-up delay will automatically recalculate the status of all contacts
+							currently "awaiting response" based on their initial contact date.
 						</p>
 					</div>
 				</div>
 			</div>
 
-			<!-- Statistiques actuelles -->
+			<!-- Current statistics -->
 			<div class="bg-gray-50 rounded-lg p-4">
-				<h4 class="font-medium text-gray-900 mb-2">Aperçu des paramètres actuels</h4>
+				<h4 class="font-medium text-gray-900 mb-2">Current settings overview</h4>
 				<div class="grid grid-cols-2 gap-4 text-sm">
-					<!-- ✅ CORRECTION - Protection contre undefined -->
 					<div>
-						<span class="text-gray-600">Suivi automatique :</span>
+						<span class="text-gray-600">Automatic follow-up:</span>
 						<span class="font-medium {(settings?.auto_follow_up_enabled || false) ? 'text-green-600' : 'text-red-600'}">
-							{(settings?.auto_follow_up_enabled || false) ? 'Activé' : 'Désactivé'}
+							{(settings?.auto_follow_up_enabled || false) ? 'Enabled' : 'Disabled'}
 						</span>
 					</div>
 					<div>
-						<span class="text-gray-600">Délai actuel :</span>
-						<span class="font-medium">{settings?.follow_up_days || 7} jour(s)</span>
+						<span class="text-gray-600">Current delay:</span>
+						<span class="font-medium">{settings?.follow_up_days || 7} day(s)</span>
 					</div>
 				</div>
 			</div>
 
-			<!-- Aperçu des modifications -->
+			<!-- Changes preview -->
 			{#if settings && (localSettings.follow_up_days !== settings.follow_up_days || localSettings.auto_follow_up_enabled !== settings.auto_follow_up_enabled)}
 				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
 					<div class="flex items-start gap-2">
 						<Info size={16} class="text-yellow-500 mt-0.5 flex-shrink-0" />
 						<div class="text-sm">
-							<p class="font-medium text-yellow-900 mb-1">Modifications en attente</p>
+							<p class="font-medium text-yellow-900 mb-1">Pending changes</p>
 							<div class="space-y-1 text-yellow-800">
 								{#if localSettings.follow_up_days !== settings.follow_up_days}
-									<p>• Délai de relance : {settings.follow_up_days} → {localSettings.follow_up_days} jour(s)</p>
+									<p>Follow-up delay: {settings.follow_up_days} → {localSettings.follow_up_days} day(s)</p>
 								{/if}
 								{#if localSettings.auto_follow_up_enabled !== settings.auto_follow_up_enabled}
-									<p>• Suivi automatique : {settings.auto_follow_up_enabled ? 'Activé' : 'Désactivé'} → {localSettings.auto_follow_up_enabled ? 'Activé' : 'Désactivé'}</p>
+									<p>Automatic follow-up: {settings.auto_follow_up_enabled ? 'Enabled' : 'Disabled'} → {localSettings.auto_follow_up_enabled ? 'Enabled' : 'Disabled'}</p>
 								{/if}
 							</div>
 						</div>
@@ -223,7 +214,7 @@
 				disabled={saving}
 				class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
 			>
-				Annuler
+				Cancel
 			</button>
 			<button
 				type="button"
@@ -234,14 +225,13 @@
 				{#if saving}
 					<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 				{/if}
-				{saving ? 'Sauvegarde...' : 'Sauvegarder'}
+				{saving ? 'Saving...' : 'Save'}
 			</button>
 		</div>
 	</div>
 </div>
 
 <style>
-    /* Style pour le toggle switch */
     .peer:checked + div {
         background-color: #3b82f6;
     }

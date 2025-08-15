@@ -1,4 +1,4 @@
-<!-- src/routes/projects/[id]/management/recruitment/+page.svelte - Version avec import avancé -->
+<!-- src/routes/projects/[id]/management/recruitment/+page.svelte -->
 <script lang="ts">
 	import { page } from '$app/stores'
 	import { onMount } from 'svelte'
@@ -31,26 +31,22 @@
 	let showImportAdvancedModal = false
 	let showSettingsModal = false
 
-	// ✅ RÉFÉRENCE AU COMPOSANT LISTE
 	let contactsListRef: any
 
 	$: projectId = $page.params.id
 
-	// Protection robuste contre les IDs invalides
 	$: if (projectId && (projectId === 'undefined' || projectId === 'null' || isNaN(Number(projectId)))) {
-		console.error('❌ Invalid project ID:', projectId)
+		console.error('Invalid project ID:', projectId)
 		error = 'ID de projet invalide'
 		goto('/projects')
 	}
 
 	onMount(async () => {
-		console.log('🔄 Initializing recruitment page for project:', projectId)
 		checkMobile()
 		window.addEventListener('resize', checkMobile)
 
 		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
 			await loadData()
-			// Auto-import de tous les contacts au montage
 			await autoImportAllContacts()
 		} else {
 			error = 'ID de projet manquant ou invalide'
@@ -71,15 +67,13 @@
 
 	async function loadData() {
 		try {
-			console.log('📊 Loading recruitment data...')
 			await Promise.all([
 				fetchProject(),
 				fetchSettings(),
 				fetchStats()
 			])
-			console.log('✅ All data loaded successfully')
 		} catch (err) {
-			console.error('❌ Error loading data:', err)
+			console.error('Error loading data:', err)
 			error = 'Erreur lors du chargement des données'
 		}
 	}
@@ -88,8 +82,6 @@
 		if (initialImportDone) return
 
 		try {
-			console.log('🔄 Auto-importing all contacts from database using optimized route...')
-
 			const importResponse = await fetch(`/api/projects/${projectId}/management/recruitment/auto-import-all`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
@@ -97,56 +89,43 @@
 
 			if (importResponse.ok) {
 				const importResults = await importResponse.json()
-				console.log('✅ Auto-import completed:', {
-					total_contacts: importResults.total_contacts || 0,
-					new_imports: importResults.new_imports || 0,
-					already_imported: importResults.already_imported || 0,
-					errors: importResults.errors?.length || 0
-				})
 
 				if (importResults.new_imports > 0) {
-					console.log(`📥 ${importResults.new_imports} nouveaux contacts importés automatiquement`)
+					if (contactsListRef && contactsListRef.refreshContacts) {
+						contactsListRef.refreshContacts()
+					}
+					fetchStats()
 				}
-
-				if (contactsListRef && contactsListRef.refreshContacts) {
-					contactsListRef.refreshContacts()
-				}
-				fetchStats()
-			} else {
-				console.warn('⚠️ Auto-import failed, but continuing...')
 			}
 
 			initialImportDone = true
 		} catch (error) {
-			console.warn('⚠️ Error during auto-import:', error)
+			console.warn('Error during auto-import:', error)
 			initialImportDone = true
 		}
 	}
 
 	async function fetchProject() {
 		try {
-			console.log('🔍 Fetching project data...')
 			const response = await fetch(`/api/projects/${projectId}`)
 
 			if (response.ok) {
 				project = await response.json()
-				console.log('✅ Project loaded:', project?.name)
 			} else if (response.status === 404) {
-				console.error('❌ Project not found')
+				console.error('Project not found')
 				error = 'Projet non trouvé'
 				goto('/projects')
 			} else {
 				throw new Error(`HTTP ${response.status}`)
 			}
 		} catch (err) {
-			console.error('❌ Error fetching project:', err)
+			console.error('Error fetching project:', err)
 			throw err
 		}
 	}
 
 	async function fetchSettings() {
 		try {
-			console.log('⚙️ Fetching recruitment settings...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/settings`)
 
 			if (response.ok) {
@@ -159,9 +138,8 @@
 					created_at: data.created_at || new Date().toISOString(),
 					updated_at: data.updated_at || new Date().toISOString()
 				}
-				console.log('✅ Settings loaded:', settings)
 			} else {
-				console.warn('⚠️ Could not fetch settings, using defaults')
+				console.warn('Could not fetch settings, using defaults')
 				settings = {
 					id: 0,
 					project_id: Number(projectId),
@@ -172,7 +150,7 @@
 				}
 			}
 		} catch (err) {
-			console.error('❌ Error fetching settings:', err)
+			console.error('Error fetching settings:', err)
 			settings = {
 				id: 0,
 				project_id: Number(projectId),
@@ -186,7 +164,6 @@
 
 	async function fetchStats() {
 		try {
-			console.log('📈 Fetching recruitment stats...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/stats`)
 
 			if (response.ok) {
@@ -198,13 +175,9 @@
 					pending_recommendations: Number(data.pending_recommendations) || 0
 				}
 
-				console.log('📊 Raw stats from API:', data)
-				console.log('📊 Processed stats:', newStats)
-
 				stats = newStats
-				console.log('✅ Stats updated:', stats)
 			} else {
-				console.warn('⚠️ Could not fetch stats, status:', response.status)
+				console.warn('Could not fetch stats, status:', response.status)
 				stats = {
 					total: 0,
 					by_status: [],
@@ -212,7 +185,7 @@
 				}
 			}
 		} catch (err) {
-			console.error('❌ Error fetching stats:', err)
+			console.error('Error fetching stats:', err)
 			stats = {
 				total: 0,
 				by_status: [],
@@ -222,7 +195,6 @@
 	}
 
 	function handleSettingsUpdate() {
-		console.log('🔄 Settings updated, refreshing data...')
 		setTimeout(async () => {
 			await Promise.all([fetchSettings(), fetchStats()])
 			if (contactsListRef && contactsListRef.refreshContacts) {
@@ -232,12 +204,10 @@
 	}
 
 	function handleContactChange() {
-		console.log('🔄 Contact changed, refreshing stats...')
 		fetchStats()
 	}
 
 	function handleRecommendationChange() {
-		console.log('🔄 Recommendation changed, refreshing stats...')
 		fetchStats()
 		if (contactsListRef && contactsListRef.refreshContacts) {
 			contactsListRef.refreshContacts()
@@ -245,7 +215,6 @@
 	}
 
 	function handleContactAdded(event) {
-		console.log('✅ New contact added:', event.detail)
 		if (contactsListRef && contactsListRef.refreshContacts) {
 			contactsListRef.refreshContacts()
 		}
@@ -253,9 +222,7 @@
 		showAddManualModal = false
 	}
 
-	// ✅ NOUVEAU : Handler pour l'import avancé
 	function handleContactsImported(event) {
-		console.log('✅ Contacts imported:', event.detail)
 		if (contactsListRef && contactsListRef.refreshContacts) {
 			contactsListRef.refreshContacts()
 		}
@@ -263,7 +230,6 @@
 		showImportAdvancedModal = false
 	}
 
-	// Valeurs sécurisées pour l'affichage
 	$: safeStats = stats || { total: 0, by_status: [], pending_recommendations: 0 }
 	$: totalContacts = safeStats.total || 0
 	$: awaitingCount = safeStats.by_status?.find(s => s.status === 'awaiting_response')?.count || 0
@@ -310,7 +276,6 @@
 					</p>
 				</div>
 
-				<!-- ✅ BOUTONS AVEC NOUVEAU IMPORT AVANCÉ -->
 				<div class="flex {isMobile ? 'flex-col' : 'flex-row'} gap-2">
 					<button
 						on:click={() => showSettingsModal = true}
@@ -447,7 +412,6 @@
 			/>
 		{/if}
 
-		<!-- ✅ NOUVEAU MODAL D'IMPORT AVANCÉ -->
 		{#if showImportAdvancedModal}
 			<ImportContactsAdvancedModal
 				{projectId}

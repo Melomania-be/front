@@ -9,37 +9,37 @@
 	function getStatusConfig(status: RecruitmentStatus) {
 		const configs = {
 			'not_yet_contacted': {
-				label: 'Pas encore contacté',
+				label: 'Not yet contacted',
 				color: 'bg-gray-100 text-gray-800 border-gray-300',
 				icon: AlertCircle
 			},
 			'awaiting_response': {
-				label: 'En attente de réponse',
+				label: 'Awaiting response',
 				color: 'bg-blue-100 text-blue-800 border-blue-300',
 				icon: Clock
 			},
 			'to_follow_up': {
-				label: 'À relancer',
+				label: 'Follow up',
 				color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
 				icon: AlertCircle
 			},
 			'not_available': {
-				label: 'Non disponible',
+				label: 'Not available',
 				color: 'bg-red-100 text-red-800 border-red-300',
 				icon: XCircle
 			},
 			'pending_validation': {
-				label: 'En validation',
+				label: 'Pending validation',
 				color: 'bg-purple-100 text-purple-800 border-purple-300',
 				icon: Clock
 			},
 			'cancelled': {
-				label: 'Annulé',
+				label: 'Cancelled',
 				color: 'bg-gray-100 text-gray-500 border-gray-300',
 				icon: XCircle
 			},
 			'recruited': {
-				label: 'Recruté',
+				label: 'Recruited',
 				color: 'bg-green-100 text-green-800 border-green-300',
 				icon: CheckCircle
 			}
@@ -58,6 +58,6 @@
   </span>
 
 	{#if shouldFollowUp}
-		<span class="text-xs text-yellow-600 font-medium">🔔 À relancer</span>
+		<span class="text-xs text-yellow-600 font-medium">Follow up</span>
 	{/if}
 </div>

@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/ContactActionButtons.svelte - Version avec contacted_by -->
+<!-- src/lib/components/recruitment/ContactActionButtons.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
 	import { Mail, Phone, MessageCircle, Edit, Trash2, MoreVertical, CheckCircle, XCircle, Clock, User } from 'lucide-svelte'
@@ -10,9 +10,9 @@
 
 	let showDropdown = false
 	let notesModal = false
-	let contactedByModal = false // 🆕 Modal pour modifier contacted_by
+	let contactedByModal = false
 	let currentNotes = contact.notes || ''
-	let currentContactedBy = contact.contacted_by || '' // 🆕 État pour contacted_by
+	let currentContactedBy = contact.contacted_by || ''
 
 	function toggleDropdown() {
 		showDropdown = !showDropdown
@@ -28,7 +28,7 @@
 	}
 
 	function deleteContact() {
-		if (confirm(`Supprimer ${contact.first_name} ${contact.last_name} du recrutement ?`)) {
+		if (confirm(`Remove ${contact.first_name} ${contact.last_name} from recruitment?`)) {
 			dispatch('delete')
 		}
 		showDropdown = false
@@ -40,7 +40,6 @@
 		showDropdown = false
 	}
 
-	// 🆕 Fonction pour ouvrir le modal contacted_by
 	function openContactedByModal() {
 		currentContactedBy = contact.contacted_by || ''
 		contactedByModal = true
@@ -56,7 +55,6 @@
 		notesModal = false
 	}
 
-	// 🆕 Fonction pour sauvegarder contacted_by
 	function saveContactedBy() {
 		dispatch('updateStatus', {
 			status: contact.status,
@@ -68,7 +66,7 @@
 
 	function sendEmail() {
 		if (contact.email) {
-			window.location.href = `mailto:${contact.email}?subject=Projet de recrutement`
+			window.location.href = `mailto:${contact.email}?subject=Recruitment project`
 		}
 	}
 
@@ -84,7 +82,6 @@
 		}
 	}
 
-	// Fermer le dropdown si on clique ailleurs
 	function handleClickOutside(event: MouseEvent) {
 		const target = event.target as HTMLElement
 		const dropdown = document.getElementById(`dropdown-${contact.id}`)
@@ -103,14 +100,12 @@
 </script>
 
 <div class="relative" id="dropdown-{contact.id}">
-	<!-- Actions rapides -->
 	<div class="flex items-center gap-1">
-		<!-- Contact direct -->
 		{#if contact.email}
 			<button
 				on:click={sendEmail}
 				class="p-1 text-blue-600 hover:bg-blue-100 rounded"
-				title="Envoyer un email"
+				title="Send email"
 			>
 				<Mail size={14} />
 			</button>
@@ -120,7 +115,7 @@
 			<button
 				on:click={callPhone}
 				class="p-1 text-green-600 hover:bg-green-100 rounded"
-				title="Appeler"
+				title="Call"
 			>
 				<Phone size={14} />
 			</button>
@@ -136,12 +131,11 @@
 			</button>
 		{/if}
 
-		<!-- Actions de statut rapides -->
 		{#if contact.status === 'not_yet_contacted'}
 			<button
 				on:click={() => updateStatus('awaiting_response')}
 				class="p-1 text-blue-600 hover:bg-blue-100 rounded"
-				title="Marquer comme contacté"
+				title="Mark as contacted"
 			>
 				<Clock size={14} />
 			</button>
@@ -151,88 +145,84 @@
 			<button
 				on:click={() => updateStatus('recruited')}
 				class="p-1 text-green-600 hover:bg-green-100 rounded"
-				title="Marquer comme recruté"
+				title="Mark as recruited"
 			>
 				<CheckCircle size={14} />
 			</button>
 			<button
 				on:click={() => updateStatus('not_available')}
 				class="p-1 text-red-600 hover:bg-red-100 rounded"
-				title="Marquer comme non disponible"
+				title="Mark as not available"
 			>
 				<XCircle size={14} />
 			</button>
 		{/if}
 
-		<!-- Menu plus d'actions -->
 		<button
 			on:click={toggleDropdown}
 			class="p-1 text-gray-600 hover:bg-gray-100 rounded"
-			title="Plus d'actions"
+			title="More actions"
 		>
 			<MoreVertical size={14} />
 		</button>
 	</div>
 
-	<!-- Dropdown menu -->
 	{#if showDropdown}
 		<div class="absolute right-0 top-8 z-10 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[180px]">
 			<div class="py-1">
-				<!-- Changer de statut -->
 				<div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase border-b">
-					Changer le statut
+					Change status
 				</div>
 
 				<button
 					on:click={() => updateStatus('not_yet_contacted')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'not_yet_contacted' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					Pas encore contacté
+					Not yet contacted
 				</button>
 
 				<button
 					on:click={() => updateStatus('awaiting_response')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'awaiting_response' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					En attente de réponse
+					Awaiting response
 				</button>
 
 				<button
 					on:click={() => updateStatus('to_follow_up')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'to_follow_up' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					À relancer
+					Follow up
 				</button>
 
 				<button
 					on:click={() => updateStatus('not_available')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'not_available' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					Non disponible
+					Not available
 				</button>
 
 				<button
 					on:click={() => updateStatus('pending_validation')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'pending_validation' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					En validation
+					Pending validation
 				</button>
 
 				<button
 					on:click={() => updateStatus('recruited')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'recruited' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					Recruté
+					Recruited
 				</button>
 
 				<button
 					on:click={() => updateStatus('cancelled')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'cancelled' ? 'bg-gray-100 font-medium' : ''}"
 				>
-					Annulé
+					Cancelled
 				</button>
 
-				<!-- Autres actions -->
 				<div class="border-t px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
 					Actions
 				</div>
@@ -242,16 +232,15 @@
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
 				>
 					<Edit size={14} />
-					Modifier les notes
+					Edit notes
 				</button>
 
-				<!-- 🆕 Action pour modifier contacted_by -->
 				<button
 					on:click={openContactedByModal}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
 				>
 					<User size={14} />
-					Modifier "Contacté par"
+					Edit "Contacted by"
 				</button>
 
 				<button
@@ -259,24 +248,23 @@
 					class="w-full px-3 py-2 text-left text-sm hover:bg-red-100 text-red-600 flex items-center gap-2"
 				>
 					<Trash2 size={14} />
-					Supprimer
+					Delete
 				</button>
 			</div>
 		</div>
 	{/if}
 </div>
 
-<!-- Modal de notes -->
 {#if notesModal}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
 			<h3 class="text-lg font-semibold mb-4">
-				Modifier les notes - {contact.first_name} {contact.last_name}
+				Edit notes - {contact.first_name} {contact.last_name}
 			</h3>
 
 			<textarea
 				bind:value={currentNotes}
-				placeholder="Ajouter des notes sur ce contact..."
+				placeholder="Add notes about this contact..."
 				class="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 			></textarea>
 
@@ -285,40 +273,39 @@
 					on:click={() => notesModal = false}
 					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
 				>
-					Annuler
+					Cancel
 				</button>
 				<button
 					on:click={saveNotes}
 					class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
 				>
-					Sauvegarder
+					Save
 				</button>
 			</div>
 		</div>
 	</div>
 {/if}
 
-<!-- 🆕 Modal de modification "Contacté par" -->
 {#if contactedByModal}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
 			<h3 class="text-lg font-semibold mb-4">
-				Modifier "Contacté par" - {contact.first_name} {contact.last_name}
+				Edit "Contacted by" - {contact.first_name} {contact.last_name}
 			</h3>
 
 			<div>
 				<label for="contacted_by_input" class="block text-sm font-medium text-gray-700 mb-2">
-					Personne qui a contacté
+					Person who made contact
 				</label>
 				<input
 					id="contacted_by_input"
 					type="text"
 					bind:value={currentContactedBy}
-					placeholder="Nom de la personne qui a contacté..."
+					placeholder="Name of the person who made contact..."
 					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				/>
 				<p class="text-xs text-gray-500 mt-1">
-					Indiquez le nom de la personne qui a pris contact avec ce candidat.
+					Indicate the name of the person who contacted this candidate.
 				</p>
 			</div>
 
@@ -327,13 +314,13 @@
 					on:click={() => contactedByModal = false}
 					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
 				>
-					Annuler
+					Cancel
 				</button>
 				<button
 					on:click={saveContactedBy}
 					class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
 				>
-					Sauvegarder
+					Save
 				</button>
 			</div>
 		</div>

@@ -65,16 +65,16 @@
 			<h4 class="font-semibold mb-3">{label}</h4>
 
 			<div class="space-y-3">
-				<!-- Sélection de section -->
+				<!-- Section selection -->
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Section (optionnel)
+						Section (optional)
 					</label>
 					<select
 						bind:value={selectedSection}
 						class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
-						<option value={null}>Sélectionner une section</option>
+						<option value={null}>Select a section</option>
 						{#each sections as section}
 							<option value={section.id}>{section.name}</option>
 						{/each}
@@ -84,13 +84,13 @@
 				<!-- Notes -->
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Notes (optionnel)
+						Notes (optional)
 					</label>
 					<textarea
 						bind:value={notes}
 						rows="2"
 						class="w-full px-3 py-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-						placeholder="Notes sur ce contact..."
+						placeholder="Notes about this contact..."
 					></textarea>
 				</div>
 
@@ -100,13 +100,13 @@
 						on:click={closeModal}
 						class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
 					>
-						Annuler
+						Cancel
 					</button>
 					<button
 						on:click={handleAction}
 						class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
 					>
-						Confirmer
+						Confirm
 					</button>
 				</div>
 			</div>

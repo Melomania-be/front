@@ -10,7 +10,6 @@
 
 	const dispatch = createEventDispatcher()
 
-	// État pour la recherche avancée (copié de votre page contacts/search)
 	let meta: any
 	let data: TableData<Contact>
 	let columns: any
@@ -56,7 +55,6 @@
 		await fetchData()
 	})
 
-	// Utiliser exactement la même logique que votre page contacts/search
 	async function fetchData() {
 		try {
 			let response = await fetch('/test/api', {
@@ -77,13 +75,10 @@
 			if (response.ok) {
 				const jsonResponse = await response.json();
 
-				// Mapper les contacts pour avoir la bonne structure
 				const mappedContacts = (jsonResponse.data.data || []).map(contact => ({
 					...contact,
-					// S'assurer que firstName et lastName sont présents
 					firstName: contact.firstName || contact.first_name,
 					lastName: contact.lastName || contact.last_name,
-					// Mapper les autres champs si nécessaire
 					email: contact.email || '',
 					phone: contact.phone || '',
 					messenger: contact.messenger || '',
@@ -98,14 +93,10 @@
 				meta = jsonResponse.data.meta;
 				columns = jsonResponse.columns;
 				isLoaded = true;
-
-				console.log('✅ Data loaded:', data.data.length, 'contacts');
-				console.log('📊 First contact structure:', data.data[0]);
-				console.log('📊 Columns:', columns);
 			}
 		} catch (error) {
-			console.error('❌ Error fetching data:', error);
-			alert('Erreur lors du chargement des contacts');
+			console.error('Error fetching data:', error);
+			alert('Error loading contacts');
 		}
 	}
 
@@ -128,16 +119,13 @@
 
 	async function importSelectedContacts() {
 		if (selectedContacts.length === 0) {
-			alert('Aucun contact sélectionné')
+			alert('No contact selected')
 			return
 		}
 
 		importing = true
 
 		try {
-			console.log('📥 Importing selected contacts...')
-			console.log('🔍 Selected contacts:', selectedContacts.map(c => ({id: c.id, name: `${c.firstName} ${c.lastName}`})))
-
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts/import`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -146,28 +134,25 @@
 				})
 			})
 
-			console.log('📡 Import response status:', response.status)
-
 			if (response.ok) {
 				importResults = await response.json()
-				console.log('✅ Import completed:', importResults)
 
 				if (importResults && (importResults.imported.length > 0 || importResults.conflicts.length > 0)) {
 					dispatch('contactsImported', importResults)
 				}
 			} else {
 				const errorText = await response.text()
-				console.error('❌ Import failed:', response.status, errorText)
+				console.error('Import failed:', response.status, errorText)
 				try {
 					const errorData = JSON.parse(errorText)
-					alert(`Erreur lors de l'importation: ${errorData.error || 'Erreur inconnue'}`)
+					alert(`Import error: ${errorData.error || 'Unknown error'}`)
 				} catch {
-					alert(`Erreur lors de l'importation: ${errorText}`)
+					alert(`Import error: ${errorText}`)
 				}
 			}
 		} catch (error) {
-			console.error('❌ Error importing contacts:', error)
-			alert('Erreur lors de l\'importation des contacts')
+			console.error('Error importing contacts:', error)
+			alert('Error importing contacts')
 		} finally {
 			importing = false
 		}
@@ -186,7 +171,6 @@
 	function resetImport() {
 		importResults = null
 		selectedContacts = []
-		// Réinitialiser les filtres
 		options = {
 			filters: {
 				type: 'and',
@@ -207,7 +191,7 @@
 
 	function getContactInstruments(contact: Contact): string {
 		if (!contact.instruments || contact.instruments.length === 0) return ''
-		return contact.instruments.map(i => `${i.name} (${i.pivot_proficiency_level || 'Non spécifié'})`).join(', ')
+		return contact.instruments.map(i => `${i.name} (${i.pivot_proficiency_level || 'Not specified'})`).join(', ')
 	}
 
 	function getContactProjects(contact: Contact): string {
@@ -228,7 +212,7 @@
 		<div class="flex items-center justify-between p-6 border-b bg-gray-50">
 			<div class="flex items-center gap-2">
 				<Upload class="text-[#6B9AD9]" size={24} />
-				<h2 class="text-xl font-semibold">Importer des Contacts depuis la Base de Données</h2>
+				<h2 class="text-xl font-semibold">Import Contacts from Database</h2>
 			</div>
 			<button
 				on:click={closeModal}
@@ -238,22 +222,22 @@
 			</button>
 		</div>
 
-		<!-- Contenu -->
+		<!-- Content -->
 		<div class="p-6">
 			{#if !importResults}
-				<!-- Recherche Avancée -->
+				<!-- Advanced Search -->
 				<div class="space-y-6">
 					<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 						<div class="flex items-center gap-2 mb-2">
 							<Search class="text-blue-600" size={20} />
-							<h3 class="text-lg font-semibold text-blue-900">Recherche Avancée</h3>
+							<h3 class="text-lg font-semibold text-blue-900">Advanced Search</h3>
 						</div>
 						<p class="text-sm text-blue-800">
-							Utilisez les filtres avancés pour rechercher des contacts par nom, email, instruments, niveau de compétence, projets passés, etc.
+							Use advanced filters to search contacts by name, email, instruments, skill level, past projects, etc.
 						</p>
 					</div>
 
-					<!-- Filtreur Avancé -->
+					<!-- Advanced Filterer -->
 					{#if isLoaded && data && columns}
 						<div class="bg-[#E7E7E7] rounded-lg">
 							<AdvancedFilterer
@@ -267,13 +251,13 @@
 								filterLevel={[]}
 								on:optionsUpdated={fetchData}
 							>
-								<!-- Tableau personnalisé pour la sélection -->
+								<!-- Custom table for selection -->
 								<div class="bg-white rounded-lg p-4">
-									<!-- Actions de sélection -->
+									<!-- Selection actions -->
 									<div class="flex items-center justify-between mb-4">
 										<h4 class="font-semibold text-gray-900 flex items-center gap-2">
 											<Users size={20} class="text-[#6B9AD9]" />
-											Contacts disponibles ({data.data.length})
+											Available contacts ({data.data.length})
 										</h4>
 
 										{#if data.data.length > 0}
@@ -282,14 +266,14 @@
 													on:click={selectAllContacts}
 													class="px-3 py-1 text-sm bg-[#6B9AD9] text-white hover:bg-[#5a9bb4] rounded-lg font-semibold"
 												>
-													Tout sélectionner
+													Select all
 												</button>
 												{#if selectedContacts.length > 0}
 													<button
 														on:click={clearSelection}
 														class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold"
 													>
-														Désélectionner ({selectedContacts.length})
+														Deselect ({selectedContacts.length})
 													</button>
 												{/if}
 											</div>
@@ -299,13 +283,13 @@
 									{#if data.data.length === 0}
 										<div class="text-center py-12">
 											<Users size={64} class="mx-auto mb-4 opacity-30 text-gray-400" />
-											<h3 class="text-lg font-medium text-gray-900">Aucun contact trouvé</h3>
+											<h3 class="text-lg font-medium text-gray-900">No contacts found</h3>
 											<p class="text-gray-500 mt-2">
-												Essayez de modifier vos critères de recherche ou réinitialisez les filtres.
+												Try modifying your search criteria or reset the filters.
 											</p>
 										</div>
 									{:else}
-										<!-- Tableau des contacts -->
+										<!-- Contacts table -->
 										<div class="border border-gray-200 rounded-lg overflow-hidden">
 											<div class="max-h-96 overflow-y-auto">
 												<table class="w-full text-sm">
@@ -320,9 +304,9 @@
 															/>
 														</th>
 														<th class="px-4 py-3 text-left font-semibold">Contact</th>
-														<th class="px-4 py-3 text-left font-semibold">Instruments & Niveaux</th>
-														<th class="px-4 py-3 text-left font-semibold">Projets passés</th>
-														<th class="px-4 py-3 text-left font-semibold">Statut</th>
+														<th class="px-4 py-3 text-left font-semibold">Instruments & Levels</th>
+														<th class="px-4 py-3 text-left font-semibold">Past projects</th>
+														<th class="px-4 py-3 text-left font-semibold">Status</th>
 													</tr>
 													</thead>
 													<tbody>
@@ -340,12 +324,12 @@
 																<div class="flex items-center space-x-3">
 																	<div class="w-10 h-10 bg-[#6B9AD9] rounded-full flex items-center justify-center">
 																		<span class="text-white font-bold text-sm">
-																			{(contact.firstName || contact.first_name || 'P').charAt(0)}{(contact.lastName || contact.last_name || 'N').charAt(0)}
+																			{(contact.firstName || contact.first_name || 'F').charAt(0)}{(contact.lastName || contact.last_name || 'L').charAt(0)}
 																		</span>
 																	</div>
 																	<div>
 																		<div class="font-medium text-gray-900">
-																			{contact.firstName || contact.first_name || 'Prénom'} {contact.lastName || contact.last_name || 'Nom'}
+																			{contact.firstName || contact.first_name || 'First name'} {contact.lastName || contact.last_name || 'Last name'}
 																		</div>
 																		<div class="text-xs text-blue-600 font-mono">ID: {contact.id}</div>
 																		{#if contact.email}
@@ -375,7 +359,7 @@
 																			</div>
 																		{/each}
 																	{:else}
-																		<span class="text-gray-400 italic">Aucun instrument</span>
+																		<span class="text-gray-400 italic">No instrument</span>
 																	{/if}
 																</div>
 															</td>
@@ -384,7 +368,7 @@
 															</td>
 															<td class="px-4 py-3">
 																<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {contact.validated ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-																	{contact.validated ? 'Validé' : 'En attente de validation'}
+																	{contact.validated ? 'Validated' : 'Pending validation'}
 																</span>
 															</td>
 														</tr>
@@ -398,23 +382,23 @@
 							</AdvancedFilterer>
 						</div>
 					{:else}
-						<!-- Chargement initial -->
+						<!-- Initial loading -->
 						<div class="text-center py-12">
 							<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
-							<p class="text-gray-600">Chargement des contacts et filtres...</p>
+							<p class="text-gray-600">Loading contacts and filters...</p>
 						</div>
 					{/if}
 
-					<!-- Actions d'import -->
+					<!-- Import actions -->
 					{#if selectedContacts.length > 0}
 						<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 							<div class="flex items-center justify-between">
 								<div>
 									<h4 class="font-semibold text-blue-900">
-										Prêt à importer {selectedContacts.length} contact(s)
+										Ready to import {selectedContacts.length} contact(s)
 									</h4>
 									<p class="text-sm text-blue-700 mt-1">
-										Ces contacts seront ajoutés à votre liste de recrutement avec le statut "Pas encore contacté".
+										These contacts will be added to your recruitment list with "Not yet contacted" status.
 									</p>
 								</div>
 								<button
@@ -425,7 +409,7 @@
 									{#if importing}
 										<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 									{/if}
-									{importing ? 'Import en cours...' : 'Importer les contacts'}
+									{importing ? 'Importing...' : 'Import contacts'}
 								</button>
 							</div>
 						</div>
@@ -433,23 +417,23 @@
 				</div>
 
 			{:else}
-				<!-- Résultats d'import -->
+				<!-- Import results -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-900">Résultats de l'importation</h3>
+					<h3 class="text-lg font-semibold text-gray-900">Import results</h3>
 
-					<!-- Succès -->
+					<!-- Success -->
 					{#if importResults.imported.length > 0}
 						<div class="bg-green-50 border border-green-200 rounded-lg p-4">
 							<div class="flex items-start gap-2">
 								<CheckCircle class="text-green-500 mt-0.5 flex-shrink-0" size={20} />
 								<div>
 									<h4 class="font-semibold text-green-900">
-										{importResults.imported.length} contact(s) importé(s) avec succès
+										{importResults.imported.length} contact(s) imported successfully
 									</h4>
 									<div class="mt-2 max-h-32 overflow-y-auto">
 										{#each importResults.imported as contact}
 											<p class="text-sm text-green-800">
-												✓ {contact.first_name} {contact.last_name}
+												{contact.first_name} {contact.last_name}
 											</p>
 										{/each}
 									</div>
@@ -458,23 +442,23 @@
 						</div>
 					{/if}
 
-					<!-- Conflits -->
+					<!-- Conflicts -->
 					{#if importResults.conflicts.length > 0}
 						<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
 							<div class="flex items-start gap-2">
 								<AlertTriangle class="text-yellow-500 mt-0.5 flex-shrink-0" size={20} />
 								<div>
 									<h4 class="font-semibold text-yellow-900">
-										{importResults.conflicts.length} conflit(s) détecté(s)
+										{importResults.conflicts.length} conflict(s) detected
 									</h4>
 									<p class="text-sm text-yellow-800 mt-1">
-										Ces contacts sont déjà présents dans votre liste de recrutement :
+										These contacts are already in your recruitment list:
 									</p>
 									<div class="mt-2 max-h-32 overflow-y-auto">
 										{#each importResults.conflicts as conflict}
 											<p class="text-sm text-yellow-800">
-												⚠️ {conflict.contact.firstName} {conflict.contact.lastName}
-												(statut actuel: {conflict.existing_status})
+												{conflict.contact.firstName} {conflict.contact.lastName}
+												(current status: {conflict.existing_status})
 											</p>
 										{/each}
 									</div>
@@ -483,18 +467,18 @@
 						</div>
 					{/if}
 
-					<!-- Erreurs -->
+					<!-- Errors -->
 					{#if importResults.errors.length > 0}
 						<div class="bg-red-50 border border-red-200 rounded-lg p-4">
 							<div class="flex items-start gap-2">
 								<AlertTriangle class="text-red-500 mt-0.5 flex-shrink-0" size={20} />
 								<div>
 									<h4 class="font-semibold text-red-900">
-										{importResults.errors.length} erreur(s)
+										{importResults.errors.length} error(s)
 									</h4>
 									<div class="mt-2 max-h-32 overflow-y-auto">
 										{#each importResults.errors as error}
-											<p class="text-sm text-red-800">❌ {error}</p>
+											<p class="text-sm text-red-800">{error}</p>
 										{/each}
 									</div>
 								</div>
@@ -512,7 +496,7 @@
 				on:click={closeModal}
 				class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
 			>
-				{importResults ? 'Fermer' : 'Annuler'}
+				{importResults ? 'Close' : 'Cancel'}
 			</button>
 
 			{#if importResults}
@@ -521,7 +505,7 @@
 					on:click={resetImport}
 					class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4]"
 				>
-					Nouvelle importation
+					New import
 				</button>
 			{/if}
 		</div>

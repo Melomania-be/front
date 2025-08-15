@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/AddManualContactModal.svelte - Version avec contacted_by -->
+<!-- src/lib/components/recruitment/AddManualContactModal.svelte -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, UserPlus, AlertTriangle } from 'lucide-svelte'
@@ -16,20 +16,18 @@
 		messenger: '',
 		section_id: null as number | null,
 		notes: '',
-		contacted_by: '' // 🆕 Nouveau champ
+		contacted_by: ''
 	}
 
 	let sections: Section[] = []
 	let saving = false
 	let errors: Record<string, string> = {}
-	let currentUserName = '' // 🆕 Nom de l'utilisateur connecté
-	let loadingUser = true // 🆕 Indicateur de chargement
+	let currentUserName = ''
+	let loadingUser = true
 
 	onMount(async () => {
-		console.log('🚀 AddManualContactModal mounted')
 		await fetchSections()
 		await getCurrentUser()
-		console.log('✅ Modal initialization complete. contacted_by =', formData.contacted_by)
 	})
 
 	async function fetchSections() {
@@ -43,26 +41,21 @@
 		}
 	}
 
-	// 🆕 Fonction pour obtenir l'utilisateur connecté
 	async function getCurrentUser() {
 		loadingUser = true
 		try {
-			console.log('🔍 Fetching current user...')
 			const response = await fetch('/api/users/current')
 			if (response.ok) {
 				const userData = await response.json()
-				console.log('✅ Current user data:', userData)
-				currentUserName = userData.fullName || userData.email || 'Utilisateur actuel'
+				currentUserName = userData.fullName || userData.email || 'Current user'
 				formData.contacted_by = currentUserName
-				console.log('✅ Set contacted_by to:', currentUserName)
 			} else {
-				console.warn('⚠️ Failed to fetch current user, using default')
-				currentUserName = 'Utilisateur actuel'
+				currentUserName = 'Current user'
 				formData.contacted_by = currentUserName
 			}
 		} catch (error) {
-			console.error('❌ Error fetching current user:', error)
-			currentUserName = 'Utilisateur actuel'
+			console.error('Error fetching current user:', error)
+			currentUserName = 'Current user'
 			formData.contacted_by = currentUserName
 		} finally {
 			loadingUser = false
@@ -70,28 +63,25 @@
 	}
 
 	async function saveContact() {
-		// Validation des champs requis
 		errors = {}
 
 		const firstName = formData.first_name.trim()
 		const lastName = formData.last_name.trim()
 
 		if (!firstName) {
-			errors.first_name = 'Le prénom est requis'
+			errors.first_name = 'First name is required'
 		}
 
 		if (!lastName) {
-			errors.last_name = 'Le nom est requis'
+			errors.last_name = 'Last name is required'
 		}
 
-		// Validation de l'email si fourni
 		if (formData.email && !isValidEmail(formData.email)) {
-			errors.email = 'Format d\'email invalide'
+			errors.email = 'Invalid email format'
 		}
 
-		// Au moins un moyen de contact est requis
 		if (!formData.email && !formData.phone && !formData.messenger) {
-			errors.contact = 'Au moins un moyen de contact est requis (email, téléphone ou messenger)'
+			errors.contact = 'At least one contact method is required (email, phone or messenger)'
 		}
 
 		if (Object.keys(errors).length > 0) {
@@ -109,10 +99,8 @@
 				messenger: formData.messenger.trim() || null,
 				section_id: formData.section_id,
 				notes: formData.notes.trim() || null,
-				contacted_by: formData.contacted_by.trim() || null // 🆕 Inclure contacted_by
+				contacted_by: formData.contacted_by.trim() || null
 			}
-
-			console.log('💾 Saving contact with data:', cleanData)
 
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts`, {
 				method: 'POST',
@@ -122,18 +110,16 @@
 
 			if (response.ok) {
 				const newContact = await response.json()
-				console.log('✅ Contact created successfully:', newContact)
-
 				dispatch('contactAdded', newContact)
 				closeModal()
 			} else {
 				const errorData = await response.json()
-				console.error('❌ Error creating contact:', errorData)
-				alert(`Erreur: ${errorData.error || 'Impossible de créer le contact'}`)
+				console.error('Error creating contact:', errorData)
+				alert(`Error: ${errorData.error || 'Unable to create contact'}`)
 			}
 		} catch (error) {
-			console.error('❌ Error saving contact:', error)
-			alert('Erreur lors de la sauvegarde du contact')
+			console.error('Error saving contact:', error)
+			alert('Error saving contact')
 		} finally {
 			saving = false
 		}
@@ -164,13 +150,11 @@
 			messenger: '',
 			section_id: null,
 			notes: '',
-			contacted_by: currentUserName // 🆕 Remettre le nom de l'utilisateur par défaut
+			contacted_by: currentUserName
 		}
 		errors = {}
-		console.log('🧹 Form cleared, contacted_by reset to:', currentUserName)
 	}
 
-	// Validation en temps réel
 	$: {
 		if (formData.first_name.trim() && errors.first_name) {
 			delete errors.first_name
@@ -191,11 +175,10 @@
 
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 	<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-		<!-- Header -->
 		<div class="flex items-center justify-between p-6 border-b">
 			<div class="flex items-center gap-2">
 				<UserPlus class="text-[#6B9AD9]" size={24} />
-				<h2 class="text-xl font-semibold">Ajouter un Contact Manuel</h2>
+				<h2 class="text-xl font-semibold">Add Manual Contact</h2>
 			</div>
 			<button
 				on:click={closeModal}
@@ -206,23 +189,21 @@
 			</button>
 		</div>
 
-		<!-- Contenu -->
 		<div class="p-6 space-y-6">
-			<!-- Informations personnelles -->
 			<div class="space-y-4">
-				<h3 class="text-lg font-semibold text-gray-900">Informations personnelles</h3>
+				<h3 class="text-lg font-semibold text-gray-900">Personal Information</h3>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">
-							Prénom *
+							First Name *
 						</label>
 						<input
 							id="first_name"
 							type="text"
 							bind:value={formData.first_name}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.first_name ? 'border-red-500' : 'border-gray-300'}"
-							placeholder="Prénom"
+							placeholder="First name"
 							disabled={saving}
 						/>
 						{#if errors.first_name}
@@ -232,14 +213,14 @@
 
 					<div>
 						<label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">
-							Nom *
+							Last Name *
 						</label>
 						<input
 							id="last_name"
 							type="text"
 							bind:value={formData.last_name}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.last_name ? 'border-red-500' : 'border-gray-300'}"
-							placeholder="Nom"
+							placeholder="Last name"
 							disabled={saving}
 						/>
 						{#if errors.last_name}
@@ -249,10 +230,9 @@
 				</div>
 			</div>
 
-			<!-- Informations de contact -->
 			<div class="space-y-4">
-				<h3 class="text-lg font-semibold text-gray-900">Informations de contact</h3>
-				<p class="text-sm text-gray-600">Au moins un moyen de contact est requis</p>
+				<h3 class="text-lg font-semibold text-gray-900">Contact Information</h3>
+				<p class="text-sm text-gray-600">At least one contact method is required</p>
 
 				<div class="space-y-4">
 					<div>
@@ -264,7 +244,7 @@
 							type="email"
 							bind:value={formData.email}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.email ? 'border-red-500' : 'border-gray-300'}"
-							placeholder="exemple@email.com"
+							placeholder="example@email.com"
 							disabled={saving}
 						/>
 						{#if errors.email}
@@ -274,14 +254,14 @@
 
 					<div>
 						<label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-							Téléphone
+							Phone
 						</label>
 						<input
 							id="phone"
 							type="tel"
 							bind:value={formData.phone}
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-							placeholder="+33 6 12 34 56 78"
+							placeholder="+1 (555) 123-4567"
 							disabled={saving}
 						/>
 					</div>
@@ -295,7 +275,7 @@
 							type="text"
 							bind:value={formData.messenger}
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-							placeholder="@username ou lien Messenger"
+							placeholder="@username or Messenger link"
 							disabled={saving}
 						/>
 					</div>
@@ -309,13 +289,12 @@
 				</div>
 			</div>
 
-			<!-- Section -->
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold text-gray-900">Section</h3>
 
 				<div>
 					<label for="section" class="block text-sm font-medium text-gray-700 mb-1">
-						Section musicale
+						Musical Section
 					</label>
 					<select
 						id="section"
@@ -323,7 +302,7 @@
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						disabled={saving}
 					>
-						<option value={null}>Sélectionner une section</option>
+						<option value={null}>Select a section</option>
 						{#each sections as section}
 							<option value={section.id}>{section.name}</option>
 						{/each}
@@ -331,74 +310,70 @@
 				</div>
 			</div>
 
-			<!-- 🆕 Champ Contacté par -->
 			<div class="space-y-4">
-				<h3 class="text-lg font-semibold text-gray-900">Suivi</h3>
+				<h3 class="text-lg font-semibold text-gray-900">Tracking</h3>
 
 				<div>
 					<label for="contacted_by" class="block text-sm font-medium text-gray-700 mb-1">
-						Contacté par
+						Contacted by
 					</label>
 					<input
 						id="contacted_by"
 						type="text"
 						bind:value={formData.contacted_by}
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-						placeholder="Nom de la personne qui contacte"
+						placeholder="Name of the person making contact"
 						disabled={saving}
 					/>
 					<p class="text-xs text-gray-500 mt-1">
-						Par défaut, votre nom est utilisé. Vous pouvez le modifier si nécessaire.
+						By default, your name is used. You can modify it if necessary.
 					</p>
 				</div>
 			</div>
 
-			<!-- Notes -->
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold text-gray-900">Notes</h3>
 
 				<div>
 					<label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
-						Notes complémentaires
+						Additional Notes
 					</label>
 					<textarea
 						id="notes"
 						bind:value={formData.notes}
 						rows="3"
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-						placeholder="Notes sur ce contact, contexte de rencontre, recommandation..."
+						placeholder="Notes about this contact, meeting context, recommendation..."
 						disabled={saving}
 					></textarea>
 				</div>
 			</div>
 
-			<!-- Aperçu -->
 			{#if formData.first_name.trim() || formData.last_name.trim()}
 				<div class="bg-gray-50 rounded-lg p-4">
-					<h4 class="font-medium text-gray-900 mb-2">Aperçu du contact</h4>
+					<h4 class="font-medium text-gray-900 mb-2">Contact Preview</h4>
 					<div class="text-sm space-y-1">
-						<p><span class="font-medium">Nom :</span> {formData.first_name.trim()} {formData.last_name.trim()}</p>
+						<p><span class="font-medium">Name:</span> {formData.first_name.trim()} {formData.last_name.trim()}</p>
 						{#if formData.email.trim()}
-							<p><span class="font-medium">Email :</span> {formData.email.trim()}</p>
+							<p><span class="font-medium">Email:</span> {formData.email.trim()}</p>
 						{/if}
 						{#if formData.phone.trim()}
-							<p><span class="font-medium">Téléphone :</span> {formData.phone.trim()}</p>
+							<p><span class="font-medium">Phone:</span> {formData.phone.trim()}</p>
 						{/if}
 						{#if formData.messenger.trim()}
-							<p><span class="font-medium">Messenger :</span> {formData.messenger.trim()}</p>
+							<p><span class="font-medium">Messenger:</span> {formData.messenger.trim()}</p>
 						{/if}
 						{#if formData.section_id}
-							<p><span class="font-medium">Section :</span> {sections.find(s => s.id === formData.section_id)?.name}</p>
+							<p><span class="font-medium">Section:</span> {sections.find(s => s.id === formData.section_id)?.name}</p>
 						{/if}
 						{#if formData.contacted_by.trim()}
-							<p><span class="font-medium">Contacté par :</span> {formData.contacted_by.trim()}</p>
+							<p><span class="font-medium">Contacted by:</span> {formData.contacted_by.trim()}</p>
 						{/if}
 					</div>
 				</div>
 			{/if}
 		</div>
 
-		<!-- Footer -->
 		<div class="flex justify-between p-6 border-t bg-gray-50">
 			<button
 				type="button"
@@ -406,7 +381,7 @@
 				class="px-4 py-2 text-gray-600 hover:text-gray-800"
 				disabled={saving}
 			>
-				Effacer le formulaire
+				Clear form
 			</button>
 
 			<div class="flex gap-3">
@@ -416,7 +391,7 @@
 					disabled={saving}
 					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
 				>
-					Annuler
+					Cancel
 				</button>
 				<button
 					type="button"
@@ -427,7 +402,7 @@
 					{#if saving}
 						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 					{/if}
-					{saving ? 'Ajout...' : 'Ajouter le contact'}
+					{saving ? 'Adding...' : 'Add contact'}
 				</button>
 			</div>
 		</div>

@@ -1,18 +1,16 @@
-<!-- src/lib/components/recruitment/RecruitmentStats.svelte - Version simplifiée -->
+<!-- src/lib/components/recruitment/RecruitmentStats.svelte -->
 <script lang="ts">
 	import { BarChart3, TrendingUp, Users, Target } from 'lucide-svelte'
 	import type { RecruitmentStats } from '$lib/types'
 
 	export let stats: RecruitmentStats | undefined
 
-	// ✅ CORRECTION : Protection maximale et simplification
 	$: safeStats = {
 		total: Number(stats?.total) || 0,
 		by_status: Array.isArray(stats?.by_status) ? stats.by_status.filter(item => item && item.status) : [],
 		pending_recommendations: Number(stats?.pending_recommendations) || 0
 	}
 
-	// Fonction utilitaire pour obtenir le count d'un statut de manière sécurisée
 	function getStatusCount(status: string): number {
 		if (!safeStats || !Array.isArray(safeStats.by_status)) {
 			return 0
@@ -21,7 +19,6 @@
 		return Number(item?.count) || 0
 	}
 
-	// Calculs sécurisés pour les graphiques
 	$: statusData = safeStats.by_status
 		.filter(item => item && item.status)
 		.map(item => ({
@@ -38,13 +35,13 @@
 
 	function getStatusLabel(status: string): string {
 		const labels = {
-			'not_yet_contacted': 'Pas encore contacté',
-			'awaiting_response': 'En attente de réponse',
-			'to_follow_up': 'À relancer',
-			'not_available': 'Non disponible',
-			'pending_validation': 'En validation',
-			'cancelled': 'Annulé',
-			'recruited': 'Recruté'
+			'not_yet_contacted': 'Not yet contacted',
+			'awaiting_response': 'Awaiting response',
+			'to_follow_up': 'Follow up',
+			'not_available': 'Not available',
+			'pending_validation': 'Pending validation',
+			'cancelled': 'Cancelled',
+			'recruited': 'Recruited'
 		}
 		return labels[status] || status
 	}
@@ -71,13 +68,13 @@
 {#if !stats}
 	<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 text-center">
 		<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
-		<p class="text-gray-600">Chargement des statistiques...</p>
+		<p class="text-gray-600">Loading statistics...</p>
 	</div>
 {:else}
 	<div class="space-y-6">
-		<!-- ✅ Métriques principales - simplifiées -->
+		<!-- Main metrics -->
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-			<!-- Total des contacts -->
+			<!-- Total contacts -->
 			<div class="bg-white border-2 border-[#6B9AD9] rounded-lg p-6">
 				<div class="flex items-center justify-between">
 					<div>
@@ -88,38 +85,38 @@
 				</div>
 			</div>
 
-			<!-- Taux de recrutement -->
+			<!-- Recruitment rate -->
 			<div class="bg-white border-2 border-green-500 rounded-lg p-6">
 				<div class="flex items-center justify-between">
 					<div>
-						<h3 class="text-sm font-medium text-gray-600 uppercase">Taux de Recrutement</h3>
+						<h3 class="text-sm font-medium text-gray-600 uppercase">Recruitment Rate</h3>
 						<p class="text-3xl font-bold text-green-600">{recruitmentRate}%</p>
 						<p class="text-sm text-gray-500">
-							{formatNumber(getStatusCount('recruited'))} recruté(s)
+							{formatNumber(getStatusCount('recruited'))} recruited
 						</p>
 					</div>
 					<Target class="text-green-500" size={32} />
 				</div>
 			</div>
 
-			<!-- Recommandations -->
+			<!-- Recommendations -->
 			<div class="bg-white border-2 border-purple-500 rounded-lg p-6">
 				<div class="flex items-center justify-between">
 					<div>
-						<h3 class="text-sm font-medium text-gray-600 uppercase">Recommandations</h3>
+						<h3 class="text-sm font-medium text-gray-600 uppercase">Recommendations</h3>
 						<p class="text-3xl font-bold text-purple-600">{formatNumber(safeStats.pending_recommendations)}</p>
-						<p class="text-sm text-gray-500">En attente</p>
+						<p class="text-sm text-gray-500">Pending</p>
 					</div>
 					<TrendingUp class="text-purple-500" size={32} />
 				</div>
 			</div>
 		</div>
 
-		<!-- ✅ Répartition par statut - simplifiée -->
+		<!-- Status breakdown -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6">
 			<div class="flex items-center gap-2 mb-6">
 				<BarChart3 class="text-[#6B9AD9]" size={24} />
-				<h3 class="text-lg font-semibold">Répartition par Statut</h3>
+				<h3 class="text-lg font-semibold">Status Breakdown</h3>
 			</div>
 
 			{#if statusData.length > 0}
@@ -147,40 +144,40 @@
 				</div>
 			{:else}
 				<div class="text-center py-8 text-gray-500">
-					<p>Aucune donnée de statut disponible</p>
+					<p>No status data available</p>
 				</div>
 			{/if}
 		</div>
 
-		<!-- ✅ Insights - simplifiés -->
+		<!-- Insights -->
 		{#if safeStats.total > 0}
 			<div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-				<h3 class="text-lg font-semibold text-blue-900 mb-4">💡 Résumé</h3>
+				<h3 class="text-lg font-semibold text-blue-900 mb-4">Summary</h3>
 
 				<div class="space-y-2 text-sm">
 					{#if recruitmentRate >= 20}
 						<p class="text-green-800">
-							✅ Excellent taux de recrutement ({recruitmentRate}%) !
+							Excellent recruitment rate ({recruitmentRate}%)!
 						</p>
 					{:else if recruitmentRate >= 10}
 						<p class="text-blue-800">
-							👍 Bon taux de recrutement ({recruitmentRate}%).
+							Good recruitment rate ({recruitmentRate}%).
 						</p>
 					{:else}
 						<p class="text-yellow-800">
-							⚠️ Taux de recrutement faible ({recruitmentRate}%).
+							Low recruitment rate ({recruitmentRate}%).
 						</p>
 					{/if}
 
 					{#if getStatusCount('to_follow_up') > 0}
 						<p class="text-orange-800">
-							📞 {formatNumber(getStatusCount('to_follow_up'))} contact(s) à relancer.
+							{formatNumber(getStatusCount('to_follow_up'))} contact(s) to follow up.
 						</p>
 					{/if}
 
 					{#if safeStats.pending_recommendations > 0}
 						<p class="text-purple-800">
-							👥 {formatNumber(safeStats.pending_recommendations)} recommandation(s) en attente.
+							{formatNumber(safeStats.pending_recommendations)} pending recommendation(s).
 						</p>
 					{/if}
 				</div>
@@ -188,8 +185,8 @@
 		{:else}
 			<div class="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 text-center">
 				<Users size={48} class="mx-auto mb-4 text-gray-400" />
-				<h3 class="text-lg font-semibold text-gray-600 mb-2">Aucun contact de recrutement</h3>
-				<p class="text-gray-500">Commencez par ajouter des contacts pour voir les statistiques.</p>
+				<h3 class="text-lg font-semibold text-gray-600 mb-2">No recruitment contacts</h3>
+				<p class="text-gray-500">Start by adding contacts to see statistics.</p>
 			</div>
 		{/if}
 	</div>

@@ -1,4 +1,4 @@
-<!-- src/lib/components/recruitment/ImportContactsModal.svelte - Version complète corrigée -->
+<!-- src/lib/components/recruitment/ImportContactsModal.svelte -->
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, Upload, Search, Users, AlertTriangle, CheckCircle } from 'lucide-svelte'
@@ -14,7 +14,7 @@
 	let searching = false
 	let importing = false
 	let searchPerformed = false
-	let initialLoadPerformed = false // ✅ NOUVEAU FLAG
+	let initialLoadPerformed = false
 
 	let importResults: {
 		imported: any[]
@@ -22,12 +22,10 @@
 		errors: string[]
 	} | null = null
 
-	// ✅ CORRECTION : Charger automatiquement les contacts au montage
 	onMount(async () => {
 		await loadInitialContacts()
 	})
 
-	// ✅ NOUVELLE FONCTION : Chargement initial automatique
 	async function loadInitialContacts() {
 		if (initialLoadPerformed) return
 
@@ -35,13 +33,11 @@
 		initialLoadPerformed = true
 
 		try {
-			console.log('🔄 Loading initial contacts...')
-
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/search-contacts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					filter: '', // Recherche vide pour avoir tous les contacts
+					filter: '',
 					criteria: {
 						name: '',
 						email: '',
@@ -55,21 +51,16 @@
 				const data = await response.json()
 				searchResults = data.data || data || []
 				searchPerformed = true
-				console.log('✅ Initial contacts loaded:', searchResults.length)
-			} else {
-				console.error('❌ Failed to load initial contacts')
 			}
 		} catch (error) {
-			console.error('❌ Error loading initial contacts:', error)
+			console.error('Error loading initial contacts:', error)
 		} finally {
 			searching = false
 		}
 	}
 
-	// ✅ FONCTION MODIFIÉE : Recherche spécifique
 	async function searchContacts() {
 		if (!searchQuery.trim()) {
-			// Si recherche vide, recharger tous les contacts
 			await loadInitialContacts()
 			return
 		}
@@ -78,8 +69,6 @@
 		searchPerformed = true
 
 		try {
-			console.log('🔍 Searching contacts with query:', searchQuery)
-
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/search-contacts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -97,13 +86,10 @@
 			if (response.ok) {
 				const data = await response.json()
 				searchResults = data.data || data || []
-				console.log('✅ Search completed:', searchResults.length, 'results')
-			} else {
-				console.error('❌ Search failed')
 			}
 		} catch (error) {
-			console.error('❌ Error searching contacts:', error)
-			alert('Erreur lors de la recherche de contacts')
+			console.error('Error searching contacts:', error)
+			alert('Error searching contacts')
 		} finally {
 			searching = false
 		}
@@ -132,7 +118,6 @@
 		importing = true
 
 		try {
-			console.log('📥 Importing selected contacts...')
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts/import`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -144,16 +129,15 @@
 			if (response.ok) {
 				importResults = await response.json()
 
-				// ✅ CORRECTION : Émettre l'événement immédiatement après import réussi
 				if (importResults && importResults.imported.length > 0) {
 					dispatch('contactsImported', importResults)
 				}
 			} else {
-				alert('Erreur lors de l\'importation des contacts')
+				alert('Error importing contacts')
 			}
 		} catch (error) {
 			console.error('Error importing contacts:', error)
-			alert('Erreur lors de l\'importation des contacts')
+			alert('Error importing contacts')
 		} finally {
 			importing = false
 		}
@@ -171,7 +155,6 @@
 		}
 	}
 
-	// ✅ FONCTION NOUVELLE : Reset et rechargement
 	function resetSearch() {
 		searchQuery = ''
 		selectedContacts = []
@@ -210,7 +193,7 @@
 		<div class="flex items-center justify-between p-6 border-b">
 			<div class="flex items-center gap-2">
 				<Upload class="text-[#6B9AD9]" size={24} />
-				<h2 class="text-xl font-semibold">Importer des Contacts</h2>
+				<h2 class="text-xl font-semibold">Import Contacts</h2>
 			</div>
 			<button
 				on:click={closeModal}
@@ -220,14 +203,14 @@
 			</button>
 		</div>
 
-		<!-- Contenu -->
+		<!-- Content -->
 		<div class="p-6 space-y-6">
 			{#if !importResults}
-				<!-- Recherche -->
+				<!-- Search -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-900">Rechercher des contacts</h3>
+					<h3 class="text-lg font-semibold text-gray-900">Search contacts</h3>
 					<p class="text-sm text-gray-600">
-						Tous les contacts sont affichés par défaut. Utilisez la recherche pour filtrer par nom, email, instrument ou projet.
+						All contacts are displayed by default. Use search to filter by name, email, instrument or project.
 					</p>
 
 					<div class="flex gap-2">
@@ -236,7 +219,7 @@
 							<input
 								type="text"
 								bind:value={searchQuery}
-								placeholder="Filtrer les contacts (optionnel)..."
+								placeholder="Filter contacts (optional)..."
 								class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								on:keydown={(e) => e.key === 'Enter' && searchContacts()}
 							/>
@@ -251,7 +234,7 @@
 							{:else}
 								<Search size={16} />
 							{/if}
-							{searching ? 'Recherche...' : 'Filtrer'}
+							{searching ? 'Searching...' : 'Filter'}
 						</button>
 
 						{#if searchQuery}
@@ -259,24 +242,23 @@
 								on:click={resetSearch}
 								class="px-4 py-2 text-gray-600 hover:text-gray-800"
 							>
-								Réinitialiser
+								Reset
 							</button>
 						{/if}
 					</div>
 				</div>
 
-				<!-- ✅ INDICATEUR DE CHARGEMENT INITIAL -->
 				{#if searching && !searchPerformed}
 					<div class="text-center py-8">
 						<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
-						<p class="text-gray-600">Chargement des contacts...</p>
+						<p class="text-gray-600">Loading contacts...</p>
 					</div>
 				{:else}
-					<!-- Résultats -->
+					<!-- Results -->
 					<div class="space-y-4">
 						<div class="flex items-center justify-between">
 							<h4 class="font-semibold text-gray-900">
-								Contacts disponibles ({searchResults.length})
+								Available contacts ({searchResults.length})
 							</h4>
 
 							{#if searchResults.length > 0}
@@ -285,14 +267,14 @@
 										on:click={selectAllSearchResults}
 										class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded"
 									>
-										Tout sélectionner
+										Select all
 									</button>
 									{#if selectedContacts.length > 0}
 										<button
 											on:click={clearSelection}
 											class="px-3 py-1 text-sm bg-red-200 hover:bg-red-300 rounded"
 										>
-											Désélectionner ({selectedContacts.length})
+											Deselect ({selectedContacts.length})
 										</button>
 									{/if}
 								</div>
@@ -303,14 +285,14 @@
 							<div class="text-center py-8 text-gray-500">
 								<Users size={48} class="mx-auto mb-4 opacity-50" />
 								{#if searchQuery}
-									<p>Aucun contact trouvé pour cette recherche.</p>
-									<p class="text-sm">Essayez avec d'autres termes de recherche.</p>
+									<p>No contacts found for this search.</p>
+									<p class="text-sm">Try different search terms.</p>
 								{:else}
-									<p>Aucun contact disponible dans la base de données.</p>
+									<p>No contacts available in the database.</p>
 								{/if}
 							</div>
 						{:else}
-							<!-- Tableau des contacts -->
+							<!-- Contact table -->
 							<div class="border border-gray-200 rounded-lg overflow-hidden">
 								<div class="max-h-96 overflow-y-auto">
 									<table class="w-full text-sm">
@@ -326,7 +308,7 @@
 											</th>
 											<th class="px-4 py-3 text-left font-semibold">Contact</th>
 											<th class="px-4 py-3 text-left font-semibold">Instruments</th>
-											<th class="px-4 py-3 text-left font-semibold">Projets passés</th>
+											<th class="px-4 py-3 text-left font-semibold">Past projects</th>
 										</tr>
 										</thead>
 										<tbody>
@@ -365,16 +347,16 @@
 					</div>
 				{/if}
 
-				<!-- Actions d'import -->
+				<!-- Import actions -->
 				{#if selectedContacts.length > 0}
 					<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 						<div class="flex items-center justify-between">
 							<div>
 								<h4 class="font-semibold text-blue-900">
-									Prêt à importer {selectedContacts.length} contact(s)
+									Ready to import {selectedContacts.length} contact(s)
 								</h4>
 								<p class="text-sm text-blue-700 mt-1">
-									Ces contacts seront ajoutés à votre liste de recrutement avec le statut "Pas encore contacté".
+									These contacts will be added to your recruitment list with "Not yet contacted" status.
 								</p>
 							</div>
 							<button
@@ -385,30 +367,30 @@
 								{#if importing}
 									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 								{/if}
-								{importing ? 'Import...' : 'Importer'}
+								{importing ? 'Importing...' : 'Import'}
 							</button>
 						</div>
 					</div>
 				{/if}
 
 			{:else}
-				<!-- Résultats d'import -->
+				<!-- Import results -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-900">Résultats de l'importation</h3>
+					<h3 class="text-lg font-semibold text-gray-900">Import results</h3>
 
-					<!-- Succès -->
+					<!-- Success -->
 					{#if importResults.imported.length > 0}
 						<div class="bg-green-50 border border-green-200 rounded-lg p-4">
 							<div class="flex items-start gap-2">
 								<CheckCircle class="text-green-500 mt-0.5 flex-shrink-0" size={20} />
 								<div>
 									<h4 class="font-semibold text-green-900">
-										{importResults.imported.length} contact(s) importé(s) avec succès
+										{importResults.imported.length} contact(s) imported successfully
 									</h4>
 									<div class="mt-2 space-y-1">
 										{#each importResults.imported as contact}
 											<p class="text-sm text-green-800">
-												✓ {contact.first_name} {contact.last_name}
+												{contact.first_name} {contact.last_name}
 											</p>
 										{/each}
 									</div>
@@ -417,23 +399,23 @@
 						</div>
 					{/if}
 
-					<!-- Conflits -->
+					<!-- Conflicts -->
 					{#if importResults.conflicts.length > 0}
 						<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
 							<div class="flex items-start gap-2">
 								<AlertTriangle class="text-yellow-500 mt-0.5 flex-shrink-0" size={20} />
 								<div>
 									<h4 class="font-semibold text-yellow-900">
-										{importResults.conflicts.length} conflit(s) détecté(s)
+										{importResults.conflicts.length} conflict(s) detected
 									</h4>
 									<p class="text-sm text-yellow-800 mt-1">
-										Ces contacts sont déjà présents dans votre liste de recrutement :
+										These contacts are already in your recruitment list:
 									</p>
 									<div class="mt-2 space-y-1">
 										{#each importResults.conflicts as conflict}
 											<p class="text-sm text-yellow-800">
-												⚠️ {conflict.contact.firstName} {conflict.contact.lastName}
-												(statut actuel: {conflict.existing_status})
+												{conflict.contact.firstName} {conflict.contact.lastName}
+												(current status: {conflict.existing_status})
 											</p>
 										{/each}
 									</div>
@@ -442,18 +424,18 @@
 						</div>
 					{/if}
 
-					<!-- Erreurs -->
+					<!-- Errors -->
 					{#if importResults.errors.length > 0}
 						<div class="bg-red-50 border border-red-200 rounded-lg p-4">
 							<div class="flex items-start gap-2">
 								<AlertTriangle class="text-red-500 mt-0.5 flex-shrink-0" size={20} />
 								<div>
 									<h4 class="font-semibold text-red-900">
-										{importResults.errors.length} erreur(s)
+										{importResults.errors.length} error(s)
 									</h4>
 									<div class="mt-2 space-y-1">
 										{#each importResults.errors as error}
-											<p class="text-sm text-red-800">❌ {error}</p>
+											<p class="text-sm text-red-800">{error}</p>
 										{/each}
 									</div>
 								</div>
@@ -471,7 +453,7 @@
 				on:click={closeModal}
 				class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
 			>
-				{importResults ? 'Fermer' : 'Annuler'}
+				{importResults ? 'Close' : 'Cancel'}
 			</button>
 
 			{#if importResults}
@@ -480,7 +462,7 @@
 					on:click={resetSearch}
 					class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4]"
 				>
-					Nouvelle importation
+					New import
 				</button>
 			{/if}
 		</div>
