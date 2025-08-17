@@ -24,7 +24,7 @@
 	let activeTab = 'contacts'
 	let loading = true
 	let error = ''
-	let initialImportDone = false
+	let hasPerformedInitialImport = false
 
 	// Modals
 	let showAddManualModal = false
@@ -47,7 +47,7 @@
 
 		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
 			await loadData()
-			await autoImportAllContacts()
+			await checkAndPerformInitialImport()
 		} else {
 			error = 'ID de projet manquant ou invalide'
 		}
@@ -78,30 +78,38 @@
 		}
 	}
 
-	async function autoImportAllContacts() {
-		if (initialImportDone) return
+	async function checkAndPerformInitialImport() {
+		if (hasPerformedInitialImport) return
 
 		try {
-			const importResponse = await fetch(`/api/projects/${projectId}/management/recruitment/auto-import-all`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
-			})
+			const statsResponse = await fetch(`/api/projects/${projectId}/management/recruitment/stats`)
 
-			if (importResponse.ok) {
-				const importResults = await importResponse.json()
+			if (statsResponse.ok) {
+				const currentStats = await statsResponse.json()
 
-				if (importResults.new_imports > 0) {
-					if (contactsListRef && contactsListRef.refreshContacts) {
-						contactsListRef.refreshContacts()
+				if (currentStats.total === 0) {
+					const importResponse = await fetch(`/api/projects/${projectId}/management/recruitment/auto-import-all`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' }
+					})
+
+					if (importResponse.ok) {
+						const importResults = await importResponse.json()
+
+						if (importResults.new_imports > 0) {
+							if (contactsListRef && contactsListRef.refreshContacts) {
+								contactsListRef.refreshContacts()
+							}
+							fetchStats()
+						}
 					}
-					fetchStats()
 				}
 			}
 
-			initialImportDone = true
+			hasPerformedInitialImport = true
 		} catch (error) {
-			console.warn('Error during auto-import:', error)
-			initialImportDone = true
+			console.warn('Error during initial import check:', error)
+			hasPerformedInitialImport = true
 		}
 	}
 

@@ -314,14 +314,40 @@
 
 	function formatContactDate(contactDate: string | null): string {
 		if (!contactDate) return '-'
+
+		// Si la date est déjà formatée côté backend (format dd/MM/yyyy HH:mm)
+		if (typeof contactDate === 'string' && contactDate.match(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)) {
+			return contactDate
+		}
+
 		try {
-			const date = new Date(contactDate)
-			if (isNaN(date.getTime())) {
-				return 'Invalid date'
+			// Essayer de parser la date
+			let date: Date
+
+			if (typeof contactDate === 'string') {
+				// Si c'est une string ISO ou autre format
+				date = new Date(contactDate)
+			} else {
+				// Si c'est déjà un objet Date
+				date = new Date(contactDate)
 			}
-			return date.toLocaleDateString('en-US')
+
+			// Vérifier si la date est valide
+			if (isNaN(date.getTime())) {
+				console.warn('Invalid date received:', contactDate)
+				return 'Date invalide'
+			}
+
+			return date.toLocaleDateString('fr-FR', {
+				day: '2-digit',
+				month: '2-digit',
+				year: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit'
+			})
 		} catch (error) {
-			return 'Invalid date'
+			console.error('Error formatting date:', error, 'Input:', contactDate)
+			return 'Date invalide'
 		}
 	}
 
@@ -553,24 +579,13 @@
 										</div>
 										<h3 class="font-bold text-sm text-gray-900 uppercase">STATUS & TIMING</h3>
 									</div>
-									<div class="grid grid-cols-2 gap-3">
-										<div class="bg-gray-50 border-2 border-gray-300 rounded-[6px] p-3">
-											<div class="flex items-center mb-2">
-												<svg class="w-3 h-3 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
-												</svg>
-												<span class="text-xs font-bold text-gray-600 uppercase">Method</span>
-											</div>
-											<p class="text-sm font-bold text-gray-900 capitalize">
-												{contact.contact_method || 'Not defined'}
-											</p>
-										</div>
+									<div class="grid grid-cols-1 gap-3">
 										<div class="bg-gray-50 border-2 border-gray-300 rounded-[6px] p-3">
 											<div class="flex items-center mb-2">
 												<svg class="w-3 h-3 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
 												</svg>
-												<span class="text-xs font-bold text-gray-600 uppercase">Contact</span>
+												<span class="text-xs font-bold text-gray-600 uppercase">Contact Date</span>
 											</div>
 											{#if contact.contact_date}
 												<p class="text-sm font-bold text-gray-900">
@@ -613,7 +628,7 @@
 			{:else}
 				<!-- Desktop table version -->
 				<div class="w-full overflow-x-auto">
-					<table class="w-full min-w-[1200px] text-sm text-left text-gray-500">
+					<table class="w-full min-w-[1000px] text-sm text-left text-gray-500">
 						<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
 						<tr>
 							<th class="px-4 py-3">
@@ -628,7 +643,6 @@
 							<th class="px-4 py-3">Contact</th>
 							<th class="px-4 py-3">Section</th>
 							<th class="px-4 py-3">Status</th>
-							<th class="px-4 py-3">Method</th>
 							<th class="px-4 py-3">Contact date</th>
 							<th class="px-4 py-3">Contacted by</th>
 							<th class="px-4 py-3">Source</th>
@@ -704,10 +718,6 @@
 										status={contact.status}
 										shouldFollowUp={shouldHighlightFollowUp(contact)}
 									/>
-								</td>
-
-								<td class="px-4 py-3">
-									<span class="text-sm capitalize">{contact.contact_method || '-'}</span>
 								</td>
 
 								<td class="px-4 py-3">

@@ -25,12 +25,17 @@
 		try {
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/recommendations`)
 			if (response.ok) {
-				recommendations = await response.json()
+				const data = await response.json()
+				// S'assurer que les données sont dans le bon format
+				recommendations = Array.isArray(data) ? data : []
+				console.log('Recommendations loaded:', recommendations)
 			} else {
 				console.error('Failed to fetch recommendations:', response.status)
+				recommendations = []
 			}
 		} catch (error) {
 			console.error('Error fetching recommendations:', error)
+			recommendations = []
 		}
 	}
 
@@ -42,6 +47,7 @@
 			}
 		} catch (error) {
 			console.error('Error fetching sections:', error)
+			sections = []
 		}
 	}
 
@@ -76,10 +82,6 @@
 				}
 
 				const message = actionMessages[action] || 'Action completed'
-
-				if (typeof window !== 'undefined' && window.alert) {
-					// alert(message)
-				}
 			} else {
 				console.error('API request failed:', response.status)
 				const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
@@ -121,13 +123,32 @@
 	}
 
 	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		})
+		if (!dateString) return 'Date inconnue'
+
+		try {
+			const date = new Date(dateString)
+			if (isNaN(date.getTime())) return 'Date invalide'
+
+			return date.toLocaleDateString('fr-FR', {
+				day: '2-digit',
+				month: '2-digit',
+				year: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit'
+			})
+		} catch (error) {
+			return 'Date invalide'
+		}
+	}
+
+	function getDisplayName(recommendation: RecruitmentRecommendation): string {
+		const firstName = recommendation.recommended_first_name || ''
+		const lastName = recommendation.recommended_last_name || ''
+		return `${firstName} ${lastName}`.trim() || 'Nom inconnu'
+	}
+
+	function getRecommenderName(recommendation: RecruitmentRecommendation): string {
+		return recommendation.recommender_name || 'Recommandateur inconnu'
 	}
 
 	$: pendingRecommendations = recommendations.filter(r => r.status === 'pending')
@@ -196,10 +217,10 @@
 								<div class="flex items-center justify-between">
 									<div class="flex-1">
 										<h4 class="font-medium">
-											{recommendation.recommended_first_name} {recommendation.recommended_last_name}
+											{getDisplayName(recommendation)}
 										</h4>
 										<p class="text-sm text-gray-600">
-											Recommended by {recommendation.recommender_name}
+											Recommended by {getRecommenderName(recommendation)}
 										</p>
 										<p class="text-xs text-gray-500">
 											{formatDate(recommendation.created_at)}
