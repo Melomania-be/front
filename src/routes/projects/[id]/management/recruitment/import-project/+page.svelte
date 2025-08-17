@@ -296,39 +296,7 @@
 						</div>
 					{/if}
 
-					<!-- Information -->
-					<div class="bg-blue-50 border-2 border-blue-200 rounded-[10px] p-6">
-						<div class="flex items-start gap-3">
-							<div class="flex items-center justify-center w-8 h-8 bg-blue-500 rounded-[6px] flex-shrink-0">
-								<AlertTriangle size={16} class="text-white" />
-							</div>
-							<div>
-								<h3 class="font-bold text-blue-900 mb-3">Import Information</h3>
-								<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-									<div class="space-y-2">
-										<div class="flex items-center gap-2">
-											<div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-											<span class="text-blue-800">Imported contacts will have "Not yet contacted" status</span>
-										</div>
-										<div class="flex items-center gap-2">
-											<div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-											<span class="text-blue-800">Duplicates will be detected and reported</span>
-										</div>
-									</div>
-									<div class="space-y-2">
-										<div class="flex items-center gap-2">
-											<div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-											<span class="text-blue-800">Only contacts with selected statuses will be imported</span>
-										</div>
-										<div class="flex items-center gap-2">
-											<div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-											<span class="text-blue-800">Original contact history will be preserved</span>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
+
 
 					<!-- Import button -->
 					<div class="text-center">

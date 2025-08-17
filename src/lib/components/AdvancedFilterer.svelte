@@ -48,14 +48,6 @@
 	export let columns: { [key: string]: string[] };
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
 	export let filterLevel: string[] = []
-	/*export let filterLevel: string[] = [
-		'Amateur - low level',
-		'Amateur - medium',
-		'Amateur - high level',
-		'Student',
-		'Professional',
-		'High level professional'
-	];*/
 
 	let columnDisplayer: { [key: string]: boolean } = {
 		id : true,
@@ -106,10 +98,8 @@
 
 </script>
 
-
-<!-- 🔍 Filtre toujours visible -->
 <div class="bg-gray-100 dark:bg-gray-800 w-full px-4 py-3 rounded-lg shadow-md mb-4">
-	<h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">🔎 Search Options</h2>
+	<h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Search Options</h2>
 	<QueryBuilder
 		bind:columns
 		bind:options
@@ -122,7 +112,6 @@
 	/>
 </div>
 
-<!-- 📄 Table et pagination -->
 <div
 	class="grid grid-cols-1 place-items-center p-2 border-2 border-gray-400 rounded-xl m-4 bg-white"
 >
@@ -131,16 +120,16 @@
 			<div class="flex gap-2">
 				{#if instrumentFamily.length !== 0 }
 					{#if !isMobile}
-					<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend : 
-						{#each instrumentFamily as family}
-							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-						{/each}
-					</p>
+						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend :
+							{#each instrumentFamily as family}
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+							{/each}
+						</p>
 					{:else}
 						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center	">
-						{#each instrumentFamily as family}
-							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-						{/each}
+							{#each instrumentFamily as family}
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+							{/each}
 						</div>
 					{/if}
 				{/if}
@@ -150,7 +139,7 @@
 			</button>
 		</div>
 		{#if showColumList}
-		
+
 			<div class="absolute right-0 h-auto w-auto mt-0 bg-white rounded-lg border-gray-400 border-2 p-4 z-20">
 				{#each Object.entries(columnDisplayer) as [col, displayed]}
 					<div class="flex gap-2 items-center">

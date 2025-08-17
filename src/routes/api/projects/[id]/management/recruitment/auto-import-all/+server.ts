@@ -23,8 +23,6 @@ export const POST: RequestHandler = async ({ params, cookies, fetch }) => {
 	}
 
 	try {
-		console.log('🔄 Frontend: Auto-importing all contacts for project:', projectId);
-
 		const response = await fetch(`${API_URL}/projects/${projectId}/management/recruitment/auto-import-all`, {
 			method: 'POST',
 			headers: {
@@ -35,7 +33,6 @@ export const POST: RequestHandler = async ({ params, cookies, fetch }) => {
 
 		if (response.ok) {
 			const result = await response.json();
-			console.log('✅ Frontend: Auto-import completed:', result);
 			return new Response(JSON.stringify(result), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
@@ -44,7 +41,6 @@ export const POST: RequestHandler = async ({ params, cookies, fetch }) => {
 
 		return response;
 	} catch (error) {
-		console.error('❌ Frontend: Error in auto-import:', error);
 		return new Response(JSON.stringify({
 			error: 'Failed to auto-import contacts',
 			imported: [],

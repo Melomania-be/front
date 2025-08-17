@@ -3,8 +3,10 @@
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, Upload, Search, Users, AlertTriangle, CheckCircle, Filter } from 'lucide-svelte'
 	import AdvancedFilterer from '$lib/components/AdvancedFilterer.svelte'
+	import QueryBuilder from '$lib/components/QueryBuilder.svelte'
 	import type { Contact } from '$lib/types'
 	import type { TableData } from '$lib/types/TableData'
+	import {familyToEmoji, familyToStyle, levelSimplificator, levelToStyle} from '$lib/components/contact/StylesFunctions'
 
 	export let projectId: string
 
@@ -45,6 +47,12 @@
 	let importing = false
 	let isLoaded = false
 
+	let operations = ['none', '=', '!=', '>', '>=', '<', '<=', 'like']
+	let typesOfWhere = ['and', 'or']
+	let filterLevel: string[] = []
+	let instrumentFamily: string[] = []
+	let selectedLevelInstruments: [number, string | null][] = []
+
 	let importResults: {
 		imported: any[]
 		conflicts: any[]
@@ -82,7 +90,9 @@
 					email: contact.email || '',
 					phone: contact.phone || '',
 					messenger: contact.messenger || '',
-					comments: contact.comments || ''
+					comments: contact.comments || '',
+					projects: contact.projects || [],
+					participants: contact.participants || []
 				}));
 
 				data = {
@@ -95,7 +105,6 @@
 				isLoaded = true;
 			}
 		} catch (error) {
-			console.error('Error fetching data:', error);
 			alert('Error loading contacts');
 		}
 	}
@@ -142,7 +151,6 @@
 				}
 			} else {
 				const errorText = await response.text()
-				console.error('Import failed:', response.status, errorText)
 				try {
 					const errorData = JSON.parse(errorText)
 					alert(`Import error: ${errorData.error || 'Unknown error'}`)
@@ -151,7 +159,6 @@
 				}
 			}
 		} catch (error) {
-			console.error('Error importing contacts:', error)
 			alert('Error importing contacts')
 		} finally {
 			importing = false
@@ -195,12 +202,23 @@
 	}
 
 	function getContactProjects(contact: Contact): string {
-		if (!contact.participants || contact.participants.length === 0) return ''
-		const projects = contact.participants
-			.map(p => p.project?.name)
-			.filter(Boolean)
-			.slice(0, 3)
-		return projects.join(', ') + (contact.participants.length > 3 ? '...' : '')
+		if (contact.projects && contact.projects.length > 0) {
+			const projects = contact.projects
+				.map(p => p.name)
+				.filter(Boolean)
+				.slice(0, 3)
+			return projects.join(', ') + (contact.projects.length > 3 ? '...' : '')
+		}
+
+		if (contact.participants && contact.participants.length > 0) {
+			const projects = contact.participants
+				.map(p => p.project?.name)
+				.filter(Boolean)
+				.slice(0, 3)
+			return projects.join(', ') + (contact.participants.length > 3 ? '...' : '')
+		}
+
+		return ''
 	}
 </script>
 
@@ -227,194 +245,179 @@
 			{#if !importResults}
 				<!-- Advanced Search -->
 				<div class="space-y-6">
-					<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-						<div class="flex items-center gap-2 mb-2">
-							<Search class="text-blue-600" size={20} />
-							<h3 class="text-lg font-semibold text-blue-900">Advanced Search</h3>
-						</div>
-						<p class="text-sm text-blue-800">
-							Use advanced filters to search contacts by name, email, instruments, skill level, past projects, etc.
-						</p>
-					</div>
-
 					<!-- Advanced Filterer -->
 					{#if isLoaded && data && columns}
-						<div class="bg-[#E7E7E7] rounded-lg">
-							<AdvancedFilterer
+						<div class="bg-white rounded-lg border border-gray-200 p-4">
+							<QueryBuilder
 								bind:columns
-								bind:meta
-								bind:data
 								bind:options
-								uniqueUrl=""
-								showData={true}
-								paginatorTop={false}
-								filterLevel={[]}
+								bind:operations
+								bind:typesOfWhere
+								bind:filterLevel
+								bind:instrumentFamily
+								bind:selectedLevelInstruments
 								on:optionsUpdated={fetchData}
-							>
-								<!-- Custom table for selection -->
-								<div class="bg-white rounded-lg p-4">
-									<!-- Selection actions -->
-									<div class="flex items-center justify-between mb-4">
-										<h4 class="font-semibold text-gray-900 flex items-center gap-2">
-											<Users size={20} class="text-[#6B9AD9]" />
-											Available contacts ({data.data.length})
-										</h4>
-
-										{#if data.data.length > 0}
-											<div class="flex gap-2">
-												<button
-													on:click={selectAllContacts}
-													class="px-3 py-1 text-sm bg-[#6B9AD9] text-white hover:bg-[#5a9bb4] rounded-lg font-semibold"
-												>
-													Select all
-												</button>
-												{#if selectedContacts.length > 0}
-													<button
-														on:click={clearSelection}
-														class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold"
-													>
-														Deselect ({selectedContacts.length})
-													</button>
-												{/if}
-											</div>
-										{/if}
-									</div>
-
-									{#if data.data.length === 0}
-										<div class="text-center py-12">
-											<Users size={64} class="mx-auto mb-4 opacity-30 text-gray-400" />
-											<h3 class="text-lg font-medium text-gray-900">No contacts found</h3>
-											<p class="text-gray-500 mt-2">
-												Try modifying your search criteria or reset the filters.
-											</p>
-										</div>
-									{:else}
-										<!-- Contacts table -->
-										<div class="border border-gray-200 rounded-lg overflow-hidden">
-											<div class="max-h-96 overflow-y-auto">
-												<table class="w-full text-sm">
-													<thead class="bg-gray-50 sticky top-0">
-													<tr>
-														<th class="px-4 py-3 text-left w-12">
-															<input
-																type="checkbox"
-																checked={selectedContacts.length === data.data.length && data.data.length > 0}
-																on:change={(e) => e.target.checked ? selectAllContacts() : clearSelection()}
-																class="rounded"
-															/>
-														</th>
-														<th class="px-4 py-3 text-left font-semibold">Contact</th>
-														<th class="px-4 py-3 text-left font-semibold">Instruments & Levels</th>
-														<th class="px-4 py-3 text-left font-semibold">Past projects</th>
-														<th class="px-4 py-3 text-left font-semibold">Status</th>
-													</tr>
-													</thead>
-													<tbody>
-													{#each data.data as contact (contact.id)}
-														<tr class="border-t hover:bg-gray-50">
-															<td class="px-4 py-3">
-																<input
-																	type="checkbox"
-																	checked={selectedContacts.some(c => c.id === contact.id)}
-																	on:change={() => toggleContactSelection(contact)}
-																	class="rounded"
-																/>
-															</td>
-															<td class="px-4 py-3">
-																<div class="flex items-center space-x-3">
-																	<div class="w-10 h-10 bg-[#6B9AD9] rounded-full flex items-center justify-center">
-																		<span class="text-white font-bold text-sm">
-																			{(contact.firstName || contact.first_name || 'F').charAt(0)}{(contact.lastName || contact.last_name || 'L').charAt(0)}
-																		</span>
-																	</div>
-																	<div>
-																		<div class="font-medium text-gray-900">
-																			{contact.firstName || contact.first_name || 'First name'} {contact.lastName || contact.last_name || 'Last name'}
-																		</div>
-																		<div class="text-xs text-blue-600 font-mono">ID: {contact.id}</div>
-																		{#if contact.email}
-																			<div class="text-sm text-gray-500">{contact.email}</div>
-																		{/if}
-																		{#if contact.phone}
-																			<div class="text-sm text-gray-500">{contact.phone}</div>
-																		{/if}
-																		{#if contact.messenger}
-																			<div class="text-sm text-gray-500">Messenger: {contact.messenger}</div>
-																		{/if}
-																	</div>
-																</div>
-															</td>
-															<td class="px-4 py-3">
-																<div class="text-sm text-gray-600">
-																	{#if contact.instruments && contact.instruments.length > 0}
-																		{#each contact.instruments as instrument}
-																			<div class="mb-1">
-																				<span class="font-medium">{instrument.name}</span>
-																				{#if instrument.pivot_proficiency_level}
-																					<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
-																						{instrument.pivot_proficiency_level}
-																					</span>
-																				{/if}
-																				<span class="text-xs text-gray-500 ml-1">({instrument.family})</span>
-																			</div>
-																		{/each}
-																	{:else}
-																		<span class="text-gray-400 italic">No instrument</span>
-																	{/if}
-																</div>
-															</td>
-															<td class="px-4 py-3 text-sm text-gray-600">
-																{getContactProjects(contact) || '-'}
-															</td>
-															<td class="px-4 py-3">
-																<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {contact.validated ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-																	{contact.validated ? 'Validated' : 'Pending validation'}
-																</span>
-															</td>
-														</tr>
-													{/each}
-													</tbody>
-												</table>
-											</div>
-										</div>
-									{/if}
-								</div>
-							</AdvancedFilterer>
-						</div>
-					{:else}
-						<!-- Initial loading -->
-						<div class="text-center py-12">
-							<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
-							<p class="text-gray-600">Loading contacts and filters...</p>
-						</div>
-					{/if}
-
-					<!-- Import actions -->
-					{#if selectedContacts.length > 0}
-						<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-							<div class="flex items-center justify-between">
-								<div>
-									<h4 class="font-semibold text-blue-900">
-										Ready to import {selectedContacts.length} contact(s)
-									</h4>
-									<p class="text-sm text-blue-700 mt-1">
-										These contacts will be added to your recruitment list with "Not yet contacted" status.
-									</p>
-								</div>
-								<button
-									on:click={importSelectedContacts}
-									disabled={importing}
-									class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2 font-semibold"
-								>
-									{#if importing}
-										<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-									{/if}
-									{importing ? 'Importing...' : 'Import contacts'}
-								</button>
-							</div>
+							/>
 						</div>
 					{/if}
 				</div>
+
+				<!-- Results -->
+				{#if isLoaded && data}
+					<div class="bg-white rounded-lg p-4 mt-6">
+						<!-- Selection actions -->
+						<div class="flex items-center justify-between mb-4">
+							<h4 class="font-semibold text-gray-900 flex items-center gap-2">
+								<Users size={20} class="text-[#6B9AD9]" />
+								Available contacts ({data.data.length})
+							</h4>
+
+							{#if data.data.length > 0}
+								<div class="flex gap-2">
+									<button
+										on:click={selectAllContacts}
+										class="px-3 py-1 text-sm bg-[#6B9AD9] text-white hover:bg-[#5a9bb4] rounded-lg font-semibold"
+									>
+										Select all
+									</button>
+									{#if selectedContacts.length > 0}
+										<button
+											on:click={clearSelection}
+											class="px-3 py-1 text-sm bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold"
+										>
+											Deselect ({selectedContacts.length})
+										</button>
+									{/if}
+								</div>
+							{/if}
+						</div>
+
+						{#if data.data.length === 0}
+							<div class="text-center py-12">
+								<Users size={64} class="mx-auto mb-4 opacity-30 text-gray-400" />
+								<h3 class="text-lg font-medium text-gray-900">No contacts found</h3>
+								<p class="text-gray-500 mt-2">
+									Try modifying your search criteria or reset the filters.
+								</p>
+							</div>
+						{:else}
+							<!-- Contacts table -->
+							<div class="border border-gray-200 rounded-lg overflow-hidden">
+								<div class="max-h-96 overflow-y-auto">
+									<table class="w-full text-sm">
+										<thead class="bg-gray-50 sticky top-0">
+										<tr>
+											<th class="px-4 py-3 text-left w-12">
+												<input
+													type="checkbox"
+													checked={selectedContacts.length === data.data.length && data.data.length > 0}
+													on:change={(e) => e.target.checked ? selectAllContacts() : clearSelection()}
+													class="rounded"
+												/>
+											</th>
+											<th class="px-4 py-3 text-left font-semibold">Contact</th>
+											<th class="px-4 py-3 text-left font-semibold">Instruments & Levels</th>
+											<th class="px-4 py-3 text-left font-semibold">Past projects</th>
+											<th class="px-4 py-3 text-left font-semibold">Status</th>
+										</tr>
+										</thead>
+										<tbody>
+										{#each data.data as contact (contact.id)}
+											<tr class="border-t hover:bg-gray-50">
+												<td class="px-4 py-3">
+													<input
+														type="checkbox"
+														checked={selectedContacts.some(c => c.id === contact.id)}
+														on:change={() => toggleContactSelection(contact)}
+														class="rounded"
+													/>
+												</td>
+												<td class="px-4 py-3">
+													<div class="flex items-center space-x-3">
+														<div class="w-10 h-10 bg-[#6B9AD9] rounded-full flex items-center justify-center">
+															<span class="text-white font-bold text-sm">
+																{(contact.firstName || contact.first_name || 'F').charAt(0)}{(contact.lastName || contact.last_name || 'L').charAt(0)}
+															</span>
+														</div>
+														<div>
+															<div class="font-medium text-gray-900">
+																{contact.firstName || contact.first_name || 'First name'} {contact.lastName || contact.last_name || 'Last name'}
+															</div>
+															{#if contact.messenger}
+																<div class="text-sm text-gray-500">Messenger: {contact.messenger}</div>
+															{/if}
+														</div>
+													</div>
+												</td>
+												<td class="px-4 py-3">
+													<div class="text-sm text-gray-600">
+														{#if contact.instruments && contact.instruments.length > 0}
+															{#each contact.instruments as instrument}
+																<div class="flex gap-2 my-1">
+																	<div class="{familyToStyle(instrument.family)} font-semibold rounded-lg p-1 px-2">
+																		{familyToEmoji(instrument.family)} {instrument.name}
+																	</div>
+																	{#if instrument.pivot_proficiency_level}
+																		<div class="{levelToStyle(instrument.pivot_proficiency_level)} border-2 p-1 px-2 rounded-lg font-semibold">
+																			{levelSimplificator(instrument.pivot_proficiency_level)}
+																		</div>
+																	{/if}
+																</div>
+															{/each}
+														{:else}
+															<span class="text-gray-400 italic">No instrument</span>
+														{/if}
+													</div>
+												</td>
+												<td class="px-4 py-3 text-sm text-gray-600">
+													{getContactProjects(contact) || '-'}
+												</td>
+												<td class="px-4 py-3">
+													<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {contact.validated ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+														{contact.validated ? 'Validated' : 'Pending validation'}
+													</span>
+												</td>
+											</tr>
+										{/each}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						{/if}
+					</div>
+				{:else}
+					<!-- Initial loading -->
+					<div class="text-center py-12">
+						<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
+						<p class="text-gray-600">Loading contacts and filters...</p>
+					</div>
+				{/if}
+
+				<!-- Import actions -->
+				{#if selectedContacts.length > 0}
+					<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+						<div class="flex items-center justify-between">
+							<div>
+								<h4 class="font-semibold text-blue-900">
+									Ready to import {selectedContacts.length} contact(s)
+								</h4>
+								<p class="text-sm text-blue-700 mt-1">
+									These contacts will be added to your recruitment list with "Not yet contacted" status.
+								</p>
+							</div>
+							<button
+								on:click={importSelectedContacts}
+								disabled={importing}
+								class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2 font-semibold"
+							>
+								{#if importing}
+									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+								{/if}
+								{importing ? 'Importing...' : 'Import contacts'}
+							</button>
+						</div>
+					</div>
+				{/if}
 
 			{:else}
 				<!-- Import results -->

@@ -1,9 +1,8 @@
-// src/routes/api/projects/[id]/management/recruitment/+server.ts - Version corrigée
+// src/routes/api/projects/[id]/management/recruitment/+server.ts
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
 
-// Fonction utilitaire pour valider l'ID
 function validateId(id: string | undefined): string | null {
 	if (!id || id === 'undefined' || id === 'null' || isNaN(Number(id))) {
 		return null;
@@ -42,7 +41,6 @@ export const GET: RequestHandler = async ({ params, cookies, url, fetch }) => {
 
 		return res;
 	} catch (error) {
-		console.error('Error fetching recruitment contacts:', error);
 		return new Response(JSON.stringify({
 			error: 'Failed to fetch recruitment contacts'
 		}), {

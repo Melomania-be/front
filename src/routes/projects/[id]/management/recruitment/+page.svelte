@@ -37,7 +37,7 @@
 
 	$: if (projectId && (projectId === 'undefined' || projectId === 'null' || isNaN(Number(projectId)))) {
 		console.error('Invalid project ID:', projectId)
-		error = 'ID de projet invalide'
+		error = 'Invalid project ID'
 		goto('/projects')
 	}
 
@@ -49,7 +49,7 @@
 			await loadData()
 			await checkAndPerformInitialImport()
 		} else {
-			error = 'ID de projet manquant ou invalide'
+			error = 'Missing or invalid project ID'
 		}
 
 		loading = false
@@ -74,7 +74,7 @@
 			])
 		} catch (err) {
 			console.error('Error loading data:', err)
-			error = 'Erreur lors du chargement des données'
+			error = 'Error loading data'
 		}
 	}
 
@@ -121,7 +121,7 @@
 				project = await response.json()
 			} else if (response.status === 404) {
 				console.error('Project not found')
-				error = 'Projet non trouvé'
+				error = 'Project not found'
 				goto('/projects')
 			} else {
 				throw new Error(`HTTP ${response.status}`)
@@ -247,26 +247,26 @@
 </script>
 
 <svelte:head>
-	<title>Recrutement - {project?.name || 'Projet'}</title>
+	<title>Recruitment - {project?.name || 'Project'}</title>
 </svelte:head>
 
 {#if loading}
 	<div class="min-h-screen bg-[#E7E7E7] flex items-center justify-center">
 		<div class="text-center">
 			<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
-			<p class="text-gray-600">Chargement du système de recrutement...</p>
+			<p class="text-gray-600">Loading recruitment system...</p>
 		</div>
 	</div>
 {:else if error}
 	<div class="min-h-screen bg-[#E7E7E7] flex items-center justify-center">
 		<div class="bg-white rounded-lg shadow-lg p-8 text-center">
-			<h1 class="text-2xl font-bold text-red-600 mb-4">Erreur</h1>
+			<h1 class="text-2xl font-bold text-red-600 mb-4">Error</h1>
 			<p class="text-gray-600 mb-4">{error}</p>
 			<button
 				on:click={() => goto('/projects')}
 				class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4]"
 			>
-				Retour aux projets
+				Back to Projects
 			</button>
 		</div>
 	</div>
@@ -274,14 +274,11 @@
 	<ProjectHeadDisplayer {project} selectedTab={6} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
-		<!-- Header avec nouveau bouton Import Avancé -->
+		<!-- Header -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 mb-6">
 			<div class="flex {isMobile ? 'flex-col gap-4' : 'items-center justify-between'} mb-6">
 				<div>
-					<h1 class="font-bold text-2xl uppercase">Gestion du Recrutement</h1>
-					<p class="text-sm text-gray-600 mt-2">
-						Importez des contacts depuis la base de données avec recherche avancée ou ajoutez-les manuellement
-					</p>
+					<h1 class="font-bold text-2xl uppercase">Recruitment Management</h1>
 				</div>
 
 				<div class="flex {isMobile ? 'flex-col' : 'flex-row'} gap-2">
@@ -290,7 +287,7 @@
 						class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
 					>
 						<Settings size={16} />
-						Paramètres
+						Settings
 					</button>
 
 					<button
@@ -298,7 +295,7 @@
 						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
 					>
 						<Upload size={16} />
-						Importer Contacts
+						Import Contacts
 					</button>
 
 					<button
@@ -306,7 +303,7 @@
 						class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors flex items-center gap-2"
 					>
 						<Plus size={16} />
-						Ajouter Manuel
+						Add Manual
 					</button>
 
 					<button
@@ -314,12 +311,12 @@
 						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
 					>
 						<Users size={16} />
-						Importer Projet
+						Import Project
 					</button>
 				</div>
 			</div>
 
-			<!-- Statistiques rapides -->
+			<!-- Quick Stats -->
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div class="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
 					<p class="text-lg font-bold text-blue-600">{totalContacts}</p>
@@ -328,22 +325,22 @@
 
 				<div class="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
 					<p class="text-lg font-bold text-yellow-600">{awaitingCount + toFollowUpCount}</p>
-					<p class="text-sm text-yellow-600">En cours</p>
+					<p class="text-sm text-yellow-600">In Progress</p>
 				</div>
 
 				<div class="text-center p-3 bg-green-50 rounded-lg border border-green-200">
 					<p class="text-lg font-bold text-green-600">{recruitedCount}</p>
-					<p class="text-sm text-green-600">Recrutés</p>
+					<p class="text-sm text-green-600">Recruited</p>
 				</div>
 
 				<div class="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
 					<p class="text-lg font-bold text-purple-600">{pendingRecs}</p>
-					<p class="text-sm text-purple-600">Recommandations</p>
+					<p class="text-sm text-purple-600">Recommendations</p>
 				</div>
 			</div>
 		</div>
 
-		<!-- Onglets -->
+		<!-- Tabs -->
 		{#if !isMobile}
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-lg mb-6">
 				<div class="flex border-b">
@@ -358,7 +355,7 @@
 						class="px-6 py-3 font-semibold {activeTab === 'recommendations' ? 'text-[#6B9AD9] border-b-2 border-[#6B9AD9]' : 'text-gray-600 hover:text-[#6B9AD9]'}"
 						on:click={() => activeTab = 'recommendations'}
 					>
-						Recommandations
+						Recommendations
 						{#if pendingRecs > 0}
 							<span class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">{pendingRecs}</span>
 						{/if}
@@ -368,13 +365,13 @@
 						class="px-6 py-3 font-semibold {activeTab === 'stats' ? 'text-[#6B9AD9] border-b-2 border-[#6B9AD9]' : 'text-gray-600 hover:text-[#6B9AD9]'}"
 						on:click={() => activeTab = 'stats'}
 					>
-						Statistiques
+						Statistics
 					</button>
 				</div>
 			</div>
 		{/if}
 
-		<!-- Contenu des onglets -->
+		<!-- Tab Content -->
 		{#if (activeTab === 'contacts' || isMobile) && settings}
 			<RecruitmentContactsList
 				bind:this={contactsListRef}
