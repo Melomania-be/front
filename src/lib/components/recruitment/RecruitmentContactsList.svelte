@@ -214,7 +214,7 @@
 			return
 		}
 
-		const confirmMessage = `SIMULATION: Send recruitment email to ${emailContacts.length} contact(s)?\n\nIn development mode, emails will be simulated (no actual sending).`
+		const confirmMessage = `SIMULATION: Send recruitment email to ${emailContacts.length} contact(s)?`
 
 		if (!confirm(confirmMessage)) {
 			return

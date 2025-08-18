@@ -12,7 +12,7 @@
 	let submitting = false
 	let submitted = false
 
-	// Données du formulaire
+	// Form data
 	let recommenderInfo = {
 		name: '',
 		email: ''
@@ -45,7 +45,7 @@
 			if (response.ok) {
 				project = await response.json()
 			} else {
-				goto('/') // Rediriger si le projet n'existe pas
+				goto('/') // Redirect if project doesn't exist
 			}
 		} catch (error) {
 			console.error('Error fetching project:', error)
@@ -76,47 +76,47 @@
 	function validateForm(): boolean {
 		errors = {}
 
-		// Validation du recommandeur
+		// Recommender validation
 		if (!recommenderInfo.name.trim()) {
-			errors['recommender_name'] = 'Votre nom est requis'
+			errors['recommender_name'] = 'Your name is required'
 		}
 
 		if (recommenderInfo.email && !isValidEmail(recommenderInfo.email)) {
-			errors['recommender_email'] = 'Format d\'email invalide'
+			errors['recommender_email'] = 'Invalid email format'
 		}
 
-		// Validation des recommandations
+		// Recommendations validation
 		let hasValidRecommendation = false
 
 		recommendations.forEach((rec, index) => {
 			const prefix = `rec_${index}`
 
 			if (!rec.first_name.trim() && !rec.last_name.trim() && !rec.email && !rec.phone && !rec.messenger) {
-				// Recommandation vide, on l'ignore
+				// Empty recommendation, ignore it
 				return
 			}
 
 			hasValidRecommendation = true
 
 			if (!rec.first_name.trim()) {
-				errors[`${prefix}_first_name`] = 'Prénom requis'
+				errors[`${prefix}_first_name`] = 'First name required'
 			}
 
 			if (!rec.last_name.trim()) {
-				errors[`${prefix}_last_name`] = 'Nom requis'
+				errors[`${prefix}_last_name`] = 'Last name required'
 			}
 
 			if (!rec.email && !rec.phone && !rec.messenger) {
-				errors[`${prefix}_contact`] = 'Au moins un moyen de contact est requis'
+				errors[`${prefix}_contact`] = 'At least one contact method is required'
 			}
 
 			if (rec.email && !isValidEmail(rec.email)) {
-				errors[`${prefix}_email`] = 'Format d\'email invalide'
+				errors[`${prefix}_email`] = 'Invalid email format'
 			}
 		})
 
 		if (!hasValidRecommendation) {
-			errors['general'] = 'Au moins une recommandation complète est requise'
+			errors['general'] = 'At least one complete recommendation is required'
 		}
 
 		return Object.keys(errors).length === 0
@@ -129,7 +129,7 @@
 
 		submitting = true
 
-		// Filtrer les recommandations vides
+		// Filter empty recommendations
 		const validRecommendations = recommendations.filter(rec =>
 			rec.first_name.trim() || rec.last_name.trim() || rec.email || rec.phone || rec.messenger
 		)
@@ -149,11 +149,11 @@
 				submitted = true
 			} else {
 				const errorData = await response.json()
-				alert(`Erreur: ${errorData.message || 'Impossible de soumettre les recommandations'}`)
+				alert(`Error: ${errorData.message || 'Unable to submit recommendations'}`)
 			}
 		} catch (error) {
 			console.error('Error submitting recommendations:', error)
-			alert('Erreur lors de l\'envoi des recommandations')
+			alert('Error sending recommendations')
 		} finally {
 			submitting = false
 		}
@@ -181,8 +181,8 @@
 </script>
 
 <svelte:head>
-	<title>Recommander des musiciens - {project?.name || 'Projet'}</title>
-	<meta name="description" content="Recommandez des musiciens talentueux pour le projet {project?.name || ''}" />
+	<title>Recommend Musicians - {project?.name || 'Project'}</title>
+	<meta name="description" content="Recommend talented musicians for the project {project?.name || ''}" />
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
@@ -190,60 +190,60 @@
 		<div class="flex items-center justify-center min-h-screen">
 			<div class="text-center">
 				<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
-				<p class="text-gray-600">Chargement...</p>
+				<p class="text-gray-600">Loading...</p>
 			</div>
 		</div>
 	{:else if !project}
 		<div class="flex items-center justify-center min-h-screen">
 			<div class="text-center">
-				<h1 class="text-2xl font-bold text-gray-800 mb-4">Projet non trouvé</h1>
-				<p class="text-gray-600">Le projet demandé n'existe pas ou n'est plus accessible.</p>
+				<h1 class="text-2xl font-bold text-gray-800 mb-4">Project not found</h1>
+				<p class="text-gray-600">The requested project does not exist or is no longer accessible.</p>
 			</div>
 		</div>
 	{:else if submitted}
-		<!-- Page de confirmation style callsheet -->
+		<!-- Confirmation page callsheet style -->
 		<div class="relative w-full py-6 px-4 sm:px-6 lg:px-8">
 			<div class="flex flex-col gap-10 max-w-4xl mx-auto">
-				<!-- Section avec image et contenu superposé -->
+				<!-- Section with image and overlaid content -->
 				<div class="relative">
-					<!-- Image de couverture -->
+					<!-- Cover image -->
 					<div class="w-full h-[200px] sm:h-[280px] md:h-[350px] lg:h-[400px] xl:h-[450px]">
 						<img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
 
-						<!-- Titre superposé -->
+						<!-- Overlaid title -->
 						<div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
 							<h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
-								RECOMMANDATION - {project.name}
+								RECOMMENDATION - {project.name}
 							</h1>
 						</div>
 					</div>
 
-					<!-- Conteneur blanc qui chevauche l'image -->
+					<!-- White container overlapping the image -->
 					<div class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10">
 						<div class="bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm">
 
-							<!-- Confirmation de succès -->
+							<!-- Success confirmation -->
 							<div class="text-center py-8">
 								<div class="flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mx-auto mb-6">
 									<CheckCircle class="text-green-500" size={48} />
 								</div>
 
 								<h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
-									Merci pour vos recommandations !
+									Thank you for your recommendations!
 								</h2>
 
 								<div class="max-w-2xl mx-auto space-y-4 text-gray-600">
 									<p class="text-lg">
-										Vos recommandations pour le projet <strong class="text-[#6B9AD9]">{project.name}</strong> ont été transmises avec succès.
+										Your recommendations for the project <strong class="text-[#6B9AD9]">{project.name}</strong> have been successfully submitted.
 									</p>
 									<p>
-										L'équipe du projet examinera vos suggestions et contactera les personnes recommandées si approprié.
+										The project team will review your suggestions and contact the recommended individuals if appropriate.
 									</p>
 								</div>
 
-								<!-- Résumé des recommandations -->
+								<!-- Recommendations summary -->
 								<div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
-									<h3 class="text-lg font-semibold text-blue-900 mb-4">Résumé de vos recommandations</h3>
+									<h3 class="text-lg font-semibold text-blue-900 mb-4">Summary of your recommendations</h3>
 									<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 										{#each recommendations.filter(r => r.first_name.trim() || r.last_name.trim()) as rec, index}
 											<div class="bg-white p-4 rounded-lg border border-blue-200">
@@ -274,13 +274,13 @@
 										class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors flex items-center justify-center gap-2"
 									>
 										<Plus size={20} />
-										Faire une nouvelle recommandation
+										Make a new recommendation
 									</button>
 									<a
 										href="/"
 										class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center gap-2"
 									>
-										Retour à l'accueil
+										Back to home
 									</a>
 								</div>
 							</div>
@@ -290,24 +290,24 @@
 			</div>
 		</div>
 	{:else}
-		<!-- Formulaire de recommandation style callsheet -->
+		<!-- Recommendation form callsheet style -->
 		<div class="relative w-full py-6 px-4 sm:px-6 lg:px-8">
 			<div class="flex flex-col gap-10 max-w-6xl mx-auto">
-				<!-- Section avec image et contenu superposé -->
+				<!-- Section with image and overlaid content -->
 				<div class="relative">
-					<!-- Image de couverture -->
+					<!-- Cover image -->
 					<div class="w-full h-[200px] sm:h-[280px] md:h-[350px] lg:h-[400px] xl:h-[450px]">
 						<img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
 
-						<!-- Titre superposé -->
+						<!-- Overlaid title -->
 						<div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
 							<h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
-								RECOMMANDATION - {project.name}
+								RECOMMENDATION - {project.name}
 							</h1>
 						</div>
 					</div>
 
-					<!-- Conteneur blanc qui chevauche l'image -->
+					<!-- White container overlapping the image -->
 					<div class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10">
 						<div class="bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm">
 
@@ -317,40 +317,40 @@
 									<UserPlus class="text-white" size={32} />
 								</div>
 								<h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
-									Recommandez des musiciens talentueux
+									Recommend talented musicians
 								</h2>
 								<div class="max-w-2xl mx-auto space-y-2 text-gray-600">
 									<p class="text-lg">
-										pour le projet <strong class="text-[#6B9AD9]">{project.name}</strong>
+										for the project <strong class="text-[#6B9AD9]">{project.name}</strong>
 									</p>
 									<p>
-										Vous connaissez des musiciens talentueux qui pourraient être intéressés par ce projet ?
-										Partagez leurs coordonnées ci-dessous !
+										Do you know talented musicians who might be interested in this project?
+										Share their contact information below!
 									</p>
 								</div>
 							</div>
 
 							<form on:submit|preventDefault={submitRecommendations} class="space-y-8">
-								<!-- Informations du recommandeur -->
+								<!-- Recommender information -->
 								<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
 									<h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
 										<div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
 											<UserPlus class="text-white" size={16} />
 										</div>
-										Vos informations
+										Your information
 									</h3>
 
 									<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 										<div>
 											<label for="recommender_name" class="block text-sm font-medium text-gray-700 mb-2">
-												Votre nom *
+												Your name *
 											</label>
 											<input
 												id="recommender_name"
 												type="text"
 												bind:value={recommenderInfo.name}
 												class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors {errors.recommender_name ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-												placeholder="Votre nom complet"
+												placeholder="Your full name"
 											/>
 											{#if errors.recommender_name}
 												<p class="text-sm text-red-600 mt-1">{errors.recommender_name}</p>
@@ -359,33 +359,33 @@
 
 										<div>
 											<label for="recommender_email" class="block text-sm font-medium text-gray-700 mb-2">
-												Votre email (optionnel)
+												Your email (optional)
 											</label>
 											<input
 												id="recommender_email"
 												type="email"
 												bind:value={recommenderInfo.email}
 												class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors {errors.recommender_email ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-												placeholder="votre@email.com"
+												placeholder="your@email.com"
 											/>
 											{#if errors.recommender_email}
 												<p class="text-sm text-red-600 mt-1">{errors.recommender_email}</p>
 											{/if}
 											<p class="text-xs text-gray-500 mt-2">
-												Pour vous recontacter si nécessaire
+												To contact you back if necessary
 											</p>
 										</div>
 									</div>
 								</div>
 
-								<!-- Recommandations -->
+								<!-- Recommendations -->
 								<div class="space-y-6">
 									<div class="flex items-center justify-between">
 										<h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
 											<div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
 												<Music class="text-white" size={16} />
 											</div>
-											Personnes à recommander
+											People to recommend
 										</h3>
 
 										{#if recommendations.length < 5}
@@ -395,7 +395,7 @@
 												class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
 											>
 												<Plus size={16} />
-												Ajouter une personne
+												Add a person
 											</button>
 										{/if}
 									</div>
@@ -416,7 +416,7 @@
 													<div class="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
 														{index + 1}
 													</div>
-													Personne {index + 1}
+													Person {index + 1}
 												</h4>
 
 												{#if recommendations.length > 1}
@@ -424,14 +424,14 @@
 														type="button"
 														on:click={() => removeRecommendation(index)}
 														class="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors"
-														title="Supprimer cette recommandation"
+														title="Remove this recommendation"
 													>
 														<Trash2 size={16} />
 													</button>
 												{/if}
 											</div>
 
-											<!-- Erreur de contact général -->
+											<!-- General contact error -->
 											{#if errors[`rec_${index}_contact`]}
 												<div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
 													<p class="text-sm text-red-800">{errors[`rec_${index}_contact`]}</p>
@@ -439,16 +439,16 @@
 											{/if}
 
 											<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-												<!-- Informations personnelles -->
+												<!-- Personal information -->
 												<div>
 													<label class="block text-sm font-medium text-gray-700 mb-2">
-														Prénom *
+														First name *
 													</label>
 													<input
 														type="text"
 														bind:value={recommendation.first_name}
 														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[`rec_${index}_first_name`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-														placeholder="Prénom"
+														placeholder="First name"
 													/>
 													{#if errors[`rec_${index}_first_name`]}
 														<p class="text-sm text-red-600 mt-1">{errors[`rec_${index}_first_name`]}</p>
@@ -457,13 +457,13 @@
 
 												<div>
 													<label class="block text-sm font-medium text-gray-700 mb-2">
-														Nom *
+														Last name *
 													</label>
 													<input
 														type="text"
 														bind:value={recommendation.last_name}
 														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[`rec_${index}_last_name`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-														placeholder="Nom de famille"
+														placeholder="Last name"
 													/>
 													{#if errors[`rec_${index}_last_name`]}
 														<p class="text-sm text-red-600 mt-1">{errors[`rec_${index}_last_name`]}</p>
@@ -480,7 +480,7 @@
 														type="email"
 														bind:value={recommendation.email}
 														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[`rec_${index}_email`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
-														placeholder="email@exemple.com"
+														placeholder="email@example.com"
 													/>
 													{#if errors[`rec_${index}_email`]}
 														<p class="text-sm text-red-600 mt-1">{errors[`rec_${index}_email`]}</p>
@@ -490,13 +490,13 @@
 												<div>
 													<label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
 														<Phone size={14} />
-														Téléphone
+														Phone
 													</label>
 													<input
 														type="tel"
 														bind:value={recommendation.phone}
 														class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-														placeholder="+33 6 12 34 56 78"
+														placeholder="+1 234 567 8900"
 													/>
 												</div>
 
@@ -509,7 +509,7 @@
 														type="text"
 														bind:value={recommendation.messenger}
 														class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-														placeholder="@username ou lien"
+														placeholder="@username or link"
 													/>
 												</div>
 
@@ -522,46 +522,29 @@
 														type="text"
 														bind:value={recommendation.instrument}
 														class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-														placeholder="Violon, Piano, Chant..."
+														placeholder="Violin, Piano, Voice..."
 													/>
 												</div>
 											</div>
 
-											<!-- Message de recommandation -->
+											<!-- Recommendation message -->
 											<div class="mt-6">
 												<label class="block text-sm font-medium text-gray-700 mb-2">
-													Pourquoi recommandez-vous cette personne ?
+													Why do you recommend this person?
 												</label>
 												<textarea
 													bind:value={recommendation.message}
 													rows="4"
 													class="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-													placeholder="Qualités musicales, expérience, personnalité, contexte de votre rencontre..."
+													placeholder="Musical qualities, experience, personality, context of your meeting..."
 												></textarea>
 											</div>
 										</div>
 									{/each}
 								</div>
 
-								<!-- Information importante -->
-								<div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
-									<div class="flex items-start gap-3">
-										<div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-											<CheckCircle class="text-white" size={16} />
-										</div>
-										<div>
-											<h4 class="font-semibold text-blue-900 mb-2">À propos de vos recommandations</h4>
-											<ul class="text-sm text-blue-800 space-y-1">
-												<li>• Au moins un moyen de contact (email, téléphone, messenger) est requis par personne</li>
-												<li>• Vos recommandations seront transmises à l'équipe du projet</li>
-												<li>• Les personnes recommandées seront contactées uniquement si elles correspondent au profil recherché</li>
-												<li>• Vous pouvez recommander jusqu'à 5 personnes en une seule fois</li>
-											</ul>
-										</div>
-									</div>
-								</div>
 
-								<!-- Bouton de soumission -->
+								<!-- Submit button -->
 								<div class="text-center py-6">
 									<button
 										type="submit"
@@ -573,11 +556,11 @@
 										{:else}
 											<Star size={24} />
 										{/if}
-										{submitting ? 'Envoi en cours...' : 'Envoyer les recommandations'}
+										{submitting ? 'Sending...' : 'Send recommendations'}
 									</button>
 
 									<p class="text-sm text-gray-500 mt-4">
-										En soumettant ce formulaire, vous acceptez que vos recommandations soient transmises à l'équipe du projet.
+										By submitting this form, you agree that your recommendations will be transmitted to the project team.
 									</p>
 								</div>
 							</form>
@@ -587,7 +570,7 @@
 
 				<!-- Footer -->
 				<div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center mt-8 sm:mt-10">
-					Formulaire de recommandation - {project.name}
+					Recommendation form - {project.name}
 				</div>
 			</div>
 		</div>
@@ -595,7 +578,7 @@
 </div>
 
 <style>
-    /* Animation subtile pour le conteneur */
+    /* Subtle animation for the container */
     .content-container {
         animation: slideUp 0.6s ease-out;
     }
@@ -611,7 +594,7 @@
         }
     }
 
-    /* Amélioration pour les très petits écrans */
+    /* Improvement for very small screens */
     @media (max-width: 360px) {
         h1 {
             font-size: 0.9rem !important;
@@ -626,7 +609,7 @@
         }
     }
 
-    /* Optimisation de l'image pour les grands écrans */
+    /* Image optimization for large screens */
     @media (min-width: 768px) {
         img {
             object-position: center;

@@ -26,7 +26,6 @@
 	let error = ''
 	let hasPerformedInitialImport = false
 
-	// Modals
 	let showAddManualModal = false
 	let showImportAdvancedModal = false
 	let showSettingsModal = false
@@ -134,20 +133,27 @@
 
 	async function fetchSettings() {
 		try {
+			console.log('Fetching settings for project:', projectId)
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/settings`)
 
 			if (response.ok) {
 				const data = await response.json()
+				console.log('Settings received:', data)
+
 				settings = {
 					id: data.id || 0,
 					project_id: data.project_id || Number(projectId),
-					follow_up_days: data.follow_up_days || 7,
-					auto_follow_up_enabled: data.auto_follow_up_enabled !== undefined ? data.auto_follow_up_enabled : true,
+					follow_up_days: Number(data.follow_up_days) || 7,
+					auto_follow_up_enabled: Boolean(data.auto_follow_up_enabled),
 					created_at: data.created_at || new Date().toISOString(),
 					updated_at: data.updated_at || new Date().toISOString()
 				}
+				console.log('Settings processed:', settings)
 			} else {
-				console.warn('Could not fetch settings, using defaults')
+				console.warn('Could not fetch settings, using defaults. Status:', response.status)
+				const errorText = await response.text()
+				console.warn('Error response:', errorText)
+
 				settings = {
 					id: 0,
 					project_id: Number(projectId),
@@ -202,9 +208,26 @@
 		}
 	}
 
-	function handleSettingsUpdate() {
+	function handleSettingsUpdate(event) {
+		console.log('Settings update event received:', event.detail)
+
+		const newSettings = event.detail
+		if (newSettings) {
+			settings = {
+				id: newSettings.id || settings?.id || 0,
+				project_id: newSettings.project_id || Number(projectId),
+				follow_up_days: Number(newSettings.follow_up_days) || 7,
+				auto_follow_up_enabled: Boolean(newSettings.auto_follow_up_enabled),
+				created_at: newSettings.created_at || settings?.created_at || new Date().toISOString(),
+				updated_at: newSettings.updated_at || new Date().toISOString()
+			}
+			console.log('Settings updated to:', settings)
+		}
+
+		showSettingsModal = false
+
 		setTimeout(async () => {
-			await Promise.all([fetchSettings(), fetchStats()])
+			await fetchStats()
 			if (contactsListRef && contactsListRef.refreshContacts) {
 				contactsListRef.refreshContacts()
 			}
@@ -236,6 +259,18 @@
 		}
 		fetchStats()
 		showImportAdvancedModal = false
+	}
+
+	function openSettingsModal() {
+		console.log('Opening settings modal with settings:', settings)
+		if (!settings) {
+			console.warn('No settings available, fetching first...')
+			fetchSettings().then(() => {
+				showSettingsModal = true
+			})
+		} else {
+			showSettingsModal = true
+		}
 	}
 
 	$: safeStats = stats || { total: 0, by_status: [], pending_recommendations: 0 }
@@ -274,7 +309,6 @@
 	<ProjectHeadDisplayer {project} selectedTab={6} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
-		<!-- Header -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 mb-6">
 			<div class="flex {isMobile ? 'flex-col gap-4' : 'items-center justify-between'} mb-6">
 				<div>
@@ -283,7 +317,7 @@
 
 				<div class="flex {isMobile ? 'flex-col' : 'flex-row'} gap-2">
 					<button
-						on:click={() => showSettingsModal = true}
+						on:click={openSettingsModal}
 						class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
 					>
 						<Settings size={16} />
@@ -316,7 +350,6 @@
 				</div>
 			</div>
 
-			<!-- Quick Stats -->
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div class="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
 					<p class="text-lg font-bold text-blue-600">{totalContacts}</p>
@@ -340,7 +373,6 @@
 			</div>
 		</div>
 
-		<!-- Tabs -->
 		{#if !isMobile}
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-lg mb-6">
 				<div class="flex border-b">
@@ -371,7 +403,6 @@
 			</div>
 		{/if}
 
-		<!-- Tab Content -->
 		{#if (activeTab === 'contacts' || isMobile) && settings}
 			<RecruitmentContactsList
 				bind:this={contactsListRef}
@@ -399,7 +430,6 @@
 			<RecruitmentStats {stats} />
 		{/if}
 
-		<!-- Modals -->
 		{#if showSettingsModal && settings}
 			<RecruitmentSettings
 				{projectId}
