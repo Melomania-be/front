@@ -13,9 +13,14 @@
 		faMusic,
 		faSheetPlastic,
 		faUsers, faWallet,
-		faUserPlus, type IconDefinition  // ← Ajout de l'icône recrutement
+		faUserPlus, type IconDefinition,  // ← Ajout de l'icône recrutement
+		faEllipsis
+
 	} from '@fortawesome/free-solid-svg-icons';
 	import { browser } from '$app/environment';
+	import { Slice } from 'lucide-svelte';
+	import { TableHead } from 'flowbite-svelte';
+	import { fade, scale } from 'svelte/transition';
 
 	export let project : any;
 	
@@ -123,6 +128,24 @@
 			window.removeEventListener('resize', checkDirection);
 		};
 	});
+
+	let showMoretabs = false;
+
+	export function clickOutside(node: HTMLElement, callback: () => void) {
+		const handleClick = (event: MouseEvent) => {
+			if (!node.contains(event.target as Node)) {
+				callback();
+			}
+		};
+
+		document.addEventListener('click', handleClick, true);
+
+		return {
+			destroy() {
+				document.removeEventListener('click', handleClick, true);
+			}
+		};
+	}
 </script>
 
 <div class="bg-white">
@@ -151,8 +174,8 @@
 		</a>
 	</div>
 	<!--Tabs-->
-	<div class="ml-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
-		{#each tabs.slice(0,7) as tab}
+	<div class="pl-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw] ">
+		{#each tabs.slice(0,6) as tab}
 			<button class="flex items-center gap-2 p-3 {selectedTab === tab.num ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}" on:click={() => goto(tab.url)}>
 				<Fa icon={tab.icon} class="text-[16px]" style="color: {selectedTab === tab.num ? "#6B9AD9;" : " #9ca3af;" }"/>
 				{tab.name}
@@ -164,6 +187,45 @@
 				{/if}
 			</button>
 		{/each}
+		<button
+					class="flex ml-auto items-center relative mr-4"
+					on:click={() => (showMoretabs = !showMoretabs)}
+				>
+					<div class="p-2 rounded-full">
+						<Fa icon={faEllipsis} class="text-[16px]" style="color: #8C8C8C;" />
+					</div>
+					{#if showMoretabs}
+						<div
+							use:clickOutside={() => (showMoretabs = false)}
+							transition:scale={{ duration: 200, start: 0.9 }}
+							class="absolute w-24 bg-white top-16 right-[1px] rounded-lg shadow-xl p-4"
+						>
+							<div class=" grid grid-cols-1 gap-2">
+							{#each tabs.slice(6, tabs.length) as tab}
+								<button
+									class="flex-1 flex p-3 justify-center items-center"
+									on:click={() => goto(tab.url)}
+								>
+									<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+										<Fa
+											icon={tab.icon}
+											class="text-[16px]"
+											style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+										/>
+									</div>
+									{#if tab.notifications}
+										<div
+											class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+										>
+											<span class="-mt-[6.8px]">{participantNotValidated}</span>
+										</div>
+									{/if}
+								</button>
+							{/each}
+							</div>
+						</div>
+					{/if}
+				</button>
 	</div>
 	{:else}
 	<div class="flex items-center p-2">
@@ -188,7 +250,7 @@
 		</span>
 	</div>
 	<div class="ml-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
-		{#each tabs.slice(0,7) as tab}
+		{#each tabs.slice(0,6) as tab}
 			<button class="flex items-center gap-2 p-3 {selectedTab === tab.num ? "text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]" : ""}">
 				<Fa icon={tab.icon} class="text-[16px]" style="color: {selectedTab === tab.num ? "#6B9AD9;" : " #9ca3af;" }"/>
 				{tab.name}
