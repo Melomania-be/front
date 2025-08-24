@@ -16,7 +16,12 @@
 		XCircle,
 		UserCheck,
 		Users,
-		User
+		User,
+		Filter,
+		ChevronUp,
+		ChevronDown,
+		Plus,
+		Settings
 	} from 'lucide-svelte'
 	import type { RecruitmentContact, RecruitmentSettings } from '$lib/types'
 	import ContactStatusBadge from './ContactStatusBadge.svelte'
@@ -41,6 +46,18 @@
 	let showBulkActions = false
 	let isMobile = false
 	let isRefreshing = false
+	let showFilters = false
+	let sortColumn = ''
+	let sortDirection = 'asc'
+	let customStatuses: string[] = []
+	let showStatusModal = false
+	let newStatusName = ''
+	let filters = {
+		status: '',
+		source: '',
+		section: '',
+		contacted_by: ''
+	}
 
 	$: dataHolder = {
 		data: contacts,
@@ -52,6 +69,7 @@
 		checkMobile()
 		window.addEventListener('resize', checkMobile)
 		fetchContacts()
+		loadCustomStatuses()
 
 		return () => {
 			window.removeEventListener('resize', checkMobile)
@@ -62,6 +80,108 @@
 		if (browser) {
 			isMobile = window.innerWidth <= 1000
 		}
+	}
+
+	function loadCustomStatuses() {
+		const saved = localStorage.getItem(`recruitment_custom_statuses_${projectId}`)
+		if (saved) {
+			try {
+				customStatuses = JSON.parse(saved)
+			} catch (error) {
+				customStatuses = []
+			}
+		}
+	}
+
+	function saveCustomStatuses() {
+		localStorage.setItem(`recruitment_custom_statuses_${projectId}`, JSON.stringify(customStatuses))
+	}
+
+	function addCustomStatus() {
+		if (newStatusName.trim() && !customStatuses.includes(newStatusName.trim())) {
+			customStatuses = [...customStatuses, newStatusName.trim()]
+			saveCustomStatuses()
+			newStatusName = ''
+			showStatusModal = false
+		}
+	}
+
+	function removeCustomStatus(status: string) {
+		customStatuses = customStatuses.filter(s => s !== status)
+		saveCustomStatuses()
+	}
+
+	function sortBy(column: string) {
+		if (sortColumn === column) {
+			sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
+		} else {
+			sortColumn = column
+			sortDirection = 'asc'
+		}
+		applySorting()
+	}
+
+	function applySorting() {
+		if (!sortColumn) return
+
+		contacts.sort((a, b) => {
+			let valueA = getSortValue(a, sortColumn)
+			let valueB = getSortValue(b, sortColumn)
+
+			if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1
+			if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1
+			return 0
+		})
+
+		contacts = [...contacts]
+	}
+
+	function getSortValue(contact: any, column: string): any {
+		switch (column) {
+			case 'name':
+				return `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase()
+			case 'status':
+				return contact.status || ''
+			case 'source':
+				return contact.source || ''
+			case 'contact_date':
+				return contact.contact_date ? new Date(contact.contact_date) : new Date(0)
+			case 'section':
+				return contact.section?.name || ''
+			case 'contacted_by':
+				return contact.contacted_by || ''
+			default:
+				return contact[column] || ''
+		}
+	}
+
+	function applyFilters() {
+		let filtered = [...contacts]
+
+		if (filters.status) {
+			filtered = filtered.filter(c => c.status === filters.status)
+		}
+		if (filters.source) {
+			filtered = filtered.filter(c => c.source && c.source.toLowerCase().includes(filters.source.toLowerCase()))
+		}
+		if (filters.section) {
+			filtered = filtered.filter(c => c.section?.name.toLowerCase().includes(filters.section.toLowerCase()))
+		}
+		if (filters.contacted_by) {
+			filtered = filtered.filter(c => c.contacted_by && c.contacted_by.toLowerCase().includes(filters.contacted_by.toLowerCase()))
+		}
+
+		contacts = filtered
+	}
+
+	function clearFilters() {
+		filters = {
+			status: '',
+			source: '',
+			section: '',
+			contacted_by: ''
+		}
+		fetchContacts()
 	}
 
 	async function fetchContacts() {
@@ -96,6 +216,14 @@
 
 				contacts = safeContacts
 				meta = data.meta || {}
+
+				if (Object.values(filters).some(f => f !== '')) {
+					applyFilters()
+				}
+
+				if (sortColumn) {
+					applySorting()
+				}
 			} else {
 				const errorText = await response.text()
 				contacts = []
@@ -214,7 +342,7 @@
 			return
 		}
 
-		const confirmMessage = `SIMULATION: Send recruitment email to ${emailContacts.length} contact(s)?`
+		const confirmMessage = `Send recruitment email to ${emailContacts.length} contact(s)?`
 
 		if (!confirm(confirmMessage)) {
 			return
@@ -264,10 +392,10 @@
 			'to_follow_up': 'bg-yellow-100 text-yellow-800',
 			'not_available': 'bg-red-100 text-red-800',
 			'pending_validation': 'bg-purple-100 text-purple-800',
-			'cancelled': 'bg-gray-100 text-gray-500',
+			'cancelled': 'bg-red-100 text-red-800',
 			'recruited': 'bg-green-100 text-green-800'
 		}
-		return colors[status] || 'bg-gray-100 text-gray-800'
+		return colors[status] || 'bg-orange-100 text-orange-800'
 	}
 
 	function getStatusIcon(status: string) {
@@ -284,6 +412,10 @@
 	}
 
 	function getStatusLabel(status: string): string {
+		if (customStatuses.includes(status)) {
+			return status
+		}
+
 		const labels = {
 			'not_yet_contacted': 'Not yet contacted',
 			'awaiting_response': 'Awaiting response',
@@ -315,30 +447,25 @@
 	function formatContactDate(contactDate: string | null): string {
 		if (!contactDate) return '-'
 
-		// Si la date est déjà formatée côté backend (format dd/MM/yyyy HH:mm)
 		if (typeof contactDate === 'string' && contactDate.match(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)) {
 			return contactDate
 		}
 
 		try {
-			// Essayer de parser la date
 			let date: Date
 
 			if (typeof contactDate === 'string') {
-				// Si c'est une string ISO ou autre format
 				date = new Date(contactDate)
 			} else {
-				// Si c'est déjà un objet Date
 				date = new Date(contactDate)
 			}
 
-			// Vérifier si la date est valide
 			if (isNaN(date.getTime())) {
 				console.warn('Invalid date received:', contactDate)
-				return 'Date invalide'
+				return 'Invalid date'
 			}
 
-			return date.toLocaleDateString('fr-FR', {
+			return date.toLocaleDateString('en-US', {
 				day: '2-digit',
 				month: '2-digit',
 				year: 'numeric',
@@ -347,11 +474,30 @@
 			})
 		} catch (error) {
 			console.error('Error formatting date:', error, 'Input:', contactDate)
-			return 'Date invalide'
+			return 'Invalid date'
 		}
 	}
 
 	$: safeContacts = Array.isArray(contacts) ? contacts.filter(c => c && c.id) : []
+	$: allStatuses = [
+		'not_yet_contacted',
+		'awaiting_response',
+		'to_follow_up',
+		'not_available',
+		'pending_validation',
+		'cancelled',
+		'recruited',
+		...customStatuses
+	]
+
+	function getSortIcon(column: string) {
+		if (sortColumn !== column) return null
+		return sortDirection === 'asc' ? ChevronUp : ChevronDown
+	}
+
+	function handleQuickStatusUpdate(contactId: number, newStatus: string) {
+		updateContactStatus(contactId, { status: newStatus })
+	}
 </script>
 
 <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
@@ -365,8 +511,27 @@
 			<h1 class="font-bold text-lg">RECRUITMENT CONTACTS ({safeContacts.length})</h1>
 		</div>
 
-		{#if safeContacts.length > 0}
-			<div class="flex gap-2 {isMobile ? 'flex-col w-full' : ''}">
+		<!-- Filter and Status Management -->
+		<div class="flex gap-2 {isMobile ? 'flex-col w-full' : ''}">
+			<button
+				on:click={() => showFilters = !showFilters}
+				class="px-3 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 font-semibold flex items-center gap-1"
+				disabled={isRefreshing}
+			>
+				<Filter size={14} />
+				Filters
+			</button>
+
+			<button
+				on:click={() => showStatusModal = true}
+				class="px-3 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center gap-1"
+				disabled={isRefreshing}
+			>
+				<Plus size={14} />
+				Statuses
+			</button>
+
+			{#if safeContacts.length > 0}
 				<button
 					on:click={selectAllContacts}
 					class="px-3 py-2 text-sm bg-[#6B9AD9] text-white rounded hover:bg-blue-600 font-semibold"
@@ -382,9 +547,73 @@
 						Deselect ({selectedContacts.length})
 					</button>
 				{/if}
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
+
+	<!-- Filters Panel -->
+	{#if showFilters}
+		<div class="bg-gray-50 border-2 border-gray-200 rounded-[10px] p-4 mb-4">
+			<div class="flex items-center justify-between mb-3">
+				<h3 class="font-semibold text-gray-800">Filters</h3>
+				<button
+					on:click={clearFilters}
+					class="text-sm text-blue-600 hover:text-blue-800 underline"
+				>
+					Clear all
+				</button>
+			</div>
+
+			<div class="grid grid-cols-1 {isMobile ? '' : 'md:grid-cols-4'} gap-3">
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+					<select
+						bind:value={filters.status}
+						on:change={applyFilters}
+						class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+					>
+						<option value="">All statuses</option>
+						{#each allStatuses as status}
+							<option value={status}>{getStatusLabel(status)}</option>
+						{/each}
+					</select>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-1">Source</label>
+					<input
+						type="text"
+						bind:value={filters.source}
+						on:input={applyFilters}
+						placeholder="Filter by source..."
+						class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-1">Section</label>
+					<input
+						type="text"
+						bind:value={filters.section}
+						on:input={applyFilters}
+						placeholder="Filter by section..."
+						class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-1">Contacted by</label>
+					<input
+						type="text"
+						bind:value={filters.contacted_by}
+						on:input={applyFilters}
+						placeholder="Filter by contact person..."
+						class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+					/>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	{#if isRefreshing}
 		<div class="p-4 text-center">
@@ -409,36 +638,24 @@
 			</div>
 
 			<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-4">
-				<div class="grid grid-cols-2 {isMobile ? 'gap-2' : 'md:grid-cols-4 gap-3'}">
+				<div class="flex flex-wrap gap-2">
 					<button
 						on:click={sendBulkEmails}
-						class="px-3 py-2 text-sm bg-blue-600 text-white rounded-[6px] hover:bg-blue-700 font-semibold flex items-center justify-center space-x-1"
+						class="px-3 py-2 text-sm bg-blue-600 text-white rounded-[6px] hover:bg-blue-700 font-semibold flex items-center space-x-1"
 						disabled={isRefreshing}
 					>
 						<Mail size={14} />
 						<span>Send emails</span>
 					</button>
-					<button
-						on:click={() => bulkUpdateStatus('awaiting_response')}
-						class="px-3 py-2 text-sm bg-yellow-600 text-white rounded-[6px] hover:bg-yellow-700 font-semibold"
-						disabled={isRefreshing}
-					>
-						Awaiting
-					</button>
-					<button
-						on:click={() => bulkUpdateStatus('not_available')}
-						class="px-3 py-2 text-sm bg-red-600 text-white rounded-[6px] hover:bg-red-700 font-semibold"
-						disabled={isRefreshing}
-					>
-						Not available
-					</button>
-					<button
-						on:click={() => bulkUpdateStatus('recruited')}
-						class="px-3 py-2 text-sm bg-green-600 text-white rounded-[6px] hover:bg-green-700 font-semibold"
-						disabled={isRefreshing}
-					>
-						Recruited
-					</button>
+					{#each allStatuses as status}
+						<button
+							on:click={() => bulkUpdateStatus(status)}
+							class="px-3 py-2 text-sm rounded-[6px] font-semibold {getStatusColor(status)} border hover:opacity-80"
+							disabled={isRefreshing}
+						>
+							{getStatusLabel(status)}
+						</button>
+					{/each}
 				</div>
 			</div>
 		</div>
@@ -490,10 +707,18 @@
 										</p>
 									</div>
 								</div>
-								<ContactStatusBadge
-									status={contact.status}
-									shouldFollowUp={shouldHighlightFollowUp(contact)}
-								/>
+								<!-- Quick status update dropdown in mobile -->
+								<div class="relative">
+									<select
+										on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
+										value={contact.status}
+										class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium"
+									>
+										{#each allStatuses as status}
+											<option value={status}>{getStatusLabel(status)}</option>
+										{/each}
+									</select>
+								</div>
 							</div>
 
 							<!-- Contact information -->
@@ -531,7 +756,7 @@
 								</div>
 							</div>
 
-							<!-- Badges and information -->
+							<!-- Source and Recommendation info -->
 							<div class="mb-3">
 								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
 									<div class="flex items-center space-x-3 mb-3">
@@ -540,7 +765,7 @@
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"></path>
 											</svg>
 										</div>
-										<h3 class="font-bold text-sm text-gray-900 uppercase">INFORMATION</h3>
+										<h3 class="font-bold text-sm text-gray-900 uppercase">SOURCE</h3>
 									</div>
 									<div class="space-y-2">
 										{#if contact.is_duplicate}
@@ -628,7 +853,7 @@
 			{:else}
 				<!-- Desktop table version -->
 				<div class="w-full overflow-x-auto">
-					<table class="w-full min-w-[1000px] text-sm text-left text-gray-500">
+					<table class="w-full min-w-[1200px] text-sm text-left text-gray-500">
 						<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
 						<tr>
 							<th class="px-4 py-3">
@@ -640,12 +865,37 @@
 									disabled={isRefreshing}
 								/>
 							</th>
-							<th class="px-4 py-3">Contact</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('name')}>
+								<div class="flex items-center gap-1">
+									Contact
+									<svelte:component this={getSortIcon('name')} size={12} />
+								</div>
+							</th>
 							<th class="px-4 py-3">Section</th>
-							<th class="px-4 py-3">Status</th>
-							<th class="px-4 py-3">Contact date</th>
-							<th class="px-4 py-3">Contacted by</th>
-							<th class="px-4 py-3">Source</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('status')}>
+								<div class="flex items-center gap-1">
+									Status
+									<svelte:component this={getSortIcon('status')} size={12} />
+								</div>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('contact_date')}>
+								<div class="flex items-center gap-1">
+									Contact date
+									<svelte:component this={getSortIcon('contact_date')} size={12} />
+								</div>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('contacted_by')}>
+								<div class="flex items-center gap-1">
+									Contacted by
+									<svelte:component this={getSortIcon('contacted_by')} size={12} />
+								</div>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('source')}>
+								<div class="flex items-center gap-1">
+									Source
+									<svelte:component this={getSortIcon('source')} size={12} />
+								</div>
+							</th>
 							<th class="px-4 py-3">Actions</th>
 						</tr>
 						</thead>
@@ -698,11 +948,6 @@
 													Potential duplicate
 												</div>
 											{/if}
-											{#if contact.recommended_by}
-												<div class="text-xs text-blue-600 mt-1">
-													Recommended by {contact.recommended_by}
-												</div>
-											{/if}
 										</div>
 									</div>
 								</td>
@@ -714,10 +959,19 @@
 								</td>
 
 								<td class="px-4 py-3">
-									<ContactStatusBadge
-										status={contact.status}
-										shouldFollowUp={shouldHighlightFollowUp(contact)}
-									/>
+									<!-- Quick status update dropdown -->
+									<select
+										on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
+										value={contact.status}
+										class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium min-w-[120px]"
+									>
+										{#each allStatuses as status}
+											<option value={status}>{getStatusLabel(status)}</option>
+										{/each}
+									</select>
+									{#if shouldHighlightFollowUp(contact)}
+										<div class="text-xs text-yellow-600 font-medium mt-1">Follow up needed</div>
+									{/if}
 								</td>
 
 								<td class="px-4 py-3">
@@ -751,18 +1005,25 @@
 								</td>
 
 								<td class="px-4 py-3">
-									<div class="inline-block">
-										<span class="text-xs px-2 py-1 rounded-[4px] border font-bold {
-											contact.source === 'database' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-											contact.source === 'manual' ? 'bg-gray-100 text-gray-700 border-gray-200' :
-											contact.source === 'recommendation' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-											'bg-green-100 text-green-700 border-green-200'
-										}">
-											{contact.source === 'database' ? 'Database' :
-												contact.source === 'manual' ? 'Manual' :
-													contact.source === 'recommendation' ? 'Recommendation' :
-														contact.source || 'Other'}
-										</span>
+									<div class="space-y-1">
+										<div class="inline-block">
+											<span class="text-xs px-2 py-1 rounded-[4px] border font-bold {
+												contact.source === 'database' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+												contact.source === 'manual' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+												contact.source === 'recommendation' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+												'bg-green-100 text-green-700 border-green-200'
+											}">
+												{contact.source === 'database' ? 'Database' :
+													contact.source === 'manual' ? 'Manual' :
+														contact.source === 'recommendation' ? 'Recommendation' :
+															contact.source || 'Other'}
+											</span>
+										</div>
+										{#if contact.recommended_by}
+											<div class="text-xs text-purple-600 font-medium">
+												Recommended by {contact.recommended_by}
+											</div>
+										{/if}
 									</div>
 								</td>
 
@@ -792,3 +1053,88 @@
 		</SimpleFilterer>
 	{/if}
 </div>
+
+<!-- Modal pour gérer les statuts personnalisés -->
+{#if showStatusModal}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+			<div class="flex items-center justify-between p-6 border-b">
+				<div class="flex items-center gap-2">
+					<Settings class="text-[#6B9AD9]" size={20} />
+					<h3 class="text-lg font-semibold">Manage Custom Statuses</h3>
+				</div>
+				<button
+					on:click={() => showStatusModal = false}
+					class="text-gray-400 hover:text-gray-600"
+				>
+					<X size={20} />
+				</button>
+			</div>
+
+			<div class="p-6">
+				<!-- Add new status -->
+				<div class="mb-4">
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Add new custom status
+					</label>
+					<div class="flex gap-2">
+						<input
+							type="text"
+							bind:value={newStatusName}
+							placeholder="Status name..."
+							class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							on:keydown={(e) => e.key === 'Enter' && addCustomStatus()}
+						/>
+						<button
+							on:click={addCustomStatus}
+							disabled={!newStatusName.trim()}
+							class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50"
+						>
+							Add
+						</button>
+					</div>
+				</div>
+
+				<!-- Existing custom statuses -->
+				<div class="mb-4">
+					<h4 class="text-sm font-medium text-gray-700 mb-2">Custom statuses:</h4>
+					{#if customStatuses.length === 0}
+						<p class="text-sm text-gray-500 italic">No custom statuses defined</p>
+					{:else}
+						<div class="space-y-2">
+							{#each customStatuses as status}
+								<div class="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+									<span class="text-sm font-medium">{status}</span>
+									<button
+										on:click={() => removeCustomStatus(status)}
+										class="text-red-600 hover:text-red-800"
+									>
+										<X size={16} />
+									</button>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+
+				<!-- Default statuses info -->
+				<div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+					<h4 class="text-sm font-medium text-blue-900 mb-1">Default statuses:</h4>
+					<p class="text-xs text-blue-700">
+						Not yet contacted, Awaiting response, Follow up, Not available, Pending validation, Cancelled, Recruited
+					</p>
+				</div>
+			</div>
+
+			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
+				<button
+					type="button"
+					on:click={() => showStatusModal = false}
+					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+				>
+					Close
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

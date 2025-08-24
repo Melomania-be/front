@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ShareFolderModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ShareFolderModal.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/SharedFolderViewer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/SharedFolderViewer.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/+layout.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/+layout.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/SimpleFilterer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/SimpleFilterer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ContactStatusBadge.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ContactStatusBadge.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsWorkingModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsWorkingModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentContactsList.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentContactsList.svelte" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,24 +43,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;google__drive__front&quot;,
-    &quot;last_opened_file_path&quot;: &quot;F:/Java/front&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;F:\\Java\\front\\node_modules\\prettier&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;F:\\Java\\front\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "bug__recruitement__front",
+    "last_opened_file_path": "F:/Java/front",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "F:\\Java\\front\\node_modules\\prettier",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "ts.external.directory.path": "F:\\Java\\front\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="F:\Java\front\src\routes\api\filesystem\shared\[token]" />
