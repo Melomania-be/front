@@ -16,26 +16,23 @@
 
 	let project: Project | undefined;
 
-	let accountings: Accounting[];
-	let categories: ExpenseCategory[];
+	let accountings: Accounting[] = [];
+	let categories: ExpenseCategory[] = [];
 
 
 	$: dataChartExpenses = (() => {
 		if (!accountings || !categories) return null;
 
-		// Filtrer les dépenses (amount < 0)
 		const expenses = accountings.filter((a) => a.amount < 0);
 
-		// Grouper par category_id
 		const categorySums = new Map<number, number>();
 
 		for (const exp of expenses) {
 			const catId = exp.categoryId;
 			const prev = categorySums.get(catId) ?? 0;
-			categorySums.set(catId, prev + Math.abs(exp.amount)); // abs pour positiver
+			categorySums.set(catId, prev + Math.abs(exp.amount));
 		}
 
-		// Construire les labels et data
 		const labels: string[] = [];
 		const data: number[] = [];
 		const backgroundColor: string[] = [];
@@ -45,7 +42,7 @@
 			if (!cat) continue;
 			labels.push(cat.name);
 			data.push(sum);
-			backgroundColor.push(cat.color ? cat.color : '#CCCCCC'); // couleur par catégorie
+			backgroundColor.push(cat.color ? cat.color : '#CCCCCC');
 		}
 
 		return {
@@ -64,19 +61,16 @@
 	$: dataChartIncome = (() => {
 		if (!accountings || !categories) return null;
 
-		// Filtrer les dépenses (amount < 0)
 		const incomes = accountings.filter((a) => a.amount >= 0);
 
-		// Grouper par category_id
 		const categorySums = new Map<number, number>();
 
 		for (const inc of incomes) {
 			const catId = inc.categoryId;
 			const prev = categorySums.get(catId) ?? 0;
-			categorySums.set(catId, prev + Math.abs(inc.amount)); // abs pour positiver
+			categorySums.set(catId, prev + Math.abs(inc.amount));
 		}
 
-		// Construire les labels et data
 		const labels: string[] = [];
 		const data: number[] = [];
 		const backgroundColor: string[] = [];
@@ -86,7 +80,7 @@
 			if (!cat) continue;
 			labels.push(cat.name);
 			data.push(sum);
-			backgroundColor.push(cat.color ? cat.color : '#CCCCCC'); // couleur par catégorie
+			backgroundColor.push(cat.color ? cat.color : '#CCCCCC');
 		}
 
 		return {
@@ -122,49 +116,64 @@
 
 	onMount(async () => {
 		await fetchProject();
-		await fetchDataAccounting();
 		await fetchCategories();
-		console.log(accountings);
+		await fetchDataAccounting();
 	});
 
 	async function fetchProject() {
 		if (!data?.id) return;
 
-		const response = await fetch(`/api/projects/${data.id}`, {
-			method: 'GET'
-		});
+		try {
+			const response = await fetch(`/api/projects/${data.id}`, {
+				method: 'GET'
+			});
 
-		if (!response.ok) {
-			return;
+			if (!response.ok) {
+				console.error('Failed to fetch project');
+				return;
+			}
+
+			project = await response.json();
+		} catch (error) {
+			console.error('Error fetching project:', error);
 		}
-
-		project = await response.json();
 	}
 
 	async function fetchDataAccounting() {
 		if (!data?.id) return;
 
-		const response = await fetch(`/api/projects/${data.id}/management/accounting`, {
-			method: 'GET'
-		});
+		try {
+			const response = await fetch(`/api/projects/${data.id}/management/accounting`, {
+				method: 'GET'
+			});
 
-		if (!response.ok) {
-			return;
+			if (!response.ok) {
+				console.error('Failed to fetch accounting data:', response.status, response.statusText);
+				return;
+			}
+
+			const rawAccountings = await response.json();
+			accountings = Array.isArray(rawAccountings) ? rawAccountings.sort((a, b) => a.id - b.id) : [];
+		} catch (error) {
+			console.error('Error fetching accounting data:', error);
+			accountings = [];
 		}
-
-		accountings = (await response.json()).sort((a, b) => a.id - b.id);
 	}
 
 	async function fetchCategories() {
-		const res = await fetch('/api/expense_categories');
+		try {
+			const res = await fetch('/api/expense_categories');
 
-		if (!res.ok) {
-			console.error('Erreur lors de la récupération des catégories');
-			return;
+			if (!res.ok) {
+				console.error('Erreur lors de la récupération des catégories');
+				return;
+			}
+
+			categories = (await res.json()) as ExpenseCategory[];
+		} catch (error) {
+			console.error('Error fetching categories:', error);
+			categories = [];
 		}
-
-		categories = (await res.json()) as ExpenseCategory[];
-		console.log(categories);
 	}
 
 	let isMobile = false;
@@ -201,14 +210,12 @@
 				description: categoryDescription,
 				color: categoryColor
 			};
-			console.log(payload);
 		} else {
 			payload = {
 				name: categoryName,
 				description: categoryDescription,
 				color: categoryColor
 			};
-			console.log(payload);
 		}
 
 		try {
@@ -229,9 +236,9 @@
 
 			if (updateMode) {
 				categories = categories.map((cat) => (cat.id === newCategory.id ? newCategory : cat))
-					.sort((a, b) => a.id - b.id); // tri ici
+					.sort((a, b) => a.id - b.id);
 			} else {
-				categories = [newCategory, ...categories].sort((a, b) => a.id - b.id); // tri ici aussi
+				categories = [newCategory, ...categories].sort((a, b) => a.id - b.id);
 			}
 
 			resetInput();
@@ -278,105 +285,102 @@
 		<div class="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center  h-auto relative
 		{isMobile ? "w-[90%]" : "w-[40%]"}">
 			<button
-			on:click={()=>{popUpAddCategory = false ; resetInput()}}
-			class="absolute top-2 right-3">
-				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
-			</button>
-			<h2 class="text-xl text-gray-500 font-bold mb-8">New</h2>
-			<div class="h-full w-full">
-				<div class="flex flex-col gap-2 items-center">
-					<!--NAME-->
-					<div class="flex flex-col {isMobile ? "w-[70%]" : "w-[50%]"} ">
+		on:click={()=>{popUpAddCategory = false ; resetInput()}}
+		class="absolute top-2 right-3">
+		<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
+	</button>
+		<h2 class="text-xl text-gray-500 font-bold mb-8">New</h2>
+		<div class="h-full w-full">
+			<div class="flex flex-col gap-2 items-center">
+				<div class="flex flex-col {isMobile ? "w-[70%]" : "w-[50%]"} ">
 						<div
-							class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
-							style="width: fit-content;"
-						>
-							Name
-						</div>
-						<textarea
-							class="p-2 px-3 border-2 border-gray-500 h-11 rounded-xl focus:outline-none"
-							bind:value={categoryName}
-							placeholder="Name"
-							required
-						/>
-					</div>
-					<!--DESCRIPTION-->
-					<div class="flex flex-col {isMobile ? "w-[70%]" : "w-[50%]"}">
+				class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
+				style="width: fit-content;"
+			>
+				Name
+			</div>
+				<textarea
+					class="p-2 px-3 border-2 border-gray-500 h-11 rounded-xl focus:outline-none"
+					bind:value={categoryName}
+					placeholder="Name"
+					required
+				/>
+			</div>
+			<div class="flex flex-col {isMobile ? "w-[70%]" : "w-[50%]"}">
 						<div
-							class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
-							style="width: fit-content;"
-						>
-							Description
-						</div>
-						<input
-							type="text"
-							class="p-2 px-3 border-2 border-gray-500 rounded-xl focus:outline-none"
-							bind:value={categoryDescription}
-							placeholder="Description"
-						/>
-					</div>
-					<!--COLOR-->
-					<div class="flex flex-col {isMobile ? "w-[70%]" : "w-[50%]"} mb-8">
+			class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
+			style="width: fit-content;"
+		>
+			Description
+		</div>
+			<input
+				type="text"
+				class="p-2 px-3 border-2 border-gray-500 rounded-xl focus:outline-none"
+				bind:value={categoryDescription}
+				placeholder="Description"
+			/>
+		</div>
+		<div class="flex flex-col {isMobile ? "w-[70%]" : "w-[50%]"} mb-8">
 						<label
-							for="colorPicker"
-							class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
-							style="width: fit-content;"
-						>
-							Color
-						</label>
-						<input
-							id="colorPicker"
-							type="color"
-							class="p-2 {isMobile ? "px-4" : "px-20"}  border-2 border-gray-500 rounded-xl focus:outline-none w-full h-10"
+		for="colorPicker"
+		class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
+		style="width: fit-content;"
+	>
+		Color
+	</label>
+		<input
+			id="colorPicker"
+			type="color"
+			class="p-2 {isMobile ? "px-4" : "px-20"}  border-2 border-gray-500 rounded-xl focus:outline-none w-full h-10"
 							bind:value={categoryColor}
 							required
 						/>
 						</div>
-					
-				</div>
-			</div>
-			<div class="w-full gap-8 flex justify-center">
-				{#if updateMode && categoryIsDefault}
-				<button
-					class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
-					on:click={() => {
+
+	</div>
+	</div>
+	<div class="w-full gap-8 flex justify-center">
+		{#if updateMode && categoryIsDefault}
+			<button
+				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
+				on:click={() => {
 						popUpAddCategory = false;
 						updateMode = false;
 						resetInput();
 					}}>Cancel</button
-				>
-				{:else if updateMode && !categoryIsDefault}
-					<button
-						class="mt-4 w-[30%] px-4 py-2 bg-red-400 text-white rounded font-semibold"
-						on:click={() => {
+			>
+		{:else if updateMode && !categoryIsDefault}
+			<button
+				class="mt-4 w-[30%] px-4 py-2 bg-red-400 text-white rounded font-semibold"
+				on:click={() => {
 							deleteCategory();
 							popUpAddCategory = false;
 						}}>Delete</button
-					>
-				{:else}
-					<button
-					class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
-					on:click={() => {
+			>
+		{:else}
+			<button
+				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
+				on:click={() => {
 						popUpAddCategory = false;
 						updateMode = false;
 						resetInput();
 					}}>Cancel</button
-					>
-				{/if}
-				<button
-					class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
-					on:click={() => {
+			>
+		{/if}
+		<button
+			class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
+			on:click={() => {
 						popUpAddCategory = false;
 						addCategory();
 					}}>
-					{#if updateMode}
-						<p>Save</p>
-					{:else}
-						<p>Add</p>
-					{/if}
-				</button>
-			</div>
-		</div>
+			{#if updateMode}
+				<p>Save</p>
+			{:else}
+				<p>Add</p>
+			{/if}
+		</button>
+	</div>
+	</div>
 	</div>
 {/if}
 
@@ -386,40 +390,40 @@
 	</div>
 	<div class="flex gap-8 mb-4 mt-4  {isMobile ? "flex-col" : "h-auto"}">
 		<div class="flex-[2] flex flex-col border-2 rounded-xl bg-white border-gray-400">
-				<div class="flex rounded-b-xl w-full flex-1 {isMobile ? "flex-col" : ""}">
+	<div class="flex rounded-b-xl w-full flex-1 {isMobile ? "flex-col" : ""}">
 					<div
-						class="flex-1 border-gray-400 justify-center flex p-2 items-center"
-					>
-						<div class="{isMobile ? "w-[250px]" : "w-[350px]"}">
+	class="flex-1 border-gray-400 justify-center flex p-2 items-center"
+>
+	<div class="{isMobile ? "w-[250px]" : "w-[350px]"}">
 							<h1 class="font-semibold text-center text-sm mb-2 text-gray-400">Expenses</h1>
-							<PieChart data={dataChartExpenses} {options} />
-						</div>
-					</div>
-					<div
-						class="flex-1 border-gray-400 flex justify-center p-2 items-center"
-					>
-						<div class="{isMobile ? "w-[250px]" : "w-[350px]"}">
+	<PieChart data={dataChartExpenses} {options} />
+</div>
+</div>
+	<div
+		class="flex-1 border-gray-400 flex justify-center p-2 items-center"
+	>
+		<div class="{isMobile ? "w-[250px]" : "w-[350px]"}">
 							<h1 class="font-semibold text-center text-sm mb-2 text-gray-400">Incomes</h1>
-							<PieChart data={dataChartIncome} {options} />
-						</div>
-					</div>
-				</div>
-		</div>
-		<div class="bg-white border-gray-400 border-2 rounded-xl p-4 flex-[1]">
-			<div class="flex">
-			<h2 class="uppercase font-bold">categories</h2>
-			<button
-				on:click={() => showPopUpAddCategory()}
-				class="bg-[#6B9AD9] px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
-				>Add New</button
-			>
-			</div>
-			<div class="grid {isMobile ? "grid-cols-2" : "grid-cols-2"}  gap-3 justify-center m-2 mt-4">
+		<PieChart data={dataChartIncome} {options} />
+	</div>
+</div>
+</div>
+</div>
+<div class="bg-white border-gray-400 border-2 rounded-xl p-4 flex-[1]">
+	<div class="flex">
+		<h2 class="uppercase font-bold">categories</h2>
+		<button
+			on:click={() => showPopUpAddCategory()}
+			class="bg-[#6B9AD9] px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
+		>Add New</button
+		>
+	</div>
+	<div class="grid {isMobile ? "grid-cols-2" : "grid-cols-2"}  gap-3 justify-center m-2 mt-4">
 				{#if categories}
 					{#each categories as cat}
 						<div class="flex justify-center">
-							<button
-								on:click={() => {
+	<button
+		on:click={() => {
 											categoryName = cat.name;
 											categoryId = cat.id;
 											categoryDescription = cat.description
@@ -428,17 +432,17 @@
 											popUpAddCategory = true;
 											updateMode = true;
 										}}
-								class="flex rounded-lg justify-center items-center text-center p-1 font-semibold break-words px-4 h-14 w-full"
-								style="border: 2px solid {cat.color || '#9CA3AF'}; color: {cat.color || '#9CA3AF'}"
-							>
-								{cat.name}
-						</button>
-						</div>
-					{/each}
-				{/if}
-			</div>
-		</div>
-	</div>
+		class="flex rounded-lg justify-center items-center text-center p-1 font-semibold break-words px-4 h-14 w-full"
+		style="border: 2px solid {cat.color || '#9CA3AF'}; color: {cat.color || '#9CA3AF'}"
+	>
+		{cat.name}
+	</button>
+</div>
+	{/each}
+	{/if}
+</div>
+</div>
+</div>
 </div>
 
 
