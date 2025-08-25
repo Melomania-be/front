@@ -21,7 +21,9 @@
 		ChevronUp,
 		ChevronDown,
 		Plus,
-		Settings
+		Settings,
+		Star,
+		X
 	} from 'lucide-svelte'
 	import type { RecruitmentContact, RecruitmentSettings } from '$lib/types'
 	import ContactStatusBadge from './ContactStatusBadge.svelte'
@@ -52,6 +54,8 @@
 	let customStatuses: string[] = []
 	let showStatusModal = false
 	let newStatusName = ''
+	let showRecommendationEmailModal = false
+	let selectedRecommendationContact: RecruitmentContact | null = null
 	let filters = {
 		status: '',
 		source: '',
@@ -381,6 +385,39 @@
 		}
 	}
 
+	async function sendRecommendationEmail(contact: RecruitmentContact) {
+		if (!contact.email) {
+			alert('No email address for this contact')
+			return
+		}
+
+		try {
+			const response = await fetch(`/api/projects/${projectId}/management/recruitment/send-recommendation-email`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					contact_id: contact.id
+				})
+			})
+
+			if (response.ok) {
+				const result = await response.json()
+				alert('Recommendation email sent successfully')
+
+				await updateContactStatus(contact.id, {
+					status: 'awaiting_response',
+					contact_method: 'email',
+					contact_date: new Date().toISOString()
+				})
+			} else {
+				const errorData = await response.json()
+				alert(`Error sending email: ${errorData.error || 'Unknown error'}`)
+			}
+		} catch (error) {
+			alert('Error sending recommendation email')
+		}
+	}
+
 	export function refreshContacts() {
 		refreshContactsList()
 	}
@@ -499,19 +536,15 @@
 		updateContactStatus(contactId, { status: newStatus })
 	}
 
-	// FONCTION PRINCIPALE POUR AFFICHER LA SOURCE AVEC RECOMMANDEUR
 	function getSourceDisplay(contact: RecruitmentContact): string {
-		// Si c'est une recommandation et qu'on a le nom du recommandeur
-		if (contact.recommended_by) {
-			return contact.recommended_by
+		if (contact.recommended_by && contact.recommended_by.includes('Recommended by ')) {
+			return contact.recommended_by.replace('Recommended by ', '')
 		}
 
-		// Si c'est une recommandation mais anonyme
 		if (contact.source === 'recommendation') {
 			return 'Recommended (anonymous)'
 		}
 
-		// Sinon, afficher la source normale
 		return contact.source === 'database' ? 'Database' :
 			contact.source === 'manual' ? 'Manual' :
 				contact.source || 'Other'
@@ -532,6 +565,27 @@
 			return UserCheck
 		}
 		return null
+	}
+
+	function isRecommendedContact(contact: RecruitmentContact): boolean {
+		return contact.source === 'recommendation' || (contact.recommended_by && contact.recommended_by.includes('Recommended by '))
+	}
+
+	function openRecommendationEmailModal(contact: RecruitmentContact) {
+		selectedRecommendationContact = contact
+		showRecommendationEmailModal = true
+	}
+
+	function closeRecommendationEmailModal() {
+		selectedRecommendationContact = null
+		showRecommendationEmailModal = false
+	}
+
+	function confirmSendRecommendationEmail() {
+		if (selectedRecommendationContact) {
+			sendRecommendationEmail(selectedRecommendationContact)
+			closeRecommendationEmailModal()
+		}
 	}
 </script>
 
@@ -788,6 +842,19 @@
 											<p class="text-sm text-gray-500 italic">No contact information available</p>
 										{/if}
 									</div>
+
+									<!-- Recommendation email button for mobile -->
+									{#if isRecommendedContact(contact) && contact.email}
+										<div class="mt-3">
+											<button
+												on:click={() => openRecommendationEmailModal(contact)}
+												class="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center justify-center gap-2"
+											>
+												<Star size={14} />
+												Send recommendation email
+											</button>
+										</div>
+									{/if}
 								</div>
 							</div>
 
@@ -1052,6 +1119,18 @@
 											</div>
 											<span class="text-xs font-bold text-gray-700 uppercase">Actions</span>
 										</div>
+
+										<!-- Recommendation email button for desktop -->
+										{#if isRecommendedContact(contact) && contact.email}
+											<button
+												on:click={() => openRecommendationEmailModal(contact)}
+												class="w-full mb-2 px-3 py-2 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center justify-center gap-1"
+											>
+												<Star size={12} />
+												Recommendation email
+											</button>
+										{/if}
+
 										<ContactActionButtons
 											{contact}
 											on:updateStatus={(e) => updateContactStatus(contact.id, e.detail)}
@@ -1148,6 +1227,69 @@
 					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
 				>
 					Close
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Modal pour email de recommandation -->
+{#if showRecommendationEmailModal && selectedRecommendationContact}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+			<div class="flex items-center justify-between p-6 border-b">
+				<div class="flex items-center gap-2">
+					<Star class="text-purple-600" size={20} />
+					<h3 class="text-lg font-semibold">Send Recommendation Email</h3>
+				</div>
+				<button
+					on:click={closeRecommendationEmailModal}
+					class="text-gray-400 hover:text-gray-600"
+				>
+					<X size={20} />
+				</button>
+			</div>
+
+			<div class="p-6">
+				<p class="text-sm text-gray-600 mb-4">
+					Send a special recommendation email to <strong>{selectedRecommendationContact.first_name} {selectedRecommendationContact.last_name}</strong>
+					at <strong>{selectedRecommendationContact.email}</strong>.
+				</p>
+
+				<div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+					<h4 class="font-medium text-purple-900 mb-2">This email will include:</h4>
+					<ul class="text-sm text-purple-800 space-y-1">
+						<li>• A personalized greeting mentioning they were recommended</li>
+						<li>• Information about who recommended them</li>
+						<li>• Project registration link</li>
+						<li>• Option to recommend other musicians</li>
+					</ul>
+				</div>
+
+				{#if selectedRecommendationContact.recommended_by}
+					<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+						<p class="text-sm text-blue-800">
+							<strong>Recommended by:</strong> {getSourceDisplay(selectedRecommendationContact)}
+						</p>
+					</div>
+				{/if}
+			</div>
+
+			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
+				<button
+					type="button"
+					on:click={closeRecommendationEmailModal}
+					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					on:click={confirmSendRecommendationEmail}
+					class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+				>
+					<Star size={16} />
+					Send Recommendation Email
 				</button>
 			</div>
 		</div>
