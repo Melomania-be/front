@@ -404,17 +404,28 @@
 				const result = await response.json()
 				alert('Recommendation email sent successfully')
 
+				// Actualiser le contact pour mettre à jour son statut
 				await updateContactStatus(contact.id, {
 					status: 'awaiting_response',
-					contact_method: 'email',
-					contact_date: new Date().toISOString()
+					contact_method: 'email'
 				})
 			} else {
-				const errorData = await response.json()
-				alert(`Error sending email: ${errorData.error || 'Unknown error'}`)
+				const errorText = await response.text()
+				console.error('Error response:', errorText)
+
+				let errorMessage = 'Unknown error'
+				try {
+					const errorData = JSON.parse(errorText)
+					errorMessage = errorData.error || errorData.message || 'Unknown error'
+				} catch (e) {
+					errorMessage = errorText || 'Unknown error'
+				}
+
+				alert(`Error sending email: ${errorMessage}`)
 			}
 		} catch (error) {
-			alert('Error sending recommendation email')
+			console.error('Network error:', error)
+			alert('Network error: Unable to send recommendation email')
 		}
 	}
 
@@ -537,14 +548,17 @@
 	}
 
 	function getSourceDisplay(contact: RecruitmentContact): string {
-		if (contact.recommended_by && contact.recommended_by.includes('Recommended by ')) {
-			return contact.recommended_by.replace('Recommended by ', '')
+		// Si c'est une recommandation et qu'on a le nom du recommandeur
+		if (contact.recommended_by && contact.recommended_by.trim() !== '' && contact.recommended_by !== 'Anonymous') {
+			return contact.recommended_by
 		}
 
+		// Si c'est une recommandation mais anonyme
 		if (contact.source === 'recommendation') {
-			return 'Recommended (anonymous)'
+			return 'Recommended'
 		}
 
+		// Sinon, afficher la source normale
 		return contact.source === 'database' ? 'Database' :
 			contact.source === 'manual' ? 'Manual' :
 				contact.source || 'Other'
