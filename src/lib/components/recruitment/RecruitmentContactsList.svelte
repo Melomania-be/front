@@ -143,7 +143,7 @@
 			case 'status':
 				return contact.status || ''
 			case 'source':
-				return contact.source || ''
+				return getSourceDisplay(contact)
 			case 'contact_date':
 				return contact.contact_date ? new Date(contact.contact_date) : new Date(0)
 			case 'section':
@@ -498,6 +498,41 @@
 	function handleQuickStatusUpdate(contactId: number, newStatus: string) {
 		updateContactStatus(contactId, { status: newStatus })
 	}
+
+	// FONCTION PRINCIPALE POUR AFFICHER LA SOURCE AVEC RECOMMANDEUR
+	function getSourceDisplay(contact: RecruitmentContact): string {
+		// Si c'est une recommandation et qu'on a le nom du recommandeur
+		if (contact.recommended_by) {
+			return contact.recommended_by
+		}
+
+		// Si c'est une recommandation mais anonyme
+		if (contact.source === 'recommendation') {
+			return 'Recommended (anonymous)'
+		}
+
+		// Sinon, afficher la source normale
+		return contact.source === 'database' ? 'Database' :
+			contact.source === 'manual' ? 'Manual' :
+				contact.source || 'Other'
+	}
+
+	function getSourceStyle(contact: RecruitmentContact): string {
+		if (contact.recommended_by || contact.source === 'recommendation') {
+			return 'bg-purple-100 text-purple-700 border-purple-200'
+		}
+
+		return contact.source === 'database' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+			contact.source === 'manual' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+				'bg-green-100 text-green-700 border-green-200'
+	}
+
+	function getSourceIcon(contact: RecruitmentContact) {
+		if (contact.recommended_by || contact.source === 'recommendation') {
+			return UserCheck
+		}
+		return null
+	}
 </script>
 
 <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
@@ -756,14 +791,18 @@
 								</div>
 							</div>
 
-							<!-- Source and Recommendation info -->
+							<!-- Source info avec nom du recommandeur (MOBILE) -->
 							<div class="mb-3">
 								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
 									<div class="flex items-center space-x-3 mb-3">
 										<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
-											<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"></path>
-											</svg>
+											{#if getSourceIcon(contact)}
+												<svelte:component this={getSourceIcon(contact)} size={14} class="text-white" />
+											{:else}
+												<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"></path>
+												</svg>
+											{/if}
 										</div>
 										<h3 class="font-bold text-sm text-gray-900 uppercase">SOURCE</h3>
 									</div>
@@ -773,23 +812,8 @@
 												<span class="text-xs text-orange-700 font-bold">Potential duplicate</span>
 											</div>
 										{/if}
-										{#if contact.recommended_by}
-											<div class="bg-blue-50 border-2 border-blue-200 rounded-[6px] p-2">
-												<span class="text-xs text-blue-700 font-bold">Recommended by {contact.recommended_by}</span>
-											</div>
-										{/if}
-										<div class="bg-gray-50 border-2 border-gray-200 rounded-[6px] p-2">
-											<span class="text-xs font-bold {
-												contact.source === 'database' ? 'text-blue-700' :
-												contact.source === 'manual' ? 'text-gray-700' :
-												contact.source === 'recommendation' ? 'text-purple-700' :
-												'text-green-700'
-											}">
-												Source: {contact.source === 'database' ? 'Database' :
-												contact.source === 'manual' ? 'Manual' :
-													contact.source === 'recommendation' ? 'Recommendation' :
-														contact.source || 'Other'}
-											</span>
+										<div class="{getSourceStyle(contact)} border-2 rounded-[6px] p-2">
+											<span class="text-xs font-bold">{getSourceDisplay(contact)}</span>
 										</div>
 									</div>
 								</div>
@@ -1004,26 +1028,17 @@
 									{/if}
 								</td>
 
+								<!-- COLONNE SOURCE MODIFIÉE POUR AFFICHER LE RECOMMANDEUR -->
 								<td class="px-4 py-3">
 									<div class="space-y-1">
 										<div class="inline-block">
-											<span class="text-xs px-2 py-1 rounded-[4px] border font-bold {
-												contact.source === 'database' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-												contact.source === 'manual' ? 'bg-gray-100 text-gray-700 border-gray-200' :
-												contact.source === 'recommendation' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-												'bg-green-100 text-green-700 border-green-200'
-											}">
-												{contact.source === 'database' ? 'Database' :
-													contact.source === 'manual' ? 'Manual' :
-														contact.source === 'recommendation' ? 'Recommendation' :
-															contact.source || 'Other'}
+											<span class="text-xs px-2 py-1 rounded-[4px] border font-bold {getSourceStyle(contact)}">
+												{#if getSourceIcon(contact)}
+													<svelte:component this={getSourceIcon(contact)} size={12} class="inline mr-1" />
+												{/if}
+												{getSourceDisplay(contact)}
 											</span>
 										</div>
-										{#if contact.recommended_by}
-											<div class="text-xs text-purple-600 font-medium">
-												Recommended by {contact.recommended_by}
-											</div>
-										{/if}
 									</div>
 								</td>
 

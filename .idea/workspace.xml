@@ -5,10 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/lib/components/SimpleFilterer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/SimpleFilterer.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ContactStatusBadge.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ContactStatusBadge.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsWorkingModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsWorkingModal.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentContactsList.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentContactsList.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
