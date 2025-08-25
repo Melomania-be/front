@@ -77,8 +77,8 @@
 	export let categories: ExpenseCategory[] = [];
 	export let showStatistic = true;
 	export let showAttachments = true;
-	export let currentParticipant: Participant | CustomParticipant;
-	export let contact;
+	export let currentParticipant: Participant | CustomParticipant | null = null;
+	export let contact: Contact | null = null;
 	export let showProject = false;
 	export let projectConcerts: Map<number, Date> = new Map();
 
@@ -152,41 +152,45 @@
 			method: 'GET'
 		});
 
-		let data = await response.json();
+		if (response.ok) {
+			let data = await response.json();
+			const allFolders = data;
 
-		const allFolders = data;
+			if (allFolders.find((f: Folders) => f.name == 'Accountings Attachments')) {
+				accountingFolder = allFolders.find((f: Folders) => f.name == 'Accountings Attachments');
+			} else {
+				const folderName = 'Accountings Attachments';
+				let response = await fetch('/api/folders', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ name: folderName })
+				});
 
-		if (allFolders.find((f: Folders) => f.name == 'Accountings Attachments')) {
-			accountingFolder = allFolders.find((f: Folders) => f.name == 'Accountings Attachments');
-		} else {
-			const folderName = 'Accountings Attachments';
-			let response = await fetch('/api/folders', {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ name: folderName })
-			});
-
-			if (response.status >= 400 && response.status < 500) {
-				const jsonResponse = await response.json();
-				const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-				alert(error);
+				if (response.ok) {
+					accountingFolder = await response.json();
+				} else if (response.status >= 400 && response.status < 500) {
+					const jsonResponse = await response.json();
+					const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+					alert(error);
+				} else if (response.status >= 500) {
+					alert('Server error');
+				}
 			}
 
-			if (response.status >= 500) {
-				alert('Server error');
+			if (accountingFolder) {
+				fetchAccountingFolder();
 			}
-		}
-		if (accountingFolder) {
-			fetchAccountingFolder();
 		}
 	});
 
 	async function addAccounting() {
 		if (!AccountingAmount || !AccountingName) {
+			alert('Please fill in required fields: Name and Amount');
 			return;
 		}
+
 		let payload;
 		let billDateISO;
 		let paymentDateISO;
@@ -220,16 +224,16 @@
 			AccountingIsMusicianFee = false;
 		}
 
-		let attachment = AccountingAttachments.join('/');
+		let attachment = AccountingAttachments.length > 0 ? AccountingAttachments.join('/') : null;
 
-		if (updateMode) {
+		if (updateMode && AccountingId) {
 			payload = {
 				id: AccountingId,
 				name: AccountingName,
 				bill_date: billDateISO,
 				payment_date: paymentDateISO,
 				amount: AccountingAmount,
-				category_id: +AccountingCategory,
+				category_id: AccountingCategory,
 				contact_id: AccountingcontactId,
 				attachment: attachment,
 				is_individual_payment: AccountingpaymentToIndiv,
@@ -244,7 +248,7 @@
 				bill_date: billDateISO,
 				payment_date: paymentDateISO,
 				amount: AccountingAmount,
-				category_id: +AccountingCategory,
+				category_id: AccountingCategory,
 				contact_id: AccountingcontactId,
 				attachment: attachment,
 				is_individual_payment: AccountingpaymentToIndiv,
@@ -265,7 +269,9 @@
 			});
 
 			if (!res.ok) {
-				console.error('Erreur lors de la création de l accounting');
+				const errorResponse = await res.json();
+				console.error('Error creating/updating accounting:', errorResponse);
+				alert('Error: ' + (errorResponse.error || 'Unknown error'));
 				return;
 			}
 
@@ -285,7 +291,8 @@
 				resetInput();
 			}
 		} catch (error) {
-			console.error('Erreur réseau :', error);
+			console.error('Network error:', error);
+			alert('Network error: ' + error.message);
 		}
 	}
 
@@ -372,11 +379,19 @@
 	let accountingDeletion = false;
 
 	async function deleteAccounting() {
+		if (!AccountingId) {
+			alert('No accounting entry selected for deletion');
+			return;
+		}
+
 		accountingDeletion = true;
 		try {
 			const confirmed = window.confirm('Are you sure you want to delete this accounting?');
 
-			if (!confirmed) return;
+			if (!confirmed) {
+				accountingDeletion = false;
+				return;
+			}
 
 			const res = await fetch(`/api/projects/${projectId}/management/accounting/${AccountingId}`, {
 				method: 'DELETE',
@@ -386,10 +401,13 @@
 			});
 
 			if (!res.ok) {
-				console.error('Erreur lors de la suppression');
-				alert('An error occurred while deleting the item.');
+				const errorResponse = await res.json();
+				console.error('Error deleting accounting:', errorResponse);
+				alert('Error: ' + (errorResponse.error || 'Unknown error'));
+				accountingDeletion = false;
 				return;
 			}
+
 			alert('Accounting entry deleted successfully.');
 			if (folder.children) {
 				let files = folder.children.filter((child) => AccountingAttachments.includes(child.id));
@@ -399,7 +417,8 @@
 			}
 			window.location.reload();
 		} catch (error) {
-			console.error('Erreur réseau :', error);
+			console.error('Network error:', error);
+			alert('Network error: ' + error.message);
 		}
 		accountingDeletion = false;
 	}
@@ -599,7 +618,7 @@
 	async function submitFiles() {
 		var fd = new FormData();
 
-		if (!selectedFiles) {
+		if (!selectedFiles || selectedFiles.length === 0) {
 			alert('Please select a file');
 			return;
 		}
@@ -639,26 +658,24 @@
 					body: JSON.stringify({ ...accountingFolder })
 				});
 
-				if (request.status >= 400 && request.status < 500) {
-					const jsonResponse = await request.json();
-					const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-					alert(error);
-				}
-
-				if (request.status >= 500) {
-					alert('Server error');
+				if (!request.ok) {
+					if (request.status >= 400 && request.status < 500) {
+						const jsonResponse = await request.json();
+						const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+						alert(error);
+					} else if (request.status >= 500) {
+						alert('Server error');
+					}
 				}
 			}
-		}
-
-		if (response.status >= 400 && response.status < 500) {
-			const jsonResponse = await response.json();
-			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-			alert(error);
-		}
-
-		if (response.status >= 500) {
-			alert('Server error');
+		} else {
+			if (response.status >= 400 && response.status < 500) {
+				const jsonResponse = await response.json();
+				const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+				alert(error);
+			} else if (response.status >= 500) {
+				alert('Server error');
+			}
 		}
 	}
 
@@ -681,21 +698,22 @@
 	let selectedAttachements: Files[] = [];
 
 	async function downloadFile(file: Files) {
-		const response = await fetch(`/api/files/${file.id}`, {
-			method: 'GET'
-		});
+		try {
+			const response = await fetch(`/api/files/${file.id}`, {
+				method: 'GET'
+			});
 
-		if (response.status >= 400 && response.status < 500) {
-			const jsonResponse = await response.json();
-			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-			alert(error);
-		}
+			if (!response.ok) {
+				if (response.status >= 400 && response.status < 500) {
+					const jsonResponse = await response.json();
+					const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+					alert(error);
+				} else if (response.status >= 500) {
+					alert('Server error');
+				}
+				return;
+			}
 
-		if (response.status >= 500) {
-			alert('Server error');
-		}
-
-		if (response.status === 200) {
 			const blob = await response.blob();
 			const url = window.URL.createObjectURL(blob);
 			const a = document.createElement('a');
@@ -709,24 +727,31 @@
 			document.body.appendChild(a);
 			a.click();
 			window.URL.revokeObjectURL(url);
-
 			document.body.removeChild(a);
+		} catch (error) {
+			console.error('Error downloading file:', error);
+			alert('Error downloading file: ' + error.message);
 		}
 	}
 
 	async function deleteFile(file: Files) {
-		const request = await fetch(`/api/files/${file.id}`, {
-			method: 'DELETE'
-		});
+		try {
+			const request = await fetch(`/api/files/${file.id}`, {
+				method: 'DELETE'
+			});
 
-		if (request.status >= 400 && request.status < 500) {
-			const jsonResponse = await request.json();
-			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
-			alert(error);
-		}
-
-		if (request.status >= 500) {
-			alert('Server error');
+			if (!request.ok) {
+				if (request.status >= 400 && request.status < 500) {
+					const jsonResponse = await request.json();
+					const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+					alert(error);
+				} else if (request.status >= 500) {
+					alert('Server error');
+				}
+			}
+		} catch (error) {
+			console.error('Error deleting file:', error);
+			alert('Error deleting file: ' + error.message);
 		}
 	}
 
@@ -945,7 +970,7 @@
 	});
 
 	let displayAttachments = false;
-	let chevronAttachments: IconDefinition = faChevronDown;
+	let chevronAttachments: any = faChevronDown;
 </script>
 
 {#if popUpAttachement}
@@ -1051,7 +1076,7 @@
 			>
 				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
 			</button>
-			<h2 class="text-xl text-gray-500 font-bold mb-8">New</h2>
+			<h2 class="text-xl text-gray-500 font-bold mb-8">{updateMode ? 'Edit' : 'New'}</h2>
 			<div class="h-full w-full flex overflow-y-auto">
 				<div class="flex flex-col gap-2 items-center w-full">
 					<div class="flex gap-2 text-gray-500 items-center font-semibold">
@@ -1122,7 +1147,7 @@
 									type="date"
 									class="p-2 px-3 border-2 border-gray-500 rounded-xl focus:outline-none"
 									bind:value={AccountingPaymentDate}
-									placeholder="Bill Date"
+									placeholder="Payment Date"
 									required
 								/>
 							</div>
@@ -1141,6 +1166,7 @@
 								</div>
 								<input
 									type="number"
+									step="0.01"
 									class="p-2 pr-10 px-3 border-2 border-gray-500 rounded-xl focus:outline-none"
 									bind:value={AccountingAmount}
 									placeholder="Amount"
@@ -1169,6 +1195,7 @@
 									class="p-2 px-3 border-2 border-gray-500 rounded-xl focus:outline-none"
 									required
 								>
+									<option value={null}>Select category</option>
 									{#each categoriesToDisplay as cat}
 										<option value={cat.id}>{cat.name}</option>
 									{/each}
@@ -1216,7 +1243,7 @@
 									on:click={submitFiles}>Submit</button
 								>
 								{#if submited}
-									<span class="text-green-600">✅ File Submited </span>
+									<span class="text-green-600">✅ File Submitted </span>
 								{/if}
 							</div>
 						</div>
@@ -1294,15 +1321,17 @@
 						class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
 						on:click={() => {
 							popUpAdd = false;
+							resetInput();
 						}}>Cancel</button
 					>
 				{/if}
 				<button
 					class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
 					on:click={() => {
-						popUpAdd = false;
 						addAccounting();
-						window.location.reload();
+						if (!updateAttachmentMode) {
+							popUpAdd = false;
+						}
 					}}
 				>
 					{#if updateMode}
@@ -1319,7 +1348,7 @@
 {#if categories}
 	<div class="grid grid-cols-1 w-full border-2 rounded-xl border-gray-400 p-4 bg-white mb-4">
 		{#if showStatistic}
-			<h1 class="font-bold text-lg mb-4">ACOUNTING</h1>
+			<h1 class="font-bold text-lg mb-4">ACCOUNTING</h1>
 		{/if}
 		<div class="flex mb-6">
 			<div class=" {isMobile ? 'w-[60%] text-sm' : 'w-[70%]'}">
@@ -1711,6 +1740,7 @@
 											}
 											AccountingAmount = accounting.amount;
 											AccountingCategory = accounting.categoryId;
+											AccountingcontactId = accounting.contactId;
 											AccountingIsMusicianFee = accounting.isMusicianFee;
 											AccountingId = accounting.id;
 											popUpAdd = true;
@@ -1722,6 +1752,10 @@
 							</td>
 						</tr>
 					{/each}
+				{:else}
+					<tr>
+						<td colspan="8" class="text-center p-4 text-gray-500">No accounting entries found</td>
+					</tr>
 				{/if}
 				</tbody>
 			</table>

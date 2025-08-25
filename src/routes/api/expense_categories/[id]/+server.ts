@@ -1,18 +1,26 @@
-import { API_URL } from '$env/static/private'
-import { getToken } from '$lib/server/authentification'
-import type { RequestHandler } from '@sveltejs/kit'
-/**
- * DELETE /expense_category?id=5
- * Supprime une catégorie selon son ID
- */
-export const DELETE: RequestHandler = async ({params, fetch, cookies }) => {
-	const res = await fetch(`${API_URL}/expense_categories/${params.id}`, {
-		method: 'DELETE',
-		headers: {
-			'Content-Type': 'application/json',
-			authorization: `${await getToken(cookies)}`
-		}
-	})
+import { API_URL } from '$env/static/private';
+import { getToken } from '$lib/server/authentification';
+import type { RequestHandler } from '@sveltejs/kit';
 
-	return res
-}
+export const DELETE: RequestHandler = async ({ cookies, params, fetch }) => {
+	try {
+		const res = await fetch(`${API_URL}/expense_categories/${params.id}`, {
+			method: 'DELETE',
+			headers: {
+				authorization: `${await getToken(cookies)}`
+			}
+		});
+
+		if (!res.ok) {
+			console.error('Backend error:', res.status, res.statusText);
+		}
+
+		return res;
+	} catch (error) {
+		console.error('API route error:', error);
+		return new Response(JSON.stringify({ error: 'Internal server error' }), {
+			status: 500,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
+};
