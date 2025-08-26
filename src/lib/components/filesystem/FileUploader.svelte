@@ -158,11 +158,11 @@
 
 <!-- ✅ DESIGN IDENTIQUE : Modal avec backdrop exact même style -->
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-	<!-- ✅ DESIGN IDENTIQUE : Container principal même style que les autres pages -->
-	<div class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+	<!-- ✅ FIX MOBILE : Container avec flex layout pour garantir la visibilité des boutons -->
+	<div class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
 
 		<!-- ✅ DESIGN IDENTIQUE : Header exact même style -->
-		<div class="bg-white border-2 border-[#8C8C8C] rounded-t-[10px] p-4">
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-t-[10px] p-4 flex-shrink-0">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-3">
 					<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
@@ -183,8 +183,8 @@
 			</div>
 		</div>
 
-		<!-- ✅ DESIGN IDENTIQUE : Content avec même padding et structure -->
-		<div class="p-4 space-y-4">
+		<!-- ✅ FIX MOBILE : Content scrollable mais footer toujours visible -->
+		<div class="flex-1 overflow-y-auto p-4 space-y-4">
 
 			<!-- ✅ DESIGN IDENTIQUE : Upload Area avec même style que les cards -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
@@ -245,8 +245,8 @@
 						</button>
 					</div>
 
-					<!-- ✅ DESIGN IDENTIQUE : Files list même style que FileSystemExplorer -->
-					<div class="max-h-48 overflow-y-auto space-y-{isMobile ? '2' : '3'}">
+					<!-- ✅ FIX MOBILE : Hauteur max ajustée pour mobile -->
+					<div class="max-h-{isMobile ? '60' : '48'} overflow-y-auto space-y-{isMobile ? '2' : '3'}">
 						{#each selectedFiles as file, index}
 							<div class="flex items-center justify-between p-{isMobile ? '3' : '4'} bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-[10px] hover:border-[#6B9AD9] transition-all duration-200 group">
 								<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
@@ -297,43 +297,43 @@
 					</div>
 				</div>
 			{/if}
+		</div>
 
-			<!-- ✅ DESIGN IDENTIQUE : Footer Actions même style -->
-			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
-				<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
-					<div class="text-sm text-gray-600 font-semibold">
-						{#if selectedFiles.length > 0}
-							Total: {selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024 < 1
-							? formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))
-							: (selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024).toFixed(2) + ' MB'}
+		<!-- ✅ FIX MOBILE : Footer fixe toujours visible -->
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-b-[10px] p-4 flex-shrink-0 border-t-0">
+			<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
+				<div class="text-sm text-gray-600 font-semibold">
+					{#if selectedFiles.length > 0}
+						Total: {selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024 < 1
+						? formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))
+						: (selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024).toFixed(2) + ' MB'}
+					{:else}
+						No files selected
+					{/if}
+				</div>
+
+				<div class="flex {isMobile ? 'flex-col w-full gap-2' : 'gap-3'}">
+					<button
+						class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
+						on:click={cancel}
+						disabled={isUploading}
+					>
+						Cancel
+					</button>
+
+					<!-- ✅ DESIGN IDENTIQUE : Upload button principal même style -->
+					<button
+						class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile ? 'w-full' : ''}"
+						disabled={selectedFiles.length === 0 || isUploading}
+						on:click={upload}
+					>
+						{#if isUploading}
+							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 						{:else}
-							No files selected
+							<Upload size={16} />
 						{/if}
-					</div>
-
-					<div class="flex {isMobile ? 'flex-col w-full gap-2' : 'gap-3'}">
-						<button
-							class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
-							on:click={cancel}
-							disabled={isUploading}
-						>
-							Cancel
-						</button>
-
-						<!-- ✅ DESIGN IDENTIQUE : Upload button principal même style -->
-						<button
-							class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile ? 'w-full' : ''}"
-							disabled={selectedFiles.length === 0 || isUploading}
-							on:click={upload}
-						>
-							{#if isUploading}
-								<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-							{:else}
-								<Upload size={16} />
-							{/if}
-							Upload {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
-						</button>
-					</div>
+						Upload {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
+					</button>
 				</div>
 			</div>
 		</div>
@@ -405,6 +405,11 @@
 
         .min-w-0 {
             min-width: 0;
+        }
+
+        /* FIX MOBILE : Hauteur max plus petite pour laisser place aux boutons */
+        .max-h-60 {
+            max-height: 15rem;
         }
     }
 
