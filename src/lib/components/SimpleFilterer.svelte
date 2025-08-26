@@ -49,7 +49,6 @@
 		if (browser) {
 			isMobile = window.innerWidth < 768;
 		}
-		
 	}
 
 	onMount(() => {
@@ -57,7 +56,6 @@
 		if (browser) {
 			window.addEventListener('resize', handleResize);
 		}
-		window.addEventListener('resize', handleResize);
 
 		return () => {
 			if (browser) {
@@ -103,8 +101,7 @@
 					dispatchOptionsUpdated();
 				}}
 				class="text-white absolute end-3 bottom-2.5 bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>Search</button
-			>
+			>Search</button>
 		</div>
 		{#if paginatorTop}
 			<Paginator bind:meta bind:options {changePage} orientation={isMobile ? 'vertical' : 'horizontal'}/>
@@ -120,7 +117,6 @@
 						options.order = options.order === 'asc' ? 'desc' : 'asc';
 						options.page = meta.firstPage;
 						dispatchOptionsUpdated();
-						console.log(data.columns);
 					}}
 				>
 					<span
