@@ -1,10 +1,12 @@
+// src/routes/api/projects/[id]/management/recruitment/recommendations/[recommendationId]/+server.ts
 import { getToken } from '$lib/server/authentification';
 import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
 
-export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
+export const POST: RequestHandler = async ({ params, cookies, request, fetch }) => {
 	const data = await request.json();
-	const res = await fetch(`${API_URL}/contact`, {
+
+	const res = await fetch(`${API_URL}/projects/${params.id}/management/recruitment/recommendations/${params.recommendationId}/handle`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -13,14 +15,5 @@ export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 		body: JSON.stringify(data)
 	});
 
-	return res;
-};
-
-export const GET: RequestHandler = async ({ cookies, fetch }) => {
-	const res = await fetch(`${API_URL}/contact/filterable`, {
-		headers: {
-			authorization: `${await getToken(cookies)}`
-		}
-	});
 	return res;
 };
