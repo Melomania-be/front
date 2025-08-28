@@ -808,359 +808,359 @@
 										</h3>
 										<p class="text-sm text-blue-600 font-medium">
 											{contact.section?.name || 'No section defined'}
-									</p>
-								</div>
-							</div>
-							<!-- Quick status update dropdown in mobile -->
-							<div class="relative">
-								<select
-									on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
-									value={contact.status}
-									class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium"
-								>
-									{#each allStatuses as status}
-										<option value={status}>{getStatusLabel(status)}</option>
-									{/each}
-								</select>
-							</div>
-						</div>
-
-						<!-- Contact information -->
-						<div class="mb-3">
-							<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
-								<div class="flex items-center space-x-3 mb-3">
-									<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
-										<Mail size={14} class="text-white" />
+										</p>
 									</div>
-									<h3 class="font-bold text-sm text-gray-900 uppercase">CONTACT</h3>
 								</div>
-								<div class="bg-gray-50 border-2 border-gray-200 rounded-[6px] p-3 space-y-2">
-									{#if contact.email}
-										<div class="flex items-center text-sm text-gray-700 break-all">
-											<Mail size={12} class="mr-2 flex-shrink-0 text-blue-600" />
-											<span class="font-medium">{contact.email}</span>
-										</div>
-									{/if}
-									{#if contact.phone}
-										<div class="flex items-center text-sm text-gray-700">
-											<Phone size={12} class="mr-2 flex-shrink-0 text-green-600" />
-											<span class="font-medium">{contact.phone}</span>
-										</div>
-									{/if}
-									{#if contact.messenger}
-										<div class="flex items-center text-sm text-gray-700">
-											<MessageCircle size={12} class="mr-2 flex-shrink-0 text-purple-600" />
-											<span class="font-medium">{contact.messenger}</span>
-										</div>
-									{/if}
-									{#if !contact.email && !contact.phone && !contact.messenger}
-										<p class="text-sm text-gray-500 italic">No contact information available</p>
-									{/if}
+								<!-- Quick status update dropdown in mobile -->
+								<div class="relative">
+									<select
+										on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
+										value={contact.status}
+										class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium"
+									>
+										{#each allStatuses as status}
+											<option value={status}>{getStatusLabel(status)}</option>
+										{/each}
+									</select>
 								</div>
-
-								<!-- Recommendation email button for mobile -->
-								{#if isRecommendedContact(contact) && contact.email}
-									<div class="mt-3">
-										<button
-											on:click={() => openRecommendationEmailModal(contact)}
-											class="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center justify-center gap-2"
-										>
-											<Star size={14} />
-											Send recommendation email
-										</button>
-									</div>
-								{/if}
 							</div>
-						</div>
 
-						<!-- Source info avec nom du recommandeur (MOBILE) -->
-						<div class="mb-3">
-							<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
-								<div class="flex items-center space-x-3 mb-3">
-									<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
-										{#if getSourceIcon(contact)}
-											<svelte:component this={getSourceIcon(contact)} size={14} class="text-white" />
-										{:else}
-											<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"></path>
-											</svg>
+							<!-- Contact information -->
+							<div class="mb-3">
+								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
+									<div class="flex items-center space-x-3 mb-3">
+										<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
+											<Mail size={14} class="text-white" />
+										</div>
+										<h3 class="font-bold text-sm text-gray-900 uppercase">CONTACT</h3>
+									</div>
+									<div class="bg-gray-50 border-2 border-gray-200 rounded-[6px] p-3 space-y-2">
+										{#if contact.email}
+											<div class="flex items-center text-sm text-gray-700 break-all">
+												<Mail size={12} class="mr-2 flex-shrink-0 text-blue-600" />
+												<span class="font-medium">{contact.email}</span>
+											</div>
+										{/if}
+										{#if contact.phone}
+											<div class="flex items-center text-sm text-gray-700">
+												<Phone size={12} class="mr-2 flex-shrink-0 text-green-600" />
+												<span class="font-medium">{contact.phone}</span>
+											</div>
+										{/if}
+										{#if contact.messenger}
+											<div class="flex items-center text-sm text-gray-700">
+												<MessageCircle size={12} class="mr-2 flex-shrink-0 text-purple-600" />
+												<span class="font-medium">{contact.messenger}</span>
+											</div>
+										{/if}
+										{#if !contact.email && !contact.phone && !contact.messenger}
+											<p class="text-sm text-gray-500 italic">No contact information available</p>
 										{/if}
 									</div>
-									<h3 class="font-bold text-sm text-gray-900 uppercase">SOURCE</h3>
-								</div>
-								<div class="space-y-2">
-									{#if contact.is_duplicate}
-										<div class="bg-orange-50 border-2 border-orange-200 rounded-[6px] p-2">
-											<span class="text-xs text-orange-700 font-bold">Potential duplicate</span>
+
+									<!-- Recommendation email button for mobile -->
+									{#if isRecommendedContact(contact) && contact.email}
+										<div class="mt-3">
+											<button
+												on:click={() => openRecommendationEmailModal(contact)}
+												class="w-full px-3 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center justify-center gap-2"
+											>
+												<Star size={14} />
+												Send recommendation email
+											</button>
 										</div>
 									{/if}
-									<div class="{getSourceStyle(contact)} border-2 rounded-[6px] p-2">
-										<span class="text-xs font-bold">{getSourceDisplay(contact)}</span>
-									</div>
 								</div>
 							</div>
-						</div>
 
-						<!-- Status & timing -->
-						<div class="mb-3">
-							<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
-								<div class="flex items-center space-x-3 mb-3">
-									<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
-										<Clock size={14} class="text-white" />
-									</div>
-									<h3 class="font-bold text-sm text-gray-900 uppercase">STATUS & TIMING</h3>
-								</div>
-								<div class="grid grid-cols-1 gap-3">
-									<div class="bg-gray-50 border-2 border-gray-300 rounded-[6px] p-3">
-										<div class="flex items-center mb-2">
-											<svg class="w-3 h-3 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-											</svg>
-											<span class="text-xs font-bold text-gray-600 uppercase">Contact Date</span>
-										</div>
-										{#if contact.contact_date}
-											<p class="text-sm font-bold text-gray-900">
-												{formatContactDate(contact.contact_date)}
-											</p>
-											{#if getDaysSinceContact(contact.contact_date)}
-												<p class="text-xs text-gray-500 mt-1">
-													{getDaysSinceContact(contact.contact_date)} day(s) ago
-												</p>
+							<!-- Source info avec nom du recommandeur (MOBILE) -->
+							<div class="mb-3">
+								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
+									<div class="flex items-center space-x-3 mb-3">
+										<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
+											{#if getSourceIcon(contact)}
+												<svelte:component this={getSourceIcon(contact)} size={14} class="text-white" />
+											{:else}
+												<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"></path>
+												</svg>
 											{/if}
-										{:else}
-											<p class="text-sm font-bold text-gray-400">Not contacted</p>
+										</div>
+										<h3 class="font-bold text-sm text-gray-900 uppercase">SOURCE</h3>
+									</div>
+									<div class="space-y-2">
+										{#if contact.is_duplicate}
+											<div class="bg-orange-50 border-2 border-orange-200 rounded-[6px] p-2">
+												<span class="text-xs text-orange-700 font-bold">Potential duplicate</span>
+											</div>
 										{/if}
+										<div class="{getSourceStyle(contact)} border-2 rounded-[6px] p-2">
+											<span class="text-xs font-bold">{getSourceDisplay(contact)}</span>
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
 
-						<!-- Contacted by -->
-						{#if contact.contacted_by}
-							<div class="mb-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-[8px]">
-								<div class="flex items-center">
-									<User size={14} class="text-blue-600 mr-2" />
-									<span class="text-sm font-bold text-blue-700">Contacted by: {contact.contacted_by}</span>
+							<!-- Status & timing -->
+							<div class="mb-3">
+								<div class="bg-white border-2 border-[#8C8C8C] rounded-[8px] p-3">
+									<div class="flex items-center space-x-3 mb-3">
+										<div class="flex items-center justify-center w-8 h-8 bg-[#6B9AD9] rounded-[6px]">
+											<Clock size={14} class="text-white" />
+										</div>
+										<h3 class="font-bold text-sm text-gray-900 uppercase">STATUS & TIMING</h3>
+									</div>
+									<div class="grid grid-cols-1 gap-3">
+										<div class="bg-gray-50 border-2 border-gray-300 rounded-[6px] p-3">
+											<div class="flex items-center mb-2">
+												<svg class="w-3 h-3 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+												</svg>
+												<span class="text-xs font-bold text-gray-600 uppercase">Contact Date</span>
+											</div>
+											{#if contact.contact_date}
+												<p class="text-sm font-bold text-gray-900">
+													{formatContactDate(contact.contact_date)}
+												</p>
+												{#if getDaysSinceContact(contact.contact_date)}
+													<p class="text-xs text-gray-500 mt-1">
+														{getDaysSinceContact(contact.contact_date)} day(s) ago
+													</p>
+												{/if}
+											{:else}
+												<p class="text-sm font-bold text-gray-400">Not contacted</p>
+											{/if}
+										</div>
+									</div>
 								</div>
 							</div>
-						{/if}
 
-						<!-- Actions -->
-						<div class="pt-3 border-t-2 border-gray-200">
-							<ContactActionButtons
-								{contact}
-								on:updateStatus={(e) => updateContactStatus(contact.id, e.detail)}
-								on:delete={() => deleteContact(contact.id)}
-							/>
+							<!-- Contacted by -->
+							{#if contact.contacted_by}
+								<div class="mb-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-[8px]">
+									<div class="flex items-center">
+										<User size={14} class="text-blue-600 mr-2" />
+										<span class="text-sm font-bold text-blue-700">Contacted by: {contact.contacted_by}</span>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Actions -->
+							<div class="pt-3 border-t-2 border-gray-200">
+								<ContactActionButtons
+									{contact}
+									on:updateStatus={(e) => updateContactStatus(contact.id, e.detail)}
+									on:delete={() => deleteContact(contact.id)}
+								/>
+							</div>
 						</div>
-					</div>
-				{/each}
-			</div>
-		{:else}
-			<!-- Desktop table version -->
-			<div class="w-full overflow-x-auto">
-				<table class="w-full min-w-[1200px] text-sm text-left text-gray-500">
-					<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
-					<tr>
-						<th class="px-4 py-3">
-							<input
-								type="checkbox"
-								on:change={(e) => e.target.checked ? selectAllContacts() : clearSelection()}
-								checked={selectedContacts.length === safeContacts.length && safeContacts.length > 0}
-								class="rounded"
-								disabled={isRefreshing}
-							/>
-						</th>
-						<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('name')}>
-							<div class="flex items-center gap-1">
-								Contact
-								<svelte:component this={getSortIcon('name')} size={12} />
-							</div>
-						</th>
-						<th class="px-4 py-3">Section</th>
-						<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('status')}>
-							<div class="flex items-center gap-1">
-								Status
-								<svelte:component this={getSortIcon('status')} size={12} />
-							</div>
-						</th>
-						<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('contact_date')}>
-							<div class="flex items-center gap-1">
-								Contact date
-								<svelte:component this={getSortIcon('contact_date')} size={12} />
-							</div>
-						</th>
-						<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('contacted_by')}>
-							<div class="flex items-center gap-1">
-								Contacted by
-								<svelte:component this={getSortIcon('contacted_by')} size={12} />
-							</div>
-						</th>
-						<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('source')">
-							<div class="flex items-center gap-1">
-								Source
-								<svelte:component this={getSortIcon('source')} size={12} />
-							</div>
-						</th>
-						<th class="px-4 py-3">Actions</th>
-					</tr>
-					</thead>
-					<tbody>
-					{#each safeContacts as contact (contact.id)}
-						<tr class="border-b hover:bg-gray-50 {shouldHighlightFollowUp(contact) ? 'bg-yellow-50' : ''} {contact.is_duplicate ? 'bg-orange-50' : ''}">
-							<td class="px-4 py-3">
+					{/each}
+				</div>
+			{:else}
+				<!-- Desktop table version -->
+				<div class="w-full overflow-x-auto">
+					<table class="w-full min-w-[1200px] text-sm text-left text-gray-500">
+						<thead class="bg-gray-100 text-xs text-gray-700 uppercase">
+						<tr>
+							<th class="px-4 py-3">
 								<input
 									type="checkbox"
-									checked={selectedContacts.includes(contact.id)}
-									on:change={() => toggleContactSelection(contact.id)}
+									on:change={(e) => e.target.checked ? selectAllContacts() : clearSelection()}
+									checked={selectedContacts.length === safeContacts.length && safeContacts.length > 0}
 									class="rounded"
 									disabled={isRefreshing}
 								/>
-							</td>
-
-							<td class="px-4 py-3">
-								<div class="flex items-center space-x-3">
-									<div class="w-8 h-8 bg-[#6B9AD9] rounded-[6px] flex items-center justify-center">
-										<span class="text-white font-bold text-xs">
-											{contact.first_name?.charAt(0)}{contact.last_name?.charAt(0)}
-										</span>
-									</div>
-									<div>
-										<div class="font-medium text-gray-900">
-											{contact.first_name || 'First name'} {contact.last_name || 'Last name'}
-										</div>
-										<div class="text-sm text-gray-500 space-y-1">
-											{#if contact.email}
-												<div class="flex items-center gap-1">
-													<Mail size={12} />
-													{contact.email}
-												</div>
-											{/if}
-											{#if contact.phone}
-												<div class="flex items-center gap-1">
-													<Phone size={12} />
-													{contact.phone}
-												</div>
-											{/if}
-											{#if contact.messenger}
-												<div class="flex items-center gap-1">
-													<MessageCircle size={12} />
-													{contact.messenger}
-												</div>
-											{/if}
-										</div>
-										{#if contact.is_duplicate}
-											<div class="text-xs text-orange-600 font-medium mt-1">
-												Potential duplicate
-											</div>
-										{/if}
-									</div>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('name')}>
+								<div class="flex items-center gap-1">
+									Contact
+									<svelte:component this={getSortIcon('name')} size={12} />
 								</div>
-							</td>
-
-							<td class="px-4 py-3">
-								<span class="text-blue-600 font-medium">
-									{contact.section?.name || '-'}
-								</span>
-							</td>
-
-							<td class="px-4 py-3">
-								<!-- Quick status update dropdown -->
-								<select
-									on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
-									value={contact.status}
-									class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium min-w-[120px]"
-								>
-									{#each allStatuses as status}
-										<option value={status}>{getStatusLabel(status)}</option>
-									{/each}
-								</select>
-								{#if shouldHighlightFollowUp(contact)}
-									<div class="text-xs text-yellow-600 font-medium mt-1">Follow up needed</div>
-								{/if}
-							</td>
-
-							<td class="px-4 py-3">
-								{#if contact.contact_date}
-									<div class="text-sm">
-										{formatContactDate(contact.contact_date)}
-										{#if getDaysSinceContact(contact.contact_date)}
-											<div class="text-xs text-gray-500">
-												{getDaysSinceContact(contact.contact_date)} day(s) ago
-											</div>
-										{/if}
-									</div>
-								{:else}
-									<span class="text-gray-400">-</span>
-								{/if}
-							</td>
-
-							<td class="px-4 py-3">
-								{#if contact.contacted_by}
-									<div class="bg-blue-50 border border-blue-200 rounded-[4px] p-2">
-										<div class="flex items-center gap-1">
-											<User size={12} class="text-blue-600" />
-											<span class="text-sm font-medium text-blue-700">{contact.contacted_by}</span>
-										</div>
-									</div>
-								{:else}
-									<div class="bg-gray-50 border border-gray-200 rounded-[4px] p-2">
-										<span class="text-gray-400 text-sm">Not defined</span>
-									</div>
-								{/if}
-							</td>
-
-							<!-- COLONNE SOURCE MODIFIÉE POUR AFFICHER LE RECOMMANDEUR -->
-							<td class="px-4 py-3">
-								<div class="space-y-1">
-									<div class="inline-block">
-										<span class="text-xs px-2 py-1 rounded-[4px] border font-bold {getSourceStyle(contact)}">
-											{#if getSourceIcon(contact)}
-												<svelte:component this={getSourceIcon(contact)} size={12} class="inline mr-1" />
-											{/if}
-											{getSourceDisplay(contact)}
-										</span>
-									</div>
+							</th>
+							<th class="px-4 py-3">Section</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('status')}>
+								<div class="flex items-center gap-1">
+									Status
+									<svelte:component this={getSortIcon('status')} size={12} />
 								</div>
-							</td>
-
-							<td class="px-4 py-3">
-								<div class="bg-white border border-[#8C8C8C] rounded-[6px] p-2">
-									<div class="flex items-center space-x-2 mb-2">
-										<div class="flex items-center justify-center w-6 h-6 bg-[#6B9AD9] rounded-[4px]">
-											<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
-											</svg>
-										</div>
-										<span class="text-xs font-bold text-gray-700 uppercase">Actions</span>
-									</div>
-
-									<!-- Recommendation email button for desktop -->
-									{#if isRecommendedContact(contact) && contact.email}
-										<button
-											on:click={() => openRecommendationEmailModal(contact)}
-											class="w-full mb-2 px-3 py-2 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center justify-center gap-1"
-										>
-											<Star size={12} />
-											Recommendation email
-										</button>
-									{/if}
-
-									<ContactActionButtons
-										{contact}
-										on:updateStatus={(e) => updateContactStatus(contact.id, e.detail)}
-										on:delete={() => deleteContact(contact.id)}
-									/>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('contact_date')}>
+								<div class="flex items-center gap-1">
+									Contact date
+									<svelte:component this={getSortIcon('contact_date')} size={12} />
 								</div>
-							</td>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('contacted_by')}>
+								<div class="flex items-center gap-1">
+									Contacted by
+									<svelte:component this={getSortIcon('contacted_by')} size={12} />
+								</div>
+							</th>
+							<th class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" on:click={() => sortBy('source')}>
+								<div class="flex items-center gap-1">
+									Source
+									<svelte:component this={getSortIcon('source')} size={12} />
+								</div>
+							</th>
+							<th class="px-4 py-3">Actions</th>
 						</tr>
-					{/each}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-	</SimpleFilterer>
-{/if}
+						</thead>
+						<tbody>
+						{#each safeContacts as contact (contact.id)}
+							<tr class="border-b hover:bg-gray-50 {shouldHighlightFollowUp(contact) ? 'bg-yellow-50' : ''} {contact.is_duplicate ? 'bg-orange-50' : ''}">
+								<td class="px-4 py-3">
+									<input
+										type="checkbox"
+										checked={selectedContacts.includes(contact.id)}
+										on:change={() => toggleContactSelection(contact.id)}
+										class="rounded"
+										disabled={isRefreshing}
+									/>
+								</td>
+
+								<td class="px-4 py-3">
+									<div class="flex items-center space-x-3">
+										<div class="w-8 h-8 bg-[#6B9AD9] rounded-[6px] flex items-center justify-center">
+											<span class="text-white font-bold text-xs">
+												{contact.first_name?.charAt(0)}{contact.last_name?.charAt(0)}
+											</span>
+										</div>
+										<div>
+											<div class="font-medium text-gray-900">
+												{contact.first_name || 'First name'} {contact.last_name || 'Last name'}
+											</div>
+											<div class="text-sm text-gray-500 space-y-1">
+												{#if contact.email}
+													<div class="flex items-center gap-1">
+														<Mail size={12} />
+														{contact.email}
+													</div>
+												{/if}
+												{#if contact.phone}
+													<div class="flex items-center gap-1">
+														<Phone size={12} />
+														{contact.phone}
+													</div>
+												{/if}
+												{#if contact.messenger}
+													<div class="flex items-center gap-1">
+														<MessageCircle size={12} />
+														{contact.messenger}
+													</div>
+												{/if}
+											</div>
+											{#if contact.is_duplicate}
+												<div class="text-xs text-orange-600 font-medium mt-1">
+													Potential duplicate
+												</div>
+											{/if}
+										</div>
+									</div>
+								</td>
+
+								<td class="px-4 py-3">
+									<span class="text-blue-600 font-medium">
+										{contact.section?.name || '-'}
+									</span>
+								</td>
+
+								<td class="px-4 py-3">
+									<!-- Quick status update dropdown -->
+									<select
+										on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
+										value={contact.status}
+										class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium min-w-[120px]"
+									>
+										{#each allStatuses as status}
+											<option value={status}>{getStatusLabel(status)}</option>
+										{/each}
+									</select>
+									{#if shouldHighlightFollowUp(contact)}
+										<div class="text-xs text-yellow-600 font-medium mt-1">Follow up needed</div>
+									{/if}
+								</td>
+
+								<td class="px-4 py-3">
+									{#if contact.contact_date}
+										<div class="text-sm">
+											{formatContactDate(contact.contact_date)}
+											{#if getDaysSinceContact(contact.contact_date)}
+												<div class="text-xs text-gray-500">
+													{getDaysSinceContact(contact.contact_date)} day(s) ago
+												</div>
+											{/if}
+										</div>
+									{:else}
+										<span class="text-gray-400">-</span>
+									{/if}
+								</td>
+
+								<td class="px-4 py-3">
+									{#if contact.contacted_by}
+										<div class="bg-blue-50 border border-blue-200 rounded-[4px] p-2">
+											<div class="flex items-center gap-1">
+												<User size={12} class="text-blue-600" />
+												<span class="text-sm font-medium text-blue-700">{contact.contacted_by}</span>
+											</div>
+										</div>
+									{:else}
+										<div class="bg-gray-50 border border-gray-200 rounded-[4px] p-2">
+											<span class="text-gray-400 text-sm">Not defined</span>
+										</div>
+									{/if}
+								</td>
+
+								<!-- COLONNE SOURCE MODIFIÉE POUR AFFICHER LE RECOMMANDEUR -->
+								<td class="px-4 py-3">
+									<div class="space-y-1">
+										<div class="inline-block">
+											<span class="text-xs px-2 py-1 rounded-[4px] border font-bold {getSourceStyle(contact)}">
+												{#if getSourceIcon(contact)}
+													<svelte:component this={getSourceIcon(contact)} size={12} class="inline mr-1" />
+												{/if}
+												{getSourceDisplay(contact)}
+											</span>
+										</div>
+									</div>
+								</td>
+
+								<td class="px-4 py-3">
+									<div class="bg-white border border-[#8C8C8C] rounded-[6px] p-2">
+										<div class="flex items-center space-x-2 mb-2">
+											<div class="flex items-center justify-center w-6 h-6 bg-[#6B9AD9] rounded-[4px]">
+												<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+												</svg>
+											</div>
+											<span class="text-xs font-bold text-gray-700 uppercase">Actions</span>
+										</div>
+
+										<!-- Recommendation email button for desktop -->
+										{#if isRecommendedContact(contact) && contact.email}
+											<button
+												on:click={() => openRecommendationEmailModal(contact)}
+												class="w-full mb-2 px-3 py-2 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 font-semibold flex items-center justify-center gap-1"
+											>
+												<Star size={12} />
+												Recommendation email
+											</button>
+										{/if}
+
+										<ContactActionButtons
+											{contact}
+											on:updateStatus={(e) => updateContactStatus(contact.id, e.detail)}
+											on:delete={() => deleteContact(contact.id)}
+										/>
+									</div>
+								</td>
+							</tr>
+						{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+		</SimpleFilterer>
+	{/if}
 </div>
 
 <!-- Modal pour gérer les statuts personnalisés -->
