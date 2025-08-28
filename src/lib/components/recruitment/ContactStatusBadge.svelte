@@ -52,11 +52,10 @@
 </script>
 
 <div class="inline-flex items-center gap-1">
-  <span class="px-2 py-1 text-xs font-medium rounded-full border {config.color} {shouldFollowUp ? 'animate-pulse ring-2 ring-yellow-400' : ''}">
-    <svelte:component this={IconComponent} size={12} class="inline mr-1" />
+	<span class="px-2 py-1 text-xs font-medium rounded-full border {config.color} {shouldFollowUp ? 'animate-pulse ring-2 ring-yellow-400' : ''}">
+		<svelte:component this={IconComponent} size={12} class="inline mr-1" />
 		{config.label}
-  </span>
-
+	</span>
 	{#if shouldFollowUp}
 		<span class="text-xs text-yellow-600 font-medium">Follow up</span>
 	{/if}
