@@ -316,7 +316,7 @@
 {#if popUpSave}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 ">
 		<div
-			class="bg-white p-6 rounded-xl shadow-xl  text-center flex flex-col items-center justify-center {isMobile ? "h-[20%] w-[80%]" : "h-[20%] w-[20%]"}
+			class="bg-white p-6 min-h-[200px] rounded-xl shadow-xl  text-center flex flex-col items-center justify-center {isMobile ? "h-[20%] w-[80%]" : "h-[20%] w-[20%]"}
 		"
 		>
 			<h2 class="text-xl text-gray-500 font-bold mb-10">Changes saved successfully</h2>
@@ -443,7 +443,7 @@
 							</div>
 							{#if project.sectionGroup}
 								<p class="ml-4 uppercase mt-3 font-semibold">Composed of</p>
-								<div class="grid  text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4 {isMobile ? "grid-cols-2" : "grid-cols-8"}">
+								<div class="grid  text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4 {isMobile ? "grid-cols-2" : "grid-cols-5"}">
 									{#each project.sectionGroup.sections as section}
 										<div
 											class="flex flex-col border-2 border-gray-400 rounded-full text-gray-500 p-1"

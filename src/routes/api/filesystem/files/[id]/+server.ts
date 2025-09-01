@@ -38,7 +38,9 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 			});
 		}
 
-		// Procéder à la suppression si le fichier est vraiment général
+	
+
+		// ✅ Procéder à la suppression si le fichier est vraiment général
 		const response = await fetch(`${API_URL}/filesystem/files/${params.id}`, {
 			method: 'DELETE',
 			headers: {

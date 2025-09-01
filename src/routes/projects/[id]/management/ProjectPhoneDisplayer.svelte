@@ -9,26 +9,68 @@
 	import {
 		faCalendarCheck,
 		faDiagramProject,
+		faEllipsis,
 		faEnvelope,
 		faMusic,
 		faSheetPlastic,
 		faUsers,
-		faUserPlus  // ← Ajout de l'icône recrutement
+		faWallet,
+		faUserPlus,
+		type IconDefinition
 	} from '@fortawesome/free-solid-svg-icons';
+	import { Slice } from 'lucide-svelte';
+	import { TableHead } from 'flowbite-svelte';
+	import { fade, scale } from 'svelte/transition';
 
-	export let project : any;
+	export let project: any;
 
 	export let selectedTab: number;
 
 	let participantsUrl: string;
 	let maillingUrl: string;
 	let projectUrl: string;
-	let callsheetUrl : string;
-	let attendanceUrl : string;
-	let auditionUrl : string;
-	let recruitmentUrl: string;  // ← Ajout URL recrutement
+	let callsheetUrl: string;
+	let attendanceUrl: string;
+	let auditionUrl: string;
+	let accountingUrl: string;
+	let recruitmentUrl: string;
 
-	let participantNotValidated : number = 0;
+	let participantNotValidated: number = 0;
+
+	let tabs: {
+		url: string;
+		name: string;
+		icon: IconDefinition;
+		notifications: number;
+		num: number;
+	}[] = [
+				{
+					url: "",
+					name: 'Project Details',
+					icon: faDiagramProject,
+					notifications: 0,
+					num: 0
+				},
+				{
+					url: "",
+					name: 'Participants',
+					icon: faUsers,
+					notifications: participantNotValidated,
+					num: 1
+				},
+				{ url: "", name: 'Mailing', icon: faEnvelope, notifications: 0, num: 2 },
+				{ url: "", name: 'Callsheet', icon: faSheetPlastic, notifications: 0, num: 3 },
+				{
+					url: "",
+					name: 'Attendances',
+					icon: faCalendarCheck,
+					notifications: 0,
+					num: 4
+				},
+				{ url: "", name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
+				{ url: "", name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
+				{ url: "", name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+			];
 
 	// Reactif : met à jour les URLs dès que project devient dispo
 	$: if (project) {
@@ -38,19 +80,50 @@
 		callsheetUrl = `/projects/${project.id}/management/callsheets`;
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
 		auditionUrl = `/projects/${project.id}/management/auditions`;
-		recruitmentUrl = `/projects/${project.id}/management/recruitment`;  // ← Ajout
+		accountingUrl = `/projects/${project.id}/management/accounting`;
+		recruitmentUrl = `/projects/${project.id}/management/recruitment`;
 
-		if(project?.participants){
-			for(const p of project.participants){
-				if( !p.accepted ){
+		if (project?.participants) {
+			participantNotValidated = 0;
+			for (const p of project.participants) {
+				if (!p.accepted) {
 					participantNotValidated++;
 				}
 			}
+
+			tabs = [
+				{
+					url: projectUrl,
+					name: 'Project Details',
+					icon: faDiagramProject,
+					notifications: 0,
+					num: 0
+				},
+				{
+					url: participantsUrl,
+					name: 'Participants',
+					icon: faUsers,
+					notifications: participantNotValidated,
+					num: 1
+				},
+				{ url: maillingUrl, name: 'Mailing', icon: faEnvelope, notifications: 0, num: 2 },
+				{ url: callsheetUrl, name: 'Callsheet', icon: faSheetPlastic, notifications: 0, num: 3 },
+				{
+					url: attendanceUrl,
+					name: 'Attendances',
+					icon: faCalendarCheck,
+					notifications: 0,
+					num: 4
+				},
+				{ url: auditionUrl, name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
+				{ url: accountingUrl, name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
+				{ url: recruitmentUrl, name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+			];
 		}
 	}
 
 	let isMobile = false;
-	let screenDirection : "horizontal" | "vertical" = "vertical";
+	let screenDirection: 'horizontal' | 'vertical' = 'vertical';
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
@@ -71,98 +144,152 @@
 			window.removeEventListener('resize', checkDirection);
 		};
 	});
+
+	let showMoretabs = false;
+
+	export function clickOutside(node: HTMLElement, callback: () => void) {
+		const handleClick = (event: MouseEvent) => {
+			if (!node.contains(event.target as Node)) {
+				callback();
+			}
+		};
+
+		document.addEventListener('click', handleClick, true);
+
+		return {
+			destroy() {
+				document.removeEventListener('click', handleClick, true);
+			}
+		};
+	}
 </script>
 
 <div class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_rgba(0,0,0,0.1)] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl">
 	{#if isMobile}
 		{#if project}
-			<!--Tabs avec recrutement ajouté-->
+			<!--Tabs-->
 			<div class="ml-3 w-full text-lg text-gray-400 font-semibold flex mr-3">
-				<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(projectUrl)}>
-					<div class="{selectedTab === 0 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-                <Fa icon={faDiagramProject} class="text-[16px]" style="color: {selectedTab === 0 ? "white;" : "#8C8C8C;" }"/>
-            </div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(participantsUrl)}>
-				<div class="{selectedTab === 1 ? " bg-[#6B9AD9] w-[33px] flex items-center justify-center" : ""} p-2 rounded-full">
-            	<Fa icon={faUsers} class="text-[16px]" style="color: {selectedTab === 1 ? "white;" : "#8C8C8C;" }" />
-			</div>
-				{#if participantNotValidated}
-					<div class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center">
-						<span class="-mt-[6.8px]">{participantNotValidated}</span>
+				{#each tabs.slice(0, 5) as tab}
+					<button
+						class="flex-1 flex p-3 justify-center items-center"
+						on:click={() => goto(tab.url)}
+					>
+						<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+							<Fa
+								icon={tab.icon}
+								class="text-[16px]"
+								style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+							/>
+						</div>
+						{#if tab.notifications}
+							<div
+								class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+							>
+								<span class="-mt-[6.8px]">{participantNotValidated}</span>
+							</div>
+						{/if}
+					</button>
+				{/each}
+				<button
+					class="flex-1 flex p-3 justify-center items-center relative"
+					on:click={() => (showMoretabs = !showMoretabs)}
+				>
+					<div class="p-2 rounded-full">
+						<Fa icon={faEllipsis} class="text-[16px]" style="color: #8C8C8C;" />
 					</div>
-				{/if}
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(maillingUrl)}>
-				<div class="{selectedTab === 2 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faEnvelope} class="text-[16px]" style="color:  {selectedTab === 2 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(callsheetUrl)}>
-				<div class="{selectedTab === 3 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faSheetPlastic} class="text-[16px]" style="color: {selectedTab === 3 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(attendanceUrl)}>
-				<div class="{selectedTab === 4 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faCalendarCheck} class="text-[16px]" style="color: {selectedTab === 4 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(auditionUrl)}>
-				<div class="{selectedTab === 5 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<!-- ← Ajout du bouton recrutement -->
-			<button class="flex-1 flex p-3 justify-center items-center" on:click={() => goto(recruitmentUrl)}>
-				<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faUserPlus} class="text-[16px]" style="color: {selectedTab === 6 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
+					{#if showMoretabs}
+						<div
+							use:clickOutside={() => (showMoretabs = false)}
+							transition:scale={{ duration: 200, start: 0.9 }}
+							class="absolute bg-white bottom-16 right-[1px] rounded-lg shadow-xl p-4"
+						>
+							<div class=" grid grid-cols-2 gap-2">
+							{#each tabs.slice(5, tabs.length) as tab}
+								<button
+									class="flex-1 flex p-3 justify-center items-center"
+									on:click={() => goto(tab.url)}
+								>
+									<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+										<Fa
+											icon={tab.icon}
+											class="text-[16px]"
+											style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+										/>
+									</div>
+									{#if tab.notifications}
+										<div
+											class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+										>
+											<span class="-mt-[6.8px]">{participantNotValidated}</span>
+										</div>
+									{/if}
+								</button>
+							{/each}
+							</div>
+						</div>
+					{/if}
+				</button>
 			</div>
 		{:else}
 			<div class="ml-3 w-full text-lg text-gray-400 font-semibold flex mr-3">
-				<button class="flex-1 flex p-3 justify-center items-center">
-					<div class="{selectedTab === 0 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-                <Fa icon={faDiagramProject} class="text-[16px]" style="color: {selectedTab === 0 ? "white;" : "#8C8C8C;" }"/>
-            </div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center">
-				<div class="{selectedTab === 1 ? " bg-[#6B9AD9] w-[33px] flex items-center justify-center" : ""} p-2 rounded-full">
-            	<Fa icon={faUsers} class="text-[16px]" style="color: {selectedTab === 1 ? "white;" : "#8C8C8C;" }" />
-			</div>
-				{#if participantNotValidated}
-					<div class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center">
-						<span class="-mt-[6.8px]">{participantNotValidated}</span>
+				{#each tabs.slice(0, 5) as tab}
+					<button
+						class="flex-1 flex p-3 justify-center items-center"
+					>
+						<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+							<Fa
+								icon={tab.icon}
+								class="text-[16px]"
+								style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+							/>
+						</div>
+						{#if tab.notifications}
+							<div
+								class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+							>
+								<span class="-mt-[6.8px]">{participantNotValidated}</span>
+							</div>
+						{/if}
+					</button>
+				{/each}
+				<button
+					class="flex-1 flex p-3 justify-center items-center relative"
+				>
+					<div class="p-2 rounded-full">
+						<Fa icon={faEllipsis} class="text-[16px]" style="color: #8C8C8C;" />
 					</div>
-				{/if}
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center">
-				<div class="{selectedTab === 2 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faEnvelope} class="text-[16px]" style="color:  {selectedTab === 2 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center">
-				<div class="{selectedTab === 3 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faSheetPlastic} class="text-[16px]" style="color: {selectedTab === 3 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center">
-				<div class="{selectedTab === 4 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faCalendarCheck} class="text-[16px]" style="color: {selectedTab === 4 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<button class="flex-1 flex p-3 justify-center items-center">
-				<div class="{selectedTab === 5 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faMusic} class="text-[16px]" style="color: {selectedTab === 5 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
-			<!-- ← Ajout du bouton recrutement désactivé -->
-			<button class="flex-1 flex p-3 justify-center items-center">
-				<div class="{selectedTab === 6 ? " bg-[#6B9AD9]" : ""} p-2 rounded-full">
-            <Fa icon={faUserPlus} class="text-[16px]" style="color: {selectedTab === 6 ? "white;" : "#8C8C8C;" }" />
-			</div>
-			</button>
+					{#if showMoretabs}
+						<div
+							use:clickOutside={() => (showMoretabs = false)}
+							transition:scale={{ duration: 200, start: 0.9 }}
+							class="absolute bg-white bottom-16 right-[1px] rounded-lg shadow-xl p-4"
+						>
+							<div class=" grid grid-cols-2 gap-2">
+							{#each tabs.slice(5, tabs.length) as tab}
+								<button
+									class="flex-1 flex p-3 justify-center items-center"
+									on:click={() => goto(tab.url)}
+								>
+									<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+										<Fa
+											icon={tab.icon}
+											class="text-[16px]"
+											style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+										/>
+									</div>
+									{#if tab.notifications}
+										<div
+											class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+										>
+											<span class="-mt-[6.8px]">{participantNotValidated}</span>
+										</div>
+									{/if}
+								</button>
+							{/each}
+							</div>
+						</div>
+					{/if}
+				</button>
 			</div>
 		{/if}
 	{:else}

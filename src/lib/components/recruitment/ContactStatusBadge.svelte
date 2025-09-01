@@ -2,10 +2,10 @@
 <script lang="ts">
 	import { AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-svelte'
 	import type { RecruitmentStatus } from '$lib/types'
-
+	
 	export let status: RecruitmentStatus
 	export let shouldFollowUp: boolean = false
-
+	
 	function getStatusConfig(status: RecruitmentStatus) {
 		const configs = {
 			'not_yet_contacted': {
@@ -35,7 +35,7 @@
 			},
 			'cancelled': {
 				label: 'Cancelled',
-				color: 'bg-gray-100 text-gray-500 border-gray-300',
+				color: 'bg-red-100 text-red-800 border-red-300',
 				icon: XCircle
 			},
 			'recruited': {
@@ -46,7 +46,7 @@
 		}
 		return configs[status] || configs['not_yet_contacted']
 	}
-
+	
 	$: config = getStatusConfig(status)
 	$: IconComponent = config.icon
 </script>

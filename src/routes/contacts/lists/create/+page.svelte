@@ -5,4 +5,5 @@
 	let urlFront = '/contacts/lists/create';
 </script>
 
+
 <ListModifier mode="create" bind:url bind:urlFront />

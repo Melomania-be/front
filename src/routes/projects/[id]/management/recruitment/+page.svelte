@@ -306,7 +306,7 @@
 		</div>
 	</div>
 {:else}
-	<ProjectHeadDisplayer {project} selectedTab={6} />
+	<ProjectHeadDisplayer {project} selectedTab={7} />
 
 	<div class="bg-[#E7E7E7] min-h-screen p-4 pb-[80px]">
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-lg p-6 mb-6">
@@ -456,7 +456,4 @@
 		{/if}
 	</div>
 
-	{#if isMobile}
-		<ProjectPhoneDisplayer {project} selectedTab={6} />
-	{/if}
-{/if}
+	{#if isM

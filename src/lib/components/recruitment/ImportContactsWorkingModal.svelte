@@ -352,7 +352,6 @@
 			{#if !importResults}
 				<!-- Advanced Search -->
 				<div class="space-y-6">
-					<!-- Advanced Filterer -->
 					{#if isLoaded && data && columns}
 						<div class="bg-white rounded-lg border border-gray-200 p-4">
 							<QueryBuilder
