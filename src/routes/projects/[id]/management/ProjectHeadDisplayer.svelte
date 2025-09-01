@@ -1,3 +1,4 @@
+<!-- src/routes/projects/[id]/management/ProjectHeadDisplayer.svelte -->
 <script lang="ts">
 	import type { Project } from '$lib/types/Project';
 	import Dashboard from './Dashboard.svelte';

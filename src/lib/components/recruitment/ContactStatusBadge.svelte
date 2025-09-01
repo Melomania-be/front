@@ -2,10 +2,10 @@
 <script lang="ts">
 	import { AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-svelte'
 	import type { RecruitmentStatus } from '$lib/types'
-
+	
 	export let status: RecruitmentStatus
 	export let shouldFollowUp: boolean = false
-
+	
 	function getStatusConfig(status: RecruitmentStatus) {
 		const configs = {
 			'not_yet_contacted': {
@@ -46,17 +46,16 @@
 		}
 		return configs[status] || configs['not_yet_contacted']
 	}
-
+	
 	$: config = getStatusConfig(status)
 	$: IconComponent = config.icon
 </script>
 
 <div class="inline-flex items-center gap-1">
-  <span class="px-2 py-1 text-xs font-medium rounded-full border {config.color} {shouldFollowUp ? 'animate-pulse ring-2 ring-yellow-400' : ''}">
-    <svelte:component this={IconComponent} size={12} class="inline mr-1" />
+	<span class="px-2 py-1 text-xs font-medium rounded-full border {config.color} {shouldFollowUp ? 'animate-pulse ring-2 ring-yellow-400' : ''}">
+		<svelte:component this={IconComponent} size={12} class="inline mr-1" />
 		{config.label}
-  </span>
-
+	</span>
 	{#if shouldFollowUp}
 		<span class="text-xs text-yellow-600 font-medium">Follow up</span>
 	{/if}

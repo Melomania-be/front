@@ -495,6 +495,7 @@
 	function formatContactDate(contactDate: string | null): string {
 		if (!contactDate) return '-'
 
+		// Si la date est déjà formatée côté backend (format dd/MM/yyyy HH:mm)
 		if (typeof contactDate === 'string' && contactDate.match(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)) {
 			return contactDate
 		}

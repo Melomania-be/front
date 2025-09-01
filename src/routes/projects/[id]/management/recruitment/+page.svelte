@@ -456,7 +456,4 @@
 		{/if}
 	</div>
 
-	{#if isMobile}
-		<ProjectPhoneDisplayer {project} selectedTab={7} />
-	{/if}
-{/if}
+	{#if isM

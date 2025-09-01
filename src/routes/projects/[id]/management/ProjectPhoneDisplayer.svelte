@@ -33,7 +33,7 @@
 	let attendanceUrl: string;
 	let auditionUrl: string;
 	let accountingUrl: string;
-	let recruitmentUrl: string;  // ← Ajout URL recrutement
+	let recruitmentUrl: string;
 
 	let participantNotValidated: number = 0;
 
@@ -81,9 +81,10 @@
 		attendanceUrl = `/projects/${project.id}/management/attendance`;
 		auditionUrl = `/projects/${project.id}/management/auditions`;
 		accountingUrl = `/projects/${project.id}/management/accounting`;
-		recruitmentUrl = `/projects/${project.id}/management/recruitment`;  // ← Ajout
+		recruitmentUrl = `/projects/${project.id}/management/recruitment`;
 
 		if (project?.participants) {
+			participantNotValidated = 0;
 			for (const p of project.participants) {
 				if (!p.accepted) {
 					participantNotValidated++;
@@ -129,7 +130,7 @@
 	};
 
 	const checkDirection = () => {
-		screenDirection = window.innerWidth > window.innerHeight ? 'horizontal' : 'vertical';
+		screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
 	};
 
 	onMount(() => {
@@ -163,9 +164,7 @@
 	}
 </script>
 
-<div
-	class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_rgba(0,0,0,0.1)] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl"
->
+<div class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_rgba(0,0,0,0.1)] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl">
 	{#if isMobile}
 		{#if project}
 			<!--Tabs-->
