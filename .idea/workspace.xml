@@ -15,7 +15,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="material_file_front" />
+        <entry key="$PROJECT_DIR$" value="dev" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -45,7 +45,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "bug__recruitement__front",
+    "git-widget-placeholder": "accounting-feature-lastest-2",
     "last_opened_file_path": "F:/Java/front",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",

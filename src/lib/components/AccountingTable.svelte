@@ -142,9 +142,33 @@
 	let categoriesToDisplay = categories || [];
 
 	$: if (AccountingpaymentToIndiv && categories) {
-		categoriesToDisplay = categories.filter((cat) => cat.id === 1 || cat.id === 2);
+		// Pour les paiements individuels, on affiche les catégories liées aux musiciens
+		categoriesToDisplay = categories.filter((cat) =>
+			cat.name.toLowerCase().includes('musician') ||
+			cat.name.toLowerCase().includes('musicien') ||
+			cat.id === 1 || cat.id === 2  // Garde la compatibilité avec les anciens IDs
+		);
+
+		// Si aucune catégorie trouvée, afficher les deux premières catégories par défaut
+		if (categoriesToDisplay.length === 0 && categories.length > 0) {
+			categoriesToDisplay = categories.slice(0, 2);
+		}
 	} else if (categories) {
 		categoriesToDisplay = categories;
+	}
+
+	$: if (categories && categories.length > 0) {
+		console.log('📊 Categories loaded:', categories.map(c => ({
+			id: c.id,
+			name: c.name,
+			color: c.color,
+			isDefault: c.isDefault
+		})));
+		console.log('🔍 Categories to display:', categoriesToDisplay.map(c => ({
+			id: c.id,
+			name: c.name
+		})));
+		console.log('💳 Payment to individual mode:', AccountingpaymentToIndiv);
 	}
 
 	onMount(async () => {
