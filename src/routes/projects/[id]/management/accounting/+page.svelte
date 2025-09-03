@@ -94,6 +94,47 @@
 		};
 	})();
 
+	// DEBUG - Code temporaire pour diagnostiquer les problèmes
+	$: if (accountings && accountings.length > 0 && categories && categories.length > 0) {
+		console.log('=== DEBUG ACCOUNTING DATA ===');
+		console.log('📈 Total accountings:', accountings.length);
+		console.log('🎯 Categories available:', categories.length);
+
+		// Analyse des données
+		const expenses = accountings.filter((a) => a.amount < 0);
+		const incomes = accountings.filter((a) => a.amount >= 0);
+
+		console.log('💸 Expenses (negative amounts):', expenses.length, expenses.map(e => ({
+			name: e.name,
+			amount: e.amount,
+			categoryId: e.categoryId,
+			categoryName: categories.find(c => c.id === e.categoryId)?.name || 'Unknown'
+		})));
+
+		console.log('💰 Incomes (positive amounts):', incomes.length, incomes.map(i => ({
+			name: i.name,
+			amount: i.amount,
+			categoryId: i.categoryId,
+			categoryName: categories.find(c => c.id === i.categoryId)?.name || 'Unknown'
+		})));
+
+		// Vérification des données pour le graphique des dépenses
+		if (dataChartExpenses && dataChartExpenses.datasets[0].data.length > 0) {
+			console.log('📊 Chart Expenses Data:', dataChartExpenses);
+		} else {
+			console.log('❌ No expenses data for chart - Need negative amounts with valid categories');
+		}
+
+		// Vérification des données pour le graphique des revenus
+		if (dataChartIncome && dataChartIncome.datasets[0].data.length > 0) {
+			console.log('📊 Chart Income Data:', dataChartIncome);
+		} else {
+			console.log('❌ No income data for chart - Need positive amounts with valid categories');
+		}
+
+		console.log('=== END DEBUG ===');
+	}
+
 	const options = {
 		responsive: true,
 		plugins: {
@@ -160,6 +201,8 @@
 
 			const rawAccountings = await response.json();
 			accountings = Array.isArray(rawAccountings) ? rawAccountings.sort((a, b) => a.id - b.id) : [];
+
+			console.log('✅ Accountings fetched:', accountings.length, 'entries');
 		} catch (error) {
 			console.error('Error fetching accounting data:', error);
 			accountings = [];
@@ -178,6 +221,7 @@
 			}
 
 			categories = (await res.json()) as ExpenseCategory[];
+			console.log('✅ Categories fetched:', categories.length, 'entries');
 		} catch (error) {
 			console.error('Error fetching categories:', error);
 			categories = [];
@@ -423,7 +467,11 @@
 						{#if dataChartExpenses && dataChartExpenses.datasets[0].data.length > 0}
 							<PieChart data={dataChartExpenses} {options} />
 						{:else}
-							<div class="text-center text-gray-500 p-4">No expenses data available</div>
+							<div class="text-center text-gray-500 p-4">
+								No expenses data available
+								<br />
+								<small class="text-xs">Add entries with negative amounts to see expenses</small>
+							</div>
 						{/if}
 					</div>
 				</div>
@@ -433,7 +481,11 @@
 						{#if dataChartIncome && dataChartIncome.datasets[0].data.length > 0}
 							<PieChart data={dataChartIncome} {options} />
 						{:else}
-							<div class="text-center text-gray-500 p-4">No income data available</div>
+							<div class="text-center text-gray-500 p-4">
+								No income data available
+								<br />
+								<small class="text-xs">Add entries with positive amounts to see incomes</small>
+							</div>
 						{/if}
 					</div>
 				</div>
@@ -471,7 +523,11 @@
 						</div>
 					{/each}
 				{:else}
-					<div class="col-span-2 text-center text-gray-500 p-4">No categories available</div>
+					<div class="col-span-2 text-center text-gray-500 p-4">
+						No categories available
+						<br />
+						<small class="text-xs">Run the seeder or add categories manually</small>
+					</div>
 				{/if}
 			</div>
 		</div>
