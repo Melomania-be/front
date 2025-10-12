@@ -970,19 +970,35 @@
 	}
 
 	async function fetchProject(projectId: number) {
-		if (projectConcerts.has(projectId)) return;
+		if (!projectId || projectConcerts.has(projectId)) return;
 
-		const response = await fetch(`/api/projects/${projectId}`);
-		if (!response.ok) return;
+		try {
+			const response = await fetch(`/api/projects/${projectId}`);
+			if (!response.ok) {
+				// Si le projet n'existe pas, on marque qu'on a tenté de le charger
+				// pour éviter de retry sans cesse
+				projectConcerts.set(projectId, new Date(0)); // Date très ancienne
+				projectConcerts = new Map(projectConcerts);
+				return;
+			}
 
-		const data = await response.json();
+			const data = await response.json();
 
-		if (Array.isArray(data.concerts) && data.concerts.length > 0) {
-			const sortedConcerts = data.concerts
-				.map((c) => new Date(c.startDate))
-				.sort((a, b) => b.getTime() - a.getTime());
+			if (Array.isArray(data.concerts) && data.concerts.length > 0) {
+				const sortedConcerts = data.concerts
+					.map((c) => new Date(c.startDate))
+					.sort((a, b) => b.getTime() - a.getTime());
 
-			projectConcerts.set(projectId, sortedConcerts[0]);
+				projectConcerts.set(projectId, sortedConcerts[0]);
+				projectConcerts = new Map(projectConcerts);
+			} else {
+				// Pas de concerts, on met une date très ancienne
+				projectConcerts.set(projectId, new Date(0));
+				projectConcerts = new Map(projectConcerts);
+			}
+		} catch (error) {
+			// Erreur silencieuse, on marque juste qu'on a essayé
+			projectConcerts.set(projectId, new Date(0));
 			projectConcerts = new Map(projectConcerts);
 		}
 	}
@@ -1645,16 +1661,16 @@
 				{#if accountingsDisplayed && accountingsDisplayed.length > 0}
 					{#each accountingsDisplayed as accounting}
 						<tr
-							class="font-semibold text-gray-400 {accounting.isIndividualPayment
+							class="font-semibold text-gray-400 border-b border-gray-200 hover:bg-gray-50 {accounting.isIndividualPayment
 									? accounting.isMusicianFee
 										? 'bg-blue-100'
 										: 'bg-orange-100'
 									: ''}"
 						>
 							{#if showProject}
-								<td class="p-1 w-4">{accounting.projectId}</td>
+								<td class="p-3 w-4">{accounting.projectId}</td>
 							{/if}
-							<td>
+							<td class="p-3">
 								{#if projectConcerts.get(accounting.projectId) < today && !accounting.paymentDate && accounting.isIndividualPayment}
 									<div>
 										<div class="flex items-center gap-2">
@@ -1676,16 +1692,16 @@
 									<span>{accounting.name}</span>
 								{/if}
 							</td>
-							<td class="p-1">{accounting.billDate ? accounting.billDate : 'unknown'}</td>
-							<td class="p-1">{accounting.paymentDate ? accounting.paymentDate : 'unpaid'}</td>
-							<td class="p-1">
+							<td class="p-3">{accounting.billDate ? accounting.billDate : 'unknown'}</td>
+							<td class="p-3">{accounting.paymentDate ? accounting.paymentDate : 'unpaid'}</td>
+							<td class="p-3">
 								{#if accounting.amount < 0}
 									<p class=" text-red-500">{accounting.amount} €</p>
 								{:else}
 									<p class="text-green-500">+{accounting.amount} €</p>
 								{/if}
 							</td>
-							<td class="p-1">
+							<td class="p-3">
 								{#if categories.find((c) => c.id === accounting.categoryId)}
 									<p
 										style="color: {categories.find((c) => c.id === accounting.categoryId)?.color}"
@@ -1697,7 +1713,7 @@
 									<p class="text-gray-400">x</p>
 								{/if}
 							</td>
-							<td>
+							<td class="p-3">
 								{#if accounting.attachment}
 									<button
 										class="flex justify-center w-full"
@@ -1741,7 +1757,7 @@
 									</button>
 								{/if}
 							</td>
-							<td class="flex justify-center p-1 items-center">
+							<td class="p-3">
 								<button
 									on:click={() => {
 											fetchContacts();
