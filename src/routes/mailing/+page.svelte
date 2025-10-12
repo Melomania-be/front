@@ -10,6 +10,8 @@
 	import { browser } from '$app/environment';
 	import type { List } from '$lib/types/List';
 	import type { Project } from '$lib/types/Project';
+	import { Mail } from 'lucide-svelte';
+	import ModuleHeader from '$lib/components/ModuleHeader.svelte';
 
 	let selectedList: CustomList | null = null as CustomList | null;
 	let lists: CustomList[] = [];
@@ -275,10 +277,15 @@
 	}
 </script>
 
-<div class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-	<div class="mb-5 font-bold tracking-tight text-gray-900 border-b-gray-200 shadow dark:text-white origin-center w-full flex justify-center">
-		<h1 class="text-3xl font-bold mb-2 p-3">Mailing</h1>
-	</div>
+<div>
+	<ModuleHeader
+		title="Mailing"
+		description="Send emails to your contact lists"
+		icon={Mail}
+		on:refresh={() => fetchData()}
+	/>
+
+<div class="m-4 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
 
 	<button
 		type="button"
@@ -432,4 +439,5 @@
 			</div>
 		</div>
 	{/if}
+</div>
 </div>

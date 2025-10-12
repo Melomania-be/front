@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { Music } from 'lucide-svelte';
+	import ModuleHeader from '$lib/components/ModuleHeader.svelte';
 
 	let composers: any[] = [];
 	let pieces: any[] = [];
@@ -77,7 +79,15 @@
 	<title>Music Library - Melomania</title>
 </svelte:head>
 
-<div class="bg-[#E7E7E7] min-h-screen p-8">
+<div class="bg-[#E7E7E7] min-h-screen">
+	<ModuleHeader
+		title="Music Library"
+		description="Manage composers, pieces and categories"
+		icon={Music}
+		on:refresh={() => loadData()}
+	/>
+
+	<div class="p-8">
 	{#if loading}
 		<div class="flex items-center justify-center min-h-[400px]">
 			<div class="text-center">
@@ -287,4 +297,5 @@
 			{/if}
 		</div>
 	{/if}
+	</div>
 </div>
