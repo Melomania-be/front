@@ -210,10 +210,10 @@
 			return;
 		}
 
-		// Check file size (50MB max)
-		const maxSize = 50 * 1024 * 1024;
+		// Check file size (2GB max)
+		const maxSize = 2 * 1024 * 1024 * 1024;
 		if (file.size > maxSize) {
-			fileValidationError = `File too large: ${formatFileSize(file.size)}. Maximum size: 50MB`;
+			fileValidationError = `File too large: ${formatFileSize(file.size)}. Maximum size: 2GB`;
 			return;
 		}
 
@@ -429,9 +429,9 @@
 			return;
 		}
 
-		const maxSize = 50 * 1024 * 1024;
+		const maxSize = 2 * 1024 * 1024 * 1024;
 		if (file.size > maxSize) {
-			showNotification('File is too large. Maximum allowed size: 50MB', 'error');
+			showNotification('File is too large. Maximum allowed size: 2GB', 'error');
 			return;
 		}
 
@@ -947,7 +947,7 @@
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-2">
 								File
-								<span class="text-xs text-gray-500">(Max: 50MB)</span>
+								<span class="text-xs text-gray-500">(Max: 2GB)</span>
 							</label>
 							<input
 								type="file"
@@ -998,7 +998,7 @@
 							<div><strong>🎵 Audio:</strong> MP3, WAV, AAC, FLAC, OGG, M4A, WMA</div>
 						</div>
 						<div class="text-xs text-blue-600 mt-2 font-medium">
-							<strong>Maximum size:</strong> 50MB per file
+							<strong>Maximum size:</strong> 2GB per file
 						</div>
 					</div>
 

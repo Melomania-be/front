@@ -66,6 +66,16 @@
             orderBy: urlParams.get('orderBy') || options.orderBy
         };
 
+        // Vérifier s'il y a un objet selected dans l'URL
+        const selectedParam = urlParams.get('selected');
+        if (selectedParam) {
+            try {
+                selectedData = JSON.parse(decodeURIComponent(selectedParam));
+            } catch (e) {
+                console.error('Error parsing selected piece:', e);
+            }
+        }
+
         fetchData();
     });
 

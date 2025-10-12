@@ -11,23 +11,23 @@
 	import RecruitmentRecommendations from '$lib/components/recruitment/RecruitmentRecommendations.svelte'
 	import AddManualContactModal from '$lib/components/recruitment/AddManualContactModal.svelte'
 	import ImportContactsAdvancedModal from '$lib/components/recruitment/ImportContactsWorkingModal.svelte'
+	import ImportProjectModal from '$lib/components/recruitment/ImportProjectModal.svelte'
 	import { Plus, Users, Settings, Upload } from 'lucide-svelte'
 	import type { Project } from '$lib/types/Project'
 	import type { RecruitmentStats as StatsType, RecruitmentSettings as SettingsType } from '$lib/types'
-
-	export let data
 
 	let project: Project | undefined
 	let settings: SettingsType | undefined
 	let stats: StatsType | undefined
 	let isMobile = false
 	let activeTab = 'contacts'
-	let loading = true
+	let loading = false
 	let error = ''
 	let hasPerformedInitialImport = false
 
 	let showAddManualModal = false
 	let showImportAdvancedModal = false
+	let showImportProjectModal = false
 	let showSettingsModal = false
 
 	let contactsListRef: any
@@ -45,13 +45,11 @@
 		window.addEventListener('resize', checkMobile)
 
 		if (projectId && projectId !== 'undefined' && !isNaN(Number(projectId))) {
-			await loadData()
-			await checkAndPerformInitialImport()
+			loadData()
+			checkAndPerformInitialImport()
 		} else {
 			error = 'Missing or invalid project ID'
 		}
-
-		loading = false
 
 		return () => {
 			window.removeEventListener('resize', checkMobile)
@@ -261,6 +259,14 @@
 		showImportAdvancedModal = false
 	}
 
+	function handleProjectsImported(event) {
+		if (contactsListRef && contactsListRef.refreshContacts) {
+			contactsListRef.refreshContacts()
+		}
+		fetchStats()
+		showImportProjectModal = false
+	}
+
 	function openSettingsModal() {
 		console.log('Opening settings modal with settings:', settings)
 		if (!settings) {
@@ -341,7 +347,7 @@
 					</button>
 
 					<button
-						on:click={() => goto(`/projects/${projectId}/management/recruitment/import-project`)}
+						on:click={() => showImportProjectModal = true}
 						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
 					>
 						<Users size={16} />
@@ -452,6 +458,14 @@
 				{projectId}
 				on:close={() => showImportAdvancedModal = false}
 				on:contactsImported={handleContactsImported}
+			/>
+		{/if}
+
+		{#if showImportProjectModal}
+			<ImportProjectModal
+				{projectId}
+				on:close={() => showImportProjectModal = false}
+				on:projectsImported={handleProjectsImported}
 			/>
 		{/if}
 	</div>

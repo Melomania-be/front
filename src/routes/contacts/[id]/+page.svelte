@@ -87,27 +87,33 @@
 		class="w-full p-4 mt-4 bg-white border-2 border-gray-500 rounded-xl shadow dark:bg-gray-800 dark:border-gray-700"
 	>
 		<div class="mb-4">
-			<h1 class="w-full text-center m-1 text-lg uppercase font-bold text-gray-600">Projects</h1>
+			<h1 class="w-full text-center m-1 text-lg uppercase font-bold text-gray-600">Sections and Recruitments</h1>
 		</div>
 
-		<div class="grid grid-cols-2 w-full">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
 			{#each contact.participants as participant}
 				<div
-					class="group text-sm *:break-words block mr-1 mt-1 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:max-h-full *:[&:not(:hover)]:truncate"
+					class="group text-sm block p-4 bg-white border-2 border-gray-300 rounded-lg shadow hover:shadow-md hover:border-[#6B9AD9] dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all"
 				>
-					<h6 class="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">
+					<h6 class="mb-3 font-bold text-base tracking-tight text-gray-900 dark:text-white border-b pb-2">
 						{participant.project.name}
 					</h6>
-					<p class="text-gray-700 dark:text-gray-300">In section : {participant.section.name}</p>
-					<p class="text-gray-700 dark:text-gray-300">
-						Last activity seen : <DateShow bind:startTime={participant.lastActivity} />
-					</p>
-					{#if projectConcerts}
-						<p class="text-gray-700 dark:text-gray-300">
-							Last Concert Date : <DateShow startTime={new Date(projectConcerts.get(participant.project.id))} />
+					<div class="space-y-2">
+						<p class="text-gray-700 dark:text-gray-300 flex items-center gap-2">
+							<span class="font-semibold min-w-[140px]">Section:</span>
+							<span class="text-[#6B9AD9] font-semibold">{participant.section.name}</span>
 						</p>
-					{/if}
-					
+						<p class="text-gray-700 dark:text-gray-300 flex items-center gap-2">
+							<span class="font-semibold min-w-[140px]">Last activity:</span>
+							<DateShow bind:startTime={participant.lastActivity} />
+						</p>
+						{#if projectConcerts && projectConcerts.get(participant.project.id)}
+							<p class="text-gray-700 dark:text-gray-300 flex items-center gap-2">
+								<span class="font-semibold min-w-[140px]">Last Concert:</span>
+								<DateShow startTime={new Date(projectConcerts.get(participant.project.id))} />
+							</p>
+						{/if}
+					</div>
 				</div>
 			{/each}
 		</div>
