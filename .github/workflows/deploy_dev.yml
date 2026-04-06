@@ -23,11 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: build
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Get runner's public IP
         id: ip
@@ -60,13 +57,19 @@ jobs:
         run: |
           sleep 2
           rsync --timeout=60 -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
-          --exclude=".git" -av --delete build/ \
-          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_LOGIN }}/app/front || true
+          --exclude ".git" \
+          --exclude "node_modules" \
+          --exclude "build" \
+          -av --delete ./ \
+          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_LOGIN }}/app/front/ || true
 
           sleep 2
           rsync --timeout=60 -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
-          --exclude=".git" -av --delete build/ \
-          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_LOGIN }}/app/front
+          --exclude ".git" \
+          --exclude "node_modules" \
+          --exclude "build" \
+          -av --delete ./ \
+          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_LOGIN }}/app/front/
 
       - name: Restarting NodeJS application via ssh
         run: |
@@ -74,7 +77,10 @@ jobs:
           ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }} \
           '/usr/sbin/cloudlinux-selector stop --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
           /usr/sbin/cloudlinux-selector start --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
-          /usr/sbin/cloudlinux-selector install-modules --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front'
+          /usr/sbin/cloudlinux-selector install-modules --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
+          source /home/${{ secrets.CPANEL_LOGIN }}/nodevenv/app/front/20/bin/activate && \
+          cd /home/${{ secrets.CPANEL_LOGIN }}/app/front && \
+          npm run build'
 
       - name: Cleaning SSH keys
         if: always()
