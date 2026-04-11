@@ -341,7 +341,7 @@
 						To take a look or modify these default templates please go to
 						<button
 							class="text-blue-800 cursor-pointer hover:text-blue-400"
-							on:click={() => goto('/mailing/templates/default')}
+							on:click={() => goto('/mailing?tab=system')}
 						>
 							the default template editor.
 						</button>
