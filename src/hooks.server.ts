@@ -16,7 +16,7 @@ export const handle = async ({ resolve, event }) => {
   console.log(`Is authorized: ${isAuthorized}`);
 
   // Pages qui ne nécessitent pas d'autorisation
-  const publicPaths = ['/login', '/registration', '/call_sheets'];
+  const publicPaths = ['/login', '/registration', '/call_sheets', '/audition'];
   const isPublicPath = publicPaths.some(path => event.url.pathname.startsWith(path));
   const isApiPath = event.url.pathname.startsWith('/api');
 
