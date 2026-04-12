@@ -31,7 +31,7 @@ export default class ResponseHandlerServer {
 				break;
 			case StatusCodesClientError.UNAUTHORIZED:
 				cookies.delete('Authorization', { path: '/' });
-				redirect(StatusCodesRedirection.TEMPORARY_REDIRECT, '/login');
+				throw redirect(StatusCodesRedirection.TEMPORARY_REDIRECT, '/login');
 			case StatusCodesClientError.METHOD_NOT_ALLOWED:
 				break;
 			case StatusCodesClientError.NOT_ACCEPTABLE:
