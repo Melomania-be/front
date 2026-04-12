@@ -5,6 +5,7 @@ import {
 	StatusCodesServerError,
 	StatusCodesSuccess
 } from '$lib/common/statusCodes';
+import { removeToken } from './authentification';
 
 export default class ResponseHandlerServer {
 	/** @param {Response} response
@@ -30,7 +31,7 @@ export default class ResponseHandlerServer {
 			case StatusCodesClientError.BAD_REQUEST:
 				break;
 			case StatusCodesClientError.UNAUTHORIZED:
-				cookies.delete('Authorization', { path: '/' });
+				removeToken(cookies);
 				throw redirect(StatusCodesRedirection.TEMPORARY_REDIRECT, '/login');
 			case StatusCodesClientError.METHOD_NOT_ALLOWED:
 				break;
