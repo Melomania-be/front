@@ -1,4 +1,4 @@
-<!-- src/routes/users/+page.svelte - Version mise à jour avec full_name -->
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 
@@ -8,7 +8,7 @@
 		email: '',
 		password: '',
 		password_confirmation: '',
-		fullName: '' // 🆕 Ajout du champ fullName
+		fullName: ''
 	};
 
 	let editingUser: any = null;
@@ -46,12 +46,12 @@
 				});
 			}
 		} catch (error) {
-			console.error('Erreur lors du chargement des utilisateurs:', error);
+			console.error('Error loading users:', error);
 		}
 	}
 
 	async function deleteUser(user: any) {
-		const confirmDelete = confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');
+		const confirmDelete = confirm('Are you sure you want to delete this user?');
 
 		if (!confirmDelete) {
 			return;
@@ -71,7 +71,7 @@
 				listUsers = listUsers.filter((u) => u.id !== user.id);
 			}
 		} catch (error) {
-			console.error('Erreur lors de la suppression:', error);
+			console.error('Error deleting user:', error);
 		}
 	}
 
@@ -83,28 +83,26 @@
 					email: newUser.email,
 					password: newUser.password,
 					password_confirmation: newUser.password_confirmation,
-					fullName: newUser.fullName // 🆕 Inclure fullName
+					fullName: newUser.fullName
 				})
 			});
 
 			await errorEvent(response);
 
 			if (response.status === 200) {
-				// Réinitialiser le formulaire
 				newUser.email = '';
 				newUser.password = '';
 				newUser.password_confirmation = '';
 				newUser.fullName = '';
 
-				// Recharger la liste
 				await loadUsers();
 			}
 		} catch (error) {
-			console.error('Erreur lors de l\'ajout:', error);
+			console.error('Error adding user:', error);
 		}
 	}
 
-	// 🆕 Fonction pour éditer un utilisateur
+
 	async function editUser(user: any) {
 		editingUser = user.id;
 		editForm = {
@@ -114,7 +112,7 @@
 		};
 	}
 
-	// 🆕 Fonction pour sauvegarder les modifications
+
 	async function saveUser() {
 		try {
 			const response = await fetch('/api/users', {
@@ -132,7 +130,7 @@
 				await loadUsers();
 			}
 		} catch (error) {
-			console.error('Erreur lors de la modification:', error);
+			console.error('Error editing user:', error);
 		}
 	}
 
@@ -147,31 +145,31 @@
 			const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
 			alert(error);
 		} else if (response.status >= 500) {
-			alert('Erreur serveur');
+			alert('Server error');
 		}
 	}
 </script>
 
 <div class="p-6 max-w-7xl mx-auto">
-	<h1 class="text-3xl font-bold mb-8 text-center">Gestion des Utilisateurs</h1>
+	<h1 class="text-3xl font-bold mb-8 text-center">User Management</h1>
 
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-		<!-- Section Ajouter un Utilisateur -->
+		<!-- Add a User section -->
 		<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-			<h2 class="text-2xl font-semibold mb-6 text-gray-800">Ajouter un Utilisateur</h2>
+			<h2 class="text-2xl font-semibold mb-6 text-gray-800">Add a User</h2>
 
 			<form on:submit|preventDefault={addUser} class="space-y-4">
-				<!-- 🆕 Champ Nom complet -->
+
 				<div>
 					<label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">
-						Nom complet *
+						Full Name *
 					</label>
 					<input
 						id="fullName"
 						type="text"
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						bind:value={newUser.fullName}
-						placeholder="Nom et prénom de l'utilisateur"
+						placeholder="User's full name"
 						required
 					/>
 				</div>
@@ -185,35 +183,35 @@
 						type="email"
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						bind:value={newUser.email}
-						placeholder="email@exemple.com"
+						placeholder="email@example.com"
 						required
 					/>
 				</div>
 
 				<div>
 					<label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-						Mot de passe *
+						Password *
 					</label>
 					<input
 						id="password"
 						type="password"
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						bind:value={newUser.password}
-						placeholder="Mot de passe"
+						placeholder="Password"
 						required
 					/>
 				</div>
 
 				<div>
 					<label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
-						Confirmation mot de passe *
+						Confirm Password *
 					</label>
 					<input
 						id="password_confirmation"
 						type="password"
 						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						bind:value={newUser.password_confirmation}
-						placeholder="Confirmer le mot de passe"
+						placeholder="Confirm password"
 						required
 					/>
 				</div>
@@ -222,30 +220,30 @@
 					type="submit"
 					class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
 				>
-					Ajouter l'utilisateur
+					Add user
 				</button>
 			</form>
 		</div>
 
-		<!-- Section Liste des Utilisateurs -->
+		<!-- User List section -->
 		<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-			<h2 class="text-2xl font-semibold mb-6 text-gray-800">Liste des Utilisateurs</h2>
+			<h2 class="text-2xl font-semibold mb-6 text-gray-800">User List</h2>
 
 			<div class="space-y-3">
 				{#each listUsers as user (user.id)}
 					<div class="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
 						{#if editingUser === user.id}
-							<!-- Mode édition -->
+							<!-- Edit mode -->
 							<div class="space-y-3">
 								<div>
 									<label class="block text-sm font-medium text-gray-700 mb-1">
-										Nom complet
+										Full Name
 									</label>
 									<input
 										type="text"
 										class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 										bind:value={editForm.fullName}
-										placeholder="Nom complet"
+										placeholder="Full name"
 									/>
 								</div>
 								<div>
@@ -264,31 +262,31 @@
 										on:click={saveUser}
 										class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
 									>
-										Sauvegarder
+										Save
 									</button>
 									<button
 										type="button"
 										on:click={cancelEdit}
 										class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
 									>
-										Annuler
+										Cancel
 									</button>
 								</div>
 							</div>
 						{:else}
-							<!-- Mode affichage -->
+							<!-- Display mode -->
 							<div class="flex justify-between items-start">
 								<div class="flex-1">
-									<!-- 🆕 Affichage du nom complet -->
+
 									{#if user.fullName}
 										<p class="font-semibold text-gray-900">{user.fullName}</p>
 										<p class="text-sm text-gray-600">{user.email}</p>
 									{:else}
 										<p class="font-semibold text-gray-900">{user.email}</p>
-										<p class="text-sm text-gray-500 italic">Nom non défini</p>
+										<p class="text-sm text-gray-500 italic">No name defined</p>
 									{/if}
-									<p class="text-xs text-gray-500 mt-1">Créé : {user.createdAt}</p>
-									<p class="text-xs text-gray-500">Dernière activité : {user.token.lastUsedAt}</p>
+									<p class="text-xs text-gray-500 mt-1">Created: {user.createdAt}</p>
+									<p class="text-xs text-gray-500">Last activity: {user.token.lastUsedAt}</p>
 								</div>
 								<div class="flex gap-2">
 									<button
@@ -296,14 +294,14 @@
 										on:click={() => editUser(user)}
 										class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
 									>
-										Modifier
+										Edit
 									</button>
 									<button
 										type="button"
 										on:click={() => deleteUser(user)}
 										class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
 									>
-										Supprimer
+										Delete
 									</button>
 								</div>
 							</div>
@@ -313,7 +311,7 @@
 
 				{#if listUsers.length === 0}
 					<div class="text-center py-8 text-gray-500">
-						<p>Aucun utilisateur trouvé</p>
+						<p>No users found</p>
 					</div>
 				{/if}
 			</div>
