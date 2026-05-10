@@ -26,7 +26,7 @@
 						['clean']
 					]
 				},
-				placeholder: 'Whrite here...'
+				placeholder: 'Write here...'
 			});
 
 			// Remplit l'éditeur avec la valeur initiale
