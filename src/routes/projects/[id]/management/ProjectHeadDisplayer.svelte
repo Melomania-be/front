@@ -178,10 +178,10 @@
 					Edit Project
 				</a>
 			</div>
-			<div class="pl-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
+			<div class="pl-5 w-full text-lg text-gray-400 font-semibold flex flex-wrap gap-[1vw] gap-y-1">
 				{#each tabs as tab}
 					<button
-						class="flex items-center gap-2 p-3 {selectedTab === tab.num
+						class="flex items-center gap-2 p-3 whitespace-nowrap {selectedTab === tab.num
 							? 'text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]'
 							: ''}"
 						on:click={() => goto(tab.url)}
@@ -221,10 +221,10 @@
 					Edit Project
 				</span>
 			</div>
-			<div class="ml-5 w-full text-lg text-gray-400 font-semibold flex gap-[3vw]">
+			<div class="ml-5 w-full text-lg text-gray-400 font-semibold flex flex-wrap gap-[1vw] gap-y-1">
 				{#each tabs as tab}
 					<button
-						class="flex items-center gap-2 p-3 {selectedTab === tab.num
+						class="flex items-center gap-2 p-3 whitespace-nowrap {selectedTab === tab.num
 							? 'text-[#6B9AD9] border-b-[3px] border-[#6B9AD9]'
 							: ''}"
 					>
@@ -264,10 +264,14 @@
 				>
 					<div class="">
 						<p>
-							Created at : {#if project}<DateShow startTime={project.createdAt} />{:else} - {/if}
+							Created at : {#if project}<DateShow startTime={project.createdAt} />{:else}
+								-
+							{/if}
 						</p>
 						<p>
-							Updated at : {#if project}<DateShow startTime={project.updatedAt} />{:else} - {/if}
+							Updated at : {#if project}<DateShow startTime={project.updatedAt} />{:else}
+								-
+							{/if}
 						</p>
 					</div>
 				</div>
@@ -286,6 +290,32 @@
 					</span>
 				{/if}
 			</div>
+		</div>
+		<div
+			class="w-full flex flex-wrap justify-center gap-3 px-2 py-2 text-xs text-gray-400 font-semibold border-b border-gray-200 dark:border-gray-700"
+		>
+			{#each tabs as tab}
+				<button
+					class="flex items-center gap-1 p-1.5 {selectedTab === tab.num
+						? 'text-[#6B9AD9] border-b-[2px] border-[#6B9AD9]'
+						: ''}"
+					on:click={() => goto(tab.url)}
+				>
+					<Fa
+						icon={tab.icon}
+						class="text-[12px]"
+						style="color: {selectedTab === tab.num ? '#6B9AD9;' : ' #9ca3af;'}"
+					/>
+					{tab.name}
+					{#if tab.notifications && tab.notifications > 0}
+						<div
+							class="bg-red-400 text-white w-[16px] h-[16px] rounded-full text-[0.7rem] text-center flex justify-center -ml-1"
+						>
+							<span class="-mt-[2px]">{tab.notifications}</span>
+						</div>
+					{/if}
+				</button>
+			{/each}
 		</div>
 	{/if}
 </div>

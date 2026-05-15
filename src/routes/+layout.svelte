@@ -197,8 +197,8 @@
 {#if data.connected}
 <div class="flex h-auto bg-gray-100 dark:bg-gray-900 {isMobile? "overflow-x-hidden" : "overflow-x-hidden"}">
     <!-- Sidebar -->
-    <aside class={`fixed top-0 left-0 z-40 w-64 h-full transition-transform ${screenDirection === "horizontal" ? '' : '-translate-x-full'} ${showSidebar ? 'translate-x-0' : '-translate-x-full'} bg-gradient-to-t from-[#343CAD] to-[#6BB0C7] dark:bg-gray-800 border-r dark:border-gray-700`}>
-        <div class="h-full overflow-y-auto px-3 py-4">
+    <aside class={`fixed top-0 left-0 z-40 w-64 h-[100dvh] transition-transform ${screenDirection === "horizontal" ? '' : '-translate-x-full'} ${showSidebar ? 'translate-x-0' : '-translate-x-full'} bg-gradient-to-t from-[#343CAD] to-[#6BB0C7] dark:bg-gray-800 border-r dark:border-gray-700`}>
+        <div class="h-full overflow-y-auto px-3 py-4 pb-24">
             <h2 class="text-xl font-bold dark:text-gray-800 text-white mb-6 px-2">Melomania</h2>
             <ul class="space-y-2">
                 {#each menu as item}
@@ -230,10 +230,10 @@
     {/if}
 
     <!-- Main content -->
-    <div class="bg-white w-screen ml-0 {!isMobile ? "pl-64" : "" }">
+    <div class="bg-white w-full min-h-[100dvh] ml-0 {!isMobile ? "pl-64" : "" }">
         <!-- Mobile toggle button -->
         <button
-            class="{!isMobile ? "hidden" : ""} p-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            class="{!isMobile ? "hidden" : ""} p-2 m-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
             on:click={toggleSidebar}
         >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
