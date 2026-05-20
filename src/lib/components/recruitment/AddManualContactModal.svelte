@@ -6,6 +6,8 @@
 	import type { Contact } from '$lib/types/Contact'
 
 	export let projectId: string
+	let duplicateEmailContact: Contact | null = null
+let duplicatePhoneContact: Contact | null = null
 	const dispatch = createEventDispatcher()
 
 	let formData = {
@@ -67,7 +69,12 @@ async function searchContacts() {
 	const firstName = formData.first_name.trim()
 	const lastName = formData.last_name.trim()
 
-	if (firstName.length < 2 && lastName.length < 2) {
+	if (
+	firstName.length < 2 &&
+	lastName.length < 2 &&
+	!formData.email.trim() &&
+	!formData.phone.trim()
+)  {
 		foundContacts = []
 		return
 	}
@@ -96,11 +103,38 @@ async function searchContacts() {
 			const data = await response.json()
 			const contacts = data.data || data || []
 
-foundContacts = contacts.filter((contact: Contact) => {
-	const fullName =
-		`${contact.firstName || ''} ${contact.lastName || ''}`.toLowerCase()
+			duplicateEmailContact = null
+duplicatePhoneContact = null
 
-	return fullName.includes(searchQuery.toLowerCase())
+if (formData.email.trim()) {
+	duplicateEmailContact =
+		contacts.find(
+			(contact: Contact) =>
+				contact.email?.toLowerCase() ===
+				formData.email.trim().toLowerCase()
+		) || null
+}
+
+if (formData.phone.trim()) {
+	duplicatePhoneContact =
+		contacts.find(
+			(contact: Contact) =>
+				contact.phone?.trim() === formData.phone.trim()
+		) || null
+}
+
+foundContacts = contacts.filter((contact: Contact) => {
+	const first = (contact.firstName || '').toLowerCase()
+	const last = (contact.lastName || '').toLowerCase()
+
+	const searchFirst = firstName.toLowerCase()
+	const searchLast = lastName.toLowerCase()
+
+	return (
+		first.includes(searchFirst) ||
+		last.includes(searchLast) ||
+		`${first} ${last}`.includes(searchQuery.toLowerCase())
+	)
 })
 		}
 	} catch (error) {
@@ -320,6 +354,26 @@ foundContacts = contacts.filter((contact: Contact) => {
 	</div>
 {/if}
 
+{#if duplicateEmailContact}
+	<div class="mt-3 p-3 border border-yellow-400 bg-yellow-50 rounded">
+		⚠️ This email already belongs to
+		<strong>
+			{duplicateEmailContact.firstName}
+			{duplicateEmailContact.lastName}
+		</strong>
+	</div>
+{/if}
+
+{#if duplicatePhoneContact}
+	<div class="mt-3 p-3 border border-yellow-400 bg-yellow-50 rounded">
+		⚠️ This phone number already belongs to
+		<strong>
+			{duplicatePhoneContact.firstName}
+			{duplicatePhoneContact.lastName}
+		</strong>
+	</div>
+{/if}
+
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold text-gray-900">Contact Information</h3>
 				<p class="text-sm text-gray-600">At least one contact method is required</p>
@@ -332,6 +386,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 						<input
 							id="email"
 							type="email"
+							on:input={searchContacts}
 							bind:value={formData.email}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.email ? 'border-red-500' : 'border-gray-300'}"
 							placeholder="example@email.com"
@@ -349,6 +404,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 						<input
 							id="phone"
 							type="tel"
+							on:input={searchContacts}
 							bind:value={formData.phone}
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 							placeholder="+1 (555) 123-4567"
