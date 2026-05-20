@@ -3,6 +3,7 @@
 	import { createEventDispatcher, onMount } from 'svelte'
 	import { X, UserPlus, AlertTriangle } from 'lucide-svelte'
 	import type { Section } from '$lib/types'
+	import type { Contact } from '$lib/types/Contact'
 
 	export let projectId: string
 
@@ -20,6 +21,7 @@
 	}
 
 	let sections: Section[] = []
+	let foundContacts: Contact[] = []
 	let saving = false
 	let errors: Record<string, string> = {}
 	let currentUserName = ''
@@ -61,6 +63,33 @@
 			loadingUser = false
 		}
 	}
+
+	async function searchContacts() {
+	const firstName = formData.first_name.trim()
+	const lastName = formData.last_name.trim()
+
+	if (firstName.length < 2 && lastName.length < 2) {
+		foundContacts = []
+		return
+	}
+
+	const filter = `${firstName} ${lastName}`
+
+	try {
+		const response = await fetch(
+			`/api/contacts?filter=${encodeURIComponent(filter)}`
+		)
+
+		if (response.ok) {
+			const data = await response.json()
+			console.log(data)
+			foundContacts = data.data || []
+			console.log(data.data)
+		}
+	} catch (error) {
+		console.error('Error searching contacts:', error)
+	}
+}
 
 	async function saveContact() {
 		errors = {}
@@ -202,6 +231,7 @@
 							id="first_name"
 							type="text"
 							bind:value={formData.first_name}
+							on:input={searchContacts}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.first_name ? 'border-red-500' : 'border-gray-300'}"
 							placeholder="First name"
 							disabled={saving}
@@ -219,6 +249,7 @@
 							id="last_name"
 							type="text"
 							bind:value={formData.last_name}
+							on:input={searchContacts}
 							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.last_name ? 'border-red-500' : 'border-gray-300'}"
 							placeholder="Last name"
 							disabled={saving}
@@ -229,6 +260,48 @@
 					</div>
 				</div>
 			</div>
+
+{#if foundContacts.length > 0}
+	<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+		<h4 class="font-medium text-yellow-800 mb-2">
+			Possible existing contacts
+		</h4>
+
+		<div class="space-y-2">
+			{#each foundContacts as contact}
+				<button
+					type="button"
+					class="w-full text-left p-3 bg-white border rounded hover:bg-gray-50"
+					on:click={() => {
+						formData.first_name = contact.firstName || ''
+						formData.last_name = contact.lastName || ''
+						formData.email = contact.email || ''
+						formData.phone = contact.phone || ''
+						formData.messenger = contact.messenger || ''
+
+						foundContacts = []
+					}}
+				>
+					<div class="font-medium">
+						{contact.firstName} {contact.lastName}
+					</div>
+
+					{#if contact.email}
+						<div class="text-sm text-gray-600">
+							{contact.email}
+						</div>
+					{/if}
+
+					{#if contact.phone}
+						<div class="text-sm text-gray-600">
+							{contact.phone}
+						</div>
+					{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold text-gray-900">Contact Information</h3>
