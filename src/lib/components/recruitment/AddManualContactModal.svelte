@@ -6,7 +6,6 @@
 	import type { Contact } from '$lib/types/Contact'
 
 	export let projectId: string
-
 	const dispatch = createEventDispatcher()
 
 	let formData = {
@@ -64,7 +63,7 @@
 		}
 	}
 
-	async function searchContacts() {
+async function searchContacts() {
 	const firstName = formData.first_name.trim()
 	const lastName = formData.last_name.trim()
 
@@ -73,22 +72,36 @@
 		return
 	}
 
-	const filter = `${firstName} ${lastName}`
+	const searchQuery = `${firstName} ${lastName}`.trim()
 
 	try {
 		const response = await fetch(
-			`/api/contacts?filter=${encodeURIComponent(filter)}`
+			`/api/projects/${projectId}/management/recruitment/search-contacts`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					filter: searchQuery,
+					criteria: {
+						name: searchQuery,
+						email: '',
+						instruments: '',
+						projects: ''
+					}
+				})
+			}
 		)
 
 		if (response.ok) {
 			const data = await response.json()
-			console.log(data)
-			foundContacts = Array.isArray(data)
-	? data
-	: Array.isArray(data.data)
-		? data.data
-		: []
-			console.log(data.data)
+			const contacts = data.data || data || []
+
+foundContacts = contacts.filter((contact: Contact) => {
+	const fullName =
+		`${contact.firstName || ''} ${contact.lastName || ''}`.toLowerCase()
+
+	return fullName.includes(searchQuery.toLowerCase())
+})
 		}
 	} catch (error) {
 		console.error('Error searching contacts:', error)
