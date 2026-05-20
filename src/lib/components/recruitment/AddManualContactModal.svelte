@@ -83,7 +83,11 @@
 		if (response.ok) {
 			const data = await response.json()
 			console.log(data)
-			foundContacts = data.data || data || []
+			foundContacts = Array.isArray(data)
+	? data
+	: Array.isArray(data.data)
+		? data.data
+		: []
 			console.log(data.data)
 		}
 	} catch (error) {
