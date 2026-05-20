@@ -83,7 +83,7 @@
 		if (response.ok) {
 			const data = await response.json()
 			console.log(data)
-			foundContacts = data.data || []
+			foundContacts = data.data || data || []
 			console.log(data.data)
 		}
 	} catch (error) {
