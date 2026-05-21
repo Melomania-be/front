@@ -66,6 +66,7 @@ let duplicatePhoneContact: Contact | null = null
 	}
 
 async function searchContacts() {
+	
 	const firstName = formData.first_name.trim()
 	const lastName = formData.last_name.trim()
 
@@ -79,7 +80,10 @@ async function searchContacts() {
 		return
 	}
 
-	const searchQuery = `${firstName} ${lastName}`.trim()
+	const searchQuery =
+	formData.email.trim() ||
+	formData.phone.trim() ||
+	`${firstName} ${lastName}`.trim()
 
 	try {
 		const response = await fetch(
@@ -102,11 +106,13 @@ async function searchContacts() {
 		if (response.ok) {
 			const data = await response.json()
 			const contacts = data.data || data || []
+			const activeField = (document.activeElement as HTMLInputElement)?.id
 
 			duplicateEmailContact = null
 duplicatePhoneContact = null
 
-if (formData.email.trim()) {
+if (formData.email.trim() &&
+	activeField === 'email') {
 	duplicateEmailContact =
 		contacts.find(
 			(contact: Contact) =>
@@ -115,26 +121,63 @@ if (formData.email.trim()) {
 		) || null
 }
 
-if (formData.phone.trim()) {
+if (formData.phone.trim() &&
+	activeField === 'phone') {
+	const normalizedInputPhone = normalizePhone(formData.phone)
+
 	duplicatePhoneContact =
-		contacts.find(
-			(contact: Contact) =>
-				contact.phone?.trim() === formData.phone.trim()
-		) || null
+		contacts.find((contact: Contact) => {
+			if (!contact.phone) return false
+
+			return (
+				normalizePhone(contact.phone) === normalizedInputPhone
+			)
+		}) || null
 }
+
 
 foundContacts = contacts.filter((contact: Contact) => {
 	const first = (contact.firstName || '').toLowerCase()
 	const last = (contact.lastName || '').toLowerCase()
+	const email = (contact.email || '').toLowerCase()
+	const phone = contact.phone
+		? normalizePhone(contact.phone)
+		: ''
 
-	const searchFirst = firstName.toLowerCase()
-	const searchLast = lastName.toLowerCase()
+	const searchFirst = firstName.toLowerCase().trim()
+	const searchLast = lastName.toLowerCase().trim()
+	const searchEmail = formData.email.toLowerCase().trim()
+	const searchPhone = normalizePhone(formData.phone)
 
-	return (
-		first.includes(searchFirst) ||
-		last.includes(searchLast) ||
-		`${first} ${last}`.includes(searchQuery.toLowerCase())
-	)
+	if (activeField === 'first_name') {
+		return (
+			searchFirst.length >= 2 &&
+			first.includes(searchFirst)
+		)
+	}
+
+	if (activeField === 'last_name') {
+		return (
+			searchLast.length >= 2 &&
+			last.includes(searchLast)
+		)
+	}
+
+	if (activeField === 'email') {
+		return (
+			searchEmail.length >= 3 &&
+			email.includes(searchEmail)
+		)
+	}
+
+	if (activeField === 'phone') {
+		return (
+			searchPhone.length >= 5 &&
+			phone.includes(searchPhone)
+		)
+	}
+
+	return false
 })
 		}
 	} catch (error) {
@@ -205,10 +248,24 @@ foundContacts = contacts.filter((contact: Contact) => {
 		}
 	}
 
+function normalizePhone(phone: string) {
+	return phone
+		.replace(/\s|\/|\.|-/g, '')
+		.replace(/^\+32/, '0')
+		.replace(/^0032/, '0')
+}
+
 	function closeModal() {
 		clearForm()
 		dispatch('close')
 	}
+function getFirstName(contact: any) {
+	return contact.firstName || contact.first_name || ''
+}
+
+function getLastName(contact: any) {
+	return contact.lastName || contact.last_name || ''
+}
 
 	function isValidEmail(email: string): boolean {
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -324,18 +381,19 @@ foundContacts = contacts.filter((contact: Contact) => {
 					type="button"
 					class="w-full text-left p-3 bg-white border rounded hover:bg-gray-50"
 					on:click={() => {
-						formData.first_name = contact.firstName || ''
-						formData.last_name = contact.lastName || ''
+						formData.first_name = getFirstName(contact)
+						formData.last_name = getLastName(contact)
 						formData.email = contact.email || ''
 						formData.phone = contact.phone || ''
 						formData.messenger = contact.messenger || ''
-
+duplicateEmailContact = null
+duplicatePhoneContact = null
 						foundContacts = []
 					}}
 				>
 					<div class="font-medium">
-						{contact.firstName} {contact.lastName}
-					</div>
+	{getFirstName(contact)} {getLastName(contact)}
+</div>
 
 					{#if contact.email}
 						<div class="text-sm text-gray-600">
