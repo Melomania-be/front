@@ -28,6 +28,89 @@ let duplicatePhoneContact: Contact | null = null
 	let currentUserName = ''
 	let loadingUser = true
 
+function isSimilar(a: string, b: string) {
+	a = a.toLowerCase()
+	b = b.toLowerCase()
+
+	if (
+		a.includes(b) ||
+		b.includes(a)
+	) {
+		return true
+	}
+
+	let differences = 0
+
+	for (let i = 0; i < Math.min(a.length, b.length); i++) {
+		if (a[i] !== b[i]) {
+			differences++
+		}
+	}
+
+	differences += Math.abs(a.length - b.length)
+
+	return differences <= 2
+}
+
+function normalizePhone(phone: string) {
+	return phone
+		.replace(/\s|\/|\.|-/g, '')
+		.replace(/^\+32/, '0')
+		.replace(/^0032/, '0')
+}
+
+	function closeModal() {
+		clearForm()
+		dispatch('close')
+	}
+function getFirstName(contact: any) {
+	return contact.firstName || contact.first_name || ''
+}
+
+function getLastName(contact: any) {
+	return contact.lastName || contact.last_name || ''
+}
+
+	function isValidEmail(email: string): boolean {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		return emailRegex.test(email)
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			closeModal()
+		}
+	}
+
+	function clearForm() {
+		formData = {
+			first_name: '',
+			last_name: '',
+			email: '',
+			phone: '',
+			messenger: '',
+			section_id: null,
+			notes: '',
+			contacted_by: currentUserName
+		}
+		errors = {}
+	}
+
+	$: {
+		if (formData.first_name.trim() && errors.first_name) {
+			delete errors.first_name
+		}
+		if (formData.last_name.trim() && errors.last_name) {
+			delete errors.last_name
+		}
+		if ((formData.email || formData.phone || formData.messenger) && errors.contact) {
+			delete errors.contact
+		}
+		if (formData.email && isValidEmail(formData.email) && errors.email) {
+			delete errors.email
+		}
+	}
+
 	onMount(async () => {
 		await fetchSections()
 		await getCurrentUser()
@@ -152,14 +235,14 @@ foundContacts = contacts.filter((contact: Contact) => {
 	if (activeField === 'first_name') {
 		return (
 			searchFirst.length >= 2 &&
-			first.includes(searchFirst)
+			isSimilar(first, searchFirst)
 		)
 	}
 
 	if (activeField === 'last_name') {
 		return (
 			searchLast.length >= 2 &&
-			last.includes(searchLast)
+			isSimilar(last, searchLast)
 		)
 	}
 
@@ -248,64 +331,6 @@ foundContacts = contacts.filter((contact: Contact) => {
 		}
 	}
 
-function normalizePhone(phone: string) {
-	return phone
-		.replace(/\s|\/|\.|-/g, '')
-		.replace(/^\+32/, '0')
-		.replace(/^0032/, '0')
-}
-
-	function closeModal() {
-		clearForm()
-		dispatch('close')
-	}
-function getFirstName(contact: any) {
-	return contact.firstName || contact.first_name || ''
-}
-
-function getLastName(contact: any) {
-	return contact.lastName || contact.last_name || ''
-}
-
-	function isValidEmail(email: string): boolean {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		return emailRegex.test(email)
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			closeModal()
-		}
-	}
-
-	function clearForm() {
-		formData = {
-			first_name: '',
-			last_name: '',
-			email: '',
-			phone: '',
-			messenger: '',
-			section_id: null,
-			notes: '',
-			contacted_by: currentUserName
-		}
-		errors = {}
-	}
-
-	$: {
-		if (formData.first_name.trim() && errors.first_name) {
-			delete errors.first_name
-		}
-		if (formData.last_name.trim() && errors.last_name) {
-			delete errors.last_name
-		}
-		if ((formData.email || formData.phone || formData.messenger) && errors.contact) {
-			delete errors.contact
-		}
-		if (formData.email && isValidEmail(formData.email) && errors.email) {
-			delete errors.email
-		}
-	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
