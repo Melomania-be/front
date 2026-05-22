@@ -111,9 +111,28 @@
 	}
 
 	function removeCustomStatus(status: string) {
-		customStatuses = customStatuses.filter(s => s !== status)
-		saveCustomStatuses()
+	const contactsUsingStatus = contacts.filter(
+		(contact) => contact.status === status
+	)
+
+	if (contactsUsingStatus.length > 0) {
+		const contactNames = contactsUsingStatus
+			.map(
+				(contact) =>
+					`${contact.first_name || ''} ${contact.last_name || ''}`.trim()
+			)
+			.join(', ')
+
+		alert(
+			`Cannot delete status "${status}".\n\nThe following contacts are still using it:\n${contactNames}\n\nPlease change their status before deleting it.`
+		)
+
+		return
 	}
+
+	customStatuses = customStatuses.filter((s) => s !== status)
+	saveCustomStatuses()
+}
 
 	function sortBy(column: string) {
 		if (sortColumn === column) {
