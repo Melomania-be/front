@@ -63,7 +63,9 @@
 	let showDuplicateConfirm = false
 	let duplicateContact: Contact | null = null
 	let duplicateMatches: any[] = []
-	let pendingImport = false
+	let showImportDuplicateWarning = false
+	let importDuplicateWarnings: any[] = []
+	let duplicateWarningSource: 'client' | 'server' | null = null
 
 	onMount(async () => {
 		await Promise.all([fetchData(), fetchExistingContacts()])
@@ -130,11 +132,34 @@
 	function isContactInProject(contact: Contact): boolean {
 		return existingContacts.some(existing =>
 			existing.contact_id === contact.id ||
-			(existing.email && contact.email && existing.email.toLowerCase() === contact.email.toLowerCase()) ||
-			(existing.first_name && existing.last_name && contact.firstName && contact.lastName &&
-				existing.first_name.toLowerCase().trim() === contact.firstName.toLowerCase().trim() &&
-				existing.last_name.toLowerCase().trim() === contact.lastName.toLowerCase().trim())
+			(existing.email && contact.email && existing.email.toLowerCase() === contact.email.toLowerCase())
 		)
+	}
+
+	function getContactFirstName(contact: any): string {
+		return contact.firstName || contact.first_name || ''
+	}
+
+	function getContactLastName(contact: any): string {
+		return contact.lastName || contact.last_name || ''
+	}
+
+	function contactToDuplicateMatch(contact: any) {
+		return {
+			type: 'selected_contact',
+			contact: {
+				id: contact.id,
+				first_name: getContactFirstName(contact),
+				last_name: getContactLastName(contact),
+				email: contact.email || null,
+				phone: contact.phone || null,
+				messenger: contact.messenger || null,
+				status: 'Selected for import',
+				source: 'Current selection'
+			},
+			match_id: contact.id,
+			similarity: 1
+		}
 	}
 
 	function findSimilarContacts(contact: Contact): any[] {
@@ -146,8 +171,8 @@
 
 			const firstName1 = (existing.first_name || '').toLowerCase().trim()
 			const lastName1 = (existing.last_name || '').toLowerCase().trim()
-			const firstName2 = (contact.firstName || '').toLowerCase().trim()
-			const lastName2 = (contact.lastName || '').toLowerCase().trim()
+			const firstName2 = getContactFirstName(contact).toLowerCase().trim()
+			const lastName2 = getContactLastName(contact).toLowerCase().trim()
 
 			if (firstName1 === firstName2 && lastName1 === lastName2) return true
 
@@ -155,7 +180,28 @@
 			return similarity > 0.8
 		})
 
-		return similar
+		const selectedSimilar = selectedContacts
+			.filter(selected => selected.id !== contact.id)
+			.filter(selected => areContactsSimilar(selected, contact))
+			.map(contactToDuplicateMatch)
+
+		return [...similar, ...selectedSimilar]
+	}
+
+	function areContactsSimilar(firstContact: Contact, secondContact: Contact): boolean {
+		if (firstContact.email && secondContact.email &&
+			firstContact.email.toLowerCase() === secondContact.email.toLowerCase()) return true
+
+		const firstName1 = getContactFirstName(firstContact).toLowerCase().trim()
+		const lastName1 = getContactLastName(firstContact).toLowerCase().trim()
+		const firstName2 = getContactFirstName(secondContact).toLowerCase().trim()
+		const lastName2 = getContactLastName(secondContact).toLowerCase().trim()
+
+		if (!firstName1 || !lastName1 || !firstName2 || !lastName2) return false
+		if (firstName1 === firstName2 && lastName1 === lastName2) return true
+
+		const similarity = calculateNameSimilarity(firstName1 + ' ' + lastName1, firstName2 + ' ' + lastName2)
+		return similarity > 0.8
 	}
 
 	function calculateNameSimilarity(name1: string, name2: string): number {
@@ -233,10 +279,20 @@
 		selectedContacts = []
 	}
 
-	async function importSelectedContacts() {
+	async function importSelectedContacts(allowDuplicateName = false, skipClientDuplicateCheck = false) {
 		if (selectedContacts.length === 0) {
 			alert('No contact selected')
 			return
+		}
+
+		if (!allowDuplicateName && !skipClientDuplicateCheck) {
+			const duplicateWarnings = findSelectedDuplicateWarnings()
+			if (duplicateWarnings.length > 0) {
+				importDuplicateWarnings = duplicateWarnings
+				duplicateWarningSource = 'client'
+				showImportDuplicateWarning = true
+				return
+			}
 		}
 
 		importing = true
@@ -246,7 +302,8 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					contact_ids: selectedContacts.map(c => c.id).filter(id => id != null)
+					contact_ids: selectedContacts.map(c => c.id).filter(id => id != null),
+					allow_duplicate_name: allowDuplicateName
 				})
 			})
 
@@ -260,6 +317,12 @@
 				const errorText = await response.text()
 				try {
 					const errorData = JSON.parse(errorText)
+					if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || Array.isArray(errorData.duplicate_warnings)) {
+						importDuplicateWarnings = errorData.duplicate_warnings || []
+						duplicateWarningSource = 'server'
+						showImportDuplicateWarning = true
+						return
+					}
 					alert(`Import error: ${errorData.error || 'Unknown error'}`)
 				} catch {
 					alert(`Import error: ${errorText}`)
@@ -270,6 +333,48 @@
 		} finally {
 			importing = false
 		}
+	}
+
+	function cancelImportDuplicateWarning() {
+		showImportDuplicateWarning = false
+		importDuplicateWarnings = []
+		duplicateWarningSource = null
+	}
+
+	async function confirmImportDuplicateWarning() {
+		const warningSource = duplicateWarningSource
+		showImportDuplicateWarning = false
+		importDuplicateWarnings = []
+		duplicateWarningSource = null
+		await importSelectedContacts(warningSource === 'server', true)
+	}
+
+	function findSelectedDuplicateWarnings() {
+		const warnings: any[] = []
+
+		for (let i = 0; i < selectedContacts.length; i++) {
+			const contact = selectedContacts[i]
+			const matches = selectedContacts
+				.slice(0, i)
+				.filter(previousContact => areContactsSimilar(previousContact, contact))
+				.map(contactToDuplicateMatch)
+
+			if (matches.length > 0) {
+				warnings.push({
+					contact: {
+						id: contact.id,
+						first_name: getContactFirstName(contact),
+						last_name: getContactLastName(contact),
+						email: contact.email || null,
+						phone: contact.phone || null,
+						messenger: contact.messenger || null
+					},
+					matches
+				})
+			}
+		}
+
+		return warnings
 	}
 
 	function closeModal() {
@@ -533,7 +638,7 @@
 								</p>
 							</div>
 							<button
-								on:click={importSelectedContacts}
+								on:click={() => importSelectedContacts()}
 								disabled={importing}
 								class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2 font-semibold"
 							>
@@ -670,14 +775,15 @@
 					<h4 class="font-medium text-gray-900 mb-2">Similar contacts already in project:</h4>
 					<div class="space-y-2">
 						{#each duplicateMatches as match}
+							{@const matchContact = match.contact || match}
 							<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-								<p class="font-semibold">{match.first_name} {match.last_name}</p>
-								{#if match.email}
-									<p class="text-sm text-gray-600">{match.email}</p>
+								<p class="font-semibold">{matchContact.first_name} {matchContact.last_name}</p>
+								{#if matchContact.email}
+									<p class="text-sm text-gray-600">{matchContact.email}</p>
 								{/if}
-								<p class="text-xs text-yellow-700">Status: {match.status}</p>
-								{#if match.source}
-									<p class="text-xs text-gray-500">Source: {match.source}</p>
+								<p class="text-xs text-yellow-700">Status: {matchContact.status}</p>
+								{#if matchContact.source}
+									<p class="text-xs text-gray-500">Source: {matchContact.source}</p>
 								{/if}
 							</div>
 						{/each}
@@ -710,6 +816,62 @@
 					class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
 				>
 					Import anyway
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showImportDuplicateWarning}
+	<div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]">
+		<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+			<div class="flex items-center gap-3 p-6 border-b bg-yellow-50">
+				<AlertTriangle class="text-yellow-500" size={24} />
+				<h3 class="text-lg font-semibold text-yellow-900">Potential duplicate contacts</h3>
+			</div>
+
+			<div class="p-6 space-y-5">
+				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+					<p class="text-sm text-yellow-800">
+						One or more selected contacts have an identical or similar first and last name already in this recruitment list.
+					</p>
+				</div>
+
+				<div class="space-y-3">
+					{#each importDuplicateWarnings as warning}
+						<div class="border border-gray-200 rounded-lg p-3">
+							<p class="font-semibold text-gray-900">
+								{warning.contact?.first_name} {warning.contact?.last_name}
+							</p>
+							<div class="mt-2 space-y-1">
+								{#each (warning.matches || []).slice(0, 3) as match}
+									<p class="text-sm text-gray-600">
+										Similar to: {match.contact.first_name} {match.contact.last_name}
+									</p>
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</div>
+
+				<p class="text-sm text-gray-700">Do you still want to import them?</p>
+			</div>
+
+			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
+				<button
+					type="button"
+					on:click={cancelImportDuplicateWarning}
+					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					on:click={confirmImportDuplicateWarning}
+					disabled={importing}
+					class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+				>
+					{importing ? 'Importing...' : 'Import anyway'}
 				</button>
 			</div>
 		</div>

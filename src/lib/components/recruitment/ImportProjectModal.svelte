@@ -19,6 +19,8 @@
 		conflicts: any[]
 		errors: string[]
 	} | null = null
+	let showDuplicateWarning = false
+	let duplicateWarnings: any[] = []
 
 	const statusOptions = [
 		{ value: 'not_yet_contacted', label: 'Not yet contacted', color: 'text-gray-700', bgColor: 'bg-gray-100' },
@@ -62,7 +64,7 @@
 		selectedStatuses = []
 	}
 
-	async function importFromProject() {
+	async function importFromProject(allowDuplicateName = false) {
 		if (!selectedProjectId || selectedStatuses.length === 0) {
 			alert('Please select a project and at least one status')
 			return
@@ -76,14 +78,21 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					source_project_id: selectedProjectId,
-					include_statuses: selectedStatuses
+					include_statuses: selectedStatuses,
+					allow_duplicate_name: allowDuplicateName
 				})
 			})
 
 			if (response.ok) {
 				importResults = await response.json()
 			} else {
-				alert('Import error')
+				const errorData = await response.json().catch(() => ({ error: 'Import error' }))
+				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || Array.isArray(errorData.duplicate_warnings)) {
+					duplicateWarnings = errorData.duplicate_warnings || []
+					showDuplicateWarning = true
+					return
+				}
+				alert(errorData.error || 'Import error')
 			}
 		} catch (error) {
 			console.error('Error importing:', error)
@@ -93,12 +102,24 @@
 		}
 	}
 
+	function cancelDuplicateWarning() {
+		showDuplicateWarning = false
+		duplicateWarnings = []
+	}
+
+	async function confirmDuplicateWarning() {
+		showDuplicateWarning = false
+		duplicateWarnings = []
+		await importFromProject(true)
+	}
+
 	function closeModal() {
 		dispatch('close')
 	}
 
 	function resetImport() {
 		importResults = null
+		cancelDuplicateWarning()
 		selectedProjectId = null
 		selectedStatuses = ['not_yet_contacted', 'awaiting_response', 'to_follow_up']
 	}
@@ -386,7 +407,7 @@
 				</button>
 				<button
 					type="button"
-					on:click={importFromProject}
+					on:click={() => importFromProject()}
 					disabled={importing || !selectedProjectId || selectedStatuses.length === 0}
 					class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2 font-semibold"
 				>
@@ -417,3 +438,59 @@
 		</div>
 	</div>
 </div>
+
+{#if showDuplicateWarning}
+	<div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]">
+		<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+			<div class="flex items-center gap-3 p-6 border-b bg-yellow-50">
+				<AlertTriangle class="text-yellow-500" size={24} />
+				<h3 class="text-lg font-semibold text-yellow-900">Potential duplicate contacts</h3>
+			</div>
+
+			<div class="p-6 space-y-5">
+				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+					<p class="text-sm text-yellow-800">
+						One or more contacts from this project have an identical or similar first and last name already in this recruitment list.
+					</p>
+				</div>
+
+				<div class="space-y-3">
+					{#each duplicateWarnings as warning}
+						<div class="border border-gray-200 rounded-lg p-3">
+							<p class="font-semibold text-gray-900">
+								{warning.contact?.first_name} {warning.contact?.last_name}
+							</p>
+							<div class="mt-2 space-y-1">
+								{#each (warning.matches || []).slice(0, 3) as match}
+									<p class="text-sm text-gray-600">
+										Similar to: {match.contact.first_name} {match.contact.last_name}
+									</p>
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</div>
+
+				<p class="text-sm text-gray-700">Do you still want to import them?</p>
+			</div>
+
+			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
+				<button
+					type="button"
+					on:click={cancelDuplicateWarning}
+					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					on:click={confirmDuplicateWarning}
+					disabled={importing}
+					class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+				>
+					{importing ? 'Importing...' : 'Import anyway'}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

@@ -35,6 +35,7 @@
 	const dispatch = createEventDispatcher()
 
 	let contacts: RecruitmentContact[] = []
+	let allContacts: RecruitmentContact[] = []
 	let meta: any = {}
 	let options: any = {
 		filter: '',
@@ -160,7 +161,7 @@
 	}
 
 	function applyFilters() {
-		let filtered = [...contacts]
+		let filtered = [...allContacts]
 
 		if (filters.status) {
 			filtered = filtered.filter(c => c.status === filters.status)
@@ -176,6 +177,10 @@
 		}
 
 		contacts = filtered
+
+		if (sortColumn) {
+			applySorting()
+		}
 	}
 
 	function clearFilters() {
@@ -219,6 +224,7 @@
 				})) : []
 
 				contacts = safeContacts
+				allContacts = safeContacts
 				meta = data.meta || {}
 
 				if (Object.values(filters).some(f => f !== '')) {
