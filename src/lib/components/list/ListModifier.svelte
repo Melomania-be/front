@@ -228,50 +228,66 @@
 			<span> Show Instruments</span>
 		</div>
 		{#if newList.contacts.length > 0}
-			<div class="grid {isMobile ? '' : 'grid-cols-3'} gap-4">
-				{#each newList.contacts as contact}
-					<div>
-						<div class="border-2 border-gray-400 rounded-xl p-4 h-auto flex items-center">
-							<div>
-								<div class="flex gap-4 font-bold items-center">
-									<Fa icon={faUser} class="text-[18px]" style="color: #6b9ad9;" />
-									<p>{contact.firstName} {contact.lastName}</p>
-								</div>
+			<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-full mt-2 border border-gray-300">
+				<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b">
+						<tr>
+							<th scope="col" class="px-6 py-3"> First name </th>
+							<th scope="col" class="px-6 py-3"> Last name </th>
+							<th scope="col" class="px-6 py-3"> Email </th>
+							{#if showInstruments}
+								<th scope="col" class="px-6 py-3"> Instruments </th>
+							{/if}
+							<th scope="col" class="px-6 py-3 text-right"> Actions </th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each newList.contacts as contact}
+							<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+								<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+									{contact.firstName}
+								</td>
+								<td class="px-6 py-4">
+									{contact.lastName}
+								</td>
+								<td class="px-6 py-4">
+									{contact.email || ''}
+								</td>
 								{#if showInstruments}
-									{#each contact.instruments as instrument}
-										<div class="flex gap-4 my-1">
-											<div
-												class="{familyToStyle(instrument.family)} font-semibold rounded-lg p-1 px-2"
-											>
-												{familyToEmoji(instrument.family)}
-												{instrument.name}
+									<td class="px-6 py-4">
+										{#if contact.instruments && contact.instruments.length}
+											<div class="flex flex-wrap gap-2">
+												{#each contact.instruments as instrument}
+													<div class="flex gap-2 items-center my-1">
+														<div class="{familyToStyle(instrument.family)} font-semibold rounded-lg p-1 px-2 text-xs">
+															{familyToEmoji(instrument.family)}
+															{instrument.name}
+														</div>
+														{#if instrument.pivot_proficiency_level}
+															<div class="{levelToStyle(instrument.pivot_proficiency_level)} border-2 p-1 px-2 rounded-lg font-semibold text-xs">
+																{levelSimplificator(instrument.pivot_proficiency_level)}
+															</div>
+														{/if}
+													</div>
+												{/each}
 											</div>
-											{#if instrument.pivot_proficiency_level}
-												<div
-													class="{levelToStyle(
-														instrument.pivot_proficiency_level
-													)} border-2 p-1 px-2 rounded-lg font-semibold"
-												>
-													{levelSimplificator(instrument.pivot_proficiency_level)}
-												</div>
-											{/if}
-										</div>
-									{/each}
+										{/if}
+									</td>
 								{/if}
-							</div>
-							<div class="ml-auto">
-								<button
-									class="p-2 bg-red-400 rounded-lg ml-auto"
-									on:click={() => {
-										newList.contacts = newList.contacts.filter((c) => c.id !== contact.id);
-									}}
-								>
-									<Fa icon={faTrashCan} class="text-[16px]" style="color: white;" />
-								</button>
-							</div>
-						</div>
-					</div>
-				{/each}
+								<td class="px-6 py-4 text-right">
+									<button
+										class="p-2 bg-red-400 hover:bg-red-500 rounded-lg inline-flex items-center justify-center"
+										on:click={() => {
+											newList.contacts = newList.contacts.filter((c) => c.id !== contact.id);
+										}}
+									>
+										<Fa icon={faTrashCan} style="color: white;" />
+									</button>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</div>
@@ -361,13 +377,15 @@
 														{familyToEmoji(instrument.family)}
 														{instrument.name}
 													</div>
-													<div
-														class="{levelToStyle(
-															instrument.pivot_proficiency_level
-														)} border-2 p-1 px-2 rounded-lg font-semibold"
-													>
-														{levelSimplificator(instrument.pivot_proficiency_level)}
-													</div>
+													{#if instrument.pivot_proficiency_level}
+														<div
+															class="{levelToStyle(
+																instrument.pivot_proficiency_level
+															)} border-2 p-1 px-2 rounded-lg font-semibold"
+														>
+															{levelSimplificator(instrument.pivot_proficiency_level)}
+														</div>
+													{/if}
 												</div>
 											{/each}
 										{/if}
