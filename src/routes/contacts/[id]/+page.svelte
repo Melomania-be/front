@@ -7,6 +7,7 @@
 	import AccountingTable from '$lib/components/AccountingTable.svelte';
 	import type { ExpenseCategory } from '$lib/types/ExpenseCategory.js';
 	import { onMount } from 'svelte';
+	import { jsPDF } from 'jspdf';
 	import autoTable from 'jspdf-autotable';
 
 	export let data;
@@ -16,6 +17,15 @@
 
 	let contactAccountings: Accounting[] = [];
 	let categories: ExpenseCategory[];
+
+	let exportFields = {
+		email: true,
+		phone: true,
+		messenger: true,
+		comments: true,
+		instruments: true,
+		projects: true
+	};
 
 	onMount(async () => {
 		await fetchAccountingContact();
@@ -79,10 +89,99 @@
 		}
 		console.log(projectConcerts)
 	});
+
+	function exportPdf() {
+		const doc = new jsPDF();
+
+		doc.setFontSize(18);
+		doc.text(`${contact.firstName} ${contact.lastName}`, 14, 20);
+
+		const infoRows = [];
+		if (exportFields.email) infoRows.push(['Email', contact.email ?? '']);
+		if (exportFields.phone) infoRows.push(['Téléphone', contact.phone ?? '']);
+		if (exportFields.messenger) infoRows.push(['Messenger', contact.messenger ?? '']);
+		if (exportFields.comments) infoRows.push(['Commentaires', contact.comments ?? '']);
+
+		infoRows.push(['Validé', contact.validated ? 'Oui' : 'Non']);
+		infoRows.push(['Créé le', contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('fr-BE') : '']);
+		infoRows.push(['Modifié le', contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('fr-BE') : '']);
+
+		autoTable(doc, {
+			startY: 30,
+			head: [['Champ', 'Valeur']],
+			body: infoRows,
+			styles: { fontSize: 11 },
+			headStyles: { fillColor: [107, 154, 217] }
+		});
+
+		if (exportFields.instruments) {
+			const instrumentRows = (contact.instruments ?? []).map((i) => [
+				i.name ?? '',
+				i.pivot_proficiency_level ?? ''
+			]);
+
+			if (instrumentRows.length > 0) {
+				autoTable(doc, {
+					head: [['Instrument', 'Niveau']],
+					body: instrumentRows,
+					styles: { fontSize: 11 },
+					headStyles: { fillColor: [107, 154, 217] }
+				});
+			}
+		}
+
+		if (exportFields.projects) {
+			const projectRows = (contact.participants ?? []).map((p) => [
+				p.project?.name ?? ''
+			]);
+
+			if (projectRows.length > 0) {
+				autoTable(doc, {
+					head: [['Projets joués']],
+					body: projectRows,
+					styles: { fontSize: 11 },
+					headStyles: { fillColor: [107, 154, 217] }
+				});
+			}
+		}
+
+		doc.save(`contact-${contact.id}.pdf`);
+	}
 </script>
 
 <div class="bg-[#E7E7E7] p-4 h-screen">
 	<ContactModifier mode="modify" {contact} {instruments} />
+	<div class="w-full mt-4 p-4 bg-white border-2 border-gray-500 rounded-xl shadow">
+		<p class="font-semibold text-gray-600 mb-2">Champs à exporter :</p>
+		<div class="flex flex-wrap gap-4 mb-4">
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.email} /> Email
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.phone} /> Téléphone
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.messenger} /> Messenger
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.comments} /> Commentaires
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.instruments} /> Instruments
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.projects} /> Projets
+			</label>
+		</div>
+		<div class="flex justify-end">
+			<button
+				on:click={exportPdf}
+				class="px-4 py-2 bg-[#6B9AD9] text-white font-semibold rounded-lg shadow hover:bg-[#5a89c8] transition-all"
+			>
+				Export PDF
+			</button>
+		</div>
+	</div>
 	<div
 		class="w-full p-4 mt-4 bg-white border-2 border-gray-500 rounded-xl shadow dark:bg-gray-800 dark:border-gray-700"
 	>
