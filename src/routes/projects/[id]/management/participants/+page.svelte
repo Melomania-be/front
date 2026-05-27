@@ -15,7 +15,8 @@
 	import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
 	import type { Registration } from '$lib/types/Registration';
 	import type { Form } from '$lib/types/Form';
-
+	import { jsPDF } from 'jspdf';
+	import autoTable from 'jspdf-autotable';
 	export let data;
 
 	let project: Project | undefined;
@@ -148,24 +149,20 @@
 		for (const acc of accountings) {
 			if(acc.isMusicianFee){
 				if (acc.contactId != null) {
-					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactMusicianFee[acc.contactId]) {
 						paymentsByContactMusicianFee[acc.contactId] = 0;
 					}
 
-					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactMusicianFee[acc.contactId] += Number(acc.amount);
 				}
 				
 			}
 			else{
 				if (acc.contactId != null) {
-					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactAdditionnal[acc.contactId]) {
 						paymentsByContactAdditionnal[acc.contactId] = 0;
 					}
 
-					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactAdditionnal[acc.contactId] += Number(acc.amount);
 				}
 				console.log(acc.amount)
@@ -280,13 +277,13 @@
 	function parseQuestionAndAnswers(raw: string): string {
 		const [question, answersPart] = raw.split(':', 2);
 
-		if (!answersPart) return raw; // cas où il n’y a pas de ":"
+		if (!answersPart) return raw;
 
 		const answers = answersPart
-			.replace(/^;+|;+$/g, '') // retire les ; au début/fin
-			.split(';') // transforme en tableau
-			.map((s) => s.trim()) // nettoie les espaces
-			.filter((s) => s.length > 0); // ignore les vides
+			.replace(/^;+|;+$/g, '')
+			.split(';')
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0);
 
 		return `${question.trim()} (${answers.join(', ')})`;
 	}
@@ -323,6 +320,36 @@
 		console.log(p.id, p.contact?.email);
 	});
 	}
+
+	function exportParticipantsPdf() {
+		const doc = new jsPDF();
+
+		doc.setFontSize(18);
+		doc.text('Participants du projet', 14, 20);
+
+		if (project?.name) {
+			doc.setFontSize(12);
+			doc.text(project.name, 14, 28);
+		}
+
+		const rows = participants.map((p) => [
+			p.contact?.firstName ?? '',
+			p.contact?.lastName ?? '',
+			p.contact?.email ?? '',
+			p.contact?.phone ?? '',
+			p.section?.name ?? ''
+		]);
+
+		autoTable(doc, {
+			startY: 36,
+			head: [['Prénom', 'Nom', 'Email', 'Téléphone', 'Section']],
+			body: rows,
+			styles: { fontSize: 10 },
+			headStyles: { fillColor: [107, 154, 217] }
+		});
+
+		doc.save(`participants-projet-${data.id}.pdf`);
+	}
 </script>
 
 <ProjectHeadDisplayer {project} selectedTab={1} />
@@ -351,8 +378,14 @@
 			<div class="flex items-center">
 				<h1 class="font-bold text-lg">PARTICIPANTS</h1>
 				<button
-					on:click={() => goto(`${urlFront}/creation`)}
+					on:click={exportParticipantsPdf}
 					class="ml-auto px-4 py-2 text-sm bg-[#6B9AD9] text-white rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+				>
+					Export PDF
+				</button>
+				<button
+					on:click={() => goto(`${urlFront}/creation`)}
+					class="ml-2 px-4 py-2 text-sm bg-[#6B9AD9] text-white rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
 				>
 					Add a participant
 				</button>
@@ -398,20 +431,6 @@
 							{/each}
 						</div>
 					</div>
-					<!--
-					<div class="flex w-full justify-center">
-						<select
-							on:change={changeSorting}
-							class="w-1/2 items-center flex rounded-lg border-2 border-gray-500"
-							bind:value={sorting}
-						>
-							<option value={''}>None</option>
-							<option value={'email'}>Email</option>
-							<option value={'firstName'}>First Name</option>
-							<option value={'lastName'}>Last Name</option>
-						</select>
-					</div>
-					-->
 				</div>
 				<div class="w-full overflow-x-auto">
 					<table
