@@ -175,7 +175,7 @@
 		});
 	}
 
-	let showInstruments = false;
+	let showInstruments = true;
 
 	let isMobile = false;
 
@@ -219,14 +219,6 @@
 			/>
 		</div>
 		<h2 class="text-xl font-bold mt-4 mb-2 text-gray-600 uppercase">Contacts</h2>
-		<div class="flex gap-2 items-center mb-4">
-			<input
-				bind:checked={showInstruments}
-				type="checkbox"
-				class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-			/>
-			<span> Show Instruments</span>
-		</div>
 		{#if newList.contacts.length > 0}
 			<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-full mt-2 border border-gray-300">
 				<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
