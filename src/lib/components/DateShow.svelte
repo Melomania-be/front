@@ -56,7 +56,7 @@
 			{usableEndTime.toLocaleTimeString(undefined, timeOption)}
 		{:else if withDate}
 			{usableStartTime.toLocaleDateString(undefined, dateOptions)}
-			{#if endTime && !isRehearsal}
+			{#if endTime && !isRehearsal && usableStartTime.toDateString() !== usableEndTime.toDateString()}
 				{' to '}
 				{usableEndTime.toLocaleDateString(undefined, dateOptions)}
 			{/if}
