@@ -56,12 +56,11 @@
 			{' - '}
 			{usableEndTime.toLocaleTimeString(undefined, timeOption)}
 		{:else if withDate}
-			{usableStartTime.toLocaleDateString(undefined, dateOptions)}
-			{#if endTime}
-				{' to '}
-				{usableEndTime.toLocaleDateString(undefined, dateOptions)}
-			{/if}
-		{/if}
+    {usableStartTime.toLocaleDateString(undefined, dateOptions)}
+    	{#if endTime && !isRehearsal}
+        {' to '}
+        {usableEndTime.toLocaleDateString(undefined, dateOptions)}
+    	{/if}
 	{:else}
 		-
 	{/if}
