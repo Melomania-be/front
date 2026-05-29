@@ -621,16 +621,18 @@
 									{#if registration.contents && registration.contents.length > 0}
 										<div class="bg-[#ececec] h-full pl-7 pr-7 overflow-y-auto pb-7">
 											{#each registration.contents as content}
-												<h2
-													class="text-2xl font-medium tracking-tight text-black dark:text-white mb-3 mt-5"
-												>
-													{@html content.title}
-												</h2>
-												<div class="w-full flex">
-													<p class="text-gray-500 dark:text-gray-400 text-justify">
-														{@html content.text}
-													</p>
-												</div>
+												{#if content.showOnRegistration}
+													<h2
+														class="text-2xl font-medium tracking-tight text-black dark:text-white mb-3 mt-5"
+													>
+														{@html content.title}
+													</h2>
+													<div class="w-full flex">
+														<p class="text-gray-500 dark:text-gray-400 text-justify">
+															{@html content.text}
+														</p>
+													</div>
+												{/if}
 											{/each}
 										</div>
 									{/if}
