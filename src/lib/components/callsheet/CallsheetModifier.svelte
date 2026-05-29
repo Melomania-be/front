@@ -78,6 +78,7 @@
 						id: content.id,
 						title: content.title.trim(),
 						text: content.text
+						showOnRegistration: content.showOnRegistration || false
 					};
 				})
 			};
@@ -211,6 +212,7 @@
 		const newContent = {
 			title: '',
 			text: '',
+			showOnRegistration: false,
 			callsheet_id: 0,
 			id: contentIdCounter++, // ID temporaire unique
 			createdAt: new Date(),
@@ -375,6 +377,17 @@
 											value={content.text}
 											onChange={(v) => content.text = v}
 										/>
+										<label class="flex items-center gap-2 mt-2 cursor-pointer">
+											<input
+												type="checkbox"
+												class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+												bind:checked={content.showOnRegistration}
+												disabled={isLoading}
+											/>
+											<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+             Afficher ce bloc sur le formulaire d'inscription
+            </span>
+										</label>
 									{:else}
 										<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
 									{/if}

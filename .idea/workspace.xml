@@ -6,11 +6,38 @@
   <component name="ChangeListManager">
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/CallsheetModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/CallsheetModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationShow.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationShow.svelte" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotChats">
+    <option name="panelChat">
+      <chat>
+        <option name="activeSessionId" value="629031b8-5bed-4e9d-967f-69996abf587a" />
+        <option name="sessions">
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="629031b8-5bed-4e9d-967f-69996abf587a" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+        </option>
+        <option name="type" value="PANEL" />
+      </chat>
+    </option>
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/total informatique/Desktop/front" value="30B5cOjabNfLnrFKJ3iJAQE5cSY" />
+    </persistenceIdMap>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -28,8 +55,8 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;git@github.com:Melomania-be/front.git&quot;,
-    &quot;accountId&quot;: &quot;916160fa-0032-456d-8215-daf5f729a91f&quot;
+    &quot;url&quot;: &quot;https://github.com/Melomania-be/front.git&quot;,
+    &quot;accountId&quot;: &quot;750a5e31-cbe3-41e3-acd5-cf3a619cf847&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
@@ -45,8 +72,8 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "accounting-feature-lastest-2",
-    "last_opened_file_path": "F:/Java/front",
+    "git-widget-placeholder": "feat/registration-block-visibility-84",
+    "last_opened_file_path": "C:/Users/total informatique/Desktop/front",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -54,11 +81,14 @@
     "nodejs_package_manager_path": "npm",
     "prettierjs.PrettierConfiguration.Package": "F:\\Java\\front\\node_modules\\prettier",
     "settings.editor.selected.configurable": "preferences.lookFeel",
-    "ts.external.directory.path": "F:\\Java\\front\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Users\\total informatique\\Desktop\\front\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\total informatique\Desktop\front" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="F:\Java\front\src\routes\api\filesystem\shared\[token]" />
       <recent name="F:\Java\front\src\lib\components\callsheet" />
@@ -67,7 +97,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-WS-243.26053.12" />
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.29188.11" />
+        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.29188.11" />
       </set>
     </attachedChunks>
   </component>
@@ -86,10 +117,22 @@
       <workItem from="1753374859465" duration="8757000" />
       <workItem from="1753456813138" duration="4312000" />
       <workItem from="1753791465892" duration="8100000" />
+      <workItem from="1779957823619" duration="3038000" />
+      <workItem from="1780044261792" duration="177000" />
+      <workItem from="1780044491742" duration="28000" />
+      <workItem from="1780044545676" duration="5201000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
   </component>
 </project>
