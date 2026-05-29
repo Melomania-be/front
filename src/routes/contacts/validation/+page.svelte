@@ -363,8 +363,8 @@
 	}
 </script>
 
-<main class="flex ml-5 mr-5 min-w-[1200px] overflow-x-auto">
-	<div class="w-full border-2 border-rose-500">
+<main class="flex flex-col md:flex-row ml-2 mr-2 lg:ml-5 lg:mr-5 w-full box-border overflow-x-auto gap-4">
+	<div class="w-full md:flex-1 p-2 box-border border-2 border-rose-500 overflow-hidden break-words">
 		{#if selectedContact}
 			<div>
 				<button class="flex items-center cursor-pointer" on:click={() => deselectContact()}>
@@ -431,7 +431,7 @@
 	</div>
 
 	{#if selectedContact && comparedContact}
-		<div class="w-full border-2 border-pink-500">
+		<div class="w-full border-2 border-pink-500 overflow-hidden break-words">
 			<table>
 				<thead>
 					<tr>
@@ -511,14 +511,14 @@
 			</div>
 		</div>
 	{:else}
-		<div class="w-full border-2 border-pink-500 col-1 w-1/2 mx-auto">
+		<div class="w-full border-2 border-pink-500 overflow-hidden break-words col-1 w-1/2 mx-auto">
 			<p>Select two contacts to compare and merge.</p>
 		</div>
 	{/if}
 
 	{#if selectedContact}
 		{#if comparedContact === null}
-			<div class="w-full border-2 border-green-500">
+			<div class="w-full border-2 border-green-500 ">
 				<div class="border-2 border-yellow-500">
 					<h2>Recommended</h2>
 					The following contacts are similar to the selected contact:
@@ -526,7 +526,7 @@
 						{#each similartoSelected as contact}
 							<div class="border-b-2 border-gray-300 flex justify-between items-center">
 								<button
-									class="flex border-2 border-rose-500 cursor-pointer"
+									class="flex border-2 border-rose-500 cursor-pointer overflow-hidden break-words"
 									on:click={() => selectedCompared(contact)}
 								>
 									{contact.firstName}
@@ -577,7 +577,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="w-full border-2 border-rose-500">
+			<div class="w-full md:flex-1 p-2 box-border border-2 border-rose-500 overflow-hidden break-words">
 				<button class="flex items-center cursor-pointer" on:click={() => deselectCompared()}>
 					<Fa icon={faArrowLeft} />
 					<b><span>&#20; Back to comparison selector</span></b>
@@ -606,7 +606,7 @@
 			</div>
 		{/if}
 	{:else}
-		<div class="w-full flex border-2 border-green-500">
+		<div class="w-full flex border-2 border-green-500 border-green-500">
 			<h2>No contact selected</h2>
 		</div>
 	{/if}
