@@ -459,39 +459,42 @@
 	let currentBalance = 0;
 	let futureBalance = 0;
 
-	$: if (accountings && accountings.length > 0) {
-		totalExpenses = 0;
-		currentExpenses = 0;
-		futureExpenses = 0;
+$: if (accountings && accountings.length > 0) {
+    totalExpenses = 0;
+    currentExpenses = 0;
+    futureExpenses = 0;
 
-		totalIncomes = 0;
-		currentIncomes = 0;
-		futureIncomes = 0;
+    totalIncomes = 0;
+    currentIncomes = 0;
+    futureIncomes = 0;
 
-		for (const acc of accountings) {
-			const amount = Number(acc.amount);
+    const now = new Date();
 
-			if (amount < 0) {
-				totalExpenses += amount;
-				if (acc.paymentDate) {
-					currentExpenses += amount;
-				} else {
-					futureExpenses += amount;
-				}
-			} else {
-				totalIncomes += amount;
-				if (acc.paymentDate) {
-					currentIncomes += amount;
-				} else {
-					futureIncomes += amount;
-				}
-			}
-		}
+    for (const acc of accountings) {
+        const amount = Number(acc.amount);
+        const bankDate = acc.paymentDate ? new Date(acc.paymentDate) : null;
 
-		totalBalance = totalIncomes + totalExpenses;
-		currentBalance = currentIncomes + currentExpenses;
-		futureBalance = futureIncomes + futureExpenses;
-	}
+        if (amount < 0) {
+            totalExpenses += amount;
+            if (bankDate && bankDate < now) {
+                currentExpenses += amount;
+            } else {
+                futureExpenses += amount;
+            }
+        } else {
+            totalIncomes += amount;
+            if (bankDate && bankDate < now) {
+                currentIncomes += amount;
+            } else {
+                futureIncomes += amount;
+            }
+        }
+    }
+
+    totalBalance = totalIncomes + totalExpenses;
+    currentBalance = currentIncomes + currentExpenses;
+    futureBalance = futureIncomes + futureExpenses;
+}
 
 	let search = '';
 	let accountingsDisplayed: Accounting[] = [];
@@ -1030,7 +1033,7 @@
 			>
 				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
 			</button>
-			<h2 class="text-xl text-gray-500 font-bold mb-8 uppercase">{AccountingName}</h2>
+			<h2 class="text-lg text-gray-500 font-bold mb-8 uppercase">{AccountingName}</h2>
 			<div class="w-full p-4">
 				<div class="gap-4 flex flex-col">
 					{#if accountingFolder && folder.children}
@@ -1116,7 +1119,7 @@
 			>
 				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
 			</button>
-			<h2 class="text-xl text-gray-500 font-bold mb-8">{updateMode ? 'Edit' : 'New'}</h2>
+			<h2 class="text-lg text-gray-500 font-bold mb-8">{updateMode ? 'Edit' : 'New'}</h2>
 			<div class="h-full w-full flex overflow-y-auto">
 				<div class="flex flex-col gap-2 items-center w-full">
 					<div class="flex gap-2 text-gray-500 items-center font-semibold">
