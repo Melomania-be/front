@@ -21,7 +21,7 @@
 	}
 
 	// Compteur pour générer des IDs uniques pour les nouveaux contenus
-	$: contentIdCounter = Math.max(...(callsheet?.contents?.map(c => c.id || 0) || [0])) + 1;
+	let contentIdCounter = Math.max(...(callsheet?.contents?.map(c => c.id || 0) || [0])) + 1;
 
 	// Validation des champs requis
 	function validateCallsheet() {
