@@ -33,8 +33,10 @@
 		}
 
 		if (!callsheet.version || callsheet.version.trim() === '') {
-			errors.push('La version est requise');
-		}
+    errors.push('La version est requise');
+} else if (callsheet.version.length > 255) {
+    errors.push('La version ne peut pas dépasser 255 caractères');
+}
 
 		if (!callsheet.contents || callsheet.contents.length === 0) {
 			errors.push('Au moins un contenu est requis');
