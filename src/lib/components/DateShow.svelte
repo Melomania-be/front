@@ -3,67 +3,98 @@
 	export let endTime: string | Date | null = null;
 	export let withTime: boolean = false;
 	export let withDate: boolean = true;
-	export let isRehearsal: boolean = false;
-	export let multiLine: boolean = false; // NOUVELLE PROP
+	export let multiLine: boolean = false;
 
-	let usableStartTime = new Date(startTime);
+	function toLocalDateTimeString(value: string | Date) {
+		const d = new Date(value);
 
-	let usableEndTime = endTime
-		? new Date(endTime)
-		: new Date(
-				usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000)
-			);
+		const year = d.getFullYear();
+		const month = String(d.getMonth() + 1).padStart(2, '0');
+		const day = String(d.getDate()).padStart(2, '0');
+		const hours = String(d.getHours()).padStart(2, '0');
+		const minutes = String(d.getMinutes()).padStart(2, '0');
 
-	const dateOptions: Intl.DateTimeFormatOptions = {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric'
-	};
-	const shortDateOptions: Intl.DateTimeFormatOptions = {
-		weekday: 'long',
-		day: 'numeric',
-		month: 'numeric',
-		year: '2-digit'
-	};
-	const timeOption: Intl.DateTimeFormatOptions = {
-		hour: '2-digit',
-		minute: '2-digit'
-	};
+		return `${year}-${month}-${day}T${hours}:${minutes}`;
+	}
 
-	$: usableStartTime = new Date(startTime);
-	$: usableEndTime = endTime
-		? new Date(endTime)
-		: new Date(
-				usableStartTime.getTime() + (isRehearsal ? 3 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000)
-			);
+	function normalize(value: string | Date) {
+		if (value instanceof Date) {
+			return toLocalDateTimeString(value);
+		}
+
+		return value;
+	}
+
+	function getDate(value: string | Date) {
+		if (!value) return '';
+
+		const raw = normalize(value);
+		const datePart = raw.includes('T') ? raw.split('T')[0] : raw;
+
+		const [year, month, day] = datePart.split('-').map(Number);
+
+		if (!year || !month || !day) return raw;
+
+		const date = new Date(year, month - 1, day);
+
+		return date.toLocaleDateString('en-GB', {
+			weekday: 'long',
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric'
+		});
+	}
+
+	function getTime(value: string | Date) {
+		if (!value) return '';
+
+		const raw = normalize(value);
+
+		const timePart = raw.includes('T')
+			? raw.split('T')[1]?.slice(0, 5)
+			: raw.slice(0, 5);
+
+		if (!timePart || !timePart.includes(':')) return raw;
+
+		const [hourString, minute] = timePart.split(':');
+
+		let hour = Number(hourString);
+		const ampm = hour >= 12 ? 'pm' : 'am';
+
+		hour = hour % 12 || 12;
+
+		if (minute === '00') {
+			return `${hour}${ampm}`;
+		}
+
+		return `${hour}:${minute} ${ampm}`;
+	}
 </script>
 
 <span>
 	{#if startTime}
 		{#if multiLine}
-			<!-- AFFICHAGE SUR DEUX LIGNES -->
-			{usableStartTime.toLocaleDateString(undefined, shortDateOptions)}<br>
-			{usableStartTime.toLocaleTimeString(undefined, timeOption)} - {usableEndTime.toLocaleTimeString(undefined, timeOption)}
-		{:else if withTime && withDate}
-			{usableStartTime.toLocaleTimeString(undefined, timeOption)}
-			{' - '}
-			{usableEndTime.toLocaleTimeString(undefined, timeOption)}
-			{' | '}
-			{usableStartTime.toLocaleDateString(undefined, dateOptions)}
-		{:else if withTime}
-			{usableStartTime.toLocaleTimeString(undefined, timeOption)}
-			{' - '}
-			{usableEndTime.toLocaleTimeString(undefined, timeOption)}
-		{:else if withDate}
-			{usableStartTime.toLocaleDateString(undefined, dateOptions)}
+			{getDate(startTime)}<br />
+			{getTime(startTime)}
 			{#if endTime}
-				{' to '}
-				{usableEndTime.toLocaleDateString(undefined, dateOptions)}
+				{' - '}{getTime(endTime)}
 			{/if}
+		{:else if withTime && withDate}
+			{getTime(startTime)}
+			{#if endTime}
+				{' - '}{getTime(endTime)}
+			{/if}
+			{' | '}
+			{getDate(startTime)}
+		{:else if withTime}
+			{getTime(startTime)}
+			{#if endTime}
+				{' - '}{getTime(endTime)}
+			{/if}
+		{:else if withDate}
+			{getDate(startTime)}
 		{/if}
 	{:else}
 		-
 	{/if}
 </span>
-
