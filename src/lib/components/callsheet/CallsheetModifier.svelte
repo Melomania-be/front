@@ -194,11 +194,14 @@
 
 	// Fonction pour supprimer un contenu spécifique
 	function removeContent(contentToRemove: any) {
-		if (!callsheet || !callsheet.contents) return;
+    if (!callsheet || !callsheet.contents) return;
 
-		callsheet.contents = callsheet.contents.filter(content => content !== contentToRemove);
-		callsheet = callsheet; // Force la réactivité
-	}
+    const confirmDelete = confirm('Êtes-vous sûr de vouloir supprimer ce bloc ?');
+    if (!confirmDelete) return;
+
+    callsheet.contents = callsheet.contents.filter(content => content !== contentToRemove);
+    callsheet = callsheet; // Force la réactivité
+}
 
 	// Fonction pour ajouter un nouveau contenu
 	function addNewContent() {
