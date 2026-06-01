@@ -38,7 +38,7 @@
 			</div>
 		{/if}
 		-->
-		{#if !project.responsibles || project.responsibles.length === 0}
+		{#if !project || !project.responsibles || project.responsibles.length === 0}
 			<a class="tooltip-wrapper text-white font-semibold m-1 p-2 pl-4 pr-4 bg-[#E35656] rounded-[7px] h-full"
 				href="/projects/{project.id}/management/modify"
 				on:mouseenter={() => managerDetails = true}

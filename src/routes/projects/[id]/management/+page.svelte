@@ -6,7 +6,8 @@
 
 	export let data;
 
-	let project = data.data[0];
+	
+	let project = data.data;
 	let participantsNotSeenCallsheet = data.participantsNotSeenCallsheet;
 	let participantsNotValidated = data.participantsNotValidated;
 	let participantsWithoutEmail = data.participantsWithoutEmail;

@@ -40,7 +40,7 @@
 				</div>
 			</div>
 			<div class="text-sm my-6 mr-4 grid grid-cols-2 gap-2">
-				{#if project.responsibles && project.responsibles.length === 0}
+				{#if !project?.responsibles || project.responsibles.length === 0}
 					<p class="text-center">No project manager</p>
 				{:else}
 					{#each project.responsibles as responsible}
@@ -95,7 +95,7 @@
 			</div>
 			<div class="text-sm">
 				Project managers:
-				{#if project.responsibles && project.responsibles.length === 0}
+				{#if !project || !project.responsibles || project.responsibles.length === 0}
 					No project manager
 				{:else}
 					{#each project.responsibles as responsible}
