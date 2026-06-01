@@ -11,6 +11,7 @@ let duplicatePhoneContact: Contact | null = null
 	const dispatch = createEventDispatcher()
 
 	let formData = {
+		contact_id: null as number | null,
 		first_name: '',
 		last_name: '',
 		email: '',
@@ -29,6 +30,7 @@ let duplicatePhoneContact: Contact | null = null
 	let loadingUser = true
 	let showDuplicateWarning = false
 	let duplicateWarnings: any[] = []
+	let duplicateWarningSource: 'similar' | 'exact' = 'similar'
 
 function isSimilar(a: string, b: string) {
 	a = a.toLowerCase()
@@ -86,6 +88,7 @@ function getLastName(contact: any) {
 
 	function clearForm() {
 		formData = {
+			contact_id: null,
 			first_name: '',
 			last_name: '',
 			email: '',
@@ -156,7 +159,11 @@ function getLastName(contact: any) {
 	}
 
 async function searchContacts() {
-	
+	const activeField = (document.activeElement as HTMLInputElement)?.id
+	if (formData.contact_id && activeField) {
+		formData.contact_id = null
+	}
+
 	const firstName = formData.first_name.trim()
 	const lastName = formData.last_name.trim()
 
@@ -196,7 +203,6 @@ async function searchContacts() {
 		if (response.ok) {
 			const data = await response.json()
 			const contacts = data.data || data || []
-			const activeField = (document.activeElement as HTMLInputElement)?.id
 
 			duplicateEmailContact = null
 duplicatePhoneContact = null
@@ -313,6 +319,23 @@ foundContacts = contacts.filter((contact: Contact) => {
 		}]
 	}
 
+	function hasExactDuplicateWarning(warnings: any[]): boolean {
+		return warnings.some((warning) =>
+			(warning.matches || []).some((match) => {
+				const matchContact = match.contact || match
+				const sameName =
+					(matchContact.first_name || '').toLowerCase().trim() === formData.first_name.trim().toLowerCase() &&
+					(matchContact.last_name || '').toLowerCase().trim() === formData.last_name.trim().toLowerCase()
+				const sameContactDetails =
+					(matchContact.email || '').toLowerCase().trim() === formData.email.trim().toLowerCase() &&
+					normalizePhone(matchContact.phone || '') === normalizePhone(formData.phone) &&
+					(matchContact.messenger || '').toLowerCase().trim() === formData.messenger.trim().toLowerCase()
+
+				return sameName && sameContactDetails && match.type === 'exact_contact'
+			})
+		)
+	}
+
 	async function saveContact(allowDuplicateName = false) {
 		errors = {}
 
@@ -343,6 +366,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 			const warnings = buildClientDuplicateWarnings()
 			if (warnings.length > 0) {
 				duplicateWarnings = warnings
+				duplicateWarningSource = hasExactDuplicateWarning(warnings) ? 'exact' : 'similar'
 				showDuplicateWarning = true
 				return
 			}
@@ -352,6 +376,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 
 		try {
 			const cleanData = {
+				contact_id: formData.contact_id,
 				first_name: firstName,
 				last_name: lastName,
 				email: formData.email.trim() || null,
@@ -375,8 +400,11 @@ foundContacts = contacts.filter((contact: Contact) => {
 				closeModal()
 			} else {
 				const errorData = await response.json()
-				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || Array.isArray(errorData.duplicate_warnings)) {
+				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(errorData.duplicate_warnings)) {
 					duplicateWarnings = errorData.duplicate_warnings || []
+					duplicateWarningSource = hasExactDuplicateWarning(duplicateWarnings)
+						? 'exact'
+						: 'similar'
 					showDuplicateWarning = true
 					return
 				}
@@ -394,11 +422,13 @@ foundContacts = contacts.filter((contact: Contact) => {
 	function cancelDuplicateWarning() {
 		duplicateWarnings = []
 		showDuplicateWarning = false
+		duplicateWarningSource = 'similar'
 	}
 
 	async function confirmDuplicateWarning() {
 		duplicateWarnings = []
 		showDuplicateWarning = false
+		duplicateWarningSource = 'similar'
 		await saveContact(true)
 	}
 
@@ -479,6 +509,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 					on:click={() => {
 						formData.first_name = getFirstName(contact)
 						formData.last_name = getLastName(contact)
+						formData.contact_id = contact.id || null
 						formData.email = contact.email || ''
 						formData.phone = contact.phone || ''
 						formData.messenger = contact.messenger || ''
@@ -718,11 +749,11 @@ duplicatePhoneContact = null
 			</div>
 
 			<div class="p-6 space-y-5">
-				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-					<p class="text-sm text-yellow-800">
-						This contact looks similar to a contact that already exists.
-					</p>
-				</div>
+			<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+				<p class="text-sm text-yellow-800">
+					This contact looks similar to a contact that already exists.
+				</p>
+			</div>
 
 				<div class="space-y-3">
 					{#each duplicateWarnings as warning}
@@ -745,7 +776,9 @@ duplicatePhoneContact = null
 					{/each}
 				</div>
 
-				<p class="text-sm text-gray-700">Do you still want to add this contact?</p>
+				<p class="text-sm text-gray-700">
+					Do you still want to add this contact?
+				</p>
 			</div>
 
 			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">

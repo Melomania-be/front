@@ -16,11 +16,13 @@
 
 	let importResults: {
 		imported: any[]
+		replaced?: any[]
 		conflicts: any[]
 		errors: string[]
 	} | null = null
 	let showDuplicateWarning = false
 	let duplicateWarnings: any[] = []
+	let duplicateWarningSource: 'server' | 'server_exact' | null = null
 
 	const statusOptions = [
 		{ value: 'not_yet_contacted', label: 'Not yet contacted', color: 'text-gray-700', bgColor: 'bg-gray-100' },
@@ -64,7 +66,42 @@
 		selectedStatuses = []
 	}
 
-	async function importFromProject(allowDuplicateName = false) {
+	function normalizePhone(value: string | null | undefined): string {
+		return (value || '').replace(/\s|\/|\.|-/g, '').trim()
+	}
+
+	function normalizeMessenger(value: string | null | undefined): string {
+		return (value || '').toLowerCase().trim()
+	}
+
+	function hasIdenticalCommunicationDetails(first: any, second: any): boolean {
+		return (
+			((first?.email || '').toLowerCase().trim() === (second?.email || '').toLowerCase().trim()) &&
+			(normalizePhone(first?.phone) === normalizePhone(second?.phone)) &&
+			(normalizeMessenger(first?.messenger) === normalizeMessenger(second?.messenger))
+		)
+	}
+
+	function hasExactWarningMatch(warning: any): boolean {
+		const warningContact = warning?.contact || {}
+		const warningFirstName = (warningContact.first_name || '').toLowerCase().trim()
+		const warningLastName = (warningContact.last_name || '').toLowerCase().trim()
+
+		return (warning?.matches || []).some((match: any) => {
+			const matchContact = match.contact || match
+			const matchFirstName = (matchContact.first_name || '').toLowerCase().trim()
+			const matchLastName = (matchContact.last_name || '').toLowerCase().trim()
+			const sameName = warningFirstName === matchFirstName && warningLastName === matchLastName
+
+			return sameName && hasIdenticalCommunicationDetails(warningContact, matchContact) && match?.type === 'exact_contact'
+		})
+	}
+
+	function hasAnyExactMatches(): boolean {
+		return duplicateWarnings.some((warning) => hasExactWarningMatch(warning))
+	}
+
+	async function importFromProject(allowDuplicateName = false, replaceExisting = false) {
 		if (!selectedProjectId || selectedStatuses.length === 0) {
 			alert('Please select a project and at least one status')
 			return
@@ -79,7 +116,8 @@
 				body: JSON.stringify({
 					source_project_id: selectedProjectId,
 					include_statuses: selectedStatuses,
-					allow_duplicate_name: allowDuplicateName
+					allow_duplicate_name: allowDuplicateName,
+					replace_existing: replaceExisting
 				})
 			})
 
@@ -87,8 +125,9 @@
 				importResults = await response.json()
 			} else {
 				const errorData = await response.json().catch(() => ({ error: 'Import error' }))
-				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || Array.isArray(errorData.duplicate_warnings)) {
+				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(errorData.duplicate_warnings)) {
 					duplicateWarnings = errorData.duplicate_warnings || []
+					duplicateWarningSource = hasAnyExactMatches() ? 'server_exact' : 'server'
 					showDuplicateWarning = true
 					return
 				}
@@ -105,12 +144,14 @@
 	function cancelDuplicateWarning() {
 		showDuplicateWarning = false
 		duplicateWarnings = []
+		duplicateWarningSource = null
 	}
 
 	async function confirmDuplicateWarning() {
 		showDuplicateWarning = false
 		duplicateWarnings = []
-		await importFromProject(true)
+		duplicateWarningSource = null
+		await importFromProject(true, false)
 	}
 
 	function closeModal() {
@@ -343,6 +384,27 @@
 						</div>
 					{/if}
 
+					{#if (importResults.replaced || []).length > 0}
+						<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-4">
+							<div class="flex items-start gap-3">
+								<CheckCircle class="text-blue-500 mt-0.5 flex-shrink-0" size={20} />
+								<div class="flex-1">
+									<h4 class="font-bold text-blue-900 mb-2">
+										{(importResults.replaced || []).length} existing contact(s) replaced
+									</h4>
+									<div class="max-h-32 overflow-y-auto space-y-1">
+										{#each (importResults.replaced || []) as contact}
+											<div class="flex items-center gap-2 text-sm text-blue-800">
+												<div class="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+												<span class="font-medium">{contact.first_name} {contact.last_name}</span>
+											</div>
+										{/each}
+									</div>
+								</div>
+							</div>
+						</div>
+					{/if}
+
 					<!-- Conflicts -->
 					{#if importResults.conflicts.length > 0}
 						<div class="bg-yellow-50 border-2 border-yellow-200 rounded-[8px] p-4">
@@ -444,52 +506,76 @@
 		<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
 			<div class="flex items-center gap-3 p-6 border-b bg-yellow-50">
 				<AlertTriangle class="text-yellow-500" size={24} />
-				<h3 class="text-lg font-semibold text-yellow-900">Potential duplicate contacts</h3>
+				<h3 class="text-lg font-semibold text-yellow-900">Import conflicts detected</h3>
 			</div>
 
 			<div class="p-6 space-y-5">
 				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-					<p class="text-sm text-yellow-800">
-						One or more contacts from this project have an identical or similar first and last name already in this recruitment list.
+					<p class="text-sm text-yellow-800 font-semibold mb-2">Duplicate or similar contact detected</p>
+					<p class="text-sm text-yellow-700">
+						One or more selected contacts look similar to contacts already in this recruitment list. You can import them anyway as separate entries.
 					</p>
 				</div>
 
 				<div class="space-y-3">
 					{#each duplicateWarnings as warning}
-						<div class="border border-gray-200 rounded-lg p-3">
-							<p class="font-semibold text-gray-900">
-								{warning.contact?.first_name} {warning.contact?.last_name}
-							</p>
-							<div class="mt-2 space-y-1">
-								{#each (warning.matches || []).slice(0, 3) as match}
-									<p class="text-sm text-gray-600">
-										Similar to: {match.contact.first_name} {match.contact.last_name}
+						<div class="border rounded-lg p-3 bg-yellow-50 border-yellow-200">
+							<div class="flex items-start gap-2">
+								<div class="flex-1">
+									<p class="font-semibold text-gray-900">
+										{warning.contact?.first_name} {warning.contact?.last_name}
 									</p>
-								{/each}
+									{#if warning.contact?.email}
+										<p class="text-xs text-gray-600 mt-1">Email: {warning.contact.email}</p>
+									{/if}
+									{#if warning.contact?.phone}
+										<p class="text-xs text-gray-600">Phone: {warning.contact.phone}</p>
+									{/if}
+									{#if warning.contact?.messenger}
+										<p class="text-xs text-gray-600">Messenger: {warning.contact.messenger}</p>
+									{/if}
+									{#if (warning.matches?.length || 0) > 0}
+										<div class="mt-2 pt-2 border-t border-gray-300">
+											<p class="text-xs font-semibold text-gray-700 mb-1">Existing contact(s):</p>
+											<div class="space-y-1">
+												{#each (warning.matches || []).slice(0, 3) as match}
+													{@const matchContact = match.contact || match}
+													<div class="text-xs text-gray-600">
+														<p><strong>{matchContact.first_name} {matchContact.last_name}</strong></p>
+														{#if matchContact.email}
+															<p class="text-gray-500">Email: {matchContact.email}</p>
+														{/if}
+														{#if matchContact.phone}
+															<p class="text-gray-500">Phone: {matchContact.phone}</p>
+														{/if}
+													</div>
+												{/each}
+											</div>
+										</div>
+									{/if}
+								</div>
 							</div>
 						</div>
 					{/each}
 				</div>
-
-				<p class="text-sm text-gray-700">Do you still want to import them?</p>
 			</div>
 
 			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
 				<button
-					type="button"
-					on:click={cancelDuplicateWarning}
-					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-				>
-					Cancel
-				</button>
-				<button
-					type="button"
-					on:click={confirmDuplicateWarning}
-					disabled={importing}
-					class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
-				>
-					{importing ? 'Importing...' : 'Import anyway'}
-				</button>
+						type="button"
+						on:click={cancelDuplicateWarning}
+						class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						on:click={confirmDuplicateWarning}
+						disabled={importing}
+						class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+					>
+						{importing ? 'Importing...' : 'Import anyway'}
+					</button>
 			</div>
 		</div>
 	</div>
