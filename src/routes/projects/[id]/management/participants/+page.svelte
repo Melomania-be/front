@@ -323,32 +323,59 @@
 
 	function exportParticipantsPdf() {
 		const doc = new jsPDF();
+		const blue: [number, number, number] = [107, 154, 217];
 
-		doc.setFontSize(18);
-		doc.text('Participants du projet', 14, 20);
+		// Titre stylisé
+		doc.setTextColor(blue[0], blue[1], blue[2]);
+		doc.setFontSize(24);
+		doc.setFont('helvetica', 'bold');
+		doc.text('Project participants', 14, 22);
 
+		// Ligne colorée sous le titre
+		doc.setDrawColor(blue[0], blue[1], blue[2]);
+		doc.setLineWidth(0.8);
+		doc.line(14, 26, 196, 26);
+
+		// Date d'export à droite
+		doc.setTextColor(120, 120, 120);
+		doc.setFontSize(9);
+		doc.setFont('helvetica', 'normal');
+		const today = new Date().toLocaleDateString('en-GB');
+		doc.text(`Exported on ${today}`, 196, 22, { align: 'right' });
+
+		// Nom du projet en sous-titre
+		doc.setTextColor(60, 60, 60);
+		doc.setFontSize(12);
+		doc.setFont('helvetica', 'normal');
 		if (project?.name) {
-			doc.setFontSize(12);
-			doc.text(project.name, 14, 28);
+			doc.text(project.name, 14, 34);
 		}
 
-		const rows = participants.map((p) => [
-			p.contact?.firstName ?? '',
-			p.contact?.lastName ?? '',
-			p.contact?.email ?? '',
-			p.contact?.phone ?? '',
-			p.section?.name ?? ''
-		]);
+		doc.setTextColor(0, 0, 0);
 
-		autoTable(doc, {
-			startY: 36,
-			head: [['Prénom', 'Nom', 'Email', 'Téléphone', 'Section']],
-			body: rows,
-			styles: { fontSize: 10 },
-			headStyles: { fillColor: [107, 154, 217] }
+		// Tableau des participants
+		const rows = participants.map((p) => {
+			const sectionName = p.section?.name ?? '';
+			const sectionText = p.isSectionLeader ? `${sectionName} (section leader)` : sectionName;
+			return [
+				p.contact?.firstName ?? '',
+				p.contact?.lastName ?? '',
+				p.contact?.email ?? '',
+				p.contact?.phone ?? '',
+				sectionText
+			];
 		});
 
-		doc.save(`participants-projet-${data.id}.pdf`);
+		autoTable(doc, {
+			startY: 42,
+			head: [['First name', 'Last name', 'Email', 'Phone', 'Section']],
+			body: rows,
+			styles: { fontSize: 10, cellPadding: 3 },
+			headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+			alternateRowStyles: { fillColor: [245, 248, 252] }
+		});
+
+		doc.save(`participants-project-${data.id}.pdf`);
 	}
 </script>
 
@@ -362,8 +389,9 @@
 					<p class={isMobile ? '' : ''}>
 						You have <strong class="text-red-400 mx-1">{participantNotValidated}</strong>
 						{participantNotValidated === 1 ? 'participant' : 'participants'} waiting for validation
-					</p>
-					<a
+						</p>
+						<a
+					
 						href="/projects/{data.id}/management/validation"
 						class="ml-auto inline-flex items-center px-3 py-2 text-sm font-semibold text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 					>

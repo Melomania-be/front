@@ -24,7 +24,10 @@
 		messenger: true,
 		comments: true,
 		instruments: true,
-		projects: true
+		projects: true,
+		validated: false,
+		createdAt: false,
+		updatedAt: false
 	};
 
 	onMount(async () => {
@@ -92,55 +95,107 @@
 
 	function exportPdf() {
 		const doc = new jsPDF();
+		const blue: [number, number, number] = [107, 154, 217];
 
-		doc.setFontSize(18);
-		doc.text(`${contact.firstName} ${contact.lastName}`, 14, 20);
+		// Titre en grand et coloré
+		doc.setTextColor(blue[0], blue[1], blue[2]);
+		doc.setFontSize(24);
+		doc.setFont('helvetica', 'bold');
+		doc.text(`${contact.firstName} ${contact.lastName}`, 14, 22);
 
-		const infoRows = [];
-		if (exportFields.email) infoRows.push(['Email', contact.email ?? '']);
-		if (exportFields.phone) infoRows.push(['Téléphone', contact.phone ?? '']);
-		if (exportFields.messenger) infoRows.push(['Messenger', contact.messenger ?? '']);
-		if (exportFields.comments) infoRows.push(['Commentaires', contact.comments ?? '']);
+		// Ligne colorée sous le titre
+		doc.setDrawColor(blue[0], blue[1], blue[2]);
+		doc.setLineWidth(0.8);
+		doc.line(14, 26, 196, 26);
 
-		infoRows.push(['Validé', contact.validated ? 'Oui' : 'Non']);
-		infoRows.push(['Créé le', contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('fr-BE') : '']);
-		infoRows.push(['Modifié le', contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('fr-BE') : '']);
+		// Date d'export à droite
+		doc.setTextColor(120, 120, 120);
+		doc.setFontSize(9);
+		doc.setFont('helvetica', 'normal');
+		const today = new Date().toLocaleDateString('en-GB');
+		doc.text(`Exported on ${today}`, 196, 22, { align: 'right' });
 
-		autoTable(doc, {
-			startY: 30,
-			head: [['Champ', 'Valeur']],
-			body: infoRows,
-			styles: { fontSize: 11 },
-			headStyles: { fillColor: [107, 154, 217] }
-		});
+		// Retour aux couleurs/styles par défaut pour la suite
+		doc.setTextColor(0, 0, 0);
 
+		let currentY = 36;
+
+		// Section "Contact information"
+		const infoRows: any[] = [];
+		if (exportFields.email) infoRows.push([{ content: 'Email', styles: { fontStyle: 'bold' } }, contact.email ?? '']);
+		if (exportFields.phone) infoRows.push([{ content: 'Phone', styles: { fontStyle: 'bold' } }, contact.phone ?? '']);
+		if (exportFields.messenger) infoRows.push([{ content: 'Messenger', styles: { fontStyle: 'bold' } }, contact.messenger ?? '']);
+		if (exportFields.comments) infoRows.push([{ content: 'Comments', styles: { fontStyle: 'bold' } }, contact.comments ?? '']);
+		if (exportFields.validated) infoRows.push([{ content: 'Validated', styles: { fontStyle: 'bold' } }, contact.validated ? 'Yes' : 'No']);
+		if (exportFields.createdAt) infoRows.push([{ content: 'Created on', styles: { fontStyle: 'bold' } }, contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('en-GB') : '']);
+		if (exportFields.updatedAt) infoRows.push([{ content: 'Updated on', styles: { fontStyle: 'bold' } }, contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString('en-GB') : '']);
+
+		if (infoRows.length > 0) {
+			doc.setFontSize(13);
+			doc.setFont('helvetica', 'bold');
+			doc.setTextColor(blue[0], blue[1], blue[2]);
+			doc.text('Contact information', 14, currentY);
+			currentY += 4;
+
+			autoTable(doc, {
+				startY: currentY,
+				head: [['Field', 'Value']],
+				body: infoRows,
+				styles: { fontSize: 11, cellPadding: 4 },
+				headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+				alternateRowStyles: { fillColor: [245, 248, 252] },
+				columnStyles: { 0: { cellWidth: 45 } }
+			});
+			currentY = (doc as any).lastAutoTable.finalY + 10;
+		}
+
+		// Section "Instruments"
 		if (exportFields.instruments) {
 			const instrumentRows = (contact.instruments ?? []).map((i) => [
-				i.name ?? '',
+				{ content: i.name ?? '', styles: { fontStyle: 'bold' as const } },
 				i.pivot_proficiency_level ?? ''
 			]);
 
 			if (instrumentRows.length > 0) {
+				doc.setFontSize(13);
+				doc.setFont('helvetica', 'bold');
+				doc.setTextColor(blue[0], blue[1], blue[2]);
+				doc.text('Instruments', 14, currentY);
+				currentY += 4;
+
 				autoTable(doc, {
-					head: [['Instrument', 'Niveau']],
+					startY: currentY,
+					head: [['Instrument', 'Level']],
 					body: instrumentRows,
-					styles: { fontSize: 11 },
-					headStyles: { fillColor: [107, 154, 217] }
+					styles: { fontSize: 11, cellPadding: 4 },
+					headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+					alternateRowStyles: { fillColor: [245, 248, 252] },
+					columnStyles: { 0: { cellWidth: 60 } }
 				});
+				currentY = (doc as any).lastAutoTable.finalY + 10;
 			}
 		}
 
+		// Section "Projects"
 		if (exportFields.projects) {
 			const projectRows = (contact.participants ?? []).map((p) => [
 				p.project?.name ?? ''
 			]);
 
 			if (projectRows.length > 0) {
+				doc.setFontSize(13);
+				doc.setFont('helvetica', 'bold');
+				doc.setTextColor(blue[0], blue[1], blue[2]);
+				doc.text('Projects', 14, currentY);
+				currentY += 4;
+
 				autoTable(doc, {
-					head: [['Projets joués']],
+					startY: currentY,
+					head: [['Project']],
 					body: projectRows,
-					styles: { fontSize: 11 },
-					headStyles: { fillColor: [107, 154, 217] }
+					styles: { fontSize: 11, cellPadding: 4 },
+					headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+					alternateRowStyles: { fillColor: [245, 248, 252] }
 				});
 			}
 		}
@@ -152,25 +207,34 @@
 <div class="bg-[#E7E7E7] p-4 h-screen">
 	<ContactModifier mode="modify" {contact} {instruments} />
 	<div class="w-full mt-4 p-4 bg-white border-2 border-gray-500 rounded-xl shadow">
-		<p class="font-semibold text-gray-600 mb-2">Champs à exporter :</p>
+		<p class="font-semibold text-gray-600 mb-2">Fields to export:</p>
 		<div class="flex flex-wrap gap-4 mb-4">
 			<label class="flex items-center gap-2">
 				<input type="checkbox" bind:checked={exportFields.email} /> Email
 			</label>
 			<label class="flex items-center gap-2">
-				<input type="checkbox" bind:checked={exportFields.phone} /> Téléphone
+				<input type="checkbox" bind:checked={exportFields.phone} /> Phone
 			</label>
 			<label class="flex items-center gap-2">
 				<input type="checkbox" bind:checked={exportFields.messenger} /> Messenger
 			</label>
 			<label class="flex items-center gap-2">
-				<input type="checkbox" bind:checked={exportFields.comments} /> Commentaires
+				<input type="checkbox" bind:checked={exportFields.comments} /> Comments
 			</label>
 			<label class="flex items-center gap-2">
 				<input type="checkbox" bind:checked={exportFields.instruments} /> Instruments
 			</label>
 			<label class="flex items-center gap-2">
-				<input type="checkbox" bind:checked={exportFields.projects} /> Projets
+				<input type="checkbox" bind:checked={exportFields.projects} /> Projects
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.validated} /> Validated
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.createdAt} /> Created on
+			</label>
+			<label class="flex items-center gap-2">
+				<input type="checkbox" bind:checked={exportFields.updatedAt} /> Updated on
 			</label>
 		</div>
 		<div class="flex justify-end">
