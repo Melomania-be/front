@@ -123,19 +123,31 @@
 	}
 
 	function addToList() {
-		let newContacts: Contact[] = contacts
-			.filter((contact) => contact.checked)
-			.map((contact) => {
-				const { checked, ...rest } = contact;
-				return rest;
-			});
+		const checkedContacts = contacts.filter((contact) => contact.checked);
+		
+		if (checkedContacts.length === 0) return;
 
-		newContacts = newContacts.filter((contact) => {
+		const skipped: (Contact & { checked: boolean })[] = [];
+		const toAdd: Contact[] = [];
+
+		checkedContacts.forEach((contact) => {
 			const exists = newList.contacts.find((c) => c.id === contact.id);
-			return !exists;
+			if (exists) {
+				skipped.push(contact);
+			} else {
+				const { checked, ...rest } = contact;
+				toAdd.push(rest);
+			}
 		});
 
-		newList.contacts = [...newList.contacts, ...newContacts];
+		if (toAdd.length > 0) {
+			newList.contacts = [...newList.contacts, ...toAdd];
+		}
+
+		if (skipped.length > 0) {
+			const names = skipped.map(c => `${c.firstName} ${c.lastName}`).join('\n- ');
+			alert(`The following contact(s) were not added because they are already in the list:\n- ${names}`);
+		}
 	}
 
 	async function save() {
