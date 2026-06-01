@@ -14,6 +14,20 @@
 	let pieces: Array<Piece>;
 	let folders: Array<Folder>;
 
+	function buildLocalDate(date: string, time: string) {
+	    return new Date(`${date}T${time}:00`);
+    }
+
+    function getDatePart(value: string | Date) {
+	    const raw = String(value);
+	    return raw.includes('T') ? raw.split('T')[0] : raw;
+    }
+
+    function getTimePart(value: string | Date) {
+	    const raw = String(value);
+	    return raw.includes('T') ? raw.split('T')[1]?.slice(0, 5) : '00:00';
+    }
+
 	onMount(async () => {
 		const projectResponse = await fetch(`/api/projects/${data.id}`, {
 			method: 'GET'
@@ -23,18 +37,24 @@
 			let tmp = await projectResponse.json();
 			project = {
 				...tmp,
-                rehearsals: tmp.rehearsals.map((r: Rehearsal) => {
+                rehearsals: tmp.rehearsals.map((r: any) => {
+					const date = r.date || getDatePart(r.startDate);
+					const startTime = r.startTime || getTimePart(r.startDate);
+					const endTime = r.endTime || getTimePart(r.endDate);
                     return { 
                         ...r, 
-                        startDate: new Date(r.startDate), 
-                        endDate: r.endDate ? new Date(r.endDate) : null 
+                        startDate: buildLocalDate(date, startTime),
+                        endDate: endTime ? buildLocalDate(date, endTime) : null 
                     };
                 }),
-                concerts: tmp.concerts.map((c: Rehearsal) => {
+                concerts: tmp.concerts.map((c: any) => {
+					const date = c.date || getDatePart(c.startDate);
+					const startTime = c.startTime || getTimePart(c.startDate);
+					const endTime = c.endTime || getTimePart(c.endDate);
                     return { 
                         ...c, 
-                        startDate: new Date(c.startDate), 
-                        endDate: c.endDate ? new Date(c.endDate) : null 
+                        startDate: buildLocalDate(date, startTime),
+                        endDate: endTime ? buildLocalDate(date, endTime) : null 
                     };
                 })
 			};
