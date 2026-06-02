@@ -789,12 +789,12 @@
 		>
 			{#if isMobile}
 				<!-- Mobile version with cards -->
-				<div class="space-y-3">
+				<div class="w-full min-w-0 space-y-3">
 					{#each safeContacts as contact (contact.id)}
-						<div class="border-2 border-[#8C8C8C] rounded-[10px] p-4 hover:bg-gray-50 {shouldHighlightFollowUp(contact) ? 'bg-yellow-50' : ''} {contact.is_duplicate ? 'bg-orange-50' : ''}">
+						<div class="w-full min-w-0 overflow-hidden border-2 border-[#8C8C8C] rounded-[10px] p-4 hover:bg-gray-50 {shouldHighlightFollowUp(contact) ? 'bg-yellow-50' : ''} {contact.is_duplicate ? 'bg-orange-50' : ''}">
 
 							<!-- Header with selection and name -->
-							<div class="flex items-start justify-between mb-3">
+							<div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 								<div class="flex items-center space-x-3 flex-1 min-w-0">
 									<input
 										type="checkbox"
@@ -818,11 +818,11 @@
 									</div>
 								</div>
 								<!-- Quick status update dropdown in mobile -->
-								<div class="relative">
+								<div class="relative w-full min-w-0 sm:w-auto">
 									<select
 										on:change={(e) => handleQuickStatusUpdate(contact.id, e.target.value)}
 										value={contact.status}
-										class="text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium"
+										class="w-full min-w-0 max-w-full text-xs px-2 py-1 border border-gray-300 rounded {getStatusColor(contact.status)} font-medium sm:w-auto"
 									>
 										{#each allStatuses as status}
 											<option value={status}>{getStatusLabel(status)}</option>
@@ -840,23 +840,23 @@
 										</div>
 										<h3 class="font-bold text-sm text-gray-900 uppercase">CONTACT</h3>
 									</div>
-									<div class="bg-gray-50 border-2 border-gray-200 rounded-[6px] p-3 space-y-2">
+									<div class="min-w-0 bg-gray-50 border-2 border-gray-200 rounded-[6px] p-3 space-y-2">
 										{#if contact.email}
-											<div class="flex items-center text-sm text-gray-700 break-all">
+											<div class="flex min-w-0 items-start text-sm text-gray-700">
 												<Mail size={12} class="mr-2 flex-shrink-0 text-blue-600" />
-												<span class="font-medium">{contact.email}</span>
+												<span class="min-w-0 break-all font-medium">{contact.email}</span>
 											</div>
 										{/if}
 										{#if contact.phone}
-											<div class="flex items-center text-sm text-gray-700">
+											<div class="flex min-w-0 items-start text-sm text-gray-700">
 												<Phone size={12} class="mr-2 flex-shrink-0 text-green-600" />
-												<span class="font-medium">{contact.phone}</span>
+												<span class="min-w-0 break-all font-medium">{contact.phone}</span>
 											</div>
 										{/if}
 										{#if contact.messenger}
-											<div class="flex items-center text-sm text-gray-700">
+											<div class="flex min-w-0 items-start text-sm text-gray-700">
 												<MessageCircle size={12} class="mr-2 flex-shrink-0 text-purple-600" />
-												<span class="font-medium">{contact.messenger}</span>
+												<span class="min-w-0 break-all font-medium">{contact.messenger}</span>
 											</div>
 										{/if}
 										{#if !contact.email && !contact.phone && !contact.messenger}
@@ -900,8 +900,8 @@
 												<span class="text-xs text-orange-700 font-bold">Potential duplicate</span>
 											</div>
 										{/if}
-										<div class="{getSourceStyle(contact)} border-2 rounded-[6px] p-2">
-											<span class="text-xs font-bold">{getSourceDisplay(contact)}</span>
+										<div class="{getSourceStyle(contact)} min-w-0 border-2 rounded-[6px] p-2">
+											<span class="block break-words text-xs font-bold">{getSourceDisplay(contact)}</span>
 										</div>
 									</div>
 								</div>
@@ -943,10 +943,10 @@
 
 							<!-- Contacted by -->
 							{#if contact.contacted_by}
-								<div class="mb-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-[8px]">
-									<div class="flex items-center">
+								<div class="mb-3 min-w-0 p-3 bg-blue-50 border-2 border-blue-200 rounded-[8px]">
+									<div class="flex min-w-0 items-start">
 										<User size={14} class="text-blue-600 mr-2" />
-										<span class="text-sm font-bold text-blue-700">Contacted by: {contact.contacted_by}</span>
+										<span class="min-w-0 break-words text-sm font-bold text-blue-700">Contacted by: {contact.contacted_by}</span>
 									</div>
 								</div>
 							{/if}

@@ -100,7 +100,7 @@
 </script>
 
 <div class="relative" id="dropdown-{contact.id}">
-	<div class="flex items-center gap-1">
+	<div class="flex flex-wrap items-center gap-1">
 		{#if contact.email}
 			<button
 				on:click={sendEmail}
