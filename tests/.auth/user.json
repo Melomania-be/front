@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "Authorization",
+      "value": "Bearer%20oat_NDE.bEQwYlJTTnAwUjdPNTB6MHN5Ql9ocE9obUhXSXZaWjZQQXZ4RVk0RDM2NTA2NDU3Mzg",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1783059186.260499,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
