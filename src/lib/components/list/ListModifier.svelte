@@ -74,8 +74,11 @@
 		const responseHandler = new ResponseHandlerClient();
 
 		responseHandler.handle(response, async () => {
+			
 			const data = await response.json();
-
+console.log(
+	data.data.find((c: Contact) => c.projects?.length > 0)
+);
 			contacts = data.data.map((contact: Contact) => {
 				return {
 					...contact,
@@ -195,10 +198,12 @@
 	let popUpFilter = false;
 
 	let instruments: Instrument[] = [];
-	let instrumentFamily: string[];
+	let instrumentFamily: string[] = [];
 	let selectedInstrumentIds: Set<number> = new Set();
 	let selectedFamilyIds: Set<string> = new Set();
 	
+		let projectIds: string = '';
+let projectName: string = '';
 
 	onMount(async () => {
 		// Puis récupérer les instruments via fetch
@@ -244,11 +249,37 @@
 		}
 	}
 
+function filterByProject() {
+	contactsToDisplay = contacts.filter((contact) => {
+		let matchesId = true;
+		let matchesName = true;
+
+		if (projectIds.trim() !== '') {
+			matchesId = contact.projects?.some(
+				(project) => project.id.toString() === projectIds.trim()
+			);
+		}
+
+		if (projectName.trim() !== '') {
+			matchesName = contact.projects?.some(
+				(project) =>
+					project.name
+						.toLowerCase()
+						.includes(projectName.toLowerCase())
+			);
+		}
+
+		return matchesId && matchesName;
+	});
+}
+
 	function resetFilter(){
 		console.log(contacts)
 		selectedInstrumentIds = new Set();
 		selectedFamilyIds = new Set();
 		selectedLevelInstruments = new Map();
+		projectIds = '';
+	projectName = '';
 		contactsToDisplay = contacts;
 	}
 
@@ -289,6 +320,8 @@
 			contactsToDisplay = contacts.filter((contact) => contact.instruments.some((instrument) => selectedFamilyIds.has(instrument.family)))
 		}
 	}
+
+	
 	
 </script>
 
@@ -354,6 +387,27 @@
 					</div>
 					{/each}
 				</div>
+				<h2 class="text-md font-bold mb-2 text-xl">Project</h2>
+
+<div class="px-4 mb-6">
+	<div class="flex items-center gap-2 mb-2">
+		<p class="font-semibold text-gray-500">By Id :</p>
+		<input
+			type="text"
+			bind:value={projectIds}
+			class="border rounded px-2 py-1"
+		/>
+	</div>
+
+	<div class="flex items-center gap-2">
+		<p class="font-semibold text-gray-500">By Name :</p>
+		<input
+			type="text"
+			bind:value={projectName}
+			class="border rounded px-2 py-1"
+		/>
+	</div>
+</div>
 			</div>
 			<div class="flex pr-6 bg-white border-t py-2 rounded-b-xl border-gray-300">
 				<button
@@ -365,7 +419,12 @@
 					}}>Reset Filter</button
 				>
 				<button
-					on:click={() => { popUpFilter = false; document.body.style.overflow = '';}}
+					on:click={() => {
+	filterByProject();
+
+	popUpFilter = false;
+	document.body.style.overflow = '';
+}}
 					class=" {isMobile ? "w-[40%]" : "w-[30%] px-4 py-2"} my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
 				>
 					Search
