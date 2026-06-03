@@ -28,8 +28,8 @@
 	function getDate(value: string | Date) {
 		if (!value) return '';
 
-		const raw = normalize(value);
-		const datePart = raw.includes('T') ? raw.split('T')[0] : raw;
+		const raw = String(value);
+		const datePart = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
 
 		const [year, month, day] = datePart.split('-').map(Number);
 
@@ -48,26 +48,17 @@
 	function getTime(value: string | Date) {
 		if (!value) return '';
 
-		const raw = normalize(value);
+		const raw = String(value);
 
 		const timePart = raw.includes('T')
 			? raw.split('T')[1]?.slice(0, 5)
-			: raw.slice(0, 5);
+			: raw.slice(11,16);
 
 		if (!timePart || !timePart.includes(':')) return raw;
 
 		const [hourString, minute] = timePart.split(':');
 
-		let hour = Number(hourString);
-		const ampm = hour >= 12 ? 'pm' : 'am';
-
-		hour = hour % 12 || 12;
-
-		if (minute === '00') {
-			return `${hour}${ampm}`;
-		}
-
-		return `${hour}:${minute} ${ampm}`;
+		return `${hourString}:${minute}`;
 	}
 </script>
 
