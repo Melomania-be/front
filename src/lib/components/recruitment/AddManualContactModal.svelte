@@ -147,7 +147,7 @@ function showExactDuplicateResults(matches: any[], contact: any = getCurrentForm
 		replaced: [],
 		conflicts: [],
 		errors: [
-			'This contact already exists in the database with identical information. Exact duplicates cannot be added.'
+			'This contact is already in this recruitment list. Exact duplicates are not allowed.'
 		],
 		contact: normalizeWarningContact(contact),
 		exactMatches: matches.map((match) => normalizeWarningContact(match.contact || match))
@@ -242,7 +242,7 @@ function getManualAddDisplayedErrors() {
 	const exactMatches = getManualAddResultsExactMatches()
 
 	if (payload && exactMatches.length > 0) {
-		return ['This contact already exists in the database with identical information. Exact duplicates cannot be added.']
+		return ['This contact is already in this recruitment list. Exact duplicates are not allowed.']
 	}
 
 	if (payload?.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT') {
@@ -836,7 +836,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 							const fallbackMessage = getBackendErrorMessage(
 								parsedErrorData,
 								errorText,
-								'This contact is already in the recruitment contact list.'
+								'This contact is already in the recruitment contact list. Exact duplicates are not allowed'
 							)
 
 							manualAddResultsTitle = 'Cannot Add Contact'

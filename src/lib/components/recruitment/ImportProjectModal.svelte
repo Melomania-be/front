@@ -20,6 +20,7 @@
 		conflicts: any[]
 		errors: string[]
 	} | null = null
+	let showCompactErrorModal = false
 	let showDuplicateWarning = false
 	let duplicateWarnings: any[] = []
 	let duplicateWarningSource: 'server' | 'server_exact' | null = null
@@ -74,6 +75,37 @@
 		return (value || '').toLowerCase().trim()
 	}
 
+	function getWarningContactFirstName(contact: any): string {
+		return contact?.first_name || contact?.firstName || contact?.contact?.first_name || contact?.contact?.firstName || ''
+	}
+
+	function getWarningContactLastName(contact: any): string {
+		return contact?.last_name || contact?.lastName || contact?.contact?.last_name || contact?.contact?.lastName || ''
+	}
+
+	function normalizeImportWarningContact(contact: any) {
+		return {
+			...contact,
+			id: contact?.id ?? contact?.contact_id ?? contact?.contactId ?? null,
+			first_name: getWarningContactFirstName(contact),
+			last_name: getWarningContactLastName(contact),
+			email: contact?.email || contact?.contact?.email || null,
+			phone: contact?.phone || contact?.contact?.phone || null,
+			messenger: contact?.messenger || contact?.contact?.messenger || null,
+			status: contact?.status || contact?.contact?.status || 'Existing contact',
+			source: contact?.source || contact?.contact?.source || null
+		}
+	}
+
+	function normalizeImportWarningMatches(matches: any[] = []) {
+		return matches
+			.filter(Boolean)
+			.map((match: any) => ({
+				...match,
+				contact: normalizeImportWarningContact(match.contact || match)
+			}))
+	}
+
 	function hasIdenticalCommunicationDetails(first: any, second: any): boolean {
 		return (
 			((first?.email || '').toLowerCase().trim() === (second?.email || '').toLowerCase().trim()) &&
@@ -98,7 +130,11 @@
 	}
 
 	function hasAnyExactMatches(): boolean {
-		return duplicateWarnings.some((warning) => hasExactWarningMatch(warning))
+		return duplicateWarnings.some((warning) =>
+			warning?.warning_type === 'exact_existing_contact' ||
+			hasExactWarningMatch(warning) ||
+			(warning?.matches || []).some((match: any) => match?.type === 'exact_contact')
+		)
 	}
 
 	function normalizeServerDuplicateWarnings(rawWarnings, defaultContact = null) {
@@ -106,19 +142,76 @@
 		const arr = Array.isArray(rawWarnings) ? rawWarnings : [rawWarnings]
 		return arr.map((item) => {
 			if (item.contact) {
-				return { contact: item.contact, matches: Array.isArray(item.matches) ? item.matches : [] }
+				return {
+					warning_type: item.warning_type || null,
+					contact: normalizeImportWarningContact(item.contact),
+					matches: normalizeImportWarningMatches(Array.isArray(item.matches) ? item.matches : [])
+				}
 			}
 			if (item.source_contact) {
-				return { contact: item.source_contact, matches: Array.isArray(item.matches) ? item.matches : [] }
+				return {
+					warning_type: item.warning_type || null,
+					contact: normalizeImportWarningContact(item.source_contact),
+					matches: normalizeImportWarningMatches(Array.isArray(item.matches) ? item.matches : [])
+				}
 			}
 			if (Array.isArray(item.matches) && item.matches.length > 0) {
-				return { contact: defaultContact || { first_name: '', last_name: '' }, matches: item.matches }
+				return {
+					warning_type: item.warning_type || null,
+					contact: normalizeImportWarningContact(defaultContact || { first_name: '', last_name: '' }),
+					matches: normalizeImportWarningMatches(item.matches)
+				}
 			}
 			if (item.first_name || item.last_name || item.email) {
-				return { contact: { first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || null, phone: item.phone || null }, matches: [] }
+				return {
+					warning_type: item.warning_type || null,
+					contact: normalizeImportWarningContact({
+						first_name: item.first_name || '',
+						last_name: item.last_name || '',
+						email: item.email || null,
+						phone: item.phone || null,
+						messenger: item.messenger || null
+					}),
+					matches: []
+				}
 			}
-			return { contact: defaultContact || { first_name: '', last_name: '' }, matches: [] }
+			return {
+				warning_type: item.warning_type || null,
+				contact: normalizeImportWarningContact(defaultContact || { first_name: '', last_name: '' }),
+				matches: []
+			}
 		})
+	}
+
+	function getImportMatchLabel(match: any): string {
+		return match?.type === 'exact_contact' ? '❌ Exact match:' : '⚠️ May be a duplicate of:'
+	}
+
+	function isExactDuplicateImportError(error: string): boolean {
+		return error.includes('already in this recruitment list')
+	}
+
+	function parseImportErrorPayload(error: string) {
+		if (!error) return null
+		try {
+			return JSON.parse(error)
+		} catch {
+			return null
+		}
+	}
+
+	function getImportErrorExactWarnings() {
+		if (!importResults?.errors?.length) return []
+
+		const payloads = importResults.errors
+			.map((error) => parseImportErrorPayload(error))
+			.filter(Boolean)
+
+		const warnings = payloads.flatMap((payload: any) =>
+			normalizeServerDuplicateWarnings(payload?.duplicate_warnings || payload?.duplicateWarnings || null)
+		)
+
+		return warnings.filter((warning) => hasExactWarningMatch(warning) || warning?.warning_type === 'exact_existing_contact')
 	}
 
 	async function importFromProject(allowDuplicateName = false, replaceExisting = false) {
@@ -144,11 +237,28 @@
 			if (response.ok) {
 				importResults = await response.json()
 			} else {
-				const errorData = await response.json().catch(() => ({ error: 'Import error' }))
+				const errorText = await response.text().catch(() => '')
+				const errorData = parseImportErrorPayload(errorText) || { error: errorText || 'Import error' }
 				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(errorData.duplicate_warnings)) {
 					duplicateWarnings = normalizeServerDuplicateWarnings(errorData.duplicate_warnings || errorData)
-					duplicateWarningSource = hasAnyExactMatches() ? 'server_exact' : 'server'
-					showDuplicateWarning = true
+					if (allowDuplicateName || hasAnyExactMatches() || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS') {
+						importResults = {
+							imported: [],
+							replaced: [],
+							conflicts: [],
+							errors: [
+								hasAnyExactMatches() || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS'
+									? errorText || 'This contact is already in this recruitment list. Exact duplicates are not allowed.'
+									: (errorData.error || errorData.message || 'Import conflict detected.')
+							]
+						}
+						duplicateWarnings = []
+						duplicateWarningSource = null
+						showDuplicateWarning = false
+					} else {
+						duplicateWarningSource = 'server'
+						showDuplicateWarning = true
+					}
 					return
 				}
 				alert(errorData.error || 'Import error')
@@ -205,12 +315,18 @@
 	}
 
 	$: selectedProject = projects.find(p => p.id === selectedProjectId)
+	$: showCompactErrorModal =
+		!!importResults &&
+		importResults.errors.length > 0 &&
+		importResults.imported.length === 0 &&
+		(importResults.replaced || []).length === 0 &&
+		importResults.conflicts.length === 0
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-	<div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+	<div class="bg-white rounded-lg shadow-xl w-full overflow-y-auto {showCompactErrorModal ? 'max-w-2xl max-h-[80vh]' : 'max-w-4xl max-h-[90vh]'}">
 		<!-- Header -->
 		<div class="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
 			<div class="flex items-center gap-3">
@@ -460,14 +576,36 @@
 									<h4 class="font-bold text-red-900 mb-2">
 										{importResults.errors.length} error(s) occurred
 									</h4>
-									<div class="max-h-32 overflow-y-auto space-y-1">
-										{#each importResults.errors as error}
-											<div class="flex items-center gap-2 text-sm text-red-800">
-												<div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-												<span>{error}</span>
-											</div>
-										{/each}
-									</div>
+									{#if showCompactErrorModal && getImportErrorExactWarnings().length > 0}
+										<div class="mt-3 space-y-4">
+											<p class="text-sm text-red-800">
+												This contact is already in this recruitment list. Exact duplicates are not allowed.
+											</p>
+
+											{#each getImportErrorExactWarnings() as warning}
+												<div class="space-y-2">
+													<p class="font-semibold text-red-900">
+														{warning.contact?.first_name} {warning.contact?.last_name}
+													</p>
+													{#each warning.matches as match}
+														{@const matchContact = match.contact || match}
+														<p class="text-sm text-red-800">
+															❌ Exact match: {matchContact.first_name} {matchContact.last_name}{matchContact.email ? ` (${matchContact.email})` : ''}
+														</p>
+													{/each}
+												</div>
+											{/each}
+										</div>
+									{:else}
+										<div class="max-h-32 overflow-y-auto space-y-1">
+											{#each importResults.errors as error}
+												<div class="flex items-center gap-2 text-sm text-red-800">
+													<div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+													<span>{error}</span>
+												</div>
+											{/each}
+										</div>
+									{/if}
 								</div>
 							</div>
 						</div>
@@ -557,18 +695,12 @@
 									{#if (warning.matches?.length || 0) > 0}
 										<div class="mt-2 pt-2 border-t border-gray-300">
 											<p class="text-xs font-semibold text-gray-700 mb-1">Existing contact(s):</p>
-											<div class="space-y-1">
+											<div class="space-y-2">
 												{#each (warning.matches || []).slice(0, 3) as match}
 													{@const matchContact = match.contact || match}
-													<div class="text-xs text-gray-600">
-														<p><strong>{matchContact.first_name} {matchContact.last_name}</strong></p>
-														{#if matchContact.email}
-															<p class="text-gray-500">Email: {matchContact.email}</p>
-														{/if}
-														{#if matchContact.phone}
-															<p class="text-gray-500">Phone: {matchContact.phone}</p>
-														{/if}
-													</div>
+													<p class="text-sm text-gray-700">
+														{getImportMatchLabel(match)} {matchContact.first_name} {matchContact.last_name}{matchContact.email ? ` (${matchContact.email})` : ''}
+													</p>
 												{/each}
 											</div>
 										</div>

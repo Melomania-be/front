@@ -1088,7 +1088,7 @@
 									{#if showCompactErrorModal && ((importResults.errors.every(isExactDuplicateImportError) && getExactDuplicateResultEntries().length > 0) || getImportErrorExactWarnings().length > 0)}
 										<div class="mt-3 space-y-4">
 											<p class="text-sm text-red-800">
-												This contact already exists in the database with identical information. Exact duplicates cannot be added.
+												This contact is already in this recruitment list. Exact duplicates are not allowed.
 											</p>
 
 											{#if getImportErrorExactWarnings().length > 0}
