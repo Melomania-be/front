@@ -101,6 +101,26 @@
 		return duplicateWarnings.some((warning) => hasExactWarningMatch(warning))
 	}
 
+	function normalizeServerDuplicateWarnings(rawWarnings, defaultContact = null) {
+		if (!rawWarnings) return []
+		const arr = Array.isArray(rawWarnings) ? rawWarnings : [rawWarnings]
+		return arr.map((item) => {
+			if (item.contact) {
+				return { contact: item.contact, matches: Array.isArray(item.matches) ? item.matches : [] }
+			}
+			if (item.source_contact) {
+				return { contact: item.source_contact, matches: Array.isArray(item.matches) ? item.matches : [] }
+			}
+			if (Array.isArray(item.matches) && item.matches.length > 0) {
+				return { contact: defaultContact || { first_name: '', last_name: '' }, matches: item.matches }
+			}
+			if (item.first_name || item.last_name || item.email) {
+				return { contact: { first_name: item.first_name || '', last_name: item.last_name || '', email: item.email || null, phone: item.phone || null }, matches: [] }
+			}
+			return { contact: defaultContact || { first_name: '', last_name: '' }, matches: [] }
+		})
+	}
+
 	async function importFromProject(allowDuplicateName = false, replaceExisting = false) {
 		if (!selectedProjectId || selectedStatuses.length === 0) {
 			alert('Please select a project and at least one status')
@@ -126,7 +146,7 @@
 			} else {
 				const errorData = await response.json().catch(() => ({ error: 'Import error' }))
 				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(errorData.duplicate_warnings)) {
-					duplicateWarnings = errorData.duplicate_warnings || []
+					duplicateWarnings = normalizeServerDuplicateWarnings(errorData.duplicate_warnings || errorData)
 					duplicateWarningSource = hasAnyExactMatches() ? 'server_exact' : 'server'
 					showDuplicateWarning = true
 					return

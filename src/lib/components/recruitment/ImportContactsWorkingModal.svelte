@@ -61,6 +61,8 @@
 		errors: string[]
 	} | null = null
 
+	let showCompactErrorModal = false
+
 	let showDuplicateConfirm = false
 	let duplicateContact: Contact | null = null
 	let duplicateMatches: any[] = []
@@ -159,6 +161,129 @@
 		return contact.lastName || contact.last_name || ''
 	}
 
+	function getExistingRecruitmentFirstName(contact: any): string {
+		return contact?.first_name || contact?.firstName || contact?.contact?.first_name || contact?.contact?.firstName || ''
+	}
+
+	function getExistingRecruitmentLastName(contact: any): string {
+		return contact?.last_name || contact?.lastName || contact?.contact?.last_name || contact?.contact?.lastName || ''
+	}
+
+	function normalizeImportWarningContact(contact: any) {
+		return {
+			...contact,
+			id: contact?.id ?? contact?.contact_id ?? contact?.contactId ?? null,
+			first_name: getExistingRecruitmentFirstName(contact),
+			last_name: getExistingRecruitmentLastName(contact),
+			email: contact?.email || contact?.contact?.email || null,
+			phone: contact?.phone || contact?.contact?.phone || null,
+			messenger: contact?.messenger || contact?.contact?.messenger || null,
+			status: contact?.status || contact?.contact?.status || 'Existing contact',
+			source: contact?.source || contact?.contact?.source || null
+		}
+	}
+
+	function normalizeImportWarningMatches(matches: any[] = []) {
+		return matches
+			.filter(Boolean)
+			.map((match: any) => ({
+				...match,
+				contact: normalizeImportWarningContact(match.contact || match)
+			}))
+	}
+
+	function getImportWarningContactDisplay(contact: any) {
+		return normalizeImportWarningContact(contact || {})
+	}
+
+	function toComparisonContact(contact: any): Contact {
+		return {
+			...contact,
+			id: contact?.id ?? contact?.contact_id ?? contact?.contactId ?? null,
+			firstName: contact?.firstName || contact?.first_name || contact?.contact?.firstName || contact?.contact?.first_name || '',
+			lastName: contact?.lastName || contact?.last_name || contact?.contact?.lastName || contact?.contact?.last_name || '',
+			email: contact?.email || contact?.contact?.email || null,
+			phone: contact?.phone || contact?.contact?.phone || null,
+			messenger: contact?.messenger || contact?.contact?.messenger || null
+		} as Contact
+	}
+
+	function getImportWarningMatches(warning: any) {
+		const normalizedMatches = normalizeImportWarningMatches(warning?.matches || [])
+		if (normalizedMatches.length > 0) {
+			return normalizedMatches
+		}
+
+		const warningContact = warning?.contact || {}
+		const fallbackContact = toComparisonContact(warningContact)
+
+		const exactMatches = existingContacts
+			.filter((existing) => isExactExistingRecruitmentMatch(existing, fallbackContact))
+			.map((existing) => ({
+				type: 'exact_contact',
+				contact: normalizeImportWarningContact(existing)
+			}))
+
+		if (exactMatches.length > 0) {
+			return exactMatches
+		}
+
+		const similarMatches = existingContacts
+			.filter((existing) => {
+				return areContactsSimilar(toComparisonContact(existing), fallbackContact)
+			})
+			.map((existing) => ({
+				type: 'similar_contact',
+				contact: normalizeImportWarningContact(existing)
+			}))
+
+		return similarMatches
+	}
+
+	function getDerivedImportDuplicateWarnings() {
+		return selectedContacts
+			.map((contact) => {
+				const comparisonContact = toComparisonContact(contact)
+				const exactMatches = existingContacts
+					.filter((existing) => isExactExistingRecruitmentMatch(existing, comparisonContact))
+					.map((existing) => ({
+						type: 'exact_contact',
+						contact: normalizeImportWarningContact(existing)
+					}))
+
+				const similarMatches = exactMatches.length > 0
+					? exactMatches
+					: existingContacts
+						.filter((existing) => areContactsSimilar(toComparisonContact(existing), comparisonContact))
+						.map((existing) => ({
+							type: 'similar_contact',
+							contact: normalizeImportWarningContact(existing)
+						}))
+
+				return {
+					contact: normalizeImportWarningContact(contact),
+					matches: similarMatches
+				}
+			})
+			.filter((warning) => warning.matches.length > 0)
+	}
+
+	function getDisplayImportDuplicateWarnings() {
+		if (importDuplicateWarnings.length > 0) {
+			const enrichedWarnings = importDuplicateWarnings.map((warning) => ({
+				...warning,
+				contact: getImportWarningContactDisplay(warning.contact),
+				matches: getImportWarningMatches(warning)
+			}))
+
+			if (enrichedWarnings.some((warning) => warning.matches.length > 0)) {
+				return enrichedWarnings
+			}
+		}
+
+		return getDerivedImportDuplicateWarnings()
+	}
+
 	function contactToDuplicateMatch(contact: any) {
 		return {
 			type: 'selected_contact',
@@ -181,12 +306,22 @@
 		return match?.type === 'exact_contact' || match?.type === 'exact_name'
 	}
 
+	function getImportMatchLabel(match: any): string {
+		return isExactMatchType(match) ? '❌ Exact match:' : '⚠️ May be a duplicate of:'
+	}
+
 	function normalizePhone(value: string | null | undefined): string {
 		return (value || '').replace(/\s|\/|\.|-/g, '').trim()
 	}
 
 	function normalizeMessenger(value: string | null | undefined): string {
 		return (value || '').toLowerCase().trim()
+	}
+
+	function getExistingContactSourceId(existing: any): number | null {
+		if (typeof existing?.contact_id === 'number') return existing.contact_id
+		if (typeof existing?.contact?.id === 'number') return existing.contact.id
+		return null
 	}
 
 	function hasIdenticalCommunicationDetails(first: any, second: any): boolean {
@@ -209,6 +344,47 @@
 		})
 	}
 
+	function normalizeServerDuplicateWarnings(rawWarnings, defaultContact = null) {
+		if (!rawWarnings) return []
+		const arr = Array.isArray(rawWarnings) ? rawWarnings : [rawWarnings]
+		return arr.map((item) => {
+			if (item.contact) {
+				return {
+					contact: normalizeImportWarningContact(item.contact),
+					matches: normalizeImportWarningMatches(Array.isArray(item.matches) ? item.matches : [])
+				}
+			}
+			if (item.source_contact) {
+				return {
+					contact: normalizeImportWarningContact(item.source_contact),
+					matches: normalizeImportWarningMatches(Array.isArray(item.matches) ? item.matches : [])
+				}
+			}
+			if (Array.isArray(item.matches) && item.matches.length > 0) {
+				return {
+					contact: normalizeImportWarningContact(defaultContact || { first_name: '', last_name: '' }),
+					matches: normalizeImportWarningMatches(item.matches)
+				}
+			}
+			if (item.first_name || item.last_name || item.email) {
+				return {
+					contact: normalizeImportWarningContact({
+						first_name: item.first_name || '',
+						last_name: item.last_name || '',
+						email: item.email || null,
+						phone: item.phone || null,
+						messenger: item.messenger || null
+					}),
+					matches: []
+				}
+			}
+			return {
+				contact: normalizeImportWarningContact(defaultContact || { first_name: '', last_name: '' }),
+				matches: []
+			}
+		})
+	}
+
 	function hasExactWarningMatch(warning: any): boolean {
 		const warningContact = warning?.contact || {}
 		const warningFirstName = (warningContact.first_name || '').toLowerCase().trim()
@@ -223,21 +399,78 @@
 		})
 	}
 
+	function hasAnyExactImportWarnings(warnings: any[]): boolean {
+		return warnings.some((warning) =>
+			warning?.warning_type === 'exact_existing_contact' ||
+			hasExactWarningMatch(warning) ||
+			(warning?.matches || []).some((match: any) => isExactMatchType(match))
+		)
+	}
+
 	function isExactExistingRecruitmentMatch(existing: any, contact: Contact): boolean {
-		const existingFirstName = (existing.first_name || '').toLowerCase().trim()
-		const existingLastName = (existing.last_name || '').toLowerCase().trim()
+		const existingSourceId = getExistingContactSourceId(existing)
+		if (existingSourceId != null && contact.id != null) {
+			if (existingSourceId === contact.id) {
+				return hasIdenticalRecruitmentContactInformation(existing, contact)
+			}
+		}
+
+		return hasIdenticalRecruitmentContactInformation(existing, contact)
+	}
+
+	function hasIdenticalRecruitmentContactInformation(existing: any, contact: Contact): boolean {
+		const existingFirstName = getExistingRecruitmentFirstName(existing).toLowerCase().trim()
+		const existingLastName = getExistingRecruitmentLastName(existing).toLowerCase().trim()
 		const contactFirstName = getContactFirstName(contact).toLowerCase().trim()
 		const contactLastName = getContactLastName(contact).toLowerCase().trim()
 
-		const sameName =
+		return (
 			existingFirstName === contactFirstName &&
-			existingLastName === contactLastName
+			existingLastName === contactLastName &&
+			hasIdenticalCommunicationDetails(existing, contact)
+		)
+	}
 
-		if (!sameName) {
-			return false
+	function isExactDuplicateImportError(error: string): boolean {
+		return error.includes('already in the recruitment contact list')
+	}
+
+	function parseImportErrorPayload(error: string) {
+		if (!error) return null
+		try {
+			return JSON.parse(error)
+		} catch {
+			return null
 		}
+	}
 
-		return hasIdenticalCommunicationDetails(existing, contact)
+	function getImportErrorExactWarnings() {
+		if (!importResults?.errors?.length) return []
+
+		const payloads = importResults.errors
+			.map((error) => parseImportErrorPayload(error))
+			.filter(Boolean)
+
+		const warnings = payloads.flatMap((payload: any) =>
+			normalizeServerDuplicateWarnings(payload?.duplicate_warnings || payload?.duplicateWarnings || null)
+		)
+
+		return warnings.filter((warning) => hasExactWarningMatch(warning) || warning?.warning_type === 'exact_existing_contact')
+	}
+
+	function getExactDuplicateMatchesForContact(contact: Contact): any[] {
+		return existingContacts.filter((existing) => isExactExistingRecruitmentMatch(existing, contact))
+	}
+
+	function getExactDuplicateResultEntries() {
+		if (!importResults || importResults.errors.length === 0) return []
+
+		return selectedContacts
+			.map((contact) => ({
+				contact,
+				matches: getExactDuplicateMatchesForContact(contact)
+			}))
+			.filter((entry) => entry.matches.length > 0)
 	}
 
 	function findSimilarContacts(contact: Contact): any[] {
@@ -365,6 +598,8 @@
 			return
 		}
 
+		await fetchExistingContacts()
+
 		if (!allowDuplicateName && !skipClientDuplicateCheck) {
 			const duplicateWarnings = findSelectedDuplicateWarnings()
 			if (duplicateWarnings.length > 0) {
@@ -395,19 +630,52 @@
 					dispatch('contactsImported', importResults)
 				}
 			} else {
-				const errorText = await response.text()
-				try {
-					const errorData = JSON.parse(errorText)
-					if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(errorData.duplicate_warnings)) {
-						importDuplicateWarnings = errorData.duplicate_warnings || []
-						duplicateWarningSource = 'server'
-						showImportDuplicateWarning = true
-						return
+					const errorText = await response.text()
+					let handled = false
+					try {
+						const errorData = JSON.parse(errorText)
+						const duplicates = errorData.duplicate_warnings || errorData.duplicateWarnings || null
+						if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(duplicates)) {
+							await fetchExistingContacts()
+							const normalizedWarnings = normalizeServerDuplicateWarnings(duplicates || errorData)
+							if (allowDuplicateName) {
+								importResults = {
+									imported: [],
+									replaced: [],
+									conflicts: [],
+									errors: [
+										hasAnyExactImportWarnings(normalizedWarnings) || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS'
+											? 'This contact is already in the recruitment contact list.'
+											: (errorData.error || errorData.message || 'Import conflict detected.')
+									]
+								}
+								importDuplicateWarnings = []
+								duplicateWarningSource = null
+								showImportDuplicateWarning = false
+							} else if (hasAnyExactImportWarnings(normalizedWarnings) || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS') {
+								importResults = {
+									imported: [],
+									replaced: [],
+									conflicts: [],
+									errors: ['This contact is already in the recruitment contact list.']
+								}
+								importDuplicateWarnings = []
+								duplicateWarningSource = null
+								showImportDuplicateWarning = false
+							} else {
+								importDuplicateWarnings = normalizedWarnings
+								duplicateWarningSource = 'server'
+								showImportDuplicateWarning = true
+							}
+							handled = true
+							return
+						}
+					} catch (e) {
+						// not JSON
 					}
-					alert(`Import error: ${errorData.error || 'Unknown error'}`)
-				} catch {
-					alert(`Import error: ${errorText}`)
-				}
+					if (!handled) {
+						alert(`Import error: ${errorText}`)
+					}
 			}
 		} catch (error) {
 			alert('Error importing contacts')
@@ -512,12 +780,19 @@
 
 		return ''
 	}
+
+	$: showCompactErrorModal =
+		!!importResults &&
+		importResults.errors.length > 0 &&
+		importResults.imported.length === 0 &&
+		(importResults.replaced || []).length === 0 &&
+		importResults.conflicts.length === 0
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-	<div class="bg-white rounded-lg shadow-xl max-w-7xl w-full mx-4 max-h-[95vh] overflow-y-auto">
+	<div class="bg-white rounded-lg shadow-xl w-full mx-4 overflow-y-auto {showCompactErrorModal ? 'max-w-2xl max-h-[80vh]' : 'max-w-7xl max-h-[95vh]'}">
 		<!-- Header -->
 		<div class="flex items-center justify-between p-6 border-b bg-gray-50">
 			<div class="flex items-center gap-2">
@@ -810,11 +1085,48 @@
 									<h4 class="font-semibold text-red-900">
 										{importResults.errors.length} error(s)
 									</h4>
-									<div class="mt-2 max-h-32 overflow-y-auto">
-										{#each importResults.errors as error}
-											<p class="text-sm text-red-800">{error}</p>
-										{/each}
-									</div>
+									{#if showCompactErrorModal && ((importResults.errors.every(isExactDuplicateImportError) && getExactDuplicateResultEntries().length > 0) || getImportErrorExactWarnings().length > 0)}
+										<div class="mt-3 space-y-4">
+											<p class="text-sm text-red-800">
+												This contact already exists in the database with identical information. Exact duplicates cannot be added.
+											</p>
+
+											{#if getImportErrorExactWarnings().length > 0}
+												{#each getImportErrorExactWarnings() as warning}
+													<div class="space-y-2">
+														<p class="font-semibold text-red-900">
+															{warning.contact?.first_name} {warning.contact?.last_name}
+														</p>
+														{#each warning.matches as match}
+															{@const matchContact = match.contact || match}
+															<p class="text-sm text-red-800">
+																❌ Exact match: {matchContact.first_name} {matchContact.last_name}{matchContact.email ? ` (${matchContact.email})` : ''}
+															</p>
+														{/each}
+													</div>
+												{/each}
+											{:else}
+											{#each getExactDuplicateResultEntries() as entry}
+												<div class="space-y-2">
+													<p class="font-semibold text-red-900">
+														{getContactFirstName(entry.contact)} {getContactLastName(entry.contact)}
+													</p>
+													{#each entry.matches as match}
+														<p class="text-sm text-red-800">
+															❌ Exact match: {match.first_name} {match.last_name}{match.email ? ` (${match.email})` : ''}
+														</p>
+													{/each}
+												</div>
+											{/each}
+											{/if}
+										</div>
+									{:else}
+										<div class="mt-2 max-h-32 overflow-y-auto">
+											{#each importResults.errors as error}
+												<p class="text-sm text-red-800">{error}</p>
+											{/each}
+										</div>
+									{/if}
 								</div>
 							</div>
 						</div>
@@ -874,19 +1186,12 @@
 					<h4 class="font-medium text-gray-900 mb-2">
 						Similar contacts already in project:
 					</h4>
-					<div class="space-y-2">
+					<div class="space-y-3">
 						{#each duplicateMatches as match}
 							{@const matchContact = match.contact || match}
-							<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-								<p class="font-semibold">{matchContact.first_name} {matchContact.last_name}</p>
-								{#if matchContact.email}
-									<p class="text-sm text-gray-600">{matchContact.email}</p>
-								{/if}
-								<p class="text-xs text-yellow-700">Status: {matchContact.status}</p>
-								{#if matchContact.source}
-									<p class="text-xs text-gray-500">Source: {matchContact.source}</p>
-								{/if}
-							</div>
+							<p class="text-sm text-gray-700">
+								{getImportMatchLabel(match)} {matchContact.first_name} {matchContact.last_name}{matchContact.email ? ` (${matchContact.email})` : ''}
+							</p>
 						{/each}
 					</div>
 				</div>
@@ -948,19 +1253,12 @@
 
 				<div class="mb-6">
 					<h4 class="font-medium text-gray-900 mb-2">Existing recruitment contact:</h4>
-					<div class="space-y-2">
+					<div class="space-y-3">
 						{#each alreadyExistsMatches as match}
 							{@const matchContact = match.contact || match}
-							<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-								<p class="font-semibold">{matchContact.first_name} {matchContact.last_name}</p>
-								{#if matchContact.email}
-									<p class="text-sm text-gray-600">{matchContact.email}</p>
-								{/if}
-								<p class="text-xs text-yellow-700">Status: {matchContact.status}</p>
-								{#if matchContact.source}
-									<p class="text-xs text-gray-500">Source: {matchContact.source}</p>
-								{/if}
-							</div>
+							<p class="text-sm text-gray-700">
+								{getImportMatchLabel(match)} {matchContact.first_name} {matchContact.last_name}{matchContact.email ? ` (${matchContact.email})` : ''}
+							</p>
 						{/each}
 					</div>
 				</div>
@@ -1006,37 +1304,33 @@
 				</div>
 
 				<div class="space-y-3">
-					{#each importDuplicateWarnings as warning}
+					{#each getDisplayImportDuplicateWarnings() as warning}
+						{@const warningContact = warning.contact}
+						{@const warningMatches = warning.matches}
 						<div class="border rounded-lg p-3 bg-yellow-50 border-yellow-200">
 							<div class="flex items-start gap-2">
 								<div class="flex-1">
 									<p class="font-semibold text-gray-900">
-										{warning.contact?.first_name} {warning.contact?.last_name}
+										{warningContact.first_name} {warningContact.last_name}
 									</p>
-									{#if warning.contact?.email}
-										<p class="text-xs text-gray-600 mt-1">Email: {warning.contact.email}</p>
+									{#if warningContact.email}
+										<p class="text-xs text-gray-600 mt-1">Email: {warningContact.email}</p>
 									{/if}
-									{#if warning.contact?.phone}
-										<p class="text-xs text-gray-600">Phone: {warning.contact.phone}</p>
+									{#if warningContact.phone}
+										<p class="text-xs text-gray-600">Phone: {warningContact.phone}</p>
 									{/if}
-									{#if warning.contact?.messenger}
-										<p class="text-xs text-gray-600">Messenger: {warning.contact.messenger}</p>
+									{#if warningContact.messenger}
+										<p class="text-xs text-gray-600">Messenger: {warningContact.messenger}</p>
 									{/if}
-									{#if (warning.matches?.length || 0) > 0}
+									{#if warningMatches.length > 0}
 										<div class="mt-2 pt-2 border-t border-gray-300">
 											<p class="text-xs font-semibold text-gray-700 mb-1">Existing contact(s):</p>
-											<div class="space-y-1">
-												{#each (warning.matches || []).slice(0, 3) as match}
-													{@const matchContact = match.contact || match}
-													<div class="text-xs text-gray-600">
-														<p><strong>{matchContact.first_name} {matchContact.last_name}</strong></p>
-														{#if matchContact.email}
-															<p class="text-gray-500">Email: {matchContact.email}</p>
-														{/if}
-														{#if matchContact.phone}
-															<p class="text-gray-500">Phone: {matchContact.phone}</p>
-														{/if}
-													</div>
+											<div class="space-y-2">
+												{#each warningMatches.slice(0, 3) as match}
+													{@const matchContact = getImportWarningContactDisplay(match.contact || match)}
+													<p class="text-sm text-gray-700">
+														{getImportMatchLabel(match)} {matchContact.first_name} {matchContact.last_name}{matchContact.email ? ` (${matchContact.email})` : ''}
+													</p>
 												{/each}
 											</div>
 										</div>
