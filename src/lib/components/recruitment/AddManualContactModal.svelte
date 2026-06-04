@@ -11,6 +11,7 @@ let duplicatePhoneContact: Contact | null = null
 	const dispatch = createEventDispatcher()
 
 	let formData = {
+		contact_id: null as number | null,
 		first_name: '',
 		last_name: '',
 		email: '',
@@ -27,6 +28,9 @@ let duplicatePhoneContact: Contact | null = null
 	let errors: Record<string, string> = {}
 	let currentUserName = ''
 	let loadingUser = true
+	let showDuplicateWarning = false
+	let duplicateWarnings: any[] = []
+	let duplicateWarningSource: 'similar' | 'exact' = 'similar'
 
 function isSimilar(a: string, b: string) {
 	a = a.toLowerCase()
@@ -84,6 +88,7 @@ function getLastName(contact: any) {
 
 	function clearForm() {
 		formData = {
+			contact_id: null,
 			first_name: '',
 			last_name: '',
 			email: '',
@@ -94,6 +99,11 @@ function getLastName(contact: any) {
 			contacted_by: currentUserName
 		}
 		errors = {}
+		duplicateEmailContact = null
+		duplicatePhoneContact = null
+		foundContacts = []
+		duplicateWarnings = []
+		showDuplicateWarning = false
 	}
 
 	$: {
@@ -149,7 +159,11 @@ function getLastName(contact: any) {
 	}
 
 async function searchContacts() {
-	
+	const activeField = (document.activeElement as HTMLInputElement)?.id
+	if (formData.contact_id && activeField) {
+		formData.contact_id = null
+	}
+
 	const firstName = formData.first_name.trim()
 	const lastName = formData.last_name.trim()
 
@@ -189,7 +203,6 @@ async function searchContacts() {
 		if (response.ok) {
 			const data = await response.json()
 			const contacts = data.data || data || []
-			const activeField = (document.activeElement as HTMLInputElement)?.id
 
 			duplicateEmailContact = null
 duplicatePhoneContact = null
@@ -268,7 +281,62 @@ foundContacts = contacts.filter((contact: Contact) => {
 	}
 }
 
-	async function saveContact() {
+	function contactToWarningMatch(contact: any) {
+		return {
+			contact: {
+				first_name: getFirstName(contact),
+				last_name: getLastName(contact),
+				email: contact.email || null,
+				phone: contact.phone || null,
+				messenger: contact.messenger || null,
+				status: contact.status || 'Existing contact',
+				source: contact.source || 'Existing contact'
+			}
+		}
+	}
+
+	function buildClientDuplicateWarnings() {
+		const matches = [
+			...foundContacts,
+			duplicateEmailContact,
+			duplicatePhoneContact
+		]
+			.filter(Boolean)
+			.filter((contact, index, self) => self.findIndex(item => item?.id === contact?.id) === index)
+			.map(contactToWarningMatch)
+
+		if (matches.length === 0) return []
+
+		return [{
+			contact: {
+				first_name: formData.first_name.trim(),
+				last_name: formData.last_name.trim(),
+				email: formData.email.trim() || null,
+				phone: formData.phone.trim() || null,
+				messenger: formData.messenger.trim() || null
+			},
+			matches
+		}]
+	}
+
+	function hasExactDuplicateWarning(warnings: any[]): boolean {
+		return warnings.some((warning) =>
+			(warning.matches || []).some((match) => {
+				const matchContact = match.contact || match
+				const sameName =
+					(matchContact.first_name || '').toLowerCase().trim() === formData.first_name.trim().toLowerCase() &&
+					(matchContact.last_name || '').toLowerCase().trim() === formData.last_name.trim().toLowerCase()
+				const sameContactDetails =
+					(matchContact.email || '').toLowerCase().trim() === formData.email.trim().toLowerCase() &&
+					normalizePhone(matchContact.phone || '') === normalizePhone(formData.phone) &&
+					(matchContact.messenger || '').toLowerCase().trim() === formData.messenger.trim().toLowerCase()
+
+				return sameName && sameContactDetails && match.type === 'exact_contact'
+			})
+		)
+	}
+
+	async function saveContact(allowDuplicateName = false) {
 		errors = {}
 
 		const firstName = formData.first_name.trim()
@@ -294,10 +362,21 @@ foundContacts = contacts.filter((contact: Contact) => {
 			return
 		}
 
+		if (!allowDuplicateName) {
+			const warnings = buildClientDuplicateWarnings()
+			if (warnings.length > 0) {
+				duplicateWarnings = warnings
+				duplicateWarningSource = hasExactDuplicateWarning(warnings) ? 'exact' : 'similar'
+				showDuplicateWarning = true
+				return
+			}
+		}
+
 		saving = true
 
 		try {
 			const cleanData = {
+				contact_id: formData.contact_id,
 				first_name: firstName,
 				last_name: lastName,
 				email: formData.email.trim() || null,
@@ -305,7 +384,8 @@ foundContacts = contacts.filter((contact: Contact) => {
 				messenger: formData.messenger.trim() || null,
 				section_id: formData.section_id,
 				notes: formData.notes.trim() || null,
-				contacted_by: formData.contacted_by.trim() || null
+				contacted_by: formData.contacted_by.trim() || null,
+				allow_duplicate_name: allowDuplicateName
 			}
 
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts`, {
@@ -320,6 +400,14 @@ foundContacts = contacts.filter((contact: Contact) => {
 				closeModal()
 			} else {
 				const errorData = await response.json()
+				if (response.status === 409 || errorData.code === 'POTENTIAL_DUPLICATE_RECRUITMENT_CONTACT' || errorData.code === 'EXACT_RECRUITMENT_CONTACT_ALREADY_EXISTS' || Array.isArray(errorData.duplicate_warnings)) {
+					duplicateWarnings = errorData.duplicate_warnings || []
+					duplicateWarningSource = hasExactDuplicateWarning(duplicateWarnings)
+						? 'exact'
+						: 'similar'
+					showDuplicateWarning = true
+					return
+				}
 				console.error('Error creating contact:', errorData)
 				alert(`Error: ${errorData.error || 'Unable to create contact'}`)
 			}
@@ -329,6 +417,19 @@ foundContacts = contacts.filter((contact: Contact) => {
 		} finally {
 			saving = false
 		}
+	}
+
+	function cancelDuplicateWarning() {
+		duplicateWarnings = []
+		showDuplicateWarning = false
+		duplicateWarningSource = 'similar'
+	}
+
+	async function confirmDuplicateWarning() {
+		duplicateWarnings = []
+		showDuplicateWarning = false
+		duplicateWarningSource = 'similar'
+		await saveContact(true)
 	}
 
 </script>
@@ -408,6 +509,7 @@ foundContacts = contacts.filter((contact: Contact) => {
 					on:click={() => {
 						formData.first_name = getFirstName(contact)
 						formData.last_name = getLastName(contact)
+						formData.contact_id = contact.id || null
 						formData.email = contact.email || ''
 						formData.phone = contact.phone || ''
 						formData.messenger = contact.messenger || ''
@@ -624,7 +726,7 @@ duplicatePhoneContact = null
 				</button>
 				<button
 					type="button"
-					on:click={saveContact}
+					on:click={() => saveContact()}
 					disabled={saving || Object.keys(errors).length > 0}
 					class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2"
 				>
@@ -637,3 +739,65 @@ duplicatePhoneContact = null
 		</div>
 	</div>
 </div>
+
+{#if showDuplicateWarning}
+	<div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]">
+		<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+			<div class="flex items-center gap-3 p-6 border-b bg-yellow-50">
+				<AlertTriangle class="text-yellow-500" size={24} />
+				<h3 class="text-lg font-semibold text-yellow-900">Potential duplicate contact</h3>
+			</div>
+
+			<div class="p-6 space-y-5">
+			<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+				<p class="text-sm text-yellow-800">
+					This contact looks similar to a contact that already exists.
+				</p>
+			</div>
+
+				<div class="space-y-3">
+					{#each duplicateWarnings as warning}
+						<div class="border border-gray-200 rounded-lg p-3">
+							<p class="font-semibold text-gray-900">
+								{warning.contact?.first_name} {warning.contact?.last_name}
+							</p>
+							<div class="mt-2 space-y-1">
+								{#each (warning.matches || []).slice(0, 3) as match}
+									{@const matchContact = match.contact || match}
+									<p class="text-sm text-gray-600">
+										Similar to: {matchContact.first_name} {matchContact.last_name}
+										{#if matchContact.email}
+											({matchContact.email})
+										{/if}
+									</p>
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</div>
+
+				<p class="text-sm text-gray-700">
+					Do you still want to add this contact?
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
+				<button
+					type="button"
+					on:click={cancelDuplicateWarning}
+					class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					on:click={confirmDuplicateWarning}
+					disabled={saving}
+					class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+				>
+					{saving ? 'Adding...' : 'Add anyway'}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
