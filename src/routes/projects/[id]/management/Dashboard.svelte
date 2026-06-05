@@ -61,25 +61,23 @@
 {/if}
 
 <!-- Statistics grid -->
-<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-2"} items-center w-full mb-4">
+<div class="grid {isMobile ? "grid-cols-1" : " grid-cols-[minmax(0,1fr)_minmax(360px,460px)]"} items-start gap-4 w-full mb-4">
 			<div class="bg-white border-2 border-[#E35656] rounded-[10px] {isMobile ? "w-full" : " w-[90%]"}">
 				<Notification bind:participantsWithoutEmail bind:project bind:participantsNotValidated />
 </div>
 
-<div class="flex text-white h-[100px] font-bold {isMobile ? "w-full text-xs mt-4" : " ml-auto mr-4"}">
-				<div class="flex w-full text-center {isMobile ? "gap-3" : "gap-6"}">
-					<div class="rounded-lg py-2 px-4 flex-1 h-full bg-[#6CB1C8]">
-	<p>PARTICIPANTS</p>
-	<p class="font-extrabold {isMobile ? 'mt-6 mobile-stat-text' : '-mt-1 text-[45px]'}">{project?.participants?.length || 0}</p>
+<div class="grid w-full grid-cols-3 gap-3 text-center text-white font-bold {isMobile ? "text-xs" : ""}">
+					<div class="stat-card bg-[#6CB1C8]">
+	<p class="stat-label">PARTICIPANTS</p>
+	<p class="stat-value">{project?.participants?.length || 0}</p>
 </div>
-<div class="rounded-lg py-2 px-4 flex-1 bg-[#5077BA]">
-	<p>REHEARSALS</p>
-	<p class="font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"}">{project?.rehearsals?.length || 0}</p>
+<div class="stat-card bg-[#5077BA]">
+	<p class="stat-label">REHEARSALS</p>
+	<p class="stat-value">{project?.rehearsals?.length || 0}</p>
 </div>
-<div class="rounded-lg py-2 px-4 flex-1 bg-[#353DAD]">
-	<p>CONCERTS</p>
-	<p class="font-extrabold {isMobile ? "mt-6 text-[45px]" : "-mt-1 text-[45px]"}">{project?.concerts?.length || 0}</p>
-</div>
+<div class="stat-card bg-[#353DAD]">
+	<p class="stat-label">CONCERTS</p>
+	<p class="stat-value">{project?.concerts?.length || 0}</p>
 </div>
 </div>
 </div>
@@ -158,6 +156,30 @@
 {/if}
 
 <style>
+	.stat-card {
+		display: flex;
+		min-width: 0;
+		min-height: 100px;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		border-radius: 0.5rem;
+		padding: 0.5rem;
+	}
+
+	.stat-label {
+		width: 100%;
+		overflow-wrap: anywhere;
+		font-size: 0.75rem;
+		line-height: 1rem;
+	}
+
+	.stat-value {
+		font-size: 2.75rem;
+		font-weight: 800;
+		line-height: 1;
+	}
+
     /* Mobile responsive adjustments */
     @media (max-width: 1000px) {
         :global(.grid-cols-2) {
@@ -170,14 +192,14 @@
             grid-template-columns: repeat(1, minmax(0, 1fr));
         }
 
-        /* Custom mobile font size for statistics */
-        .mobile-stat-text {
-            font-size: 2.5rem;
-            line-height: 1;
-        }
-
         :global(.gap-6) {
             gap: 0.75rem;
         }
     }
+
+	@media (max-width: 520px) {
+		.stat-value {
+			font-size: 2rem;
+		}
+	}
 </style>

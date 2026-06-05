@@ -79,6 +79,26 @@
 			};
 		});
 	}
+
+	async function deleteList(list: CustomList) {
+		if (!confirm(`Are you sure you want to delete "${list.name}"?`)) return;
+
+		const response = await fetch(`/api/lists/${list.id}`, {
+			method: 'DELETE'
+		});
+
+		const responseHandler = new ResponseHandlerClient();
+		responseHandler.handle(response, async () => {
+			lists = lists.filter((currentList) => currentList.id !== list.id);
+			if (dataHolder) {
+				dataHolder = {
+					...dataHolder,
+					data: lists
+				};
+			}
+			await fetchData();
+		});
+	}
 </script>
 
 <div class="bg-[#E7E7E7] min-h-screen pb-4">
@@ -92,13 +112,50 @@
 	<div class="border-2 border-gray-500 rounded-xl p-4 bg-white m-4">
 		{#if dataHolder}
 			<SimpleFilterer
-				showData={true}
+				showData={false}
 				bind:data={dataHolder}
 				bind:meta
 				bind:options
 				bind:uniqueUrl
 				on:optionsUpdated={() => fetchData()}
-			></SimpleFilterer>
+			>
+				{#if lists.length > 0}
+					<div class="mt-4 w-full overflow-x-auto">
+						<table class="w-full min-w-[520px] text-left text-sm text-gray-700">
+							<thead class="bg-gray-100 text-xs uppercase text-gray-600">
+								<tr>
+									<th class="px-4 py-3">Name</th>
+									<th class="px-4 py-3">Contacts</th>
+									<th class="px-4 py-3 text-right">Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each lists as list (list.id)}
+									<tr class="border-b bg-white hover:bg-gray-50">
+										<td class="px-4 py-3 font-medium text-gray-900">
+											<a class="hover:underline" href="/contacts/lists/{list.id}">{list.name}</a>
+										</td>
+										<td class="max-w-[520px] truncate px-4 py-3" title={list.contacts}>
+											{list.contacts || 'No contacts'}
+										</td>
+										<td class="px-4 py-3 text-right">
+											<button
+												type="button"
+												class="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+												on:click={() => deleteList(list)}
+											>
+												Delete
+											</button>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{:else}
+					<p class="mt-4 w-full text-center text-gray-500">No lists found</p>
+				{/if}
+			</SimpleFilterer>
 		{/if}
 	</div>
 </div>

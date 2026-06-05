@@ -22,7 +22,24 @@ export async function load({ cookies }) {
 
 	await responseHandler.handle(res, cookies);
 
+	let currentUser = null;
+	try {
+		const currentUserResponse = await fetch(`${API_URL}/users/current`, {
+			method: 'GET',
+			headers: {
+				authorization: `${token}`
+			}
+		});
+
+		if (currentUserResponse.ok) {
+			currentUser = await currentUserResponse.json();
+		}
+	} catch (error) {
+		console.error('Failed to load current user:', error);
+	}
+
 	return {
-		connected: true
+		connected: true,
+		currentUser
 	};
 }
