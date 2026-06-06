@@ -150,6 +150,15 @@
 			}
 		};
 	}
+
+	function formatTimestamp(value: string | Date) {
+	    return new Date(value).toLocaleDateString('en-GB', {
+		    weekday: 'long',
+		    day: 'numeric',
+		    month: 'long',
+		    year: 'numeric'
+	    });
+    }
 </script>
 
 <div class="bg-white">
@@ -164,11 +173,13 @@
 				>
 					<div class="">
 						<p>
-							Created at: <DateShow startTime={project.createdAt} />
+							Created at: {formatTimestamp(project.createdAt)} 
 						</p>
+
 						<p>
-							Updated at: <DateShow startTime={project.updatedAt} />
+							Updated at: {formatTimestamp(project.updatedAt)}
 						</p>
+
 					</div>
 				</div>
 				<a

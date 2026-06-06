@@ -8,6 +8,22 @@
     import logo from '$lib/assets/image1.png';
 
     export let callsheet: Callsheet;
+
+    function formatDateTime(value: string | Date) {
+	    if (!value) return '';
+
+	    const date = new Date(value);
+
+	    return date.toLocaleString('fr-FR', {
+		    timeZone: 'Europe/Paris',
+		    day: '2-digit',
+		    month: '2-digit',
+		    year: 'numeric',
+		    hour: '2-digit',
+		    minute: '2-digit',
+		    hour12: false
+	    });
+    }
 </script>
 
 <div class="relative w-full py-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 rounded-lg px-4 sm:px-6 lg:px-8">
@@ -47,7 +63,7 @@
 
             <!-- Footer -->
             <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center mt-8 sm:mt-10">
-                Callsheet last updated on {new Date(callsheet.updatedAt).toLocaleString()}
+                Callsheet last updated on {formatDateTime(callsheet.updatedAt)}
             </div>
         </div>
     {:else}
