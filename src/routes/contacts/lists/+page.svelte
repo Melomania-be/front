@@ -99,6 +99,57 @@
 			await fetchData();
 		});
 	}
+
+	function getDuplicateName(name: string): string {
+		const existingNames = new Set(lists.map((list) => list.name));
+		const copyMatch = name.match(/^(.*?)(?: - copy(?: (\d+))?)?$/);
+		const baseName = copyMatch?.[1] || name;
+		let duplicateName = `${baseName} - copy`;
+		let copyNumber = 1;
+
+		while (existingNames.has(duplicateName)) {
+			duplicateName = `${baseName} - copy ${copyNumber}`;
+			copyNumber++;
+		}
+
+		return duplicateName;
+	}
+
+	async function duplicateList(list: CustomList) {
+		const response = await fetch(`/api/lists/${list.id}`, {
+			method: 'GET'
+		});
+
+		const responseHandler = new ResponseHandlerClient();
+		await responseHandler.handle(response, async () => {
+			const originalList = await response.json();
+			const duplicatedList = {
+				...originalList,
+				id: null,
+				name: getDuplicateName(originalList.name),
+				contacts: originalList.contacts.map((contact: any) => {
+					return {
+						id: contact.id,
+						first_name: contact.firstName,
+						last_name: contact.lastName
+					};
+				})
+			};
+
+			const duplicateResponse = await fetch('/api/lists', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(duplicatedList)
+			});
+
+			const duplicateResponseHandler = new ResponseHandlerClient();
+			await duplicateResponseHandler.handle(duplicateResponse, async () => {
+				await fetchData();
+			});
+		});
+	}
 </script>
 
 <div class="bg-[#E7E7E7] min-h-screen pb-4">
@@ -139,6 +190,13 @@
 											{list.contacts || 'No contacts'}
 										</td>
 										<td class="px-4 py-3 text-right">
+											<button
+												type="button"
+												class="mr-2 rounded bg-[#6b9ad9] px-3 py-2 text-sm font-medium text-white hover:bg-[#5b89c5]"
+												on:click={() => duplicateList(list)}
+											>
+												Duplicate
+											</button>
 											<button
 												type="button"
 												class="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
