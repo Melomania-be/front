@@ -671,7 +671,7 @@
 							return
 						}
 					} catch (e) {
-						// not JSON
+						
 					}
 					if (!handled) {
 						alert(`Import error: ${errorText}`)

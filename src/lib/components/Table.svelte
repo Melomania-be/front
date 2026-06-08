@@ -61,6 +61,29 @@
 	function getNestedValue(obj: any, path: string) {
 		return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 	}
+
+function formatDateTimeFrance(value: string | Date) {
+	if (!value) return '';
+
+	const date = new Date(value);
+
+	const datePart = date.toLocaleDateString('en-US', {
+		timeZone: 'Europe/Paris',
+		weekday: 'short',
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric'
+	});
+
+	const timePart = date.toLocaleTimeString('en-US', {
+		timeZone: 'Europe/Paris',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
+
+	return `${datePart.replace(/,/g, '')} ${timePart}`;
+}
 </script>
 
 <div class="grid grid-cols-1 w-full mt-2">
@@ -115,7 +138,7 @@
 						{#each data.columns as column}
 							{#if typeof getNestedValue(row, String(column)) === 'object' && getNestedValue(row, String(column)) instanceof Date}
 								<td>
-									<DateShow startTime={getNestedValue(row, String(column))} />
+									{formatDateTimeFrance(getNestedValue(row, String(column)))}
 								</td>
 							{:else}
 								<td>{getNestedValue(row, String(column))}</td>

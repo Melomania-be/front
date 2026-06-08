@@ -10,6 +10,12 @@
     export let type: 'concert' | 'rehearsal';
     export let disabled: boolean = false;
 
+
+    $: sortedConcertsOrRehearsals = [...concertsOrRehearsals].sort(
+	(a, b) =>
+		new Date(a.startDate).getTime() -
+		new Date(b.startDate).getTime()
+)
     let participantData;
 
     function triggerEvent(
@@ -63,13 +69,13 @@
         <thead class="text-xs text-gray-700 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">
         <tr>
             <!-- <th class="px-4 py-2">Participant</th> -->
-            {#each concertsOrRehearsals as concertOrRehearsal}
+            {#each sortedConcertsOrRehearsals as concertOrRehearsal}
                 <th class="px-4 py-2 border-l uppercase" colspan="2">{concertOrRehearsal.place}</th>
             {/each}
         </tr>
         <tr>
             <!-- <th></th> -->
-            {#each concertsOrRehearsals as concertOrRehearsal}
+            {#each sortedConcertsOrRehearsals as concertOrRehearsal}
                 {#if type === 'rehearsal'}
                     <th class="px-4 py-2 border-l min-w-[220px]" colspan="2">
                             <DateShow 
@@ -95,7 +101,7 @@
         {#each participants as participant}
             <tr class="even:bg-gray-100 dark:even:bg-gray-800">
                 <!-- <td class="px-4 py-2 border">{participant.contact ? participant.contact.firstName : ''}</td> -->
-                {#each concertsOrRehearsals as concertOrRehearsal}
+                {#each sortedConcertsOrRehearsals as concertOrRehearsal}
                     <td class="px-4 py-2 border w-12">
                         <input
                           type="checkbox"
