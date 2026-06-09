@@ -15,7 +15,8 @@
 	import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
 	import type { Registration } from '$lib/types/Registration';
 	import type { Form } from '$lib/types/Form';
-
+	import { jsPDF } from 'jspdf';
+	import autoTable from 'jspdf-autotable';
 	export let data;
 
 	let project: Project | undefined;
@@ -148,24 +149,20 @@
 		for (const acc of accountings) {
 			if(acc.isMusicianFee){
 				if (acc.contactId != null) {
-					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactMusicianFee[acc.contactId]) {
 						paymentsByContactMusicianFee[acc.contactId] = 0;
 					}
 
-					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactMusicianFee[acc.contactId] += Number(acc.amount);
 				}
 				
 			}
 			else{
 				if (acc.contactId != null) {
-					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactAdditionnal[acc.contactId]) {
 						paymentsByContactAdditionnal[acc.contactId] = 0;
 					}
 
-					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactAdditionnal[acc.contactId] += Number(acc.amount);
 				}
 				console.log(acc.amount)
@@ -280,13 +277,13 @@
 	function parseQuestionAndAnswers(raw: string): string {
 		const [question, answersPart] = raw.split(':', 2);
 
-		if (!answersPart) return raw; // cas où il n’y a pas de ":"
+		if (!answersPart) return raw;
 
 		const answers = answersPart
-			.replace(/^;+|;+$/g, '') // retire les ; au début/fin
-			.split(';') // transforme en tableau
-			.map((s) => s.trim()) // nettoie les espaces
-			.filter((s) => s.length > 0); // ignore les vides
+			.replace(/^;+|;+$/g, '')
+			.split(';')
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0);
 
 		return `${question.trim()} (${answers.join(', ')})`;
 	}
@@ -323,6 +320,63 @@
 		console.log(p.id, p.contact?.email);
 	});
 	}
+
+	function exportParticipantsPdf() {
+		const doc = new jsPDF();
+		const blue: [number, number, number] = [107, 154, 217];
+
+		// Titre stylisé
+		doc.setTextColor(blue[0], blue[1], blue[2]);
+		doc.setFontSize(24);
+		doc.setFont('helvetica', 'bold');
+		doc.text('Project participants', 14, 22);
+
+		// Ligne colorée sous le titre
+		doc.setDrawColor(blue[0], blue[1], blue[2]);
+		doc.setLineWidth(0.8);
+		doc.line(14, 26, 196, 26);
+
+		// Date d'export à droite
+		doc.setTextColor(120, 120, 120);
+		doc.setFontSize(9);
+		doc.setFont('helvetica', 'normal');
+		const today = new Date().toLocaleDateString('en-GB');
+		doc.text(`Exported on ${today}`, 196, 22, { align: 'right' });
+
+		// Nom du projet en sous-titre
+		doc.setTextColor(60, 60, 60);
+		doc.setFontSize(12);
+		doc.setFont('helvetica', 'normal');
+		if (project?.name) {
+			doc.text(project.name, 14, 34);
+		}
+
+		doc.setTextColor(0, 0, 0);
+
+		// Tableau des participants
+		const rows = participants.map((p) => {
+			const sectionName = p.section?.name ?? '';
+			const sectionText = p.isSectionLeader ? `${sectionName} (section leader)` : sectionName;
+			return [
+				p.contact?.firstName ?? '',
+				p.contact?.lastName ?? '',
+				p.contact?.email ?? '',
+				p.contact?.phone ?? '',
+				sectionText
+			];
+		});
+
+		autoTable(doc, {
+			startY: 42,
+			head: [['First name', 'Last name', 'Email', 'Phone', 'Section']],
+			body: rows,
+			styles: { fontSize: 10, cellPadding: 3 },
+			headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+			alternateRowStyles: { fillColor: [245, 248, 252] }
+		});
+
+		doc.save(`participants-project-${data.id}.pdf`);
+	}
 </script>
 
 <ProjectHeadDisplayer {project} selectedTab={1} />
@@ -335,8 +389,9 @@
 					<p class={isMobile ? '' : ''}>
 						You have <strong class="text-red-400 mx-1">{participantNotValidated}</strong>
 						{participantNotValidated === 1 ? 'participant' : 'participants'} waiting for validation
-					</p>
-					<a
+						</p>
+						<a
+					
 						href="/projects/{data.id}/management/validation"
 						class="ml-auto inline-flex items-center px-3 py-2 text-sm font-semibold text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 					>
@@ -351,8 +406,14 @@
 			<div class="flex items-center">
 				<h1 class="font-bold text-lg">PARTICIPANTS</h1>
 				<button
-					on:click={() => goto(`${urlFront}/creation`)}
+					on:click={exportParticipantsPdf}
 					class="ml-auto px-4 py-2 text-sm bg-[#6B9AD9] text-white rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+				>
+					Export PDF
+				</button>
+				<button
+					on:click={() => goto(`${urlFront}/creation`)}
+					class="ml-2 px-4 py-2 text-sm bg-[#6B9AD9] text-white rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
 				>
 					Add a participant
 				</button>
@@ -398,20 +459,6 @@
 							{/each}
 						</div>
 					</div>
-					<!--
-					<div class="flex w-full justify-center">
-						<select
-							on:change={changeSorting}
-							class="w-1/2 items-center flex rounded-lg border-2 border-gray-500"
-							bind:value={sorting}
-						>
-							<option value={''}>None</option>
-							<option value={'email'}>Email</option>
-							<option value={'firstName'}>First Name</option>
-							<option value={'lastName'}>Last Name</option>
-						</select>
-					</div>
-					-->
 				</div>
 				<div class="w-full overflow-x-auto">
 					<table

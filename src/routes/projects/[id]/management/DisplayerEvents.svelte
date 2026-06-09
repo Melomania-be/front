@@ -119,7 +119,7 @@
 																startTime={event.startDate || new Date()}
 																endTime={event.endDate}
 																withTime={false}
-																isRehearsal={event.type === 'rehearsal'}
+																
 															/>
 														</p>
 														<p>
@@ -128,7 +128,7 @@
 																endTime={event.endDate}
 																withTime={true}
 																withDate={false}
-																isRehearsal={event.type === 'rehearsal'}
+																
 															/>
 														</p>
 													</div>
@@ -195,14 +195,14 @@
 												startTime={event.startDate || new Date()}
 												endTime={event.endDate}
 												withTime={false}
-												isRehearsal={event.type === 'rehearsal'}
+												
 											/>
 											<DateShow
 												startTime={event.startDate || new Date()}
 												endTime={event.endDate}
 												withTime={true}
 												withDate={false}
-												isRehearsal={event.type === 'rehearsal'}
+												
 											/>
 										</div>
 										<div class=" flex items-center gap-2 ml-2 p-[2px]">

@@ -13,6 +13,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { List } from '$lib/types/List';
 	import type { Project } from '$lib/types/Project';
+	import type { Contact } from '$lib/types/Contact';
 
 	// =============================================
 	// TAB STATE
@@ -35,6 +36,9 @@
 	// =============================================
 	// SEND TAB STATE
 	// =============================================
+	let recipientMode: 'list' | 'contacts' = 'list';
+
+	// List mode
 	let selectedList: CustomList | null = null;
 	let lists: CustomList[] = [];
 	let meta: any = {};
@@ -47,6 +51,38 @@
 	};
 	let uniqueUrl: string = '/mailing';
 	let dataHolder: TableData<CustomList>;
+
+	// Individual contacts mode
+	let contactSearch = '';
+	let searchResults: Contact[] = [];
+	let selectedContacts: Contact[] = [];
+	let searchTimeout: ReturnType<typeof setTimeout>;
+
+	async function searchContacts(query: string) {
+		if (!query || query.length < 2) {
+			searchResults = [];
+			return;
+		}
+		try {
+			const res = await fetch(
+				`/api/contacts?filter=${encodeURIComponent(query)}&limit=20&page=1&order=asc&orderBy=id`
+			);
+			const data = await res.json();
+			searchResults = data.data ?? [];
+		} catch {
+			searchResults = [];
+		}
+	}
+
+	function toggleContact(contact: Contact) {
+		const idx = selectedContacts.findIndex((c) => c.id === contact.id);
+		if (idx >= 0) selectedContacts = selectedContacts.filter((c) => c.id !== contact.id);
+		else selectedContacts = [...selectedContacts, contact];
+	}
+
+	function isSelected(contact: Contact) {
+		return selectedContacts.some((c) => c.id === contact.id);
+	}
 
 	let toContact = {
 		firstName: '',
@@ -273,6 +309,27 @@
 		}
 	}
 
+	async function sendUniqueMailToContacts() {
+		if (selectedContacts.length === 0) { alert('Please select at least one contact'); return; }
+		if (!confirm(`Are you sure you want to send this email to ${selectedContacts.length} selected contact(s)?`)) return;
+
+		try {
+			await fetch('/api/mailing/sendMailToIndividualContacts', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					contactIds: selectedContacts.map((c) => c.id),
+					type: 'unique',
+					subject: uniqueSubject,
+					content: unique_html?.content
+				})
+			});
+			alert('Email sent');
+		} catch (error) {
+			alert('Error sending email');
+		}
+	}
+
 	async function sendTemplateToList() {
 		if (!selectedList) { alert('Please select a list'); return; }
 		if (!selectedSendTemplate) { alert('Please select a template'); return; }
@@ -290,6 +347,27 @@
 					hasCallsheet: containsCallsheet,
 					project: linkedProject,
 					toContact: toContact
+				})
+			});
+			alert('Email sent');
+		} catch (error) {
+			alert('Error sending email');
+		}
+	}
+
+	async function sendTemplateToContacts() {
+		if (selectedContacts.length === 0) { alert('Please select at least one contact'); return; }
+		if (!selectedSendTemplate) { alert('Please select a template'); return; }
+		if (!confirm(`Are you sure you want to send the template ${selectedSendTemplate.name} to ${selectedContacts.length} selected contact(s)?`)) return;
+
+		try {
+			await fetch('/api/mailing/sendMailToIndividualContacts', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					contactIds: selectedContacts.map((c) => c.id),
+					type: 'template',
+					templateId: selectedSendTemplate.id
 				})
 			});
 			alert('Email sent');
@@ -439,45 +517,124 @@
 		<!-- ============================================= -->
 		{#if activeTab === 'send'}
 			<div class="p-6">
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-					<!-- Left: info + mail mode -->
-					<div>
-						<p class="mb-6 text-gray-600">
-							Send emails to your contact lists. Choose between writing a unique email or using a saved template.
-						</p>
-						<div class="mb-4 p-3 border-2 border-gray-200 rounded-lg text-center">
-							<p>Selected list: <strong>{selectedList?.name ?? 'none'}</strong></p>
+
+				<!-- RECIPIENT MODE TOGGLE -->
+				<div class="flex gap-3 mb-6">
+					<button
+						class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
+							{recipientMode === 'list' ? 'text-white bg-blue-700 hover:bg-blue-800' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'}"
+						on:click={() => (recipientMode = 'list')}
+					>
+						Send to a list
+					</button>
+					<button
+						class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
+							{recipientMode === 'contacts' ? 'text-white bg-blue-700 hover:bg-blue-800' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'}"
+						on:click={() => (recipientMode = 'contacts')}
+					>
+						Send to individual contacts
+					</button>
+				</div>
+
+				{#if recipientMode === 'list'}
+					<!-- LIST RECIPIENT MODE -->
+					<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+						<!-- Left: info -->
+						<div>
+							<p class="mb-6 text-gray-600">
+								Send emails to your contact lists. Choose between writing a unique email or using a saved template.
+							</p>
+							<div class="mb-4 p-3 border-2 border-gray-200 rounded-lg text-center">
+								<p>Selected list: <strong>{selectedList?.name ?? 'none'}</strong></p>
+							</div>
+						</div>
+
+						<!-- Right: list browser -->
+						<div>
+							{#if dataHolder}
+								<SimpleFilterer
+									showData={false}
+									editable={false}
+									paginatorTop={false}
+									bind:data={dataHolder}
+									bind:meta
+									bind:options
+									bind:uniqueUrl
+									on:optionsUpdated={() => fetchLists()}
+								>
+									<div class="w-full">
+										{#each dataHolder.data as list}
+											<button
+												class="w-full flex items-center justify-center p-2 my-2 text-s font-semibold text-gray-700 bg-white border rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400
+													{selectedList?.id === list.id ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'}"
+												on:click={() => (selectedList = list)}
+											>
+												<h1>{list.name}</h1>
+											</button>
+										{/each}
+									</div>
+								</SimpleFilterer>
+							{/if}
 						</div>
 					</div>
-
-					<!-- Right: list browser -->
-					<div>
-						{#if dataHolder}
-							<SimpleFilterer
-								showData={false}
-								editable={false}
-								paginatorTop={false}
-								bind:data={dataHolder}
-								bind:meta
-								bind:options
-								bind:uniqueUrl
-								on:optionsUpdated={() => fetchLists()}
-							>
-								<div class="w-full">
-									{#each dataHolder.data as list}
+				{:else}
+					<!-- INDIVIDUAL CONTACTS RECIPIENT MODE -->
+					<div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-6">
+						<div>
+							<p class="mb-4 text-gray-600">Search and select the individual contacts you want to send to.</p>
+							<input
+								type="text"
+								bind:value={contactSearch}
+								placeholder="Search by name, email..."
+								class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+								on:input={() => {
+									clearTimeout(searchTimeout);
+									searchTimeout = setTimeout(() => searchContacts(contactSearch), 300);
+								}}
+							/>
+							{#if searchResults.length > 0}
+								<div class="border border-gray-200 rounded-lg mb-4 max-h-56 overflow-y-auto">
+									{#each searchResults as contact}
 										<button
-											class="w-full flex items-center justify-center p-2 my-2 text-s font-semibold text-gray-700 bg-white border rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400
-												{selectedList?.id === list.id ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-200' : 'border-gray-300'}"
-											on:click={() => (selectedList = list)}
+											class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100 last:border-0
+												{isSelected(contact) ? 'bg-blue-50' : ''}"
+											on:click={() => toggleContact(contact)}
 										>
-											<h1>{list.name}</h1>
+											<input type="checkbox" checked={isSelected(contact)} class="pointer-events-none flex-shrink-0" />
+											<span>{contact.firstName} {contact.lastName}</span>
+											{#if contact.email}
+												<span class="text-gray-400 text-xs ml-auto">{contact.email}</span>
+											{/if}
 										</button>
 									{/each}
 								</div>
-							</SimpleFilterer>
-						{/if}
+							{/if}
+						</div>
+
+						<div>
+							{#if selectedContacts.length > 0}
+								<div class="p-3 border-2 border-blue-200 rounded-lg bg-blue-50">
+									<p class="text-sm font-medium text-blue-800 mb-2">Selected ({selectedContacts.length}):</p>
+									<div class="flex flex-wrap gap-2">
+										{#each selectedContacts as contact}
+											<span class="inline-flex items-center gap-1 px-2 py-1 bg-white border border-blue-300 rounded text-xs">
+												{contact.firstName} {contact.lastName}
+												<button
+													on:click={() => toggleContact(contact)}
+													class="text-red-400 hover:text-red-600 font-bold ml-1"
+												>×</button>
+											</span>
+										{/each}
+									</div>
+								</div>
+							{:else}
+								<div class="p-3 border-2 border-gray-200 rounded-lg text-center text-sm text-gray-500">
+									No contacts selected yet. Search and click to add contacts.
+								</div>
+							{/if}
+						</div>
 					</div>
-				</div>
+				{/if}
 
 				<!-- Mail mode toggle -->
 				<div class="flex gap-3 mt-6 mb-4">
@@ -511,8 +668,8 @@
 							<HtmlEditor bind:content={unique_html.content} on:input={handleSendEditorInput} />
 							<button
 								class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
-								on:click={sendUniqueMail}>Send</button
-							>
+								on:click={recipientMode === 'list' ? sendUniqueMail : sendUniqueMailToContacts}
+							>Send</button>
 						</div>
 						<div class="border border-gray-300 rounded-lg p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
 							<h2 class="text-xl font-bold mb-4">Preview</h2>
@@ -539,35 +696,42 @@
 							</p>
 
 							{#if selectedSendTemplate}
-								{#if containsToContact}
-									<div class="mb-3 p-3 border border-gray-200 rounded-lg">
-										<p class="font-medium mb-2">Contact information:</p>
-										<div class="grid grid-cols-2 gap-2">
-											<input type="text" bind:value={toContact.firstName} placeholder="First Name" class="p-2 text-sm border rounded" />
-											<input type="text" bind:value={toContact.lastName} placeholder="Last Name" class="p-2 text-sm border rounded" />
-											<input type="email" bind:value={toContact.email} placeholder="Email" class="p-2 text-sm border rounded" />
-											<input type="tel" bind:value={toContact.phone} placeholder="Phone" class="p-2 text-sm border rounded" />
-											<input type="text" bind:value={toContact.messenger} placeholder="Messenger" class="p-2 text-sm border rounded col-span-2" />
+								{#if recipientMode === 'list'}
+									{#if containsToContact}
+										<div class="mb-3 p-3 border border-gray-200 rounded-lg">
+											<p class="font-medium mb-2">Contact information:</p>
+											<div class="grid grid-cols-2 gap-2">
+												<input type="text" bind:value={toContact.firstName} placeholder="First Name" class="p-2 text-sm border rounded" />
+												<input type="text" bind:value={toContact.lastName} placeholder="Last Name" class="p-2 text-sm border rounded" />
+												<input type="email" bind:value={toContact.email} placeholder="Email" class="p-2 text-sm border rounded" />
+												<input type="tel" bind:value={toContact.phone} placeholder="Phone" class="p-2 text-sm border rounded" />
+												<input type="text" bind:value={toContact.messenger} placeholder="Messenger" class="p-2 text-sm border rounded col-span-2" />
+											</div>
 										</div>
-									</div>
-								{/if}
+									{/if}
 
-								{#if containsProject || containsCallsheet}
-									<div class="mb-3 p-3 border border-gray-200 rounded-lg">
-										<p class="font-medium mb-2">Select project:</p>
-										<select bind:value={linkedProject} class="p-2 border border-gray-300 rounded w-full">
-											<option value={null}>-- Choose a project --</option>
-											{#each allProjects as project}
-												<option value={project}>{project.name}</option>
-											{/each}
-										</select>
-									</div>
-								{/if}
+									{#if containsProject || containsCallsheet}
+										<div class="mb-3 p-3 border border-gray-200 rounded-lg">
+											<p class="font-medium mb-2">Select project:</p>
+											<select bind:value={linkedProject} class="p-2 border border-gray-300 rounded w-full">
+												<option value={null}>-- Choose a project --</option>
+												{#each allProjects as project}
+													<option value={project}>{project.name}</option>
+												{/each}
+											</select>
+										</div>
+									{/if}
 
-								<button
-									class="mt-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
-									on:click={sendTemplateToList}>Send</button
-								>
+									<button
+										class="mt-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
+										on:click={sendTemplateToList}
+									>Send</button>
+								{:else}
+									<button
+										class="mt-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
+										on:click={sendTemplateToContacts}
+									>Send</button>
+								{/if}
 							{/if}
 						</div>
 						<div class="border border-gray-300 rounded-lg p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
