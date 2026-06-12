@@ -7,7 +7,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Contact } from '$lib/types/Contact';
 	import type { List } from '$lib/types/List';
-	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
+	import AdvancedFilterer from '$lib/components/AdvancedFilterer.svelte';
 	import Fa from 'svelte-fa';
 	import { faSliders, faTrashCan, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
 	import {
@@ -35,58 +35,55 @@
 	let contacts: (Contact & { checked: boolean })[] = [];
 	let meta: any = {};
 	let options: any = {
-		filter: '',
-		limit: 250,
+		filters: {
+			type: 'and',
+			filtersDepth1: [
+				{ type: 'or', filtersDepth2: [] },
+				{ type: 'or', filtersDepth2: [] },
+				{ type: 'or', filtersDepth2: [] },
+				{ type: 'or', filtersDepth2: [] }
+			]
+		},
 		page: 1,
-		order: 'asc',
-		orderBy: 'id'
+		limit: 250,
+		orderBy: 'id',
+		order: 'asc'
 	};
+
+	let columns: any;
+	let filterLevel: string[] = [];
 
 	let dataHolder: TableData<Contact & { checked: boolean }>;
 
 	let contactsToDisplay: (Contact & { checked: boolean })[] = [];
 
 	onMount(async () => {
-		const urlParams = new URLSearchParams(window.location.search);
-		options = {
-			filter: urlParams.get('filter') || options.filter,
-			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-			page: parseInt(urlParams.get('page') || options.page.toString()),
-			order: urlParams.get('order') || options.order,
-			orderBy: urlParams.get('orderBy') || options.orderBy
-		};
-
 		fetchData();
 	});
 
 	async function fetchData() {
-		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
-		optionInUrls += '&filter=' + options.filter;
-		optionInUrls += '&orderBy=' + options.orderBy;
-		optionInUrls += '&order=' + options.order;
-
-		if (browser) goto(`${urlFront}${optionInUrls}`);
-
-		let response = await fetch(`${url}${optionInUrls}`, {
-			method: 'GET'
+		let response = await fetch('/test/api', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(options)
 		});
 
 		const responseHandler = new ResponseHandlerClient();
 
-		responseHandler.handle(response, async () => {
-			
-			const data = await response.json();
-console.log(
-	data.data.find((c: Contact) => c.projects?.length > 0)
-);
-			contacts = data.data.map((contact: Contact) => {
+await responseHandler.handle(response, async () => {
+	const jsonResponse = await response.json();
+
+	contacts = jsonResponse.data.data.map((contact: Contact) => {
 				return {
 					...contact,
 					checked: false
 				};
 			});
-			meta = data.meta;
-			contactsToDisplay = contacts
+			meta = jsonResponse.data.meta;
+			columns = jsonResponse.columns;
+			contactsToDisplay = contacts;
 
 			dataHolder = {
 				data: [],
@@ -104,7 +101,7 @@ console.log(
 
 			let success = false;
 
-			responseHandler.handle(response2, async () => {
+			await responseHandler.handle(response2, async () => {
 				success = true;
 
 				const data = await response2.json();
@@ -126,19 +123,31 @@ console.log(
 	}
 
 	function addToList() {
-		let newContacts: Contact[] = contacts
-			.filter((contact) => contact.checked)
-			.map((contact) => {
-				const { checked, ...rest } = contact;
-				return rest;
-			});
+		const checkedContacts = contacts.filter((contact) => contact.checked);
+		
+		if (checkedContacts.length === 0) return;
 
-		newContacts = newContacts.filter((contact) => {
+		const skipped: (Contact & { checked: boolean })[] = [];
+		const toAdd: Contact[] = [];
+
+		checkedContacts.forEach((contact) => {
 			const exists = newList.contacts.find((c) => c.id === contact.id);
-			return !exists;
+			if (exists) {
+				skipped.push(contact);
+			} else {
+				const { checked, ...rest } = contact;
+				toAdd.push(rest);
+			}
 		});
 
-		newList.contacts = [...newList.contacts, ...newContacts];
+		if (toAdd.length > 0) {
+			newList.contacts = [...newList.contacts, ...toAdd];
+		}
+
+		if (skipped.length > 0) {
+			const names = skipped.map(c => `${c.firstName} ${c.lastName}`).join('\n- ');
+			alert(`The following contact(s) were not added because they are already in the list:\n- ${names}`);
+		}
 	}
 
 	async function save() {
@@ -161,7 +170,7 @@ console.log(
 
 		const responseHandler = new ResponseHandlerClient();
 
-		responseHandler.handle(response, async () => {
+		await responseHandler.handle(response, async () => {
 			goto('/contacts/lists');
 		});
 	}
@@ -173,12 +182,12 @@ console.log(
 
 		const responseHandler = new ResponseHandlerClient();
 
-		responseHandler.handle(response, async () => {
+		await responseHandler.handle(response, async () => {
 			goto('/contacts/lists');
 		});
 	}
 
-	let showInstruments = false;
+	let showInstruments = true;
 
 	let isMobile = false;
 
@@ -461,109 +470,88 @@ function filterByProject() {
 			/>
 		</div>
 		<h2 class="text-xl font-bold mt-4 mb-2 text-gray-600 uppercase">Contacts</h2>
-		<div class="flex gap-2 items-center mb-4">
-			<input
-				bind:checked={showInstruments}
-				type="checkbox"
-				class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-			/>
-			<span> Show Instruments</span>
-		</div>
 		{#if newList.contacts.length > 0}
-			<div class="grid {isMobile ? "" : "grid-cols-3"} gap-4">
-				{#each newList.contacts as contact}
-					<div>
-						<div class="border-2 border-gray-400 rounded-xl p-4 h-auto flex items-center">
-							<div>
-								<div class="flex gap-4 font-bold items-center">
-									<Fa icon={faUser} class="text-[18px]" style="color: #6b9ad9;" />
-									<p>{contact.firstName} {contact.lastName}</p>
-								</div>
+			<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-full mt-2 border border-gray-300">
+				<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b">
+						<tr>
+							<th scope="col" class="px-6 py-3"> First name </th>
+							<th scope="col" class="px-6 py-3"> Last name </th>
+							<th scope="col" class="px-6 py-3"> Email </th>
+							{#if showInstruments}
+								<th scope="col" class="px-6 py-3"> Instruments </th>
+							{/if}
+							<th scope="col" class="px-6 py-3 text-right"> Actions </th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each newList.contacts as contact}
+							<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+								<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+									{contact.firstName}
+								</td>
+								<td class="px-6 py-4">
+									{contact.lastName}
+								</td>
+								<td class="px-6 py-4">
+									{contact.email || ''}
+								</td>
 								{#if showInstruments}
-									{#each contact.instruments as instrument}
-										<div class="flex gap-4 my-1">
-											<div
-												class="{familyToStyle(instrument.family)} font-semibold rounded-lg p-1 px-2"
-											>
-												{familyToEmoji(instrument.family)}
-												{instrument.name}
+									<td class="px-6 py-4">
+										{#if contact.instruments && contact.instruments.length}
+											<div class="flex flex-wrap gap-2">
+												{#each contact.instruments as instrument}
+													<div class="flex gap-2 items-center my-1">
+														<div class="{familyToStyle(instrument.family)} font-semibold rounded-lg p-1 px-2 text-xs">
+															{familyToEmoji(instrument.family)}
+															{instrument.name}
+														</div>
+														{#if instrument.pivot_proficiency_level}
+															<div class="{levelToStyle(instrument.pivot_proficiency_level)} border-2 p-1 px-2 rounded-lg font-semibold text-xs">
+																{levelSimplificator(instrument.pivot_proficiency_level)}
+															</div>
+														{/if}
+													</div>
+												{/each}
 											</div>
-											{#if instrument.pivot_proficiency_level}
-												<div
-													class="{levelToStyle(
-														instrument.pivot_proficiency_level
-													)} border-2 p-1 px-2 rounded-lg font-semibold"
-												>
-													{levelSimplificator(instrument.pivot_proficiency_level)}
-												</div>
-											{/if}
-										</div>
-									{/each}
+										{/if}
+									</td>
 								{/if}
-							</div>
-							<div class="ml-auto">
-								<button
-									class="p-2 bg-red-400 rounded-lg ml-auto"
-									on:click={() => {
-										newList.contacts = newList.contacts.filter((c) => c.id !== contact.id);
-									}}
-								>
-									<Fa icon={faTrashCan} class="text-[16px]" style="color: white;" />
-								</button>
-							</div>
-						</div>
-					</div>
-				{/each}
+								<td class="px-6 py-4 text-right">
+									<button
+										class="p-2 bg-red-400 hover:bg-red-500 rounded-lg inline-flex items-center justify-center"
+										on:click={() => {
+											newList.contacts = newList.contacts.filter((c) => c.id !== contact.id);
+										}}
+									>
+										<Fa icon={faTrashCan} style="color: white;" />
+									</button>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{/if}
 	</div>
 	<div class="col-span-4 border-2 border-gray-500 rounded-xl p-4 bg-white m-4">
 		{#if dataHolder}
-			{#if !isMobile}
-			<div class="flex w-full">
-			<button
-				class="m-2 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				on:click={addToList}>Add to List</button
-			>
-			<div class="flex gap-2 ml-auto">
-				{#if instrumentFamily.length !== 0 }
-						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend : 
-							{#each instrumentFamily as family}
-								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-							{/each}
-						</p>
-				{/if}
-			</div>
-			</div>
-			{:else}
-					<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center">
-						{#each instrumentFamily as family}
-							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-						{/each}
-					</div>
-					<button
-					class="m-2 mt-6 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+			<div class="flex w-full mb-2">
+				<button
+					class="m-2 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 					on:click={addToList}>Add to List</button
 				>
-			{/if}
-			<SimpleFilterer
-				bind:data={dataHolder}
+			</div>
+
+			<AdvancedFilterer
+				bind:columns
 				bind:meta
+				bind:data={dataHolder}
 				bind:options
+				bind:filterLevel
+				uniqueUrl={'/contacts'}
 				on:optionsUpdated={() => fetchData()}
 			>
-			<div class="w-full py-2">
-				<button
-					on:click={() => {
-						popUpFilter = true;
-						document.body.style.overflow = 'hidden';
-					}}
-					class="flex items-center border-2 border-gray-400 p-1 gap-2 rounded-full px-4"
-				>
-					<p class="text-gray-500 font-semibold">Filter</p>
-					<Fa icon={faSliders} class="text-[16px]" style="color: #6b7280;" />
-				</button>
-				</div>
 				<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-full mt-2">
 					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
 						<thead
@@ -632,13 +620,15 @@ function filterByProject() {
 														{familyToEmoji(instrument.family)}
 														{instrument.name}
 													</div>
-													<div
-														class="{levelToStyle(
-															instrument.pivot_proficiency_level
-														)} border-2 p-1 px-2 rounded-lg font-semibold"
-													>
-														{levelSimplificator(instrument.pivot_proficiency_level)}
-													</div>
+													{#if instrument.pivot_proficiency_level}
+														<div
+															class="{levelToStyle(
+																instrument.pivot_proficiency_level
+															)} border-2 p-1 px-2 rounded-lg font-semibold"
+														>
+															{levelSimplificator(instrument.pivot_proficiency_level)}
+														</div>
+													{/if}
 												</div>
 											{/each}
 										{/if}
@@ -648,7 +638,7 @@ function filterByProject() {
 						</tbody>
 					</table>
 				</div>
-			</SimpleFilterer>
+			</AdvancedFilterer>
 		{/if}
 	</div>
 </div>

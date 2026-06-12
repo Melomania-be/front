@@ -86,9 +86,20 @@
 	    return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
-	function formatDate(value: string | Date ) {
-	    const raw = value instanceof Date ? value.toISOString() : String(value);
-	    const datePart = raw.split('T')[0];
+	function formatDate(value: string | Date) {
+	    if (!value) return '';
+
+	    let datePart: string;
+
+	    if (value instanceof Date) {
+		    const year = value.getFullYear();
+		    const month = String(value.getMonth() + 1).padStart(2, '0');
+		    const day = String(value.getDate()).padStart(2, '0');
+
+		    datePart = `${year}-${month}-${day}`;
+	    } else {
+		    datePart = value.includes('T') ? value.split('T')[0] : value.slice(0, 10);
+	        }
 
 	    const [year, month, day] = datePart.split('-').map(Number);
 	    const date = new Date(year, month - 1, day);
@@ -98,7 +109,7 @@
 		    day: 'numeric',
 		    month: 'long',
 		    year: 'numeric'
-	   });
+	    });
     }
 
     function formatTime(value: string | Date | null = null) {
@@ -108,12 +119,8 @@
 	    if (!timePart || !timePart.includes(':')) return '';
 
 	    const [hourString, minute] = timePart.split(':');
-	    let hour = Number(hourString);
-	    const ampm = hour >= 12 ? 'pm' : 'am';
 
-	    hour = hour % 12 || 12;
-
-	    return minute === '00' ? `${hour}${ampm}` : `${hour}:${minute} ${ampm}`;
+	    return `${hourString}:${minute} `;
     }
 
 	function initializeSortable() {

@@ -23,9 +23,15 @@
 	    return raw.includes('T') ? raw.split('T')[0] : raw;
     }
 
-    function getTimePart(value: string | Date) {
+    function getTimePart(value: string | Date | null) {
+		if (!value) return '';
+
 	    const raw = String(value);
-	    return raw.includes('T') ? raw.split('T')[1]?.slice(0, 5) : '00:00';
+		if (raw.includes('T')) {
+			return raw.split('T')[1].slice(0, 5);
+		}
+
+	    return raw.slice(11, 16);
     }
 
 	onMount(async () => {
