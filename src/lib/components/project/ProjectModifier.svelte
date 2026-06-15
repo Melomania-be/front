@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Sortable from 'sortablejs';
-
 	import type { Project } from '$lib/types/Project';
 	import type { SectionGroup } from '$lib/types/SectionGroup';
 	import type { Piece } from '$lib/types/Piece';
@@ -17,9 +16,10 @@
 	import type { Folder } from '$lib/types/Folder';
 	import { StatusCodesClientError } from '$lib/common/statusCodes';
 	import DatePicker from '../DatePicker.svelte';
+	import ProjectPiecesPicker from './ProjectPiecesPicker.svelte';
 	import TimePicker from '../TimePicker.svelte';
 
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount, afterUpdate, tick } from 'svelte';
 	import Fa from 'svelte-fa';
 	import {
 		faChevronCircleDown,
@@ -33,7 +33,6 @@
 		type IconDefinition
 	} from '@fortawesome/free-solid-svg-icons';
 	import { slide } from 'svelte/transition';
-	import { tick } from 'svelte';
 
 	export let project: Project;
 	export let pieces: Array<Piece>;
@@ -43,24 +42,146 @@
 	export let urlFront: string;
 
 	let allowModification = mode === 'modify' ? false : true;
+	const PROJECT_CREATION_DRAFT_KEY = 'projectCreationDraft';
 
 	let initialSelectedPieces = [...project.pieces];
-	let initialAllPieces = pieces
-		? pieces.filter((piece) => !project.pieces.some((p) => p.id === piece.id))
-		: [];
-
 	let selectedPieces: Piece[] = [...initialSelectedPieces];
-	let allPieces: Piece[] = [...initialAllPieces];
+	let allPieces: Piece[] = [];
+	let draggedPieceId: number | null = null;
+	let dragSource: 'available' | 'selected' | null = null;
 	let allPiecesContainer: HTMLElement;
 	let selectedPiecesContainer: HTMLElement;
-
 	let allPiecesSortable: any;
 	let selectedPiecesSortable: any;
-
 	let initialized = false;
+	let pieceListsVersion = 0;
 
-	$: if (displayProjectPieces && !initialized) {
-		initSortableWhenReady();
+	function syncPieceCollections() {
+		project.pieces = [...selectedPieces];
+	}
+
+	function getCatalogPieceById(pieceId: number): Piece | undefined {
+		return (pieces || []).find((piece) => Number(piece.id) === pieceId);
+	}
+
+	function sanitizePieceContainer(
+		_container?: HTMLElement,
+		_expectedIds?: number[]
+	) {}
+
+	function cleanupSortableArtifacts() {}
+
+	function syncSelectedPiecesFromDom() {}
+
+	function deriveAvailablePieces() {
+		const selectedIds = new Set(selectedPieces.map((piece) => Number(piece.id)));
+		allPieces = (pieces || []).filter((piece) => !selectedIds.has(Number(piece.id)));
+	}
+
+	function reconcilePiecesAfterRefresh() {
+		const catalog = pieces || [];
+		const selectedIds = selectedPieces.map((piece) => Number(piece.id));
+		const piecesById = new Map(catalog.map((piece) => [Number(piece.id), piece]));
+		selectedPieces = selectedIds
+			.map((pieceId) => piecesById.get(pieceId))
+			.filter((piece): piece is Piece => Boolean(piece));
+		syncPieceCollections();
+	}
+
+	$: if (pieces) {
+		reconcilePiecesAfterRefresh();
+	}
+
+	$: project.pieces = [...selectedPieces];
+	$: deriveAvailablePieces();
+
+	function startDragging(piece: Piece, source: 'available' | 'selected') {
+		if (!allowModification) return;
+		draggedPieceId = Number(piece.id);
+		dragSource = source;
+	}
+
+	function endDragging() {
+		draggedPieceId = null;
+		dragSource = null;
+	}
+
+	function moveDraggedPieceToSelected(targetIndex?: number) {
+		if (draggedPieceId === null) return;
+
+		const draggedPiece = getCatalogPieceById(draggedPieceId);
+		if (!draggedPiece) {
+			endDragging();
+			return;
+		}
+
+		const nextSelectedPieces = selectedPieces.filter(
+			(piece) => Number(piece.id) !== draggedPieceId
+		);
+		const safeIndex =
+			targetIndex === undefined
+				? nextSelectedPieces.length
+				: Math.max(0, Math.min(targetIndex, nextSelectedPieces.length));
+
+		nextSelectedPieces.splice(safeIndex, 0, draggedPiece);
+		selectedPieces = nextSelectedPieces;
+		syncPieceCollections();
+		endDragging();
+	}
+
+	function removeDraggedPieceFromSelected() {
+		if (draggedPieceId === null) return;
+		selectedPieces = selectedPieces.filter((piece) => Number(piece.id) !== draggedPieceId);
+		syncPieceCollections();
+		endDragging();
+	}
+
+	function handleDropToSelected(targetIndex?: number) {
+		if (!allowModification || draggedPieceId === null) return;
+		moveDraggedPieceToSelected(targetIndex);
+	}
+
+	function handleDropToAvailable() {
+		if (!allowModification || draggedPieceId === null) return;
+		if (dragSource === 'selected') {
+			removeDraggedPieceFromSelected();
+			return;
+		}
+		endDragging();
+	}
+
+	function persistProjectDraft() {
+		const draft = {
+			name: project.name,
+			sectionGroupId: project.sectionGroup?.id ?? null,
+			folderId: project.folder?.id ?? null,
+			pieceIds: selectedPieces.map((piece) => Number(piece.id)),
+			rehearsals: project.rehearsals.map((rehearsal) => ({
+				...rehearsal,
+				startDate: rehearsal.startDate ? new Date(rehearsal.startDate).toISOString() : null,
+				endDate: rehearsal.endDate ? new Date(rehearsal.endDate).toISOString() : null
+			})),
+			concerts: project.concerts.map((concert) => ({
+				...concert,
+				startDate: concert.startDate ? new Date(concert.startDate).toISOString() : null,
+				endDate: concert.endDate ? new Date(concert.endDate).toISOString() : null
+			})),
+			responsibles: project.responsibles
+		};
+
+		window.sessionStorage.setItem(PROJECT_CREATION_DRAFT_KEY, JSON.stringify(draft));
+		window.localStorage.setItem(PROJECT_CREATION_DRAFT_KEY, JSON.stringify(draft));
+	}
+
+	function openPieceCreationPage() {
+		if (!browser) return;
+		persistProjectDraft();
+		const params = new URLSearchParams({
+			create: '1',
+			fromProjectCreation: '1',
+			returnTo: '/projects/creation'
+		});
+		goto(`/library/pieces?${params.toString()}`);
 	}
 
 
@@ -83,13 +204,13 @@
 			},
 			animation: 200,
 			sort: false,
+			removeCloneOnHide: true,
 			onAdd: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				allPieces.splice(evt.newIndex as number, 0, item);
+				evt.item?.remove();
+				syncSelectedPiecesFromDom();
+				cleanupSortableArtifacts();
 			},
-			onRemove: (evt: any) => {
-				allPieces.splice(evt.oldIndex as number, 1);
-			}
+			onEnd: cleanupSortableArtifacts
 		});
 
 		selectedPiecesSortable = Sortable.create(selectedPiecesContainer, {
@@ -99,18 +220,11 @@
 				pull: true
 			},
 			animation: 200,
-			onAdd: (evt: any) => {
-				const item = allPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				selectedPieces.splice(evt.oldIndex as number, 1);
-			},
-			onUpdate: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.oldIndex as number, 1);
-				selectedPieces.splice(evt.newIndex as number, 0, item);
-			}
+			removeCloneOnHide: true,
+			onAdd: syncSelectedPiecesFromDom,
+			onRemove: syncSelectedPiecesFromDom,
+			onUpdate: syncSelectedPiecesFromDom,
+			onEnd: cleanupSortableArtifacts
 		});
 	}
 
@@ -125,6 +239,18 @@
 
 	afterUpdate(() => {
 		toggleSortable();
+		sanitizePieceContainer(
+			allPiecesContainer,
+			allPieces.map((piece) => Number(piece.id))
+		);
+		sanitizePieceContainer(
+			selectedPiecesContainer,
+			selectedPieces.map((piece) => Number(piece.id))
+		);
+		cleanupSortableArtifacts();
+		if (browser && mode === 'create') {
+			persistProjectDraft();
+		}
 	});
 
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
@@ -200,6 +326,10 @@
 
 		if (response.ok) {
 			const data = await response.json();
+			if (browser && mode === 'create') {
+				window.sessionStorage.removeItem(PROJECT_CREATION_DRAFT_KEY);
+				window.localStorage.removeItem(PROJECT_CREATION_DRAFT_KEY);
+			}
 			popUpSave = true;
 		} else {
 			if (response.status === StatusCodesClientError.UNPROCESSABLE_ENTITY) {
@@ -484,40 +614,18 @@
 				</div>
 				{#if displayProjectPieces}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
-						<div class="flex gap-4 items-end">
-							<div class="flex-1 ">
-								<h4 class="text-lg top-0 text-center bg-white">Available <br> pieces</h4>
-								{#if allPieces.length === 0}
-									<p>No pieces available</p>
-								{:else}
-									<section
-										bind:this={allPiecesContainer}
-										class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
-									>
-										{#each allPieces as piece}
-											<div
-												class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab"
-											>
-												{piece.name} - {piece.composer.shortName}
-											</div>
-										{/each}
-									</section>
-								{/if}
-							</div>
-							<div class="flex-1 mt-4 md:mt-0">
-								<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
-								<section
-									bind:this={selectedPiecesContainer}
-									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
+						{#if mode === 'create'}
+							<div class="mb-4 flex flex-wrap gap-3">
+								<button
+									type="button"
+									class="rounded-lg bg-[#6B9AD9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f7cb7]"
+									on:click={openPieceCreationPage}
 								>
-									{#each project.pieces as piece}
-										<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
-											{piece.name} - {piece.composer.shortName}
-										</div>
-									{/each}
-								</section>
+									Add piece
+								</button>
 							</div>
-						</div>
+						{/if}
+						<ProjectPiecesPicker bind:selectedPieces {pieces} {allowModification} />
 						<div class="pb-4 pt-4">
 							{#if allowModification}
 								<div class="flex flex-col h-16 {isMobile ? "" : "w-1/2"}">
@@ -925,9 +1033,5 @@
 	}
 	.table-auto tr:hover {
 		background-color: #ddd;
-	}
-
-	.item:active {
-		cursor: grabbing;
 	}
 </style>

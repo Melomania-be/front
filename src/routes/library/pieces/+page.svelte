@@ -37,10 +37,13 @@
 	let urlComposerS: string = '/api/composers';
 	let urlTypeOfPieces: string = '/api/type_of_pieces';
 	let urlFolders: string = '/api/folders';
+	let isProjectCreationFlow = false;
+	let createMode = false;
+	let returnToUrl = '/projects/creation';
 
 	let dataHolder: TableData<Piece>;
 
-	let newPiece: Piece = {
+	let newPiece = {
 		arranger: null,
 		folderId: null,
 		folder: null,
@@ -54,7 +57,23 @@
 		typeOfPieceId: null,
 		updatedAt: null,
 		yearOfComposition: null
-	};
+	} as unknown as Piece;
+
+	function updateProjectFlowUrls() {
+		if (!isProjectCreationFlow) return;
+
+		const flowParams = new URLSearchParams({
+			fromProjectCreation: '1',
+			returnTo: returnToUrl
+		});
+
+		if (createMode) {
+			flowParams.set('create', '1');
+		}
+
+		urlFront = `/library/pieces?${flowParams.toString()}`;
+		uniqueUrl = urlFront;
+	}
 
     onMount(async () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -65,6 +84,10 @@
             order: urlParams.get('order') || options.order,
             orderBy: urlParams.get('orderBy') || options.orderBy
         };
+		isProjectCreationFlow = urlParams.get('fromProjectCreation') === '1';
+		createMode = urlParams.get('create') === '1';
+		returnToUrl = urlParams.get('returnTo') || '/projects/creation';
+		updateProjectFlowUrls();
 
         // Vérifier s'il y a un objet selected dans l'URL
         const selectedParam = urlParams.get('selected');
@@ -75,6 +98,10 @@
                 console.error('Error parsing selected piece:', e);
             }
         }
+
+		if (createMode) {
+			selectedData = { ...newPiece };
+		}
 
         fetchData();
     });
@@ -87,7 +114,11 @@
 
 		let baseOptionInUrls = `?page=1&limit=1000000&filter=&orderBy=id&order=asc`;
 
-		if (browser) goto(`${urlFront}${optionInUrls}`);
+		const frontUrl = urlFront.includes('?')
+			? `${urlFront}${optionInUrls.replace('?', '&')}`
+			: `${urlFront}${optionInUrls}`;
+
+		if (browser) goto(frontUrl);
 
 		const response = await fetch(`${url}${optionInUrls}`, {
 			method: 'GET'
@@ -105,7 +136,7 @@
 			dataHolder = {
 				data: piece,
 				columns: ['id', 'name'],
-				notOrderedColumns: ['composer.longName']
+				notOrderedColumns: []
 			};
 		});
 
@@ -195,6 +226,13 @@
 			errorEvent(response);
 
 			if (response.ok) {
+				await response.json();
+				if (isProjectCreationFlow && data.id === undefined) {
+					await fetchData();
+					selectedData = { ...newPiece };
+					return;
+				}
+
 				window.location.reload();
 			}
 		}
@@ -240,6 +278,17 @@
 
 <div class="responsive-container">
     <div class="w-full">
+		{#if isProjectCreationFlow}
+			<div class="mb-4 flex justify-end pr-2 pt-2">
+				<button
+					type="button"
+					class="rounded-lg bg-[#6B9AD9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f7cb7]"
+					on:click={() => goto(returnToUrl)}
+				>
+					Back to project creation
+				</button>
+			</div>
+		{/if}
         <div class="w-full">
             <button
                 on:click={() => (selectedData = newPiece)}
@@ -250,7 +299,7 @@
         </div>
 
         {#if selectedData != null}
-            <form class="justify-center w-full max-w-2xl mx-auto">
+            <form class="justify-center w-full max-w-2xl mx-auto" on:submit|preventDefault={addPiece}>
                 <div class="flex justify-between items-center">
                     <h1 class="text-4xl font-extrabold dark:text-white">
                         Piece
@@ -424,7 +473,7 @@
                     </div>
                 </div>
         
-                <form class="max-w-sm mx-auto">
+                <div class="max-w-sm mx-auto">
                     <label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                         >*Composer</label
                     >
@@ -448,20 +497,18 @@
                             {/if}
                         </optgroup>
                     </select>
-                </form>
+                </div>
                 <p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Required to add or edit.</p>
         
                 <div class="flex p-2">
                     {#if selectedData.id == 0}
                         <button
-                            on:click={addPiece}
                             type="submit"
                             class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
                             >Add</button
                         >
                     {:else}
                         <button
-                            on:click={addPiece}
                             type="submit"
                             class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
                             >Edit</button
