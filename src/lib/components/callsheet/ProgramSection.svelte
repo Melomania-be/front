@@ -4,7 +4,6 @@
 	import Accordion from '$lib/components/Accordion.svelte';
 	import { Download, Music, FileText, Eye, AlertCircle, ChevronDown, ChevronRight } from 'lucide-svelte';
 	import FilePreview from '$lib/components/filesystem/FilePreview.svelte';
-	import { onMount } from 'svelte';
 
 	export let callsheet: Callsheet;
 
@@ -14,55 +13,6 @@
 	let downloadErrors = new Map<number, string>();
 	let expandedPieces = new Set<number>();
 	let searchQuery = '';
-
-	// Stocker uniquement les fichiers des matériels sélectionnés pour chaque pièce
-	let selectedMaterialFiles: Record<number, any[]> = {};
-	let isLoadingMaterials = false;
-
-	// Charger uniquement les fichiers des matériels sélectionnés pour chaque pièce
-	onMount(async () => {
-		await loadSelectedMaterialFiles();
-	});
-
-	// Charger uniquement les fichiers des matériels sélectionnés
-	async function loadSelectedMaterialFiles() {
-		if (!callsheet.project?.pieces) return;
-
-		isLoadingMaterials = true;
-
-		try {
-			for (const piece of callsheet.project.pieces) {
-				// 1. Récupérer le matériel sélectionné pour cette pièce
-				const selectedResponse = await fetch(`/api/pieces/${piece.id}/select-material`);
-
-				if (selectedResponse.ok) {
-					const selectedResult = await selectedResponse.json();
-
-					if (selectedResult.materialId) {
-						// 2. Récupérer directement les fichiers du matériel sélectionné
-						const filesResponse = await fetch(`/api/materials/${selectedResult.materialId}/files`);
-
-						if (filesResponse.ok) {
-							const files = await filesResponse.json();
-							selectedMaterialFiles[piece.id] = Array.isArray(files) ? files : [];
-						} else {
-							selectedMaterialFiles[piece.id] = [];
-						}
-					} else {
-						selectedMaterialFiles[piece.id] = [];
-					}
-				} else {
-					selectedMaterialFiles[piece.id] = [];
-				}
-			}
-
-			selectedMaterialFiles = { ...selectedMaterialFiles }; // Force reactivity
-		} catch (error) {
-			console.error('Error loading selected material files:', error);
-		}
-
-		isLoadingMaterials = false;
-	}
 
 	// Fonction utilitaire pour formater la taille des fichiers
 	function formatFileSize(bytes: number | null | undefined): string {
@@ -160,9 +110,9 @@
 		);
 	}
 
-	// Obtenir les fichiers du matériel sélectionné pour une pièce
-	function getSelectedMaterialFiles(pieceId: number): any[] {
-		return selectedMaterialFiles[pieceId] || [];
+	// Obtenir les fichiers du matériel sélectionné pour une pièce depuis les données préchargées
+	function getSelectedMaterialFiles(piece: any): any[] {
+		return piece.selectedMaterial?.files || [];
 	}
 
 	// Auto-clear errors after 5 seconds
@@ -186,14 +136,10 @@
 		</p>
 	</div>
 
-	{#if isLoadingMaterials}
-		<div class="flex justify-center items-center h-32">
-			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-		</div>
-	{:else if callsheet.project?.pieces && callsheet.project.pieces.length > 0}
+	{#if callsheet.project?.pieces && callsheet.project.pieces.length > 0}
 		<div class="max-w-6xl mx-auto space-y-2">
 			{#each callsheet.project.pieces as piece}
-				{@const selectedFiles = getSelectedMaterialFiles(piece.id)}
+				{@const selectedFiles = getSelectedMaterialFiles(piece)}
 				{@const filteredFiles = filterFiles(selectedFiles, searchQuery)}
 				{@const isExpanded = expandedPieces.has(piece.id)}
 

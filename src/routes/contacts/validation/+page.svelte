@@ -7,6 +7,15 @@
 		faCheck,
 		faXmark
 	} from '@fortawesome/free-solid-svg-icons';
+let selectedInstrumentId = ''
+let instruments: any[] = []
+let addInstrument: any = {
+	id: null,
+	name: '',
+	family: '',
+	pivot_proficiency_level: ''
+}
+selectedInstrumentId = ''
 
 	type Instrument = {
 		pivot_proficiency_level: string;
@@ -79,6 +88,12 @@
     }
 
     onMount(async () => {
+		const instrumentsRes = await fetch('/api/instruments')
+
+if (instrumentsRes.ok) {
+	const data = await instrumentsRes.json()
+	instruments = data.data || data
+}
         const urlParams = new URLSearchParams(window.location.search);
         options = {
             filter: urlParams.get('filter') || options.filter,
@@ -393,7 +408,142 @@
 						{/if}
 					</li>
 				</ul>
+
 			</div>
+			<div class="mt-4">
+	<h3 class="font-bold mb-2">Add instruments</h3>
+
+	<table class="w-full border">
+		<tbody>
+			{#each selectedContact.instruments as instrument}
+				<tr class="border-b">
+					<td class="p-2">{instrument.name}</td>
+					<td class="p-2">{instrument.family}</td>
+					<td class="p-2">
+						{instrument.pivot_proficiency_level}
+					</td>
+
+					<td class="p-2">
+						<button
+	type="button"
+	class="bg-red-500 text-white px-2 py-1 rounded"
+	on:click={() => {
+		if (!selectedContact) return
+
+		selectedContact.instruments = selectedContact.instruments.filter(
+			(i) => i !== instrument
+		)
+
+		selectedContact = { ...selectedContact }
+	}}
+>
+	Delete
+</button>
+					</td>
+				</tr>
+			{/each}
+
+			<tr>
+				<td class="p-2">
+					<select
+	bind:value={selectedInstrumentId}
+	on:change={() => {
+		const found = instruments.find(
+			(i) => String(i.id) === String(selectedInstrumentId)
+		)
+
+		if (found) {
+			addInstrument = {
+				id: found.id,
+				name: found.name,
+				family: found.family,
+				pivot_proficiency_level: ''
+			}
+		}
+	}}
+>
+	<option value="">Select instrument</option>
+
+	{#each instruments as instrument}
+		<option value={instrument.id}>
+			{instrument.name}
+		</option>
+	{/each}
+</select>			
+				</td>
+
+				<td class="p-2">
+					{addInstrument?.family || ''}
+				</td>
+
+				<td class="p-2">
+					<select bind:value={addInstrument.pivot_proficiency_level}>
+	<option value="">Select level</option>
+						<option value="Amateur - low level">
+							Amateur - low level
+						</option>
+
+						<option value="Amateur - medium">
+							Amateur - medium
+						</option>
+
+						<option value="Amateur - high">
+							Amateur - high
+						</option>
+
+						<option value="Student">
+							Student
+						</option>
+
+						<option value="Professional">
+							Professional
+						</option>
+
+						<option value="High level professional">
+							High level professional
+						</option>
+					</select>
+				</td>
+
+				<td class="p-2">
+					<button
+						type="button"
+						class="bg-green-500 text-white px-2 py-1 rounded"
+						on:click={() => {
+	if (!selectedContact || !addInstrument || !addInstrument.id) {
+		return
+	}
+
+	selectedContact.instruments = [
+		...selectedContact.instruments,
+		{
+			id: addInstrument.id,
+			name: addInstrument.name,
+			family: addInstrument.family,
+			pivot_proficiency_level:
+				addInstrument.pivot_proficiency_level || '',
+			createdAt: null,
+			updatedAt: null
+		}
+	]
+
+	selectedContact = { ...selectedContact }
+
+	addInstrument = {
+		id: null,
+		name: '',
+		family: '',
+		pivot_proficiency_level: ''
+	}
+}}
+					>
+						Add
+					</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
 			<div class="flex items-center justify-center">
 				<button
 					type="button"

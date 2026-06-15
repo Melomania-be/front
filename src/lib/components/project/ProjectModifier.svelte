@@ -195,6 +195,55 @@
 		}
 	}
 
+	function toLocalDateTimeString(value: string | Date) {
+	    const d = new Date(value);
+
+	    const year = d.getFullYear();
+	    const month = String(d.getMonth() + 1).padStart(2, '0');
+	    const day = String(d.getDate()).padStart(2, '0');
+	    const hours = String(d.getHours()).padStart(2, '0');
+	    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+	    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+	function formatDate(value: string | Date) {
+	    if (!value) return '';
+
+	    let datePart: string;
+
+	    if (value instanceof Date) {
+		    const year = value.getFullYear();
+		    const month = String(value.getMonth() + 1).padStart(2, '0');
+		    const day = String(value.getDate()).padStart(2, '0');
+
+		    datePart = `${year}-${month}-${day}`;
+	    } else {
+		    datePart = value.includes('T') ? value.split('T')[0] : value.slice(0, 10);
+	        }
+
+	    const [year, month, day] = datePart.split('-').map(Number);
+	    const date = new Date(year, month - 1, day);
+
+	    return date.toLocaleDateString('en-GB', {
+		    weekday: 'long',
+		    day: 'numeric',
+		    month: 'long',
+		    year: 'numeric'
+	    });
+    }
+
+    function formatTime(value: string | Date | null = null) {
+	    const raw = value instanceof Date ? toLocalDateTimeString(value) : String(value);
+	    const timePart = raw.includes('T') ? raw.split('T')[1]?.slice(0, 5) : raw.slice(0, 5);
+
+	    if (!timePart || !timePart.includes(':')) return '';
+
+	    const [hourString, minute] = timePart.split(':');
+
+	    return `${hourString}:${minute} `;
+    }
+
 	function initializeSortable() {
 		allPiecesSortable = Sortable.create(allPiecesContainer, {
 			group: {
@@ -289,6 +338,19 @@
 		];
 	}
 
+	function toLocalISOString(date: Date | string) {
+	    const d = new Date(date);
+
+	    const year = d.getFullYear();
+	    const month = String(d.getMonth() + 1).padStart(2, '0');
+	    const day = String(d.getDate()).padStart(2, '0');
+	    const hours = String(d.getHours()).padStart(2, '0');
+	    const minutes = String(d.getMinutes()).padStart(2, '0');
+	    const seconds = String(d.getSeconds()).padStart(2, '0');
+
+	    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    }
+
 	async function saveProject() {
 		const projectToSend = {
 			id: project.id || null,
@@ -296,8 +358,8 @@
 			section_group_id: project.sectionGroup ? project.sectionGroup.id : null,
 			concerts: project.concerts.map((concert) => ({
 				id: concert.id ? concert.id : null,
-				start_date: new Date(concert.startDate).toISOString(),
-				end_date: concert.endDate ? new Date(concert.endDate).toISOString() : null,
+				start_date: toLocalISOString(concert.startDate),
+				end_date: concert.endDate ? toLocalISOString(concert.endDate) : null,
 				place: concert.place,
 				comment: concert.comment
 			})),
@@ -307,8 +369,8 @@
 			})),
 			rehearsals: project.rehearsals.map((rehearsal) => ({
 				id: rehearsal.id ? rehearsal.id : null,
-				start_date: new Date(rehearsal.startDate).toISOString(),
-				end_date: rehearsal.endDate ? new Date(rehearsal.endDate).toISOString() : null,
+				start_date: toLocalISOString(rehearsal.startDate),
+				end_date: rehearsal.endDate ? toLocalISOString(rehearsal.endDate) : null,
 				place: rehearsal.place,
 				comment: rehearsal.comment
 			})),
@@ -703,12 +765,9 @@
 												{#each project.rehearsals as rehearsal}
 													<tr class="rehearsal-entry">
 														<td class="px-3 py-1">
-															<DateShow
-																startTime={rehearsal.startDate}
-																endTime={rehearsal.endDate}
-																withTime
-																isRehearsal
-															/>
+															{formatTime(rehearsal.startDate)} - {formatTime(rehearsal.endDate)}
+					                                        {' | '}
+                                                            {formatDate(rehearsal.startDate)}
 														</td>
 														<td class="px-3 py-1">{rehearsal.place}</td>
 														<td class="px-3 py-1 max-w-xs">{rehearsal.comment}</td>
@@ -737,7 +796,7 @@
 											{#each project.rehearsals as rehearsal}
 												<tr class="rehearsal-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={rehearsal.startDate} on:change={() => rehearsal.endDate = rehearsal.startDate}/>
+														<DatePicker bind:date={rehearsal.startDate} on:change={() => rehearsal.endDate = new Date(rehearsal.startDate)}/>
 													</td>
 													<td class="px-3 py-1">
 														<TimePicker bind:date={rehearsal.startDate} />
@@ -799,11 +858,9 @@
 												{#each project.concerts as concert}
 													<tr class="concert-entry">
 														<td class="px-3 py-1">
-															<DateShow
-																startTime={concert.startDate}
-																endTime={concert.endDate}
-																withTime
-															/>
+															{formatTime(concert.startDate)} - {formatTime(concert.endDate)}
+                                                            {' | '}
+                                                            {formatDate(concert.startDate)}
 														</td>
 														<td class="px-3 py-1">{concert.place}</td>
 														<td class="px-3 py-1 whitespace-normal">{concert.comment}</td>
@@ -832,7 +889,7 @@
 											{#each project.concerts as concert}
 												<tr class="concert-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={concert.startDate} on:change={() => concert.endDate = concert.startDate}/> <!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
+														<DatePicker bind:date={concert.startDate} on:change={() => concert.endDate = new Date(concert.startDate)}/> <!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
 													</td>
 													<td class="px-3 py-1">
 														<TimePicker bind:date={concert.startDate} />
