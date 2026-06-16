@@ -56,6 +56,40 @@
 		return concert.participants?.filter((p) => p.id === participant.id).length > 0;
 	}
 
+	function getDateKey(value: string | Date) {
+		if (value instanceof Date) {
+			const year = value.getFullYear();
+			const month = String(value.getMonth() + 1).padStart(2, '0');
+			const day = String(value.getDate()).padStart(2, '0');
+
+			return `${year}-${month}-${day}`;
+		}
+
+		return value.includes('T') ? value.split('T')[0] : value;
+	}
+
+	function groupRehearsalsByDate(rehearsalsToGroup: Rehearsal[]) {
+		const groups: { dateKey: string; rehearsals: Rehearsal[] }[] = [];
+
+		rehearsalsToGroup.forEach((rehearsal) => {
+			const dateKey = getDateKey(rehearsal.startDate);
+			const existingGroup = groups.find((group) => group.dateKey === dateKey);
+
+			if (existingGroup) {
+				existingGroup.rehearsals.push(rehearsal);
+			} else {
+				groups.push({
+					dateKey,
+					rehearsals: [rehearsal]
+				});
+			}
+		});
+
+		return groups;
+	}
+
+	$: groupedRehearsalsByDate = groupRehearsalsByDate(rehearsals);
+
 	async function downloadPDF() {
 		if (!project || isGeneratingPDF) return;
 
@@ -192,18 +226,21 @@
 							<tr class="bg-gray-200">
 								<th rowspan="2" class="crossed border p-1"></th>
 								<th rowspan="2" class="border p-1">Section</th>
-								{#each rehearsals as rehearsal}
-									<th colspan="2" class="border p-1">{rehearsal.place}</th>
+								{#each groupedRehearsalsByDate as group}
+									<th colspan={group.rehearsals.length * 2} class="border p-1">
+										<DateShow startTime={group.rehearsals[0].startDate} />
+									</th>
 								{/each}
 							</tr>
 							<tr class="bg-gray-100">
 								{#each rehearsals as rehearsal}
 									<th colspan="2" class="border p-1">
+										<div class="font-semibold">{rehearsal.place}</div>
 										<DateShow
 											startTime={rehearsal.startDate}
 											endTime={rehearsal.endDate}
-											withTime
-											isRehearsal
+											withTime={true}
+											withDate={false}
 										/>
 									</th>
 								{/each}
