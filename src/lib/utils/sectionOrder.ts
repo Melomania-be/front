@@ -34,10 +34,17 @@ function getSectionOrder(sectionName: string): number {
 	return index === -1 ? 999 : index;
 }
 
-export function sortParticipantsBySection<T extends { section: { name: string } }>(
-	participants: T[]
-): T[] {
+export function sortParticipantsBySection<
+	T extends {
+		section: {
+			pivot_order?: number;
+			name: string;
+		};
+	}
+>(participants: T[]): T[] {
 	return [...participants].sort((a, b) => {
-		return getSectionOrder(a.section.name) - getSectionOrder(b.section.name);
+		const aOrder = a.section.pivot_order ?? getSectionOrder(a.section.name);
+		const bOrder = b.section.pivot_order ?? getSectionOrder(b.section.name);
+		return aOrder - bOrder;
 	});
 }
