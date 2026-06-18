@@ -1,12 +1,21 @@
 <script lang="ts" generics="DataType extends GenericDataType">
-	import { createEventDispatcher } from 'svelte';
+	import TableContact from '$lib/components/TableContact.svelte';
+
+	import { familyToEmoji, familyToStyle } from './contact/StylesFunctions';
+
+	import { DataTable } from 'smelte';
+
+	import Fa from 'svelte-fa';
+
+	import { faGear, faListCheck, faM, faSliders } from '@fortawesome/free-solid-svg-icons';
+
+	import { createEventDispatcher, onMount } from 'svelte';
 	import type { GenericDataType } from '$lib/types/GenericDataType';
 	import type { TableData } from '$lib/types/TableData';
 	import Paginator from '$lib/components/Paginator.svelte';
-	import Table from '$lib/components/Table.svelte';
+	import Table from '$lib/components/TableContact.svelte';
 	import QueryBuilder from './QueryBuilder.svelte';
-	import { Drawer, Button, CloseButton } from 'flowbite-svelte';
-	import { sineIn } from 'svelte/easing';
+	import { Button } from 'flowbite-svelte';
 
 	export let showData: boolean = false;
 	export let editable: boolean = true;
@@ -38,6 +47,20 @@
 	export let uniqueUrl: string = '';
 	export let columns: { [key: string]: string[] };
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
+	export let filterLevel: string[] = []
+
+	let columnDisplayer: { [key: string]: boolean } = {
+		id : true,
+		firstName : true,
+		lastName : true,
+		email : true,
+		messenger : false,
+		phone : false,
+		comments : true,
+		instruments : true,
+		projects : false,
+		action : true
+	};
 
 	if (uniqueUrl === '') {
 		editable = false;
@@ -45,67 +68,95 @@
 
 	let operations = ['none', '=', '!=', '>', '>=', '<', '<=', 'like'];
 	let typesOfWhere = ['and', 'or'];
+	let selectedData: GenericDataType | null = null;
 
-	function changePage(newPage: number) {
-		options.page = newPage;
-		dispatchOptionsUpdated();
-	}
+	let selectedLevelInstruments: [number, string | null][] = []
+
+	let instrumentFamily: string[] = [];
 
 	const dispatch = createEventDispatcher();
-
-	function dispatchOptionsUpdated() {
+	function changePage(newPage: number) {
+		options.page = newPage;
 		dispatch('optionsUpdated');
 	}
+	let showColumList = false;
 
-	let hidden5 = true;
-	let transitionParams = {
-		x: -320,
-		duration: 200,
-		easing: sineIn
+	let isMobile = false;
+
+	const checkMobile = () => {
+		isMobile = window.innerWidth <= 1000;
 	};
+
+	onMount(() => {
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
+	});
+
 </script>
 
-<Drawer
-	class="absolute z-10 w-[320px] sm:w-1/3"
-	placement="left"
-	transitionType="fly"
-	{transitionParams}
-	bind:hidden={hidden5}
-	id="sidebar5"
+<div class="bg-gray-100 dark:bg-gray-800 w-full px-4 py-3 rounded-lg shadow-md mb-4">
+	<h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Search Options</h2>
+	<QueryBuilder
+		bind:columns
+		bind:options
+		bind:operations
+		bind:typesOfWhere
+		bind:filterLevel
+		bind:instrumentFamily
+		bind:selectedLevelInstruments
+		on:optionsUpdated={() => dispatch('optionsUpdated')}
+	/>
+</div>
+
+<div
+	class="grid grid-cols-1 place-items-center p-2 border-2 border-gray-400 rounded-xl m-4 bg-white"
 >
-	<div class="flex items-center">
-		<h5
-			id="drawer-label"
-			class="inline-flex items-center mb-4 text-base font-semibold text-gray-500 dark:text-gray-400"
-		>
-			search options
-		</h5>
-		<CloseButton on:click={() => (hidden5 = true)} class="mb-4 dark:text-black" />
+	<div class="w-full relative">
+		<div class="flex flex-col items-center ml-2">
+			<div class="flex gap-2">
+				{#if instrumentFamily.length !== 0 }
+					{#if !isMobile}
+						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend :
+							{#each instrumentFamily as family}
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+							{/each}
+						</p>
+					{:else}
+						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center	">
+							{#each instrumentFamily as family}
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+							{/each}
+						</div>
+					{/if}
+				{/if}
+			</div>
+			<button on:click={() => (showColumList = !showColumList)} class="flex ml-auto mr-2 mt-2 mb-2">
+				<Fa icon={faListCheck} class="text-[22px]" style="color: #6b7280;" />
+			</button>
+		</div>
+		{#if showColumList}
+
+			<div class="absolute right-0 h-auto w-auto mt-0 bg-white rounded-lg border-gray-400 border-2 p-4 z-20">
+				{#each Object.entries(columnDisplayer) as [col, displayed]}
+					<div class="flex gap-2 items-center">
+						<input
+							id={col}
+							checked={displayed}
+							type="checkbox"
+							class="w-4 h-4 rounded-full text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+							on:click={()=>{columnDisplayer[col] = !displayed ; columnDisplayer = { ...columnDisplayer };}}
+						/>
+						<div>{col}</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</div>
-
-	<div class="relative {!paginatorTop ? 'col-span-2' : ''}">
-		<QueryBuilder bind:columns bind:options bind:operations bind:typesOfWhere />
-		<button
-			type="submit"
-			on:click={() => dispatchOptionsUpdated()}
-			class="text-white mt-0.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-		>
-			Search
-		</button>
-	</div>
-</Drawer>
-
-<div class="grid grid-cols-1 place-items-center p-2">
-	<div
-		class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full mt-2 items-center justify-items-stretch"
-	>
-		<Button
-			class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
-			on:click={() => (hidden5 = false)}
-		>
-			search options
-		</Button>
-
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full mt-2 items-center justify-items-stretch">
 		{#if paginatorTop}
 			<div class="sm:col-start-2 col-start-1">
 				<Paginator bind:meta bind:options {changePage} />
@@ -116,7 +167,18 @@
 	{#if !showData}
 		<slot />
 	{:else}
-		<Table bind:data bind:options bind:meta bind:uniqueUrl bind:editable {changePage} />
+		<TableContact
+			bind:data
+			bind:options
+			bind:meta
+			bind:uniqueUrl
+			bind:editable
+			{changePage}
+			bind:selectedData
+			bind:filterLevel
+			bind:columnDisplayer
+			bind:selectedLevelInstruments
+		/>
 	{/if}
 
 	<div class="mt-4">
@@ -124,7 +186,7 @@
 			bind:meta
 			bind:options
 			{changePage}
-			on:optionsUpdated={() => dispatchOptionsUpdated()}
+			on:optionsUpdated={() => dispatch('optionsUpdated')}
 			orientation="vertical"
 		/>
 	</div>

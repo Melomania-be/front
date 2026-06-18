@@ -58,21 +58,15 @@
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
 
-			allProjects = data.data.map((project: Project) => {
-				project.concerts = project?.concerts?.map((concert: any) => {
-					concert.startDate = new Date(concert.startDate);
-					return concert;
-				});
-				return project;
-			});
+			allProjects = data.data;
 			meta = data.meta;
 
 			passedProjects = allProjects.filter((project: Project) =>
-				project.concerts.every((concert: any) => concert.startDate < new Date())
+				project.concerts.every((concert: any) => new Date(concert.startDate) < new Date())
 			);
 
 			currentProjects = allProjects.filter((project: Project) =>
-				project.concerts.some((concert: any) => concert.startDate >= new Date())
+				project.concerts.some((concert: any) => new Date(concert.startDate) >= new Date())
 			);
 
 			group = {
@@ -160,7 +154,11 @@
 										<h2 class="text-sm">{project.name}</h2>
 										<ul class="text-sm">
 											{#each project.concerts as concert}
-												<DateShow startTime={concert.startDate} endTime={concert.endDate} />
+												<DateShow 
+												startTime={concert.startDate}
+			                                    endTime={concert.endDate}
+			                                    withDate={true}
+			                                    withTime={true} />
 												- {concert.place}
 											{/each}
 										</ul>

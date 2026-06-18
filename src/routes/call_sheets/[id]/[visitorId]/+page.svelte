@@ -11,7 +11,7 @@
 	onMount(async () => {
 		visitorId = parseInt($page.params.visitorId);
 		callsheetId = parseInt($page.params.id);
-
+		console.log(visitorId , callsheetId)
 		const callsheetResponse = await fetch(`/api/call_sheets/${callsheetId}/${visitorId}`, {
 			method: 'GET'
 		});

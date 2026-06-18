@@ -12,6 +12,9 @@
 	import type { Registration } from '$lib/types/Registration';
 	import SectionPicker from './SectionPicker.svelte';
 	import type { Participant } from '$lib/types/Participant';
+	import type { Accounting } from '$lib/types/Accounting';
+	import AccountingTable from '../AccountingTable.svelte';
+	import type { ExpenseCategory } from '$lib/types/ExpenseCategory';
 
 	export let mode: 'create' | 'modify';
 	export let id: string;
@@ -19,6 +22,20 @@
 	export let urlFront: string;
 
 	let allowModification: boolean = mode === 'create' ? true : false;
+
+	let categories: ExpenseCategory[];
+
+	async function fetchCategories() {
+		const res = await fetch('/api/expense_categories');
+
+		if (!res.ok) {
+			console.error('Erreur lors de la récupération des catégories');
+			return;
+		}
+
+		categories = (await res.json()) as ExpenseCategory[];
+		console.log(categories);
+	}
 
 	let meta: any = {};
 	let options: {
@@ -69,6 +86,22 @@
 				notOrderedColumns: []
 			};
 		});
+	}
+
+	let participantAccountings : Accounting[];
+
+	async function fetchAccountingContact() {
+		if(currentParticipant.contact){
+			const response = await fetch(`/api/accountings/${currentParticipant.contact.id}`, {
+			method: 'GET'
+		});
+		if (!response.ok) {
+			return;
+		}
+
+		participantAccountings = await response.json();
+		}
+
 	}
 
 	async function updateParticipant() {
@@ -209,16 +242,23 @@
 				goto(`/section-groups`);
 			}
 		}
+		await fetchCategories();
+		await fetchAccountingContact();
 	});
 
 	$: {
 		if (currentParticipant) participants = [currentParticipant];
 	}
+	function openContactPage() {
+    	if (currentParticipant.contact?.id) {
+    		goto(`/contacts/${currentParticipant.contact.id}`);
+		}
+	}
 </script>
 
 {#if currentParticipant}
 	<div
-		class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+		class="relative max-w-xxl bg-white border-2 border-gray-400 rounded-xl p-4"
 	>
 		<div>
 			{#if mode === 'modify'}
@@ -239,12 +279,24 @@
 
 			<div>
 				{#if registration?.project && currentParticipant.contact}
-					<h1 class="text-2xl uppercase">
+					<h1 class="text-2xl uppercase font-bold mb-4 text-center text-gray-600">
 						{currentParticipant.contact?.firstName}
 						{currentParticipant.contact?.lastName}
 					</h1>
+					{#if currentParticipant.contact?.id}
+						<button
+							class="mt-2 inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
+							on:click={openContactPage}
+						>
+							Open contact page
+						</button>
+						{/if}
 					<div class="m-1">
-						<h2 class="uppercase">Project form</h2>
+						<div class="flex w-full items-center mt-6">
+							<div class="flex-1 rounded-full border-2 h-[1px] mr-3 border-gray-400"></div>
+							<h2 class="font-bold text-lg text-gray-500 uppercase">Project form</h2>
+							<div class="flex-1 rounded-full border-2 h-[1px] ml-3 border-gray-400"></div>
+						</div>
 						{#if registration.form && currentParticipant.answers.length > 0}
 							{#each currentParticipant.answers as answer}
 								<RegistrationForm
@@ -257,7 +309,7 @@
 					</div>
 					<div class="m-1">
 						{#if registration.project.concerts && registration.project.concerts.length > 0 && participants.length > 0}
-							<h2 class="uppercase">Attendance to Concerts</h2>
+							<h2 class="font-semibold">Attendance to Concerts</h2>
 							<AttendancePicker
 								bind:participants
 								bind:concertsOrRehearsals={registration.project.concerts}
@@ -268,7 +320,7 @@
 					</div>
 					<div class="m-1">
 						{#if registration.project.rehearsals && registration.project.rehearsals.length > 0 && participants.length > 0}
-							<h2 class="uppercase">Attendance to Rehearsals</h2>
+							<h2 class="font-semibold">Attendance to Rehearsals</h2>
 							<AttendancePicker
 								bind:participants
 								bind:concertsOrRehearsals={registration.project.rehearsals}
@@ -278,6 +330,11 @@
 						{/if}
 					</div>
 					<div class="m-1">
+						<div class="flex w-full items-center my-6">
+							<div class="flex-1 rounded-full border-2 h-[1px] mr-3 border-gray-400"></div>
+							<h2 class="font-bold text-lg text-gray-500 uppercase">Section</h2>
+							<div class="flex-1 rounded-full border-2 h-[1px] ml-3 border-gray-400"></div>
+						</div>
 						{#if registration.project.sectionGroup?.sections && currentParticipant}
 							<SectionPicker
 								bind:participant={currentParticipant}
@@ -286,21 +343,31 @@
 							/>
 						{/if}
 					</div>
+					<div class="m-1">
+						<div class="flex w-full items-center my-6">
+							<div class="flex-1 rounded-full border-2 h-[1px] mr-3 border-gray-400"></div>
+							<h2 class="font-bold text-lg text-gray-500 uppercase">Accounting</h2>
+							<div class="flex-1 rounded-full border-2 h-[1px] ml-3 border-gray-400"></div>
+						</div>
+						{#if currentParticipant}
+						<AccountingTable accountings={participantAccountings} bind:categories showStatistic={false} showAttachments={false} bind:currentParticipant></AccountingTable>
+						{/if}
+					</div>
 				{/if}
 			</div>
 
 			{#if allowModification}
-				<div>
+				<div class="flex gap-4 justify-center mt-6">
 					<button
 						on:click={updateParticipant}
-						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+						class="bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded w-[20%]"
 					>
 						Save
 					</button>
 					{#if mode == 'modify'}
 						<button
 							on:click={deleteParticipant}
-							class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+							class="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded w-[20%]"
 						>
 							Delete
 						</button>

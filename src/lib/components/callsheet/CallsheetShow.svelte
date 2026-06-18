@@ -1,174 +1,90 @@
 <script lang="ts">
     import type { Callsheet } from '$lib/types/Callsheet';
-    import Accordion from '$lib/components/Accordion.svelte';
-    import DateShow from '../DateShow.svelte';
+    import ProgramSection from './ProgramSection.svelte';
+    import EventSection from './EventSection.svelte';
+    import ContentSection from './ContentSection.svelte';
+    import ContactSection from './ContactSection.svelte';
+    import logo from '$lib/assets/image1.png';
 
     export let callsheet: Callsheet;
 
-    const combinedEvents = [
-        ...(callsheet.project?.concerts || []).map(event => ({ ...event, type: 'concert' })),
-        ...(callsheet.project?.rehearsals || []).map(event => ({ ...event, type: 'rehearsal' }))
-    ].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-
-    $: aboveContents = (callsheet.contents || [])
-        .filter(c => c.position === 'above')
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-    $: belowContents = (callsheet.contents || [])
-        .filter(c => !c.position || c.position === 'below')
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    function formatDateTime(value: string | Date) {
+	    if (!value) return '';
+	    const date = new Date(value);
+	    return date.toLocaleString('fr-FR', {
+		    timeZone: 'Europe/Paris',
+		    day: '2-digit',
+		    month: '2-digit',
+		    year: 'numeric',
+		    hour: '2-digit',
+		    minute: '2-digit',
+		    hour12: false
+	    });
+    }
 </script>
 
-<div class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+<div class="relative w-full py-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 rounded-lg px-4 sm:px-6 lg:px-8">
     {#if callsheet}
-        <div class="p-5">
-            <div class="mb-5 font-bold tracking-tight text-gray-900 border-b-gray-200 shadow dark:text-white origin-center w-full flex justify-center">
-                <h1 class="text-3xl font-bold mb-2">
-                    CALLSHEET - {callsheet.project.name}
-                </h1>
-            </div>
-
-            <!-- BLOCKS ABOVE program & events -->
-            {#each aboveContents as content}
-                <div class="pt-10 mb-8 ml-20">
-                    <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-                        {@html content.title}
-                    </h2>
-                    <div class="w-full flex">
-                        <p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
+        <div class="flex flex-col gap-10">
+            <div class="relative">
+                <div class="w-full h-[200px] sm:h-[280px] md:h-[350px] lg:h-[400px] xl:h-[450px]">
+                    <img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
+                    <div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
+                        <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
+                            CALLSHEET - {callsheet.project.name}
+                        </h1>
                     </div>
                 </div>
-            {/each}
 
-            <!-- Program and Scores -->
-            <div class="mb-2 ml-20">
-                <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-                    Program and scores
-                </h2>
-                <div class="w-full flex overflow-x-auto">
-                    <table class="min-w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Composer</th>
-                                <th scope="col" class="px-6 py-3">Name</th>
-                                <th scope="col" class="px-6 py-3">Scores</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {#if callsheet.project?.pieces}
-                                {#each callsheet.project.pieces as piece}
-                                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                        <td class="px-6 py-4">{piece.composer.shortName}</td>
-                                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                            {piece.name}
-                                        </th>
-                                        <td class="px-6 py-4">
-                                            {#if piece.folder !== null && piece.folder !== undefined && piece.folder.files.length > 0}
-                                                <Accordion bind:folder={piece.folder}></Accordion>
-                                            {:else}
-                                                <span class="italic text-red-500">x</span>
-                                            {/if}
-                                        </td>
-                                    </tr>
-                                {/each}
-                            {/if}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                <div class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10">
+                    <div class="content-container bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm">
 
-            <!-- Events -->
-            <div class="pt-10 mb-2 ml-20">
-                <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-                    Events
-                </h2>
-                <div class="w-full flex overflow-x-auto">
-                    <table class="min-w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Date</th>
-                                <th scope="col" class="px-6 py-3">Place</th>
-                                <th scope="col" class="px-6 py-3">Type</th>
-                                <th scope="col" class="px-6 py-3">Comment</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-                            {#if combinedEvents.length > 0}
-                                {#each combinedEvents as event}
-                                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                            <DateShow startTime={event.startDate} endTime={event.endDate} withTime isRehearsal={event.type === 'rehearsal'}></DateShow>
-                                        </th>
-                                        <td class="px-6 py-4">{event.place}</td>
-                                        <td class="px-6 py-4">{event.type}</td>
-                                        <td class="px-6 py-4">{event.comment ?? 'No additional information'}</td>
-                                    </tr>
-                                {/each}
-                            {:else}
-                                <tr>
-                                    <td class="px-6 py-4" colspan="4">No events found</td>
-                                </tr>
-                            {/if}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                        <!-- BLOCKS ABOVE program & events -->
+                        <ContentSection {callsheet} positionFilter="above" />
 
-            <!-- BLOCKS BELOW program & events -->
-            {#each belowContents as content}
-                <div class="pt-10 mb-8 ml-20">
-                    <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline mb-5">
-                        {@html content.title}
-                    </h2>
-                    <div class="w-full flex">
-                        <p class="text-gray-800 dark:text-gray-400">{@html content.text}</p>
+                        <!-- Program Section -->
+                        <div class="mb-4 sm:mb-6">
+                            <ProgramSection {callsheet} />
+                        </div>
+
+                        <!-- Events -->
+                        <EventSection {callsheet} />
+
+                        <!-- BLOCKS BELOW program & events -->
+                        <ContentSection {callsheet} positionFilter="below" />
+
+                        <!-- Contact Information -->
+                        <ContactSection {callsheet} />
                     </div>
                 </div>
-            {/each}
-
-            <!-- Contact Information -->
-            <div class="pt-10 mb-2 ml-20">
-                <h2 class="text-2xl font-bold tracking-tight text-blue-900 dark:text-white underline">
-                    Contact Information
-                </h2>
-                <div class="w-full flex mt-2 mb-5">
-                    <p class="text-base text-gray-800 dark:text-gray-400">
-                        Below are the project managers. Please don't hesitate to call or email one of us for questions or remarks.
-                    </p>
-                </div>
-                <div class="flex flex-col-5">
-                    {#if callsheet.project?.responsibles && callsheet.project.responsibles.length > 0}
-                        {#each callsheet.project.responsibles as responsible}
-                            <div class="flex-col-1 block max-w-sm p-6 bg-white border border-blue-900 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 ml-5">
-                                <h5 class="mb-2 text-xl tracking-tight text-gray-900 dark:text-white">
-                                    {responsible.firstName} {responsible.lastName}
-                                </h5>
-                                <p class="font-normal text-gray-700 dark:text-gray-400">
-                                    {#if responsible.email}
-                                        <span class="text-gray-900">Email :</span> {responsible.email} <br />
-                                    {/if}
-                                    {#if responsible.phone !== '' && responsible.phone !== null && responsible.phone !== undefined && responsible.phone !== '/'}
-                                        <span class="text-gray-900">Phone :</span> {responsible.phone} <br />
-                                    {/if}
-                                    {#if responsible.messenger !== '' && responsible.messenger !== null && responsible.messenger !== undefined && responsible.messenger !== '/'}
-                                        <span class="text-gray-900">Messenger :</span> {responsible.messenger} <br />
-                                    {/if}
-                                </p>
-                            </div>
-                        {/each}
-                    {:else}
-                        <p>No project managers are set for this project.</p>
-                    {/if}
-                </div>
             </div>
-            <br />
-            <div class="m-5">
-                Callsheet last updated on {new Date(callsheet.updatedAt).toLocaleString()}
+
+            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center mt-8 sm:mt-10">
+                Callsheet last updated on {formatDateTime(callsheet.updatedAt)}
             </div>
         </div>
     {:else}
-        <div class="p-5">
-            <p>We encountered a problem retrieving the call sheet, please reload the page or try again later.</p>
-        </div>
+        <p class="text-center text-gray-800 dark:text-white">
+            We encountered a problem retrieving the call sheet. Please reload the page or try again later.
+        </p>
     {/if}
 </div>
+
+<style>
+    @media (max-width: 360px) {
+        h1 { font-size: 0.9rem !important; line-height: 1.2 !important; }
+    }
+    @media (max-width: 320px) {
+        h1 { font-size: 0.8rem !important; line-height: 1.1 !important; }
+    }
+    @media (min-width: 768px) {
+        img { object-position: center; }
+    }
+    .content-container {
+        animation: slideUp 0.6s ease-out;
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

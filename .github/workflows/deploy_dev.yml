@@ -1,0 +1,90 @@
+name: Deploy to Development Server
+
+on:
+  push:
+    branches:
+      - release-dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get runner's public IP
+        id: ip
+        uses: haythem/public-ip@v1.3
+
+      - name: Removing all whitelisted IP
+        run: |
+          curl -sm 45 -k 'https://${{secrets.CPANEL_LOGIN}}:${{secrets.CPANEL_PASSWORD}}@${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/remove_all'
+
+      - name: Whitelisting the runner IP
+        run: |
+          curl -sm 45 -k 'https://${{secrets.CPANEL_LOGIN}}:${{secrets.CPANEL_PASSWORD}}@${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/add?address=${{ steps.ip.outputs.ipv4 }}&port=22'
+
+      - name: Making sure the IP is whitelisted
+        run: |
+          curl -sm 45 -k 'https://${{secrets.CPANEL_LOGIN}}:${{secrets.CPANEL_PASSWORD}}@${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/list' | grep ${{ steps.ip.outputs.ipv4 }}
+
+      - name: Installing the SSH Key
+        run: |
+          eval $(ssh-agent -s)
+          mkdir -p ~/.ssh       
+          chmod 700 ~/.ssh 
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 0400 ~/.ssh/id_rsa
+
+      # Run rsync twice to see if it solves my issue. I have an issue where rsync is hanging randomly.
+      # It might be related to the Imunify360 firewall. When this occurs, Imunify seems to be reloading the ipset list.
+      # I need to investigate further.
+      - name: Sending data with RSYNC
+        run: |
+          sleep 2
+          rsync --timeout=60 -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
+          --exclude ".git" \
+          --exclude "node_modules" \
+          --exclude "build" \
+          -av --delete ./ \
+          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_LOGIN }}/app/front/ || true
+
+          sleep 2
+          rsync --timeout=60 -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
+          --exclude ".git" \
+          --exclude "node_modules" \
+          --exclude "build" \
+          -av --delete ./ \
+          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_LOGIN }}/app/front/
+
+      - name: Restarting NodeJS application via ssh
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+          ${{ secrets.CPANEL_LOGIN }}@${{ secrets.CPANEL_SERVER }} \
+          '/usr/sbin/cloudlinux-selector stop --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
+          /usr/sbin/cloudlinux-selector start --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
+          /usr/sbin/cloudlinux-selector install-modules --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
+          source /home/${{ secrets.CPANEL_LOGIN }}/nodevenv/app/front/20/bin/activate && \
+          cd /home/${{ secrets.CPANEL_LOGIN }}/app/front && \
+          npm run build && \
+          /usr/sbin/cloudlinux-selector stop --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front && \
+          /usr/sbin/cloudlinux-selector start --json --interpreter nodejs --user ${{ secrets.CPANEL_LOGIN }} --app-root app/front
+          '
+
+      - name: Cleaning SSH keys
+        if: always()
+        run: rm -fr ~/.ssh
+
+      - name: Cleaning artifacts
+        uses: geekyeggo/delete-artifact@v5
+        if: always()
+        with:
+          name: build
+          failOnError: false

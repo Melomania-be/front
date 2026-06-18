@@ -39,10 +39,6 @@
 		fetchData();
 	});
 
-	$: console.log(options);
-	$: console.log(data);
-	$: console.log(meta);
-
 	async function fetchData() {
 		let response = await fetch('/test/api', {
 			method: 'POST',

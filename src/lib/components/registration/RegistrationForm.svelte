@@ -1,3 +1,4 @@
+<!-- Registration forms at the end of the registration page  -->
 <script lang="ts">
 	import type { Answer } from '$lib/types/Answer';
 	import type { Form } from '$lib/types/Form';
@@ -17,22 +18,23 @@
 	}
 </script>
 
-<div class="border my-1 p-1">
+<div class=" p-2">
 	{#if form && answer}
 		{#if form.type === 'text'}
-			<div>
-				<label for="form-{form.id}">{form.text}</label>
+			<div class="bg-gray-200 rounded-lg px-3 pb-2">
+				<label class="text-sm font-semibold text-gray-600" for="form-{form.id}">{form.text}</label>
 				<input
 					id="form-{form.id}"
 					type="text"
 					bind:value={answer.text}
-					class="border rounded"
+					class="rounded border-2 border-gray-400 w-full "
 					{disabled}
 				/>
 			</div>
 		{:else if form.type === 'checkbox'}
-			<div>
+			<div class="bg-gray-200 rounded-lg px-3 p-2 flex items-center gap-2">
 				<input
+				 	class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7]"
 					id="form-{form.id}"
 					type="checkbox"
 					checked={answer.text === 'true' ? true : false}
@@ -41,23 +43,25 @@
 					}}
 					{disabled}
 				/>
-				<label for="form-{form.id}">{form.text}</label>
+				<label class="text-sm font-semibold text-gray-600" for="form-{form.id}">{form.text}</label>
 			</div>
 		{:else if form.type === 'select' && form.text.split(':').length > 1}
-			<div>
-				<label for="form-{form.id}">{form.text.split(':')[0]}</label>
-				<select id="form-{form.id}" bind:value={answer.text} class="border rounded" {disabled}>
+			<div class="bg-gray-200 rounded-lg px-3 p-2 flex gap-2 flex-col">
+				<label class="text-sm font-semibold text-gray-600" for="form-{form.id}">{form.text.split(':')[0]}</label>
+				<select class="rounded border-2 border-gray-400 w-full whitespace-nowrap" id="form-{form.id}" bind:value={answer.text} {disabled}>
 					{#each form.text.split(':')[1].split(';') as option}
 						<option value={option}>{option}</option>
 					{/each}
 				</select>
 			</div>
 		{:else if form.type === 'multiple' && form.text.split(':').length > 1}
-			<div>
-				<label for="form-{form.id}">{form.text.split(':')[0]}</label>
+			<div class="bg-gray-200 rounded-lg px-3 p-2 flex gap-2 flex-col">
+				<label class="text-sm font-semibold text-gray-600 break-words w-full" for="form-{form.id}">{form.text.split(':')[0]}</label>
+				<div class="ml-1">
 				{#each form.text.split(':')[1].split(';') as option}
-					<div>
+					<div class=" border">
 						<input
+							class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7]"
 							id="form-{form.id}"
 							type="checkbox"
 							checked={answer.text.split(';').includes(option)}
@@ -73,9 +77,10 @@
 							}}
 							{disabled}
 						/>
-						<label for="form-{form.id}">{option}</label>
+						<label class="text-gray-600" for="form-{form.id}">{option}</label>
 					</div>
 				{/each}
+				</div>
 			</div>
 		{/if}
 	{/if}

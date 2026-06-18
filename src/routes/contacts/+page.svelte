@@ -9,6 +9,8 @@
 	import type { CustomContact } from '$lib/types/CustomContact';
 	import type { Contact } from '$lib/types/Contact';
 	import Dashboard from './Dashboard.svelte';
+	import { Users } from 'lucide-svelte';
+	import ModuleHeader from '$lib/components/ModuleHeader.svelte';
 
 	let metaContacts: any;
 	let metaList: any;
@@ -97,5 +99,11 @@
 </script>
 
 <div>
+	<ModuleHeader
+		title="Contacts"
+		description="Manage your musicians and contacts"
+		icon={Users}
+		on:refresh={() => fetchData()}
+	/>
 	<Dashboard data={dashboardData}></Dashboard>
 </div>

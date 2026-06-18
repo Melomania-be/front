@@ -1,3 +1,4 @@
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 
@@ -6,68 +7,136 @@
 	const newUser = {
 		email: '',
 		password: '',
-		password_confirmation: ''
+		password_confirmation: '',
+		fullName: ''
+	};
+
+	let editingUser: any = null;
+	let editForm = {
+		id: null,
+		email: '',
+		fullName: ''
 	};
 
 	onMount(async () => {
-		const response = await fetch('/api/users', {
-			method: 'GET'
-		});
-
-		const data = await response.json();
-
-		listUsers = data;
-
-		listUsers = listUsers.map((user) => {
-			return {
-				...user,
-				token: {
-					...user.token,
-					lastUsedAt: user.token
-						? new Date(user.token.lastUsedAt).toLocaleString()
-						: 'never connected'
-				},
-				createdAt: new Date(user.createdAt).toLocaleString()
-			};
-		});
+		await loadUsers();
 	});
 
+	async function loadUsers() {
+		try {
+			const response = await fetch('/api/users', {
+				method: 'GET'
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				listUsers = data;
+
+				listUsers = listUsers.map((user) => {
+					return {
+						...user,
+						token: {
+							...user.token,
+							lastUsedAt: user.token
+								? new Date(user.token.lastUsedAt).toLocaleString()
+								: 'never connected'
+						},
+						createdAt: new Date(user.createdAt).toLocaleString()
+					};
+				});
+			}
+		} catch (error) {
+			console.error('Error loading users:', error);
+		}
+	}
+
 	async function deleteUser(user: any) {
-		const confirmDelete = confirm('Are you sure you want to delete this user ?');
+		const confirmDelete = confirm('Are you sure you want to delete this user?');
 
 		if (!confirmDelete) {
 			return;
 		}
 
-		const response = await fetch(`/api/users/`, {
-			method: 'DELETE',
-			body: JSON.stringify({
-				id: user.id
-			})
-		});
+		try {
+			const response = await fetch(`/api/users/`, {
+				method: 'DELETE',
+				body: JSON.stringify({
+					id: user.id
+				})
+			});
 
-		errorEvent(response);
+			await errorEvent(response);
 
-		if (response.status === 200) {
-			listUsers = listUsers.filter((u) => u.id !== user.id);
+			if (response.status === 200) {
+				listUsers = listUsers.filter((u) => u.id !== user.id);
+			}
+		} catch (error) {
+			console.error('Error deleting user:', error);
 		}
 	}
 
 	async function addUser() {
-		const response = await fetch('/api/users', {
-			method: 'PUT',
-			body: JSON.stringify({
-				email: newUser.email,
-				password: newUser.password,
-				password_confirmation: newUser.password_confirmation
-			})
-		});
+		try {
+			const response = await fetch('/api/users', {
+				method: 'PUT',
+				body: JSON.stringify({
+					email: newUser.email,
+					password: newUser.password,
+					password_confirmation: newUser.password_confirmation,
+					fullName: newUser.fullName
+				})
+			});
 
-		errorEvent(response);
+			await errorEvent(response);
 
-		if (response.status === 200) {
-			window.location.reload();
+			if (response.status === 200) {
+				newUser.email = '';
+				newUser.password = '';
+				newUser.password_confirmation = '';
+				newUser.fullName = '';
+
+				await loadUsers();
+			}
+		} catch (error) {
+			console.error('Error adding user:', error);
 		}
+	}
+
+
+	async function editUser(user: any) {
+		editingUser = user.id;
+		editForm = {
+			id: user.id,
+			email: user.email,
+			fullName: user.fullName || ''
+		};
+	}
+
+
+	async function saveUser() {
+		try {
+			const response = await fetch('/api/users', {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(editForm)
+			});
+
+			await errorEvent(response);
+
+			if (response.status === 200) {
+				editingUser = null;
+				await loadUsers();
+			}
+		} catch (error) {
+			console.error('Error editing user:', error);
+		}
+	}
+
+	function cancelEdit() {
+		editingUser = null;
+		editForm = { id: null, email: '', fullName: '' };
 	}
 
 	async function errorEvent(response: Response) {
@@ -81,66 +150,171 @@
 	}
 </script>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 m-1">
-	<!-- Add User Section -->
-	<div class="flex flex-col border p-4 rounded-lg shadow-sm">
-		<h1 class="text-2xl font-bold text-center w-full">Add User</h1>
-		<form>
-			<div class="flex flex-col mb-4">
-				<label for="email">Email</label>
-				<input
-					type="email"
-					class="border border-collapse rounded-md p-2"
-					bind:value={newUser.email}
-					required
-				/>
-			</div>
-			<div class="flex flex-col mb-4">
-				<label for="password">Password</label>
-				<input
-					type="password"
-					class="border border-collapse rounded-md p-2"
-					bind:value={newUser.password}
-					required
-				/>
-			</div>
-			<div class="flex flex-col mb-4">
-				<label for="password_confirmation">Password Confirmation</label>
-				<input
-					type="password"
-					class="border border-collapse rounded-md p-2"
-					bind:value={newUser.password_confirmation}
-					required
-				/>
-			</div>
-			<div class="flex flex-col">
+<div class="p-6 max-w-7xl mx-auto">
+	<h1 class="text-3xl font-bold mb-8 text-center">User Management</h1>
+
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+		<!-- Add a User section -->
+		<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+			<h2 class="text-2xl font-semibold mb-6 text-gray-800">Add a User</h2>
+
+			<form on:submit|preventDefault={addUser} class="space-y-4">
+
+				<div>
+					<label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">
+						Full Name *
+					</label>
+					<input
+						id="fullName"
+						type="text"
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						bind:value={newUser.fullName}
+						placeholder="User's full name"
+						required
+					/>
+				</div>
+
+				<div>
+					<label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+						Email *
+					</label>
+					<input
+						id="email"
+						type="email"
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						bind:value={newUser.email}
+						placeholder="email@example.com"
+						required
+					/>
+				</div>
+
+				<div>
+					<label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+						Password *
+					</label>
+					<input
+						id="password"
+						type="password"
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						bind:value={newUser.password}
+						placeholder="Password"
+						required
+					/>
+				</div>
+
+				<div>
+					<label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
+						Confirm Password *
+					</label>
+					<input
+						id="password_confirmation"
+						type="password"
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						bind:value={newUser.password_confirmation}
+						placeholder="Confirm password"
+						required
+					/>
+				</div>
+
 				<button
 					type="submit"
-					class="bg-blue-500 text-white px-4 py-2 rounded"
-					on:click={() => addUser()}>Add</button
+					class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
 				>
-			</div>
-		</form>
-	</div>
+					Add user
+				</button>
+			</form>
+		</div>
 
-	<!-- User List Section -->
-	<div class="flex flex-col border p-4 rounded-lg shadow-sm">
-		<h1 class="text-2xl font-bold text-center w-full">Users</h1>
-		<div>
-			{#each listUsers as user}
-				<div class="flex justify-between border border-collapse rounded-md mb-2 p-2">
-					<div>
-						<p>Email : {user.email}</p>
-						<p>Created : {user.createdAt}</p>
-						<p>Last activity : {user.token.lastUsedAt}</p>
+		<!-- User List section -->
+		<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+			<h2 class="text-2xl font-semibold mb-6 text-gray-800">User List</h2>
+
+			<div class="space-y-3">
+				{#each listUsers as user (user.id)}
+					<div class="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+						{#if editingUser === user.id}
+							<!-- Edit mode -->
+							<div class="space-y-3">
+								<div>
+									<label class="block text-sm font-medium text-gray-700 mb-1">
+										Full Name
+									</label>
+									<input
+										type="text"
+										class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										bind:value={editForm.fullName}
+										placeholder="Full name"
+									/>
+								</div>
+								<div>
+									<label class="block text-sm font-medium text-gray-700 mb-1">
+										Email
+									</label>
+									<input
+										type="email"
+										class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										bind:value={editForm.email}
+									/>
+								</div>
+								<div class="flex gap-2">
+									<button
+										type="button"
+										on:click={saveUser}
+										class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+									>
+										Save
+									</button>
+									<button
+										type="button"
+										on:click={cancelEdit}
+										class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+									>
+										Cancel
+									</button>
+								</div>
+							</div>
+						{:else}
+							<!-- Display mode -->
+							<div class="flex justify-between items-start">
+								<div class="flex-1">
+
+									{#if user.fullName}
+										<p class="font-semibold text-gray-900">{user.fullName}</p>
+										<p class="text-sm text-gray-600">{user.email}</p>
+									{:else}
+										<p class="font-semibold text-gray-900">{user.email}</p>
+										<p class="text-sm text-gray-500 italic">No name defined</p>
+									{/if}
+									<p class="text-xs text-gray-500 mt-1">Created: {user.createdAt}</p>
+									<p class="text-xs text-gray-500">Last activity: {user.token.lastUsedAt}</p>
+								</div>
+								<div class="flex gap-2">
+									<button
+										type="button"
+										on:click={() => editUser(user)}
+										class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+									>
+										Edit
+									</button>
+									<button
+										type="button"
+										on:click={() => deleteUser(user)}
+										class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+									>
+										Delete
+									</button>
+								</div>
+							</div>
+						{/if}
 					</div>
-					<div>
-						<button
-							class="bg-red-500 text-white px-4 py-2 rounded"
-							on:click={() => deleteUser(user)}>Delete</button>
+				{/each}
+
+				{#if listUsers.length === 0}
+					<div class="text-center py-8 text-gray-500">
+						<p>No users found</p>
 					</div>
-				</div>
-			{/each}
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>

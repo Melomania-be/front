@@ -56,7 +56,6 @@
 		if (browser) {
 			window.addEventListener('resize', handleResize);
 		}
-		window.addEventListener('resize', handleResize);
 
 		return () => {
 			if (browser) {
@@ -66,7 +65,7 @@
 	})
 </script>
 
-<div class="grid grid-cols-1 place-items-center p-2">
+<div class="grid grid-cols-1 place-items-center p-2 w-full">
 	<div class={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} w-full mt-2`}>
 		<div class="relative {!paginatorTop ? 'col-span-2' : ''} {isMobile ? 'mb-2' : ''}">
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -91,7 +90,7 @@
 				id="default-search"
 				bind:value={options.filter}
 				on:keypress={(event) => (event.key === 'Enter' ? dispatchOptionsUpdated() : null)}
-				class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+				class="block w-full p-4 ps-10 text-sm  border-2 border-gray-300 rounded-full"
 				placeholder="Search for {data.columns.join(', ')}..."
 				required
 			/>
@@ -101,16 +100,15 @@
 					options.page = meta.firstPage;
 					dispatchOptionsUpdated();
 				}}
-				class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				>Search</button
-			>
+				class="text-white absolute end-3 bottom-2.5 bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+			>Search</button>
 		</div>
 		{#if paginatorTop}
 			<Paginator bind:meta bind:options {changePage} orientation={isMobile ? 'vertical' : 'horizontal'}/>
 		{/if}
 	</div>
 	{#if !showData}
-		<div class="mt-1 flex items-center justify-center">
+		<div class="mt-1 flex items-center justify-center w-full">
 			{#each data.columns as column}
 				<button
 					class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-red-600 to-green-800 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800"
@@ -122,7 +120,7 @@
 					}}
 				>
 					<span
-						class="relative inline-flex items-center justify-center px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0"
+						class="relative inline-flex items-center justify-center py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0"
 					>
 						{column}
 						{#if options.orderBy === column}
