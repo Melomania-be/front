@@ -77,7 +77,12 @@ categoryCount = categories.size;
 </thead>
 	<tbody>
 	{#each contractors as contractor}
-		<tr class="border-b">
+		<tr
+	class="border-b cursor-pointer hover:bg-gray-100"
+	on:click={() => {
+		window.location.href = `/contractors/${contractor.id}`;
+	}}
+>
 			<td class="p-3">
 				{contractor.firstName}
 				{contractor.lastName}
