@@ -3,7 +3,9 @@
 
 	export let callsheet: Callsheet;
 
-	let blocks = [...(callsheet.contents || [])].sort((a, b) => a.position - b.position);
+	let blocks = [...(callsheet.contents || [])]
+		.filter(c => c.show_on_registration === true)
+		.sort((a, b) => a.position - b.position);
 
 	const token = localStorage.getItem('token'); // ou sessionStorage.getItem('token')
 </script>

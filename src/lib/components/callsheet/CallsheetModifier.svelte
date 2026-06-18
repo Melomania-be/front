@@ -77,7 +77,7 @@
 					return {
 						id: content.id,
 						title: content.title.trim(),
-						text: content.text
+						text: content.text,
 						showOnRegistration: content.showOnRegistration || false
 					};
 				})
