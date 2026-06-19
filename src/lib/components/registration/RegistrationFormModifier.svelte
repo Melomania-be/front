@@ -11,7 +11,6 @@
 	let formType = 'text';
 </script>
 
-
 <div>
 	{#if !disabled}
 		<select class="border-2 rounded-lg border-gray-400" bind:value={formType} {disabled}>
@@ -41,10 +40,12 @@
 	{#each registration.form.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) as form}
 		<div class="flex flex-col border-2 gap-2 border-gray-400 rounded-xl p-2 bg-white my-4">
 			<RegistrationFormItemModifier bind:form bind:disabled />
-			<div
-				class="flex ml-auto mr-0 mb-1"
-			>
-				<select class="border-2 border-gray-400 rounded-lg text-gray-500" bind:value={form.type} {disabled}>
+			<div class="flex ml-auto mr-0 mb-1">
+				<select
+					class="border-2 border-gray-400 rounded-lg text-gray-500"
+					bind:value={form.type}
+					{disabled}
+				>
 					{#each formTypes as types}
 						<option value={types}>{types}</option>
 					{/each}

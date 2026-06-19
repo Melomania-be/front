@@ -14,7 +14,9 @@
 		on:click={() => (isOpen = !isOpen)}
 	>
 		<div>
-			<span class="font-semibold">{event.type.toUpperCase()}</span> — {new Date(event.startDate).toLocaleDateString()}
+			<span class="font-semibold">{event.type.toUpperCase()}</span> — {new Date(
+				event.startDate
+			).toLocaleDateString()}
 		</div>
 		<div>
 			{#if isOpen}
@@ -51,8 +53,8 @@
 </div>
 
 <style>
-    /* Optionnel pour une animation plus fluide */
-    div[transition] {
-        transition: all 0.3s ease-in-out;
-    }
+	/* Optionnel pour une animation plus fluide */
+	div[transition] {
+		transition: all 0.3s ease-in-out;
+	}
 </style>

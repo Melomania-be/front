@@ -27,14 +27,14 @@
 					id="form-{form.id}"
 					type="text"
 					bind:value={answer.text}
-					class="rounded border-2 border-gray-400 w-full "
+					class="rounded border-2 border-gray-400 w-full"
 					{disabled}
 				/>
 			</div>
 		{:else if form.type === 'checkbox'}
 			<div class="bg-gray-200 rounded-lg px-3 p-2 flex items-center gap-2">
 				<input
-				 	class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7]"
+					class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7]"
 					id="form-{form.id}"
 					type="checkbox"
 					checked={answer.text === 'true' ? true : false}
@@ -47,8 +47,15 @@
 			</div>
 		{:else if form.type === 'select' && form.text.split(':').length > 1}
 			<div class="bg-gray-200 rounded-lg px-3 p-2 flex gap-2 flex-col">
-				<label class="text-sm font-semibold text-gray-600" for="form-{form.id}">{form.text.split(':')[0]}</label>
-				<select class="rounded border-2 border-gray-400 w-full whitespace-nowrap" id="form-{form.id}" bind:value={answer.text} {disabled}>
+				<label class="text-sm font-semibold text-gray-600" for="form-{form.id}"
+					>{form.text.split(':')[0]}</label
+				>
+				<select
+					class="rounded border-2 border-gray-400 w-full whitespace-nowrap"
+					id="form-{form.id}"
+					bind:value={answer.text}
+					{disabled}
+				>
 					{#each form.text.split(':')[1].split(';') as option}
 						<option value={option}>{option}</option>
 					{/each}
@@ -56,30 +63,32 @@
 			</div>
 		{:else if form.type === 'multiple' && form.text.split(':').length > 1}
 			<div class="bg-gray-200 rounded-lg px-3 p-2 flex gap-2 flex-col">
-				<label class="text-sm font-semibold text-gray-600 break-words w-full" for="form-{form.id}">{form.text.split(':')[0]}</label>
+				<label class="text-sm font-semibold text-gray-600 break-words w-full" for="form-{form.id}"
+					>{form.text.split(':')[0]}</label
+				>
 				<div class="ml-1">
-				{#each form.text.split(':')[1].split(';') as option}
-					<div class=" border">
-						<input
-							class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7]"
-							id="form-{form.id}"
-							type="checkbox"
-							checked={answer.text.split(';').includes(option)}
-							on:change={() => {
-								if (answer.text.split(';').includes(option)) {
-									answer.text = answer.text
-										.split(';')
-										.filter((o) => o !== option)
-										.join(';');
-								} else {
-									answer.text = answer.text + ';' + option;
-								}
-							}}
-							{disabled}
-						/>
-						<label class="text-gray-600" for="form-{form.id}">{option}</label>
-					</div>
-				{/each}
+					{#each form.text.split(':')[1].split(';') as option}
+						<div class=" border">
+							<input
+								class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7]"
+								id="form-{form.id}"
+								type="checkbox"
+								checked={answer.text.split(';').includes(option)}
+								on:change={() => {
+									if (answer.text.split(';').includes(option)) {
+										answer.text = answer.text
+											.split(';')
+											.filter((o) => o !== option)
+											.join(';');
+									} else {
+										answer.text = answer.text + ';' + option;
+									}
+								}}
+								{disabled}
+							/>
+							<label class="text-gray-600" for="form-{form.id}">{option}</label>
+						</div>
+					{/each}
 				</div>
 			</div>
 		{/if}

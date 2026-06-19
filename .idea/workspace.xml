@@ -5,11 +5,352 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/lib/components/Button.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/_build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/_build.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/_bump_version.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/_bump_version.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/_create_release.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/_create_release.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/_disable_protection.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/_disable_protection.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/_enable_protection.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/_enable_protection.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy_dev.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy_dev.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/promote-developpement-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/promote-developpement-prod.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/release-developpement.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/release-developpement.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/release-production.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/release-production.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.prettierrc" beforeDir="false" afterPath="$PROJECT_DIR$/.prettierrc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/launch.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entry.cjs" beforeDir="false" afterPath="$PROJECT_DIR$/entry.cjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/jsconfig.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postcss.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/postcss.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.d.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hooks.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/hooks.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/client/ResponseHandlerClient.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/client/ResponseHandlerClient.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/common/statusCodes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/common/statusCodes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/Accordion.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/Accordion.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/AccountingTable.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/AccountingTable.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/AdvancedFilterer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/AdvancedFilterer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/ComposerDisplay.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/ComposerDisplay.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/Condition.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/Condition.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/DatePicker.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/DatePicker.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/DateShow.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/DateShow.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/LineChart.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/LineChart.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/ModuleHeader.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/ModuleHeader.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/Paginator.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/Paginator.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/PieChart.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/PieChart.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/QueryBuilder.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/QueryBuilder.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/SimpleFilterer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/SimpleFilterer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/Table.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/Table.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/TableContact.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/TableContact.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/TimePicker.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/TimePicker.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/AccordionEvent.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/AccordionEvent.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/CallsheetModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/CallsheetModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/CallsheetShow.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/CallsheetShow.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/ContactSection.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/ContactSection.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/ContentSection.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/ContentSection.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/EventSection.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/EventSection.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/ProgramSection.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/ProgramSection.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/callsheet/RichTextEditor.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/callsheet/RichTextEditor.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/contact/ContactModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/contact/ContactModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/contact/StylesFunctions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/contact/StylesFunctions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FilePreview.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FilePreview.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSearch.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSearch.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemExplorer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemHeader.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileSystemHeader.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileUploader.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileUploader.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ProjectFileManager.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/ShareFolderModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/ShareFolderModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/SharedFolderViewer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/SharedFolderViewer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/list/ListModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/list/ListModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MaterialEditor.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MaterialEditor.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MaterialManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MaterialManager.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MaterialSelector.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MaterialSelector.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MaterialStatusAlert.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MaterialStatusAlert.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/MinimalMaterialsManager.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/materials/ProjectMaterialsManager.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/materials/ProjectMaterialsManager.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/participant/AttendancePicker.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/participant/AttendancePicker.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/participant/ParticipantModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/participant/ParticipantModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/participant/SectionPicker.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/participant/SectionPicker.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/pieces/PieceDetail.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/pieces/PieceDetail.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/project/ProjectModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/project/ProjectModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/AddManualContactModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/AddManualContactModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ContactActionButtons.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ContactActionButtons.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ContactStatusBadge.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ContactStatusBadge.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsWorkingModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsWorkingModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ImportProjectModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ImportProjectModal.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecommendationActionButton.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecommendationActionButton.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecommendationCard.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecommendationCard.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentContactsList.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentContactsList.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentRecommendations.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentRecommendations.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentSettings.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentSettings.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentStats.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/RecruitmentStats.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationForm.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationForm.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationFormItemModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationFormItemModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationFormModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationFormModifier.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationModifier.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/registration/RegistrationShow.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/registration/RegistrationShow.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/sections/SectionGroupModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/sections/SectionGroupModifier.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/hooks/useProjectModification.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/hooks/useProjectModification.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/server/ResponseHandlerServer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/server/ResponseHandlerServer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/services/ProjectSyncService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/services/ProjectSyncService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Accounting.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Accounting.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Answer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Answer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Audition.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Audition.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Callsheet.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Callsheet.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Composer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Composer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Concert.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Concert.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Contact.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Contact.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/ContentCallsheet.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/ContentCallsheet.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/ContentRegistration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/ContentRegistration.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/CustomContact.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/CustomContact.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/CustomList.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/CustomList.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/CustomParticipant.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/CustomParticipant.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/ExpenseCategory.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/ExpenseCategory.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/File.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/File.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/FileSystem.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/FileSystem.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Folder.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Folder.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Form.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Form.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/GenericDataType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/GenericDataType.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Instrument.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Instrument.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/List.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/List.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/MailTemplate.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/MailTemplate.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Material.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Material.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Participant.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Participant.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Piece.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Piece.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Project.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Recommended.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Recommended.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/RecruitmentContact.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/RecruitmentContact.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/RecruitmentRecommendation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/RecruitmentRecommendation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/RecruitmentSettings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/RecruitmentSettings.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/RecruitmentStats.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/RecruitmentStats.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Registration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Registration.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Rehearsal.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Rehearsal.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/Section.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/Section.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/SectionGroup.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/SectionGroup.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/SubmittesContact.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/SubmittesContact.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/TableData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/TableData.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types/TypeOfPiece.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types/TypeOfPiece.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/utils/simplePdfGenerator.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/utils/simplePdfGenerator.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/+layout.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/+layout.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/+layout.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/+layout.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/accountings/[contactId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/accountings/[contactId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/accountings/attachment/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/accountings/attachment/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/files/[fileId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/files/[fileId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/files/stream/[fileId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/files/stream/[fileId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/pdf/pdfFileId/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/pdf/pdfFileId/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/pdfs/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/pdfs/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/save-notes/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/save-notes/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/submit/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/submit/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/audition/[token]/upload/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/audition/[token]/upload/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/call_sheets/[id]/[visitorId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/call_sheets/[id]/[visitorId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/composers/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/composers/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/composers/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/composers/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/composers/[id]/pieces/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/composers/[id]/pieces/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/contacts/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/contacts/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/contacts/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/contacts/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/contacts/validations/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/contacts/validations/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/expense_categories/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/expense_categories/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/expense_categories/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/expense_categories/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/files/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/files/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/files/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/files/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/files/download/[fileId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/files/download/[fileId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/files/stream/[fileId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/files/stream/[fileId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/files/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/files/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/folders/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/folders/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/contents/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/contents/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/share-status/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/share-status/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/share/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/share/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/stats/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/folders/[id]/stats/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/general/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/general/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/general/upload/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/general/upload/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/pieces/[pieceId]/scores/[fileName]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/pieces/[pieceId]/scores/[fileName]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/projects/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/projects/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/projects/[id]/init/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/projects/[id]/init/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/projects/[id]/sync-pieces/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/projects/[id]/sync-pieces/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/share/send-email/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/share/send-email/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/shared/[token]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/shared/[token]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/shared/[token]/download/[fileId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/shared/[token]/download/[fileId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/shared/[token]/folder/[folderId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/shared/[token]/folder/[folderId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/filesystem/upload/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/filesystem/upload/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/folders/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/folders/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/folders/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/folders/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/instruments/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/instruments/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/instruments/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/instruments/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/lists/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/lists/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/lists/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/lists/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendCallsheetNotifications/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendCallsheetNotifications/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendMailToParticipants/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendMailToParticipants/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendParticipationValidationNotifications/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendParticipationValidationNotifications/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendRecommendedNotifications/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendRecommendedNotifications/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendRecruitmentNotifications/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendRecruitmentNotifications/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendRefusalEmailToParticipant/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendRefusalEmailToParticipant/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendRegistrationNotifications/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendRegistrationNotifications/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/mailing/sendTemplateToLists/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/mailing/sendTemplateToLists/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/duplicate/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/duplicate/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/files/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/files/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/projects/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/projects/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/[id]/set-default/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/[id]/set-default/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/assign-bulk/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/assign-bulk/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/assign/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/assign/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/piece/[pieceId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/piece/[pieceId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/project/[projectId]/unspecified/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/project/[projectId]/unspecified/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/materials/unassign/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/materials/unassign/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/pieces/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/pieces/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/pieces/[pieceId]/select-material/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/pieces/[pieceId]/select-material/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/pieces/all/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/pieces/all/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/assigned-materials/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/assigned-materials/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/accounting/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/accounting/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/accounting/[accountingId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/accounting/[accountingId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/accounting/participant/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/accounting/participant/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/attendance/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/attendance/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/[auditionId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/[auditionId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/bulk-send-pdfs/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/bulk-send-pdfs/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/pdfs/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/pdfs/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/section-pdfs/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/section-pdfs/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/upload-pdf/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/auditions/upload-pdf/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/callsheets/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/callsheets/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/callsheets/[callsheetId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/callsheets/[callsheetId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/mailing/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/mailing/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/[participantId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/[participantId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/[participantId]/request-audition/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/[participantId]/request-audition/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/answers/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/participants/answers/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/auto-import-all/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/auto-import-all/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/contacts/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/contacts/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/contacts/[contactId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/contacts/[contactId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/contacts/import/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/contacts/import/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/import-project/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/import-project/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/recommendations/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/recommendations/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/recommendations/[recommendationId]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/recommendations/[recommendationId]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/search-contacts/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/search-contacts/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/send-emails/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/send-emails/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/send-recommendation-email/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/send-recommendation-email/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/settings/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/settings/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/stats/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/recruitment/stats/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/registration/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/registration/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/validation/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/management/validation/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/material-assignments/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/material-assignments/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/material-selections/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/material-selections/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/pieces/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/pieces/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/public/participants-count/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/public/participants-count/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/recommend/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/recommend/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/projects/[id]/sync-material-selections/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/projects/[id]/sync-material-selections/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/recommended/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/recommended/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/recommended/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/recommended/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/registrations/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/registrations/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/registrations/[id]/forms/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/registrations/[id]/forms/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/sectionGroups/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/sectionGroups/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/sectionGroups/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/sectionGroups/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/sections/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/sections/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/sections/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/sections/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/sign_in/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/sign_in/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/sign_out/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/sign_out/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/templates/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/templates/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/templates/[id]/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/templates/[id]/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/templates/default/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/templates/default/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/templates/send/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/templates/send/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/type_of_pieces/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/type_of_pieces/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/unsubscribe/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/unsubscribe/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/users/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/users/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api/users/current/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api/users/current/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/audition/[token]/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/audition/[token]/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/audition/[token]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/audition/[token]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/auth/cleanup/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/auth/cleanup/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/call_sheets/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/call_sheets/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/call_sheets/[id]/[visitorId]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/call_sheets/[id]/[visitorId]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/Dashboard.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/Dashboard.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/[id]/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/[id]/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/[id]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/[id]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/create/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/create/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/lists/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/lists/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/lists/[id]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/lists/[id]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/lists/create/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/lists/create/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/search/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/search/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/contacts/validation/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/contacts/validation/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/files/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/files/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/library/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/library/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/library/composers/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/library/composers/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/library/pieces/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/library/pieces/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/library/type_of_pieces/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/library/type_of_pieces/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/login/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/login/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mailing/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mailing/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mailing/HtmlEditor.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mailing/HtmlEditor.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mailing/templates/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mailing/templates/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mailing/templates/default/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mailing/templates/default/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mailing/validPseudoCode.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mailing/validPseudoCode.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/Dashboard.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/Dashboard.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerEvents.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerEvents.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerFolder.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerFolder.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerPieces.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerPieces.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerSection.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerSection.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerSheets.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/DisplayerSheets.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/Notification.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/Notification.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/ProjectHeadDisplayer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/ProjectHeadDisplayer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/ProjectPhoneDisplayer.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/ProjectPhoneDisplayer.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/accounting/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/accounting/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/accounting/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/accounting/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/attendance/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/attendance/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/attendance/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/attendance/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/pdfs/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/pdfs/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/pdfs/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/auditions/pdfs/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/creation/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/creation/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/creation/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/[callsheetId]/creation/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/creation/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/creation/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/creation/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/callsheets/creation/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/mailing/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/mailing/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/modify/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/modify/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/modify/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/modify/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/[participantId]/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/[participantId]/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/[participantId]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/[participantId]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/creation/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/creation/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/creation/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/participants/creation/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/recommendations/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/recommendations/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/recruitment/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/recruitment/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/registration/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/registration/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/registration/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/registration/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/validation/+page.server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/validation/+page.server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/management/validation/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/management/validation/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/[id]/recommend/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/[id]/recommend/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/projects/creation/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/projects/creation/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/recommendation/[id]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/recommendation/[id]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/registration/[id]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/registration/[id]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/sectionGroups/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/sectionGroups/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/shared/folders/[token]/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/shared/folders/[token]/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/test/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/test/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/test/api/+server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/test/api/+server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/unsubscribe/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/unsubscribe/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/users/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/users/+page.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svelte.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/svelte.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tailwind.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,10 +380,17 @@
       <entry key="_C:/Users/total informatique/Desktop/front" value="30B5cOjabNfLnrFKJ3iJAQE5cSY" />
     </persistenceIdMap>
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Button.svelte" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="dev" />
+        <entry key="$PROJECT_DIR$" value="master" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -71,15 +419,16 @@
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "copilot.chat.legacySessionMetadata.migrated": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "feat/registration-block-visibility-84",
+    "git-widget-placeholder": "brice-tickets/67-linter-svelte",
     "last_opened_file_path": "C:/Users/total informatique/Desktop/front",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "prettierjs.PrettierConfiguration.Package": "F:\\Java\\front\\node_modules\\prettier",
+    "prettierjs.PrettierConfiguration.Package": "C:\\Users\\total informatique\\Desktop\\front\\node_modules\\prettier",
     "settings.editor.selected.configurable": "preferences.lookFeel",
     "ts.external.directory.path": "C:\\Users\\total informatique\\Desktop\\front\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
@@ -121,6 +470,7 @@
       <workItem from="1780044261792" duration="177000" />
       <workItem from="1780044491742" duration="28000" />
       <workItem from="1780044545676" duration="5201000" />
+      <workItem from="1781807258918" duration="9935000" />
     </task>
     <servers />
   </component>

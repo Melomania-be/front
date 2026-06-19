@@ -42,28 +42,28 @@
 		updatedAt: new Date()
 	};
 
-    onMount(async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+	onMount(async () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
-        // Vérifier s'il y a un objet selected dans l'URL
-        const selectedParam = urlParams.get('selected');
-        if (selectedParam) {
-            try {
-                selectedData = JSON.parse(decodeURIComponent(selectedParam));
-            } catch (e) {
-                console.error('Error parsing selected composer:', e);
-            }
-        }
+		// Vérifier s'il y a un objet selected dans l'URL
+		const selectedParam = urlParams.get('selected');
+		if (selectedParam) {
+			try {
+				selectedData = JSON.parse(decodeURIComponent(selectedParam));
+			} catch (e) {
+				console.error('Error parsing selected composer:', e);
+			}
+		}
 
-        fetchData();
-    });
+		fetchData();
+	});
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -161,7 +161,7 @@
 		if (!validated) return;
 
 		const response = await fetch(`/api/composers/${selectedData.id}`, {
-			method: 'DELETE',
+			method: 'DELETE'
 		});
 
 		errorEvent(response);
@@ -188,15 +188,15 @@
 			<form class="justify-center w-full max-w-2xl mx-auto">
 				<div class="flex justify-between items-center">
 					<h1 class="text-4xl font-extrabold dark:text-white">Composer</h1>
-                    <!-- Close button -->
-                    <button
-                        on:click={() => (selectedData = null)}
-                        type="button"
-                        class="m-2 p-2 rounded-full border border-red-700 hover:bg-red-200"
-                    >
-                        Close
-                    </button>
-                </div>
+					<!-- Close button -->
+					<button
+						on:click={() => (selectedData = null)}
+						type="button"
+						class="m-2 p-2 rounded-full border border-red-700 hover:bg-red-200"
+					>
+						Close
+					</button>
+				</div>
 				<label for="fullName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
 					>*Full name</label
 				>

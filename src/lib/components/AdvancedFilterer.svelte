@@ -47,19 +47,19 @@
 	export let uniqueUrl: string = '';
 	export let columns: { [key: string]: string[] };
 	export let data: TableData<DataType> = { data: [], columns: [], notOrderedColumns: [] };
-	export let filterLevel: string[] = []
+	export let filterLevel: string[] = [];
 
 	let columnDisplayer: { [key: string]: boolean } = {
-		id : true,
-		firstName : true,
-		lastName : true,
-		email : true,
-		messenger : false,
-		phone : false,
-		comments : true,
-		instruments : true,
-		projects : false,
-		action : true
+		id: true,
+		firstName: true,
+		lastName: true,
+		email: true,
+		messenger: false,
+		phone: false,
+		comments: true,
+		instruments: true,
+		projects: false,
+		action: true
 	};
 
 	if (uniqueUrl === '') {
@@ -70,7 +70,7 @@
 	let typesOfWhere = ['and', 'or'];
 	let selectedData: GenericDataType | null = null;
 
-	let selectedLevelInstruments: [number, string | null][] = []
+	let selectedLevelInstruments: [number, string | null][] = [];
 
 	let instrumentFamily: string[] = [];
 
@@ -95,7 +95,6 @@
 			window.removeEventListener('resize', checkMobile);
 		};
 	});
-
 </script>
 
 <div class="bg-gray-100 dark:bg-gray-800 w-full px-4 py-3 rounded-lg shadow-md mb-4">
@@ -118,17 +117,24 @@
 	<div class="w-full relative">
 		<div class="flex flex-col items-center ml-2">
 			<div class="flex gap-2">
-				{#if instrumentFamily.length !== 0 }
+				{#if instrumentFamily.length !== 0}
 					{#if !isMobile}
-						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend :
+						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center">
+							Legend :
 							{#each instrumentFamily as family}
-								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}">
+									{familyToEmoji(family)}
+									{family}
+								</div>
 							{/each}
 						</p>
 					{:else}
-						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center	">
+						<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center">
 							{#each instrumentFamily as family}
-								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div>
+								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}">
+									{familyToEmoji(family)}
+									{family}
+								</div>
 							{/each}
 						</div>
 					{/if}
@@ -139,8 +145,9 @@
 			</button>
 		</div>
 		{#if showColumList}
-
-			<div class="absolute right-0 h-auto w-auto mt-0 bg-white rounded-lg border-gray-400 border-2 p-4 z-20">
+			<div
+				class="absolute right-0 h-auto w-auto mt-0 bg-white rounded-lg border-gray-400 border-2 p-4 z-20"
+			>
 				{#each Object.entries(columnDisplayer) as [col, displayed]}
 					<div class="flex gap-2 items-center">
 						<input
@@ -148,7 +155,10 @@
 							checked={displayed}
 							type="checkbox"
 							class="w-4 h-4 rounded-full text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-							on:click={()=>{columnDisplayer[col] = !displayed ; columnDisplayer = { ...columnDisplayer };}}
+							on:click={() => {
+								columnDisplayer[col] = !displayed;
+								columnDisplayer = { ...columnDisplayer };
+							}}
 						/>
 						<div>{col}</div>
 					</div>

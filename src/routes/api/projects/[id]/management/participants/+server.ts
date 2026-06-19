@@ -28,17 +28,14 @@ export const POST: RequestHandler = async ({ request, cookies, params }) => {
 
 	console.log('data', data);
 
-	const res = await fetch(
-		`${API_URL}/projects/${params.id}/management/participants`,
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			},
-			body: JSON.stringify(data)
-		}
-	);
+	const res = await fetch(`${API_URL}/projects/${params.id}/management/participants`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(data)
+	});
 
 	return res;
 };

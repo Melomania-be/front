@@ -14,12 +14,15 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	try {
@@ -37,11 +40,14 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 		return res;
 	} catch (error) {
 		console.error('Error sending recruitment emails:', error);
-		return new Response(JSON.stringify({
-			error: 'Failed to send recruitment emails'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to send recruitment emails'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

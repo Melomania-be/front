@@ -21,8 +21,7 @@
 
 	export let registration: Registration;
 	export let projectId: number;
-	export let registrationModifierMode : boolean;
-
+	export let registrationModifierMode: boolean;
 
 	type ParticipantsCountBySection = {
 		section_id: number;
@@ -39,20 +38,19 @@
 	async function loadParticipants() {
 		const response = await fetch(`/api/projects/${projectId}/public/participants-count`);
 
-
 		if (!response.ok) {
 			// Gestion d'erreur simple
 			console.error('Erreur lors de la récupération des participants:', response.statusText);
 			return;
 		}
 
-		const data : ParticipantsCountBySection[] = await response.json();
+		const data: ParticipantsCountBySection[] = await response.json();
 
 		participants = data;
 	}
 
 	let isMobile = false;
-	let widthSize : number;
+	let widthSize: number;
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000 || registrationModifierMode;
@@ -158,10 +156,10 @@
 	}
 
 	async function handleSubmit() {
-		if(registrationModifierMode){
-			return
+		if (registrationModifierMode) {
+			return;
 		}
-		
+
 		let hasError = false;
 
 		if (newContact.rehearsals.length === 0) {
@@ -207,7 +205,6 @@
 			})
 		};
 
-
 		const response = await fetch(`/api/registrations/${projectId}`, {
 			method: 'PUT',
 			headers: {
@@ -217,7 +214,6 @@
 		});
 
 		const responseText = await response.text();
-		
 
 		if (response.status >= 400 && response.status < 500) {
 			const jsonResponse = JSON.parse(responseText);
@@ -229,7 +225,6 @@
 
 		if (response.ok) {
 			showPopupSubmit = true;
-			
 		}
 	}
 
@@ -252,7 +247,7 @@
 	let concertError = false;
 
 	function validateContactFields() {
-		if(!registrationModifierMode){
+		if (!registrationModifierMode) {
 			contactErrors.first_name = newContact.first_name.trim() === '';
 			contactErrors.last_name = newContact.last_name.trim() === '';
 			contactErrors.email = newContact.email.trim() === '';
@@ -260,7 +255,6 @@
 
 			let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 			contactErrors.validEmail = !emailPattern.test(newContact.email);
-
 		}
 		return !Object.values(contactErrors).includes(true);
 	}
@@ -268,11 +262,11 @@
 	let showPopup = false;
 
 	let openInformationPopup = false;
-	let eventInformation : string | null;
-	let eventType : 'concert' | 'rehearsal' ;
+	let eventInformation: string | null;
+	let eventType: 'concert' | 'rehearsal';
 	let eventDate = new Date();
 
-	function showInformationPopUp(info : string | null, type : 'concert' | 'rehearsal' , date : Date){
+	function showInformationPopUp(info: string | null, type: 'concert' | 'rehearsal', date: Date) {
 		eventInformation = info;
 		eventType = type;
 		eventDate = date;
@@ -281,7 +275,6 @@
 	}
 
 	let showPopupSubmit = false;
-
 </script>
 
 <!-- Image fixe avec filtre
@@ -318,13 +311,22 @@
 
 {#if showPopupSubmit}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-		<div class="bg-white p-6 rounded-xl shadow-xl {!isMobile ? " w-[60%] text-lg" : "w-[90%] text-[15px]" } text-center  text-gray-600">
+		<div
+			class="bg-white p-6 rounded-xl shadow-xl {!isMobile
+				? ' w-[60%] text-lg'
+				: 'w-[90%] text-[15px]'} text-center text-gray-600"
+		>
 			<h2 class="text-lg font-bold mb-4">Registration Submitted Successfully</h2>
 			<p class="font-semibold">Thank you for registering to this project !</p>
-			<p><strong>Please note:</strong> It may take up to 10 days for your registration to be processed</p>
-<p>All communication will be sent from
-<span class="text-blue-400">noreply@melomania.be</span></p>
-<p>Please add this address to your contacts and check your spam folder regularly</p><p>to avoid missing any important updates</p>
+			<p>
+				<strong>Please note:</strong> It may take up to 10 days for your registration to be processed
+			</p>
+			<p>
+				All communication will be sent from
+				<span class="text-blue-400">noreply@melomania.be</span>
+			</p>
+			<p>Please add this address to your contacts and check your spam folder regularly</p>
+			<p>to avoid missing any important updates</p>
 			<button
 				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white font-bold rounded"
 				on:click={() => {
@@ -339,24 +341,22 @@
 <!-- POPUP SHOW INFORMATION -->
 {#if openInformationPopup}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-		<div class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
-		">
+		<div
+			class="bg-white p-6 rounded-xl shadow-xl w-[80%] text-center flex flex-col items-center justify-center
+		"
+		>
 			<h2 class="text-lg font-bold mb-2">INFORMATION</h2>
 			<div class="text-xs text-gray-500 flex flex-col">
 				<p class="text-lg">{eventType}</p>
-				<DateShow
-					startTime={eventDate}
-					withTime={false}
-					isRehearsal={eventType === 'rehearsal'}
-				/>
+				<DateShow startTime={eventDate} withTime={false} isRehearsal={eventType === 'rehearsal'} />
 				<DateShow
 					startTime={eventDate}
 					withTime
 					withDate={false}
 					isRehearsal={eventType === 'rehearsal'}
 				/>
-				</div>
-				<p class="text-lg bg-gray-200 w-[90%] rounded-lg px-2 py-3 mt-3">{eventInformation}</p>
+			</div>
+			<p class="text-lg bg-gray-200 w-[90%] rounded-lg px-2 py-3 mt-3">{eventInformation}</p>
 			<button
 				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
@@ -367,20 +367,25 @@
 	</div>
 {/if}
 
-
 <div class="h-auto w-[100%]">
 	{#if registration}
-		<h1 class="font-bold mb-2 p-3 {registrationModifierMode ? "text-gray-500 text-center" : "text-white"} {!isMobile ? "text-[40px] text-center mt-4 mb-4" : "text-xl mx-10"}">
+		<h1
+			class="font-bold mb-2 p-3 {registrationModifierMode
+				? 'text-gray-500 text-center'
+				: 'text-white'} {!isMobile ? 'text-[40px] text-center mt-4 mb-4' : 'text-xl mx-10'}"
+		>
 			Registration to the project : {registration.project?.name || 'No project name available'}
 		</h1>
 		<div class="h-auto pb-6 flex justify-center">
 			<div class="bg-white w-[80%] rounded-xl h-auto registration-content">
 				<div class="form-head h-auto">
-					<div class="my-2 { !isMobile ? "font-bold" : "font-medium"}" >
+					<div class="my-2 {!isMobile ? 'font-bold' : 'font-medium'}">
 						<div class="flex text-center justify-center items-center">
-							<p class="flex-1 {step >= 0 ? "text-[#7DBBE5]" : "text-[#C7C7C7]"}">Project Details</p>
-							<p class="flex-1 {step >= 1 ? "text-[#7DBBE5]" : "text-[#C7C7C7]"}">Contact</p>
-							<p class="flex-1 {step >= 2 ? "text-[#7DBBE5]" : "text-[#C7C7C7]"}">Attendances</p>
+							<p class="flex-1 {step >= 0 ? 'text-[#7DBBE5]' : 'text-[#C7C7C7]'}">
+								Project Details
+							</p>
+							<p class="flex-1 {step >= 1 ? 'text-[#7DBBE5]' : 'text-[#C7C7C7]'}">Contact</p>
+							<p class="flex-1 {step >= 2 ? 'text-[#7DBBE5]' : 'text-[#C7C7C7]'}">Attendances</p>
 						</div>
 						{#if !isMobile}
 							<Steps
@@ -421,7 +426,7 @@
 				<div class="from-body rounded-xl">
 					<!-- Step 1 : Project details -->
 					{#if step === 0}
-						<div class="form-body-content {!isMobile ? "h-[50vh]" : "h-[60vh]" }">
+						<div class="form-body-content {!isMobile ? 'h-[50vh]' : 'h-[60vh]'}">
 							<div class="pb-5">
 								{#if tabName === 'event'}
 									{#if !isMobile}
@@ -641,7 +646,10 @@
 						</div>
 						<div class="form-body-buttons rounded-b-xl">
 							<div class="w-full flex justify-center">
-								<button class="from-body-button h-auto max-w-[30%]" on:click={() => (step = step + 1)}>
+								<button
+									class="from-body-button h-auto max-w-[30%]"
+									on:click={() => (step = step + 1)}
+								>
 									Next
 								</button>
 							</div>
@@ -655,14 +663,14 @@
 							<div class="flex flex-col h-16">
 								<div
 									class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
-									{contactErrors.first_name  ? 'text-red-500 placeholder-red-400' : ''}"
+									{contactErrors.first_name ? 'text-red-500 placeholder-red-400' : ''}"
 									style="width: fit-content;"
 								>
 									First Name*
 								</div>
 								<input
 									class="p-3 border-2 border-gray-500 rounded-xl focus:outline-none
-									{contactErrors.first_name  ? 'border-red-500 placeholder-red-400' : ''}"
+									{contactErrors.first_name ? 'border-red-500 placeholder-red-400' : ''}"
 									bind:value={newContact.first_name}
 									placeholder="First name"
 									required
@@ -767,10 +775,8 @@
 										bind:value={newContact.section_id}
 									>
 										{#each registration.project.sectionGroup.sections as section}
-											<option
-												value={section.id}
-											>
-												{#if (participants.find(p => p.section_id === section.id)?.participants_count ?? 0) >= section.size}
+											<option value={section.id}>
+												{#if (participants.find((p) => p.section_id === section.id)?.participants_count ?? 0) >= section.size}
 													{section.name} (FULL)
 												{:else}
 													{section.name}
@@ -808,8 +814,8 @@
 											);
 											if (selectedSection && selectedSection.size) {
 												const isFull =
-													(participants.find((p) => p.section_id === selectedSection.id)?.participants_count ?? 0) >=
-													selectedSection.size;
+													(participants.find((p) => p.section_id === selectedSection.id)
+														?.participants_count ?? 0) >= selectedSection.size;
 												if (isFull) {
 													showPopup = true;
 													return;
@@ -826,7 +832,9 @@
 					{/if}
 					{#if step === 2}
 						<div
-							class="{!isMobile ? "h-[50vh]" : "h-[60vh]" } bg-[#ececec] pt-5 w-full pb-10 form-body-content"
+							class="{!isMobile
+								? 'h-[50vh]'
+								: 'h-[60vh]'} bg-[#ececec] pt-5 w-full pb-10 form-body-content"
 						>
 							<div class="mx-3">
 								<h3 class="text-xl font-bold tracking-tight text-gray-500 dark:text-white mb-2">
@@ -862,7 +870,12 @@
 																type="checkbox"
 																id={`${event.type}-${event.id}`}
 																value={event.id}
-																on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
+																on:change={(e) =>
+																	handleCheckboxChange(
+																		e,
+																		event.id ?? 0,
+																		event.type === 'concert' ? 'concert' : 'rehearsal'
+																	)}
 															/>
 														</td>
 														<td
@@ -896,7 +909,7 @@
 														</td>
 														<td
 															class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300
-															{event.comment ? "" : "text-gray-300"}"
+															{event.comment ? '' : 'text-gray-300'}"
 															>{event.comment ? event.comment : 'No additionnal information'}</td
 														>
 														<td
@@ -926,36 +939,45 @@
 											<div
 												class=" bg-white border-[2px] border-[#989898] pl-[10px] m-[15px] p-[5px] rounded-[12px] text-xs relative flex flex-col"
 											>
-												<div class="flex items-center ">
+												<div class="flex items-center">
 													<input
 														class="w-5 h-5 accent-[#30598f] ml-2 mr-2"
 														type="checkbox"
 														id={`${event.type}-${event.id}`}
 														value={event.id}
-														on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
+														on:change={(e) =>
+															handleCheckboxChange(
+																e,
+																event.id ?? 0,
+																event.type === 'concert' ? 'concert' : 'rehearsal'
+															)}
 													/>
 													<div class="w-auto">
 														<div class="flex flex-col">
 															<div class=" flex items-center gap-2 ml-2 p-[2px]">
 																<Fa icon={faCalendar} class="text-[14px]" style="color: #6B9AD9;" />
-																<div class="{widthSize < 450 ? "flex flex-col" : ""}">
-																<DateShow
-																	startTime={event.startDate}
-																	endTime={event.endDate}
-																	withTime={false}
-																	isRehearsal={event.type === 'rehearsal'}
-																/>
-																<DateShow
-																	startTime={event.startDate}
-																	endTime={event.endDate}
-																	withTime={true}
-																	withDate={false}
-																	isRehearsal={event.type === 'rehearsal'}
-																/>
+																<div class={widthSize < 450 ? 'flex flex-col' : ''}>
+																	<DateShow
+																		startTime={event.startDate}
+																		endTime={event.endDate}
+																		withTime={false}
+																		isRehearsal={event.type === 'rehearsal'}
+																	/>
+																	<DateShow
+																		startTime={event.startDate}
+																		endTime={event.endDate}
+																		withTime={true}
+																		withDate={false}
+																		isRehearsal={event.type === 'rehearsal'}
+																	/>
 																</div>
 															</div>
 															<div class=" flex items-center gap-2 ml-2 p-[2px]">
-																<Fa icon={faLocationDot} class="text-[14px]" style="color: #6B9AD9;" />
+																<Fa
+																	icon={faLocationDot}
+																	class="text-[14px]"
+																	style="color: #6B9AD9;"
+																/>
 																{event.place}
 															</div>
 															<div class=" flex items-center gap-2 ml-2 w-[70%]">
@@ -974,7 +996,7 @@
 																	</p>
 																</div>
 															</div>
-														
+
 															{#if event.type === 'rehearsal'}
 																<div
 																	class="absolute font-semibold bottom-[-0.5px] right-[-0.5px] bg-[#6B9AD9] text-white p-2 rounded-tl-2xl rounded-br-[10px]"
@@ -991,17 +1013,21 @@
 														</div>
 													</div>
 													{#if event.comment}
-													<button class="h-full flex mb-auto mt-1 mr-1 ml-auto"
-													on:click={() => showInformationPopUp(event.comment,(event.type === "concert" ? "concert" : "rehearsal"),event.startDate)}
-													>
-														
-														
-														<Fa 
-															icon={faCircleInfo}
-															class="text-[20px] "
-															style="color: #6B9AD9;" />
-														
-													</button>
+														<button
+															class="h-full flex mb-auto mt-1 mr-1 ml-auto"
+															on:click={() =>
+																showInformationPopUp(
+																	event.comment,
+																	event.type === 'concert' ? 'concert' : 'rehearsal',
+																	event.startDate
+																)}
+														>
+															<Fa
+																icon={faCircleInfo}
+																class="text-[20px] "
+																style="color: #6B9AD9;"
+															/>
+														</button>
 													{/if}
 												</div>
 											</div>
@@ -1082,7 +1108,7 @@
 		justify-content: center;
 	}
 	.form-head {
-		position: relative;	
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;

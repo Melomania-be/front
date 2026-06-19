@@ -16,12 +16,15 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 
 		if (!checkResponse.ok) {
 			console.error('Cannot check file deletion permissions');
-			return new Response(JSON.stringify({
-				error: 'Cannot verify file deletion permissions'
-			}), {
-				status: 403,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify({
+					error: 'Cannot verify file deletion permissions'
+				}),
+				{
+					status: 403,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 
 		const checkResult = await checkResponse.json();
@@ -29,16 +32,17 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 		// Protection : Empêcher la suppression de fichiers de projet depuis les fichiers généraux
 		if (checkResult.file.projectId || checkResult.file.pieceId) {
 			console.error('Attempted to delete project file from general interface!');
-			return new Response(JSON.stringify({
-				error: 'Cannot delete project files from general file interface',
-				message: 'This file belongs to a project and must be deleted from the project interface'
-			}), {
-				status: 403,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify({
+					error: 'Cannot delete project files from general file interface',
+					message: 'This file belongs to a project and must be deleted from the project interface'
+				}),
+				{
+					status: 403,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
-
-	
 
 		// ✅ Procéder à la suppression si le fichier est vraiment général
 		const response = await fetch(`${API_URL}/filesystem/files/${params.id}`, {
@@ -55,12 +59,15 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 		return response;
 	} catch (error) {
 		console.error('Error in file deletion:', error);
-		return new Response(JSON.stringify({
-			error: 'Deletion failed',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Deletion failed',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

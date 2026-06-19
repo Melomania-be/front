@@ -13,12 +13,15 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	try {
@@ -40,12 +43,15 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 				});
 			} catch (parseError) {
 				console.error('Failed to parse response:', parseError);
-				return new Response(JSON.stringify({
-					error: 'Invalid response format from server'
-				}), {
-					status: 500,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({
+						error: 'Invalid response format from server'
+					}),
+					{
+						status: 500,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 		} else {
 			console.error('Settings fetch failed:', res.status, responseText);
@@ -56,12 +62,15 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		}
 	} catch (error) {
 		console.error('Error fetching recruitment settings:', error);
-		return new Response(JSON.stringify({
-			error: 'Failed to fetch recruitment settings'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to fetch recruitment settings'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };
 
@@ -69,12 +78,15 @@ export const PUT: RequestHandler = async ({ params, cookies, request, fetch }) =
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	try {
@@ -89,12 +101,15 @@ export const PUT: RequestHandler = async ({ params, cookies, request, fetch }) =
 				requestData = JSON.parse(requestText);
 			} catch (parseError) {
 				console.error('JSON parse error:', parseError);
-				return new Response(JSON.stringify({
-					error: 'Invalid JSON in request body'
-				}), {
-					status: 400,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({
+						error: 'Invalid JSON in request body'
+					}),
+					{
+						status: 400,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 		} else {
 			requestData = await request.formData();
@@ -108,13 +123,20 @@ export const PUT: RequestHandler = async ({ params, cookies, request, fetch }) =
 			auto_follow_up_enabled: Boolean(requestData.auto_follow_up_enabled)
 		};
 
-		if (isNaN(validatedData.follow_up_days) || validatedData.follow_up_days < 1 || validatedData.follow_up_days > 30) {
-			return new Response(JSON.stringify({
-				error: 'Follow-up days must be a number between 1 and 30'
-			}), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
+		if (
+			isNaN(validatedData.follow_up_days) ||
+			validatedData.follow_up_days < 1 ||
+			validatedData.follow_up_days > 30
+		) {
+			return new Response(
+				JSON.stringify({
+					error: 'Follow-up days must be a number between 1 and 30'
+				}),
+				{
+					status: 400,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 
 		console.log('Sending validated data to backend:', validatedData);
@@ -141,12 +163,15 @@ export const PUT: RequestHandler = async ({ params, cookies, request, fetch }) =
 				});
 			} catch (parseError) {
 				console.error('Failed to parse update response:', parseError);
-				return new Response(JSON.stringify({
-					error: 'Invalid response format from server'
-				}), {
-					status: 500,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({
+						error: 'Invalid response format from server'
+					}),
+					{
+						status: 500,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 		} else {
 			console.error('Settings update failed:', res.status, responseText);
@@ -159,20 +184,26 @@ export const PUT: RequestHandler = async ({ params, cookies, request, fetch }) =
 				errorMessage = `HTTP ${res.status}: ${responseText}`;
 			}
 
-			return new Response(JSON.stringify({
-				error: errorMessage
-			}), {
-				status: res.status,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify({
+					error: errorMessage
+				}),
+				{
+					status: res.status,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 	} catch (error) {
 		console.error('Error updating recruitment settings:', error);
-		return new Response(JSON.stringify({
-			error: error.message || 'Failed to update recruitment settings'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: error.message || 'Failed to update recruitment settings'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

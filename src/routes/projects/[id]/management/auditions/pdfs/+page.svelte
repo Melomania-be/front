@@ -54,10 +54,7 @@
 
 	onMount(async () => {
 		console.log('Project ID from data:', data.id);
-		await Promise.all([
-			fetchProject(),
-			loadSectionPdfs()
-		]);
+		await Promise.all([fetchProject(), loadSectionPdfs()]);
 	});
 
 	async function fetchProject() {
@@ -92,7 +89,12 @@
 				console.log('Loaded sections:', sections);
 			} else {
 				const errorText = await response.text();
-				console.error('Failed to load section PDFs. Status:', response.status, 'Response:', errorText);
+				console.error(
+					'Failed to load section PDFs. Status:',
+					response.status,
+					'Response:',
+					errorText
+				);
 			}
 		} catch (error) {
 			console.error('Error loading section PDFs:', error);
@@ -140,7 +142,7 @@
 
 			// Auto-generate title based on filename
 			if (!uploadTitle) {
-				const fileName = uploadFile.name.replace(/\.[^/.]+$/, ""); // Remove extension
+				const fileName = uploadFile.name.replace(/\.[^/.]+$/, ''); // Remove extension
 				uploadTitle = fileName;
 			}
 		}
@@ -190,7 +192,7 @@
 	}
 
 	function togglePdfSelection(pdf: any) {
-		const index = selectedPdfs.findIndex(p => p.file_id === pdf.file_id && p.title === pdf.title);
+		const index = selectedPdfs.findIndex((p) => p.file_id === pdf.file_id && p.title === pdf.title);
 		if (index > -1) {
 			selectedPdfs = selectedPdfs.filter((_, i) => i !== index);
 		} else {
@@ -213,7 +215,7 @@
 				},
 				body: JSON.stringify({
 					section_id: selectedSection.section_id,
-					pdf_files: selectedPdfs.map(pdf => ({
+					pdf_files: selectedPdfs.map((pdf) => ({
 						file_id: pdf.file_id,
 						title: pdf.title,
 						description: pdf.description,
@@ -250,7 +252,11 @@
 	}
 
 	async function deletePdf(pdf: any, section: any) {
-		if (!confirm(`Are you sure you want to delete "${pdf.title}" from section ${section.section_name}?`)) {
+		if (
+			!confirm(
+				`Are you sure you want to delete "${pdf.title}" from section ${section.section_name}?`
+			)
+		) {
 			return;
 		}
 
@@ -319,17 +325,28 @@
 <!-- ✅ NOUVEAU DESIGN : Utilisation du même style que les autres pages -->
 <div class="bg-[#E7E7E7] p-4 min-h-screen pb-[80px]">
 	<div class="p-4 gap-4 flex flex-col">
-
 		{#if !data?.id}
 			<!-- Error state -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 				<div class="text-center py-12">
 					<div class="text-red-500">
-						<svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+						<svg
+							class="mx-auto h-12 w-12 text-red-400 mb-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+							/>
 						</svg>
 						<h3 class="text-lg font-medium text-red-900">Loading Error</h3>
-						<p class="text-sm text-red-600">Project ID not available. Please check that you are on the correct page.</p>
+						<p class="text-sm text-red-600">
+							Project ID not available. Please check that you are on the correct page.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -342,7 +359,6 @@
 				</div>
 			</div>
 		{:else}
-
 			<!-- Header Actions -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 				<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
@@ -359,7 +375,6 @@
 						{/if}
 					</div>
 					<div class="flex gap-3">
-
 						<button
 							on:click={goBack}
 							class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 font-semibold"
@@ -401,15 +416,19 @@
 				<div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
 					<div class="flex items-center">
 						<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+							<path
+								fill-rule="evenodd"
+								d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+								clip-rule="evenodd"
+							/>
 						</svg>
 						<div class="text-sm text-blue-700">
 							<p class="font-medium">📚 Process Overview</p>
 							<p>
-								1. <strong>Upload</strong> PDFs for each section
-								• 2. <strong>send</strong> an audition request to a candidate
-								• 3. Candidates can <strong>download</strong> and play the pieces
-								• 4. They will send back their <strong>audio/video recordings</strong>
+								1. <strong>Upload</strong> PDFs for each section • 2. <strong>send</strong> an
+								audition request to a candidate • 3. Candidates can <strong>download</strong> and
+								play the pieces • 4. They will send back their
+								<strong>audio/video recordings</strong>
 							</p>
 						</div>
 					</div>
@@ -420,8 +439,18 @@
 			{#if sections.length === 0}
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="text-center py-12">
-						<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						<svg
+							class="mx-auto h-12 w-12 text-gray-400"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+							/>
 						</svg>
 						<h3 class="mt-2 text-sm font-medium text-gray-900">No sections found</h3>
 						<p class="mt-1 text-sm text-gray-500">Make sure the project has configured sections.</p>
@@ -435,10 +464,16 @@
 							<div class="flex {isMobile ? 'flex-col gap-3' : 'justify-between items-center'}">
 								<div>
 									<h3 class="text-lg font-bold text-gray-900">{section.section_name}</h3>
-									<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center space-x-4'} text-sm text-gray-600 mt-1">
+									<div
+										class="flex {isMobile
+											? 'flex-col gap-1'
+											: 'items-center space-x-4'} text-sm text-gray-600 mt-1"
+									>
 										<span class="flex items-center">
 											<span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
-											{section.auditions_count} active audition{section.auditions_count > 1 ? 's' : ''}
+											{section.auditions_count} active audition{section.auditions_count > 1
+												? 's'
+												: ''}
 										</span>
 										<span class="flex items-center">
 											<span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
@@ -470,8 +505,18 @@
 						<div class="px-6 py-4">
 							{#if section.pdfs.length === 0}
 								<div class="text-center py-8 text-gray-500">
-									<svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+									<svg
+										class="mx-auto h-8 w-8 text-gray-400 mb-2"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										/>
 									</svg>
 									<p class="text-sm">No PDFs for this section</p>
 									<button
@@ -482,9 +527,15 @@
 									</button>
 								</div>
 							{:else}
-								<div class="grid grid-cols-1 {isMobile ? 'gap-3' : 'md:grid-cols-2 lg:grid-cols-3 gap-4'}">
+								<div
+									class="grid grid-cols-1 {isMobile
+										? 'gap-3'
+										: 'md:grid-cols-2 lg:grid-cols-3 gap-4'}"
+								>
 									{#each section.pdfs as pdf}
-										<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+										<div
+											class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
+										>
 											<div class="flex items-start justify-between mb-2">
 												<div class="flex-1">
 													<h4 class="font-medium text-gray-900">{pdf.title}</h4>
@@ -497,14 +548,32 @@
 													class="text-red-500 hover:text-red-700 p-1"
 													title="Delete"
 												>
-													<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16" />
+													<svg
+														class="h-4 w-4"
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16"
+														/>
 													</svg>
 												</button>
 											</div>
-											<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center justify-between'} text-xs text-gray-500">
+											<div
+												class="flex {isMobile
+													? 'flex-col gap-1'
+													: 'items-center justify-between'} text-xs text-gray-500"
+											>
 												<span class="truncate">{pdf.file.name}</span>
-												<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold {isMobile ? 'text-center' : ''}">
+												<span
+													class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold {isMobile
+														? 'text-center'
+														: ''}"
+												>
 													Used {pdf.usage_count} time{pdf.usage_count > 1 ? 's' : ''}
 												</span>
 											</div>
@@ -537,9 +606,7 @@
 			<div class="px-6 py-4">
 				<div class="space-y-4">
 					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">
-							PDF File *
-						</label>
+						<label class="block text-sm font-medium text-gray-700 mb-2"> PDF File * </label>
 						<input
 							type="file"
 							accept=".pdf"
@@ -550,9 +617,7 @@
 					</div>
 
 					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">
-							Title *
-						</label>
+						<label class="block text-sm font-medium text-gray-700 mb-2"> Title * </label>
 						<input
 							type="text"
 							bind:value={uploadTitle}
@@ -576,9 +641,7 @@
 					</div>
 
 					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">
-							Display order
-						</label>
+						<label class="block text-sm font-medium text-gray-700 mb-2"> Display order </label>
 						<input
 							type="number"
 							bind:value={uploadOrder}
@@ -641,7 +704,9 @@
 							<div class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
 								<input
 									type="checkbox"
-									checked={selectedPdfs.some(p => p.file_id === pdf.file_id && p.title === pdf.title)}
+									checked={selectedPdfs.some(
+										(p) => p.file_id === pdf.file_id && p.title === pdf.title
+									)}
 									on:change={() => togglePdfSelection(pdf)}
 									class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
 									disabled={isSending}
@@ -663,11 +728,23 @@
 					<div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
 						<div class="flex items-center">
 							<svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+								<path
+									fill-rule="evenodd"
+									d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+									clip-rule="evenodd"
+								/>
 							</svg>
 							<div class="text-sm text-yellow-700">
-								<p><strong>Action:</strong> Selected PDFs will be associated with all active auditions in this section.</p>
-								<p><strong>Result:</strong> {selectedSection.auditions_count} candidate{selectedSection.auditions_count > 1 ? 's' : ''} will be able to download these documents.</p>
+								<p>
+									<strong>Action:</strong> Selected PDFs will be associated with all active auditions
+									in this section.
+								</p>
+								<p>
+									<strong>Result:</strong>
+									{selectedSection.auditions_count} candidate{selectedSection.auditions_count > 1
+										? 's'
+										: ''} will be able to download these documents.
+								</p>
 							</div>
 						</div>
 					</div>

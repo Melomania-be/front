@@ -1,121 +1,121 @@
 <!-- src/lib/components/recruitment/RecruitmentSettings.svelte -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
-	import { X, Settings, Info } from 'lucide-svelte'
-	import type { RecruitmentSettings as SettingsType } from '$lib/types'
+	import { createEventDispatcher } from 'svelte';
+	import { X, Settings, Info } from 'lucide-svelte';
+	import type { RecruitmentSettings as SettingsType } from '$lib/types';
 
-	export let projectId: string
-	export let settings: SettingsType
+	export let projectId: string;
+	export let settings: SettingsType;
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
 	let localSettings = {
 		follow_up_days: 7,
 		auto_follow_up_enabled: true
-	}
+	};
 
-	let saving = false
-	let hasChanges = false
+	let saving = false;
+	let hasChanges = false;
 
 	$: if (settings) {
 		localSettings = {
 			follow_up_days: Number(settings.follow_up_days) || 7,
 			auto_follow_up_enabled: Boolean(settings.auto_follow_up_enabled)
-		}
-		hasChanges = false
+		};
+		hasChanges = false;
 	}
 
 	$: {
 		if (settings) {
 			hasChanges =
 				localSettings.follow_up_days !== Number(settings.follow_up_days) ||
-				localSettings.auto_follow_up_enabled !== Boolean(settings.auto_follow_up_enabled)
+				localSettings.auto_follow_up_enabled !== Boolean(settings.auto_follow_up_enabled);
 		}
 	}
 
 	async function saveSettings() {
 		if (!projectId || projectId === 'undefined' || projectId === 'null') {
-			console.error('Invalid project ID for settings save:', projectId)
-			alert('Error: Invalid project ID')
-			return
+			console.error('Invalid project ID for settings save:', projectId);
+			alert('Error: Invalid project ID');
+			return;
 		}
 
 		if (localSettings.follow_up_days < 1 || localSettings.follow_up_days > 30) {
-			alert('Follow-up delay must be between 1 and 30 days')
-			return
+			alert('Follow-up delay must be between 1 and 30 days');
+			return;
 		}
 
-		saving = true
+		saving = true;
 
 		try {
 			const requestBody = {
 				follow_up_days: Number(localSettings.follow_up_days),
 				auto_follow_up_enabled: Boolean(localSettings.auto_follow_up_enabled)
-			}
+			};
 
-			console.log('Saving settings:', requestBody)
+			console.log('Saving settings:', requestBody);
 
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/settings`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
-					'Accept': 'application/json'
+					Accept: 'application/json'
 				},
 				body: JSON.stringify(requestBody)
-			})
+			});
 
 			if (!response.ok) {
-				const errorText = await response.text()
-				let errorMessage = 'Error saving settings'
+				const errorText = await response.text();
+				let errorMessage = 'Error saving settings';
 
 				try {
-					const errorData = JSON.parse(errorText)
-					errorMessage = errorData.error || errorData.message || errorMessage
+					const errorData = JSON.parse(errorText);
+					errorMessage = errorData.error || errorData.message || errorMessage;
 				} catch {
-					errorMessage = `HTTP ${response.status}: ${errorText || response.statusText}`
+					errorMessage = `HTTP ${response.status}: ${errorText || response.statusText}`;
 				}
 
-				throw new Error(errorMessage)
+				throw new Error(errorMessage);
 			}
 
-			const updatedSettings = await response.json()
-			console.log('Settings saved successfully:', updatedSettings)
+			const updatedSettings = await response.json();
+			console.log('Settings saved successfully:', updatedSettings);
 
-			dispatch('update', updatedSettings)
-			dispatch('close')
+			dispatch('update', updatedSettings);
+			dispatch('close');
 		} catch (error) {
-			console.error('Error saving settings:', error)
-			alert(`Error saving settings: ${error.message}`)
+			console.error('Error saving settings:', error);
+			alert(`Error saving settings: ${error.message}`);
 		} finally {
-			saving = false
+			saving = false;
 		}
 	}
 
 	function closeModal() {
-		dispatch('close')
+		dispatch('close');
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
-			closeModal()
+			closeModal();
 		}
 	}
 
 	function handleFollowUpDaysChange(event: Event) {
-		const target = event.target as HTMLInputElement
-		const value = Number(target.value)
+		const target = event.target as HTMLInputElement;
+		const value = Number(target.value);
 
 		if (value < 1) {
-			localSettings.follow_up_days = 1
+			localSettings.follow_up_days = 1;
 		} else if (value > 30) {
-			localSettings.follow_up_days = 30
+			localSettings.follow_up_days = 30;
 		} else {
-			localSettings.follow_up_days = value
+			localSettings.follow_up_days = value;
 		}
 	}
 
 	function handleAutoFollowUpToggle() {
-		localSettings.auto_follow_up_enabled = !localSettings.auto_follow_up_enabled
+		localSettings.auto_follow_up_enabled = !localSettings.auto_follow_up_enabled;
 	}
 
 	function resetSettings() {
@@ -123,7 +123,7 @@
 			localSettings = {
 				follow_up_days: Number(settings.follow_up_days) || 7,
 				auto_follow_up_enabled: Boolean(settings.auto_follow_up_enabled)
-			}
+			};
 		}
 	}
 </script>
@@ -160,7 +160,8 @@
 								Enable automatic follow-up
 							</label>
 							<p class="text-sm text-gray-600 mt-1">
-								Contacts in "awaiting response" will automatically change to "follow up" after the configured delay
+								Contacts in "awaiting response" will automatically change to "follow up" after the
+								configured delay
 							</p>
 						</div>
 						<label class="relative inline-flex items-center cursor-pointer">
@@ -171,7 +172,9 @@
 								on:change={handleAutoFollowUpToggle}
 								class="sr-only peer"
 							/>
-							<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+							<div
+								class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"
+							></div>
 						</label>
 					</div>
 
@@ -190,13 +193,11 @@
 								disabled={!localSettings.auto_follow_up_enabled}
 								class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
 							/>
-							<span class="text-sm text-gray-600">
-								day(s) after first contact
-							</span>
+							<span class="text-sm text-gray-600"> day(s) after first contact </span>
 						</div>
 						<p class="text-sm text-gray-500">
-							If a contact is "awaiting response" for {localSettings.follow_up_days} day(s),
-							it will automatically change to "follow up"
+							If a contact is "awaiting response" for {localSettings.follow_up_days} day(s), it will
+							automatically change to "follow up"
 						</p>
 					</div>
 				</div>
@@ -208,8 +209,8 @@
 					<div class="text-sm">
 						<p class="font-medium text-blue-900 mb-1">Impact of changes</p>
 						<p class="text-blue-800">
-							Modifying the follow-up delay will automatically recalculate the status of all contacts
-							currently "awaiting response" based on their initial contact date.
+							Modifying the follow-up delay will automatically recalculate the status of all
+							contacts currently "awaiting response" based on their initial contact date.
 						</p>
 					</div>
 				</div>
@@ -220,7 +221,11 @@
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-gray-600">Automatic follow-up:</span>
-						<span class="font-medium {settings?.auto_follow_up_enabled ? 'text-green-600' : 'text-red-600'}">
+						<span
+							class="font-medium {settings?.auto_follow_up_enabled
+								? 'text-green-600'
+								: 'text-red-600'}"
+						>
 							{settings?.auto_follow_up_enabled ? 'Enabled' : 'Disabled'}
 						</span>
 					</div>
@@ -239,10 +244,15 @@
 							<p class="font-medium text-yellow-900 mb-1">Pending changes</p>
 							<div class="space-y-1 text-yellow-800">
 								{#if localSettings.follow_up_days !== Number(settings?.follow_up_days)}
-									<p>Follow-up delay: {settings?.follow_up_days} → {localSettings.follow_up_days} day(s)</p>
+									<p>
+										Follow-up delay: {settings?.follow_up_days} → {localSettings.follow_up_days} day(s)
+									</p>
 								{/if}
 								{#if localSettings.auto_follow_up_enabled !== Boolean(settings?.auto_follow_up_enabled)}
-									<p>Automatic follow-up: {settings?.auto_follow_up_enabled ? 'Enabled' : 'Disabled'} → {localSettings.auto_follow_up_enabled ? 'Enabled' : 'Disabled'}</p>
+									<p>
+										Automatic follow-up: {settings?.auto_follow_up_enabled ? 'Enabled' : 'Disabled'}
+										→ {localSettings.auto_follow_up_enabled ? 'Enabled' : 'Disabled'}
+									</p>
 								{/if}
 							</div>
 						</div>
@@ -287,15 +297,15 @@
 </div>
 
 <style>
-    .peer:checked + div {
-        background-color: #3b82f6;
-    }
+	.peer:checked + div {
+		background-color: #3b82f6;
+	}
 
-    .peer:checked + div:after {
-        transform: translateX(100%);
-    }
+	.peer:checked + div:after {
+		transform: translateX(100%);
+	}
 
-    .peer:focus + div {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
+	.peer:focus + div {
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+	}
 </style>

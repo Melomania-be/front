@@ -1,7 +1,19 @@
 <!-- src/lib/components/materials/ProjectMaterialsManager.svelte - Version complète avec upload de fichiers -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { Save, AlertCircle, CheckCircle, Music, Plus, Upload, FileText, Download, Eye, Trash2, Edit } from 'lucide-svelte';
+	import {
+		Save,
+		AlertCircle,
+		CheckCircle,
+		Music,
+		Plus,
+		Upload,
+		FileText,
+		Download,
+		Eye,
+		Trash2,
+		Edit
+	} from 'lucide-svelte';
 	import MaterialSelector from './MaterialSelector.svelte';
 	import MaterialEditor from './MaterialEditor.svelte';
 	import FileUploader from '../filesystem/FileUploader.svelte';
@@ -43,12 +55,14 @@
 				console.log('📊 Loaded project data:', {
 					projectId: fullProjectData.id,
 					piecesCount: fullProjectData.pieces?.length || 0,
-					samplePiece: fullProjectData.pieces?.[0] ? {
-						id: fullProjectData.pieces[0].id,
-						name: fullProjectData.pieces[0].name,
-						pivot_material_id: fullProjectData.pieces[0].pivot_material_id,
-						pivot_material_specified: fullProjectData.pieces[0].pivot_material_specified
-					} : null
+					samplePiece: fullProjectData.pieces?.[0]
+						? {
+								id: fullProjectData.pieces[0].id,
+								name: fullProjectData.pieces[0].name,
+								pivot_material_id: fullProjectData.pieces[0].pivot_material_id,
+								pivot_material_specified: fullProjectData.pieces[0].pivot_material_specified
+							}
+						: null
 				});
 
 				// Mapper correctement les pièces avec les données pivot
@@ -58,12 +72,15 @@
 					selectedMaterialId: piece.pivot_material_id || null
 				}));
 
-				console.log('📊 Mapped pieces:', pieces.map(p => ({
-					id: p.id,
-					name: p.name,
-					materialSpecified: p.materialSpecified,
-					selectedMaterialId: p.selectedMaterialId
-				})));
+				console.log(
+					'📊 Mapped pieces:',
+					pieces.map((p) => ({
+						id: p.id,
+						name: p.name,
+						materialSpecified: p.materialSpecified,
+						selectedMaterialId: p.selectedMaterialId
+					}))
+				);
 			} else {
 				console.error('Failed to load project data:', response.status);
 				pieces = (project.pieces || []).map((piece: any) => ({
@@ -83,7 +100,7 @@
 
 		// Initialiser les sélections avec les données existantes
 		materialSelections = {};
-		pieces.forEach(piece => {
+		pieces.forEach((piece) => {
 			materialSelections[piece.id] = piece.selectedMaterialId;
 		});
 
@@ -169,62 +186,61 @@
 	// Dans handleFileUpload()
 	async function handleFileUpload(files: FileList) {
 		if (!selectedMaterialForUpload) {
-			console.error('❌ No material selected for upload')
-			return
+			console.error('❌ No material selected for upload');
+			return;
 		}
 
-		console.log('📤 Uploading files to material:', selectedMaterialForUpload.name)
+		console.log('📤 Uploading files to material:', selectedMaterialForUpload.name);
 
-		const formData = new FormData()
+		const formData = new FormData();
 		Array.from(files).forEach((file, index) => {
-			console.log(`📄 Adding file ${index + 1}: ${file.name}`)
-			formData.append('files', file)
-		})
+			console.log(`📄 Adding file ${index + 1}: ${file.name}`);
+			formData.append('files', file);
+		});
 
 		try {
 			const response = await fetch(`/api/materials/${selectedMaterialForUpload.id}/files`, {
 				method: 'POST',
 				body: formData
-			})
+			});
 
-			const responseData = await response.json()
-			console.log('📥 Response:', responseData)
+			const responseData = await response.json();
+			console.log('📥 Response:', responseData);
 
 			if (response.ok && responseData.success) {
-				console.log('✅ Upload successful!')
+				console.log('✅ Upload successful!');
 
 				// Recharger les matériels pour toutes les pièces
-				await loadAllMaterials()
+				await loadAllMaterials();
 
 				// Recharger les données du projet
-				await loadProjectPieces()
+				await loadProjectPieces();
 
 				// Notifier le composant parent
-				dispatch('materialsUpdated')
+				dispatch('materialsUpdated');
 
-				showUploader = false
-				selectedMaterialForUpload = null
+				showUploader = false;
+				selectedMaterialForUpload = null;
 
-				successMessage = responseData.message
+				successMessage = responseData.message;
 				if (responseData.errors && responseData.errors.length > 0) {
-					errorMessage = `Avertissements: ${responseData.errors.join(', ')}`
+					errorMessage = `Avertissements: ${responseData.errors.join(', ')}`;
 				}
 
 				setTimeout(() => {
-					successMessage = ''
-					errorMessage = ''
-				}, 5000)
-
+					successMessage = '';
+					errorMessage = '';
+				}, 5000);
 			} else {
-				console.error('❌ Upload failed:', responseData)
-				errorMessage = responseData.error || 'Erreur lors de l\'upload'
+				console.error('❌ Upload failed:', responseData);
+				errorMessage = responseData.error || "Erreur lors de l'upload";
 				if (responseData.errors) {
-					errorMessage += ': ' + responseData.errors.join(', ')
+					errorMessage += ': ' + responseData.errors.join(', ');
 				}
 			}
 		} catch (error) {
-			console.error('❌ Upload error:', error)
-			errorMessage = 'Erreur de connexion lors de l\'upload'
+			console.error('❌ Upload error:', error);
+			errorMessage = "Erreur de connexion lors de l'upload";
 		}
 	}
 
@@ -238,7 +254,7 @@
 		try {
 			console.log('💾 Saving material assignments:', materialSelections);
 
-			const updates = pieces.map(piece => ({
+			const updates = pieces.map((piece) => ({
 				projectId: project.id,
 				pieceId: piece.id,
 				materialId: materialSelections[piece.id] || null
@@ -288,15 +304,15 @@
 		successMessage = '';
 	}
 
-	$: unspecifiedCount = pieces.filter(p => !materialSelections[p.id]).length;
-	$: specifiedCount = pieces.filter(p => materialSelections[p.id]).length;
-	$: changedCount = pieces.filter(p => materialSelections[p.id] !== p.selectedMaterialId).length;
+	$: unspecifiedCount = pieces.filter((p) => !materialSelections[p.id]).length;
+	$: specifiedCount = pieces.filter((p) => materialSelections[p.id]).length;
+	$: changedCount = pieces.filter((p) => materialSelections[p.id] !== p.selectedMaterialId).length;
 
 	// ✅ NOUVEAU : Obtenir le matériel sélectionné pour une pièce
 	function getSelectedMaterial(pieceId: number): Material | null {
 		const materialId = materialSelections[pieceId];
 		if (!materialId || !materialsData[pieceId]) return null;
-		return materialsData[pieceId].find(m => m.id === materialId) || null;
+		return materialsData[pieceId].find((m) => m.id === materialId) || null;
 	}
 </script>
 
@@ -316,9 +332,9 @@
 					{changedCount} modification{changedCount !== 1 ? 's' : ''} en attente
 				</div>
 				<button
-						class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
-						on:click={saveChanges}
-						disabled={isSaving}
+					class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
+					on:click={saveChanges}
+					disabled={isSaving}
 				>
 					{#if isSaving}
 						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -402,9 +418,13 @@
 				{@const hasChanged = materialSelections[piece.id] !== piece.selectedMaterialId}
 				{@const selectedMaterial = getSelectedMaterial(piece.id)}
 
-				<div class="p-6 border border-gray-200 rounded-lg hover:border-[#6B9AD9] transition-colors {
-					!isSpecified ? 'bg-orange-50 border-orange-200' : hasChanged ? 'bg-blue-50 border-blue-200' : 'bg-white'
-				}">
+				<div
+					class="p-6 border border-gray-200 rounded-lg hover:border-[#6B9AD9] transition-colors {!isSpecified
+						? 'bg-orange-50 border-orange-200'
+						: hasChanged
+							? 'bg-blue-50 border-blue-200'
+							: 'bg-white'}"
+				>
 					<div class="flex items-start gap-4">
 						<!-- Informations de la pièce -->
 						<div class="flex-1 min-w-0">
@@ -436,15 +456,15 @@
 								</label>
 								<div class="max-w-md">
 									<MaterialSelector
-											{piece}
-											projectId={project.id}
-											selectedMaterialId={materialSelections[piece.id]}
-											required={true}
-											on:materialSelected={(e) => {
+										{piece}
+										projectId={project.id}
+										selectedMaterialId={materialSelections[piece.id]}
+										required={true}
+										on:materialSelected={(e) => {
 											handleMaterialSelected(e, piece);
 											clearMessages();
 										}}
-											on:createMaterial={handleCreateMaterial}
+										on:createMaterial={handleCreateMaterial}
 									/>
 								</div>
 							</div>
@@ -454,17 +474,24 @@
 								<div class="border-t pt-4 mt-4">
 									<div class="flex items-center justify-between mb-3">
 										<div class="flex items-center gap-3">
-											<h5 class="font-medium text-gray-700">Fichiers du matériel "{selectedMaterial.name}" :</h5>
+											<h5 class="font-medium text-gray-700">
+												Fichiers du matériel "{selectedMaterial.name}" :
+											</h5>
 											<div class="flex items-center gap-2 text-sm">
 												<FileText class="text-blue-500" size={16} />
-												<span class="text-blue-600 font-medium">{selectedMaterial.files_count || 0} fichier{selectedMaterial.files_count !== 1 ? 's' : ''}</span>
+												<span class="text-blue-600 font-medium"
+													>{selectedMaterial.files_count || 0} fichier{selectedMaterial.files_count !==
+													1
+														? 's'
+														: ''}</span
+												>
 											</div>
 										</div>
 
 										<!-- ✅ BOUTON UPLOAD PRINCIPAL -->
 										<button
-												class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-md"
-												on:click={() => openUploadForMaterial(selectedMaterial)}
+											class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-md"
+											on:click={() => openUploadForMaterial(selectedMaterial)}
 										>
 											<Upload size={16} />
 											<span class="font-medium">Ajouter fichiers</span>
@@ -538,9 +565,12 @@
 					<div>
 						<h5 class="font-medium text-blue-800 mb-1">Matériels manquants</h5>
 						<p class="text-sm text-blue-700">
-							{unspecifiedCount} pièce{unspecifiedCount !== 1 ? 's' : ''} nécessite{unspecifiedCount === 1 ? '' : 'nt'}
-							encore la spécification d'un matériel. Vous pouvez créer de nouveaux matériels
-							directement depuis les menus déroulants ci-dessus.
+							{unspecifiedCount} pièce{unspecifiedCount !== 1 ? 's' : ''} nécessite{unspecifiedCount ===
+							1
+								? ''
+								: 'nt'}
+							encore la spécification d'un matériel. Vous pouvez créer de nouveaux matériels directement
+							depuis les menus déroulants ci-dessus.
 						</p>
 					</div>
 				</div>
@@ -552,10 +582,10 @@
 <!-- Modal de création de matériel -->
 {#if showEditor && selectedPieceForNewMaterial}
 	<MaterialEditor
-			piece={selectedPieceForNewMaterial}
-			editMode="create"
-			on:saved={handleMaterialCreated}
-			on:cancelled={() => {
+		piece={selectedPieceForNewMaterial}
+		editMode="create"
+		on:saved={handleMaterialCreated}
+		on:cancelled={() => {
 			showEditor = false;
 			selectedPieceForNewMaterial = null;
 		}}
@@ -574,12 +604,15 @@
 						Au matériel: <strong>{selectedMaterialForUpload.name}</strong>
 					</p>
 					<p class="text-xs text-gray-500">
-						{selectedMaterialForUpload.files_count || 0} fichier{selectedMaterialForUpload.files_count !== 1 ? 's' : ''} actuellement
+						{selectedMaterialForUpload.files_count || 0} fichier{selectedMaterialForUpload.files_count !==
+						1
+							? 's'
+							: ''} actuellement
 					</p>
 				</div>
 				<button
-						class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
-						on:click={() => {
+					class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
+					on:click={() => {
 						showUploader = false;
 						selectedMaterialForUpload = null;
 					}}
@@ -591,8 +624,8 @@
 			<!-- Composant upload -->
 			<div class="p-6">
 				<FileUploader
-						on:upload={(e) => handleFileUpload(e.detail)}
-						on:cancel={() => {
+					on:upload={(e) => handleFileUpload(e.detail)}
+					on:cancel={() => {
 						showUploader = false;
 						selectedMaterialForUpload = null;
 					}}

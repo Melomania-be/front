@@ -4,15 +4,12 @@ import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
-	const res = await fetch(
-		`${API_URL}/files/download/${params.id}`,
-		{
-			method: 'GET',
-			headers: {
-				authorization: `${await getToken(cookies)}`
-			}
+	const res = await fetch(`${API_URL}/files/download/${params.id}`, {
+		method: 'GET',
+		headers: {
+			authorization: `${await getToken(cookies)}`
 		}
-	);
+	});
 
 	return res;
 };
@@ -40,13 +37,16 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 		return res;
 	} catch (error) {
 		console.error('❌ Error in delete API route:', error);
-		return new Response(JSON.stringify({
-			error: 'Delete error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Delete error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };
 

@@ -104,19 +104,27 @@
 		const expenses = accountings.filter((a) => a.amount < 0);
 		const incomes = accountings.filter((a) => a.amount >= 0);
 
-		console.log('💸 Expenses (negative amounts):', expenses.length, expenses.map(e => ({
-			name: e.name,
-			amount: e.amount,
-			categoryId: e.categoryId,
-			categoryName: categories.find(c => c.id === e.categoryId)?.name || 'Unknown'
-		})));
+		console.log(
+			'💸 Expenses (negative amounts):',
+			expenses.length,
+			expenses.map((e) => ({
+				name: e.name,
+				amount: e.amount,
+				categoryId: e.categoryId,
+				categoryName: categories.find((c) => c.id === e.categoryId)?.name || 'Unknown'
+			}))
+		);
 
-		console.log('💰 Incomes (positive amounts):', incomes.length, incomes.map(i => ({
-			name: i.name,
-			amount: i.amount,
-			categoryId: i.categoryId,
-			categoryName: categories.find(c => c.id === i.categoryId)?.name || 'Unknown'
-		})));
+		console.log(
+			'💰 Incomes (positive amounts):',
+			incomes.length,
+			incomes.map((i) => ({
+				name: i.name,
+				amount: i.amount,
+				categoryId: i.categoryId,
+				categoryName: categories.find((c) => c.id === i.categoryId)?.name || 'Unknown'
+			}))
+		);
 
 		// Vérification des données pour le graphique des dépenses
 		if (dataChartExpenses && dataChartExpenses.datasets[0].data.length > 0) {
@@ -357,7 +365,9 @@
 			>
 				<Fa icon={faXmark} class="text-[20px]" style="color: #6b7280;" />
 			</button>
-			<h2 class="text-xl text-gray-500 font-bold mb-8">{updateMode ? 'Edit Category' : 'New Category'}</h2>
+			<h2 class="text-xl text-gray-500 font-bold mb-8">
+				{updateMode ? 'Edit Category' : 'New Category'}
+			</h2>
 			<div class="h-full w-full">
 				<div class="flex flex-col gap-4 items-center">
 					<div class="flex flex-col {isMobile ? 'w-[70%]' : 'w-[50%]'}">
@@ -451,18 +461,13 @@
 
 <div class="bg-[#E7E7E7] p-8 min-h-screen pb-[80px]">
 	<div>
-		<AccountingTable
-			bind:accountings
-			bind:categories
-			currentParticipant={null}
-			contact={null}
-		/>
+		<AccountingTable bind:accountings bind:categories currentParticipant={null} contact={null} />
 	</div>
 	<div class="flex gap-8 mb-4 mt-4 {isMobile ? 'flex-col' : 'h-auto'}">
 		<div class="flex-[2] flex flex-col border-2 rounded-xl bg-white border-gray-400">
 			<div class="flex rounded-b-xl w-full flex-1 {isMobile ? 'flex-col' : ''}">
 				<div class="flex-1 border-gray-400 justify-center flex p-2 items-center">
-					<div class="{isMobile ? 'w-[250px]' : 'w-[350px]'}">
+					<div class={isMobile ? 'w-[250px]' : 'w-[350px]'}>
 						<h1 class="font-semibold text-center text-sm mb-2 text-gray-400">Expenses</h1>
 						{#if dataChartExpenses && dataChartExpenses.datasets[0].data.length > 0}
 							<PieChart data={dataChartExpenses} {options} />
@@ -476,7 +481,7 @@
 					</div>
 				</div>
 				<div class="flex-1 border-gray-400 flex justify-center p-2 items-center">
-					<div class="{isMobile ? 'w-[250px]' : 'w-[350px]'}">
+					<div class={isMobile ? 'w-[250px]' : 'w-[350px]'}>
 						<h1 class="font-semibold text-center text-sm mb-2 text-gray-400">Incomes</h1>
 						{#if dataChartIncome && dataChartIncome.datasets[0].data.length > 0}
 							<PieChart data={dataChartIncome} {options} />
@@ -497,7 +502,7 @@
 				<button
 					on:click={() => showPopUpAddCategory()}
 					class="bg-[#6B9AD9] px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
-				>Add New</button
+					>Add New</button
 				>
 			</div>
 			<div class="grid {isMobile ? 'grid-cols-2' : 'grid-cols-2'} gap-3 justify-center m-2 mt-4">
@@ -515,8 +520,7 @@
 									updateMode = true;
 								}}
 								class="flex rounded-lg justify-center items-center text-center p-1 font-semibold break-words px-4 h-14 w-full"
-								style="border: 2px solid {cat.color || '#9CA3AF'}; color: {cat.color ||
-									'#9CA3AF'}"
+								style="border: 2px solid {cat.color || '#9CA3AF'}; color: {cat.color || '#9CA3AF'}"
 							>
 								{cat.name}
 							</button>

@@ -124,13 +124,15 @@
 			{participantsWithoutEmail}
 		/>
 		{#if isMobile}
-			<ProjectPhoneDisplayer {project} selectedTab={0}/>
+			<ProjectPhoneDisplayer {project} selectedTab={0} />
 		{/if}
 	</div>
 {:else}
 	<div class="flex justify-center items-center h-64 bg-gray-100">
 		<div class="text-center">
-			<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
+			<div
+				class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"
+			></div>
 			<p class="text-gray-600 text-lg">Loading project...</p>
 			<!-- ✅ AJOUT : Debug info -->
 			<p class="text-gray-400 text-sm mt-2">

@@ -2,7 +2,15 @@
 <script lang="ts">
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import Accordion from '$lib/components/Accordion.svelte';
-	import { Download, Music, FileText, Eye, AlertCircle, ChevronDown, ChevronRight } from 'lucide-svelte';
+	import {
+		Download,
+		Music,
+		FileText,
+		Eye,
+		AlertCircle,
+		ChevronDown,
+		ChevronRight
+	} from 'lucide-svelte';
 	import FilePreview from '$lib/components/filesystem/FilePreview.svelte';
 	import { onMount } from 'svelte';
 
@@ -155,9 +163,7 @@
 	// Filtrage par recherche
 	function filterFiles(files: any[], query: string) {
 		if (!query.trim()) return files;
-		return files.filter(file =>
-			file.name.toLowerCase().includes(query.toLowerCase())
-		);
+		return files.filter((file) => file.name.toLowerCase().includes(query.toLowerCase()));
 	}
 
 	// Obtenir les fichiers du matériel sélectionné pour une pièce
@@ -178,9 +184,7 @@
 
 <div class="mb-10 py-8">
 	<div class="text-center mb-6">
-		<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-2">
-			Program and Scores
-		</h2>
+		<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-2">Program and Scores</h2>
 		<p class="text-sm text-gray-600 dark:text-gray-400">
 			Access all musical materials and scores for this project
 		</p>
@@ -197,9 +201,13 @@
 				{@const filteredFiles = filterFiles(selectedFiles, searchQuery)}
 				{@const isExpanded = expandedPieces.has(piece.id)}
 
-				<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+				<div
+					class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+				>
 					<!-- En-tête de la pièce - Focus sur la pièce uniquement -->
-					<div class="p-3 sm:p-2 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+					<div
+						class="p-3 sm:p-2 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600"
+					>
 						<button
 							class="w-full flex items-center justify-between text-left hover:bg-white hover:bg-opacity-50 rounded p-2 transition-colors"
 							on:click={() => togglePieceExpansion(piece.id)}
@@ -218,7 +226,9 @@
 										<h3 class="font-semibold text-lg text-gray-900 dark:text-white truncate">
 											{piece.name}
 										</h3>
-										<div class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1">
+										<div
+											class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1"
+										>
 											<span>{piece.composer.shortName}</span>
 											{#if piece.opus}
 												<span>Op. {piece.opus}</span>
@@ -234,12 +244,18 @@
 							<!-- Simple : Juste le nombre de fichiers -->
 							<div class="flex items-center gap-2 text-sm flex-shrink-0">
 								{#if selectedFiles.length > 0}
-									<div class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+									<div
+										class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
+									>
 										<FileText size={14} />
-										<span>{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}</span>
+										<span
+											>{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}</span
+										>
 									</div>
 								{:else}
-									<div class="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full">
+									<div
+										class="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full"
+									>
 										<AlertCircle size={14} />
 										<span>Aucun fichier</span>
 									</div>
@@ -255,7 +271,9 @@
 								<div class="text-center py-8">
 									<FileText class="mx-auto mb-4 text-gray-400" size={48} />
 									<p class="text-gray-500 dark:text-gray-400">
-										{searchQuery ? 'Aucun fichier ne correspond à votre recherche' : 'Aucun fichier disponible pour cette pièce'}
+										{searchQuery
+											? 'Aucun fichier ne correspond à votre recherche'
+											: 'Aucun fichier disponible pour cette pièce'}
 									</p>
 									<p class="text-sm text-gray-400 mt-2">
 										Sélectionnez un matériel dans la gestion des fichiers
@@ -268,7 +286,11 @@
 										{@const isDownloading = downloadingFiles.has(file.id)}
 										{@const downloadError = downloadErrors.get(file.id)}
 
-										<div class="flex items-center gap-3 p-3 {getFileColor(file.name)} rounded-lg border hover:shadow-sm transition-all duration-200">
+										<div
+											class="flex items-center gap-3 p-3 {getFileColor(
+												file.name
+											)} rounded-lg border hover:shadow-sm transition-all duration-200"
+										>
 											<div class="flex-shrink-0">
 												<svelte:component this={getFileIcon(file.name)} size={18} />
 											</div>
@@ -305,7 +327,9 @@
 													title="Download"
 												>
 													{#if isDownloading}
-														<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+														<div
+															class="animate-spin rounded-full h-4 w-4 border-b-2 border-current"
+														></div>
 													{:else}
 														<Download size={16} />
 													{/if}
@@ -329,8 +353,12 @@
 	{:else}
 		<div class="text-center py-12">
 			<Music class="mx-auto mb-4 text-gray-400" size={64} />
-			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No pieces in this project</h3>
-			<p class="text-gray-500 dark:text-gray-400">Add pieces to the project to see materials and scores here.</p>
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+				No pieces in this project
+			</h3>
+			<p class="text-gray-500 dark:text-gray-400">
+				Add pieces to the project to see materials and scores here.
+			</p>
 		</div>
 	{/if}
 </div>
@@ -349,13 +377,13 @@
 {/if}
 
 <style>
-    /* Transitions fluides */
-    .transition-all {
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+	/* Transitions fluides */
+	.transition-all {
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
 
-    /* Amélioration des hover states */
-    .hover\:shadow-sm:hover {
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
+	/* Amélioration des hover states */
+	.hover\:shadow-sm:hover {
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	}
 </style>

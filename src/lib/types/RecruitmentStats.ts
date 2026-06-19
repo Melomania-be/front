@@ -3,10 +3,10 @@
 import type { RecruitmentStatus } from '$lib/types/RecruitmentContact';
 
 export interface RecruitmentStats {
-	total: number
+	total: number;
 	by_status: Array<{
-		status: RecruitmentStatus
-		count: number
-	}>
-	pending_recommendations: number
+		status: RecruitmentStatus;
+		count: number;
+	}>;
+	pending_recommendations: number;
 }

@@ -83,7 +83,7 @@
 				};
 			});
 			meta = data.meta;
-			contactsToDisplay = contacts
+			contactsToDisplay = contacts;
 
 			dataHolder = {
 				data: [],
@@ -198,17 +198,13 @@
 	let instrumentFamily: string[];
 	let selectedInstrumentIds: Set<number> = new Set();
 	let selectedFamilyIds: Set<string> = new Set();
-	
 
 	onMount(async () => {
 		// Puis récupérer les instruments via fetch
 		fetchInstruments().then((data) => {
 			instruments = data;
 		});
-		
-
 	});
-	
 
 	async function fetchInstruments() {
 		try {
@@ -218,9 +214,9 @@
 				throw new Error(`Erreur ${response.status} : ${response.statusText}`);
 			}
 
-			const instruments : Instrument[] = await response.json();
-			console.log(instruments)
-			instrumentFamily = [...new Set(instruments.map(i => i.family))];
+			const instruments: Instrument[] = await response.json();
+			console.log(instruments);
+			instrumentFamily = [...new Set(instruments.map((i) => i.family))];
 			return instruments;
 		} catch (error) {
 			console.error('Erreur lors de la récupération des instruments :', error);
@@ -230,66 +226,72 @@
 
 	function toggleInstrumentFilter(id: number, checked: boolean) {
 		if (checked) {
-			selectedInstrumentIds = new Set(selectedInstrumentIds.add(id))
+			selectedInstrumentIds = new Set(selectedInstrumentIds.add(id));
 		} else {
-			selectedInstrumentIds.delete(id)
-   			selectedInstrumentIds = new Set(selectedInstrumentIds)
+			selectedInstrumentIds.delete(id);
+			selectedInstrumentIds = new Set(selectedInstrumentIds);
 		}
 
-		if(selectedInstrumentIds.size == 0){
-			contactsToDisplay = contacts
-		}
-		else{
-			contactsToDisplay = contacts.filter((contact) => contact.instruments.some((instrument) => selectedInstrumentIds.has(instrument.id)))
+		if (selectedInstrumentIds.size == 0) {
+			contactsToDisplay = contacts;
+		} else {
+			contactsToDisplay = contacts.filter((contact) =>
+				contact.instruments.some((instrument) => selectedInstrumentIds.has(instrument.id))
+			);
 		}
 	}
 
-	function resetFilter(){
-		console.log(contacts)
+	function resetFilter() {
+		console.log(contacts);
 		selectedInstrumentIds = new Set();
 		selectedFamilyIds = new Set();
 		selectedLevelInstruments = new Map();
 		contactsToDisplay = contacts;
 	}
 
-	
 	const levels = [
 		'Amateur - low level',
 		'Amateur - medium',
-		"Amateur - high",
-		"Student",
-		"Professional",
-		"High level professional"
-	]
+		'Amateur - high',
+		'Student',
+		'Professional',
+		'High level professional'
+	];
 
-	let selectedLevelInstruments: Map<number , string> = new Map();
+	let selectedLevelInstruments: Map<number, string> = new Map();
 
 	function handleLevelChange(instrumentId: number, level: string) {
 		if (level) {
-			selectedLevelInstruments.set(instrumentId , level)
-			console.log(selectedLevelInstruments)
+			selectedLevelInstruments.set(instrumentId, level);
+			console.log(selectedLevelInstruments);
 		}
-		console.log(contactsToDisplay)
-		contactsToDisplay = contactsToDisplay.filter(c => c.instruments.some(i => selectedLevelInstruments.has(i.id) && i.pivot_proficiency_level == selectedLevelInstruments.get(i.id) ))
+		console.log(contactsToDisplay);
+		contactsToDisplay = contactsToDisplay.filter((c) =>
+			c.instruments.some(
+				(i) =>
+					selectedLevelInstruments.has(i.id) &&
+					i.pivot_proficiency_level == selectedLevelInstruments.get(i.id)
+			)
+		);
 	}
 
-	function updateFamilyFilter(family : string, checked: boolean) {
+	function updateFamilyFilter(family: string, checked: boolean) {
 		if (checked) {
 			selectedFamilyIds = new Set(selectedFamilyIds.add(family));
 		} else {
 			selectedFamilyIds.delete(family);
-			selectedFamilyIds = new Set(selectedFamilyIds)
+			selectedFamilyIds = new Set(selectedFamilyIds);
 		}
-		console.log(selectedFamilyIds)
+		console.log(selectedFamilyIds);
 
-		if(selectedFamilyIds.size == 0){
-			contactsToDisplay = contacts
-		}
-		else{
-			contactsToDisplay = contacts.filter((contact) => contact.instruments.some((instrument) => selectedFamilyIds.has(instrument.family)))
+		if (selectedFamilyIds.size == 0) {
+			contactsToDisplay = contacts;
+		} else {
+			contactsToDisplay = contacts.filter((contact) =>
+				contact.instruments.some((instrument) => selectedFamilyIds.has(instrument.family))
+			);
 		}
 	}
-	
 </script>
 
 {#if popUpFilter}
@@ -315,7 +317,7 @@
 			</div>
 			<div class="px-6 h-[80%] w-auto overflow-y-auto">
 				<h2 class="text-md font-bold mb-4 text-xl">Instruments</h2>
-				<div class="grid  mb-6  {isMobile ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr_1fr_1fr] px-4"}">
+				<div class="grid mb-6 {isMobile ? 'grid-cols-[1fr_1fr]' : 'grid-cols-[1fr_1fr_1fr] px-4'}">
 					{#each instruments as instrument}
 						<div class="flex gap-2 h-8 items-center">
 							<input
@@ -327,12 +329,16 @@
 							/>
 							<p>{instrument.name}</p>
 							{#if selectedInstrumentIds.has(instrument.id)}
-								<select class="border-2 rounded-lg border-gray-400"
+								<select
+									class="border-2 rounded-lg border-gray-400"
 									on:change={(e) => handleLevelChange(instrument.id, e.target.value)}
-									value={selectedLevelInstruments.get(instrument.id)}>
+									value={selectedLevelInstruments.get(instrument.id)}
+								>
 									<option class="" value={null}>none</option>
 									{#each levels as level}
-										<option class="{levelToStyle(level)}" value={level}>{levelSimplificator(level)}</option>
+										<option class={levelToStyle(level)} value={level}
+											>{levelSimplificator(level)}</option
+										>
 									{/each}
 								</select>
 							{/if}
@@ -340,18 +346,25 @@
 					{/each}
 				</div>
 				<h2 class="text-md font-bold mb-2 text-xl">Family</h2>
-				<div class="grid gap-2 mb-6 {isMobile ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr_1fr_1fr] px-4"}">
+				<div
+					class="grid gap-2 mb-6 {isMobile
+						? 'grid-cols-[1fr_1fr]'
+						: 'grid-cols-[1fr_1fr_1fr] px-4'}"
+				>
 					{#each instrumentFamily as family}
-					<div class="flex items-center gap-2">
+						<div class="flex items-center gap-2">
 							<input
 								id={family}
 								checked={selectedFamilyIds.has(family)}
 								type="checkbox"
 								class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-								on:change={(e) => updateFamilyFilter(family , e.target.checked)}
+								on:change={(e) => updateFamilyFilter(family, e.target.checked)}
 							/>
-							<p class="{familyToStyle(family)} font-semibold rounded-lg p-1 px-2"> {familyToEmoji(family)} {family}</p>
-					</div>
+							<p class="{familyToStyle(family)} font-semibold rounded-lg p-1 px-2">
+								{familyToEmoji(family)}
+								{family}
+							</p>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -361,18 +374,22 @@
 					on:click={() => {
 						popUpFilter = false;
 						document.body.style.overflow = '';
-						resetFilter() ;
+						resetFilter();
 					}}>Reset Filter</button
 				>
 				<button
-					on:click={() => { popUpFilter = false; document.body.style.overflow = '';}}
-					class=" {isMobile ? "w-[40%]" : "w-[30%] px-4 py-2"} my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
+					on:click={() => {
+						popUpFilter = false;
+						document.body.style.overflow = '';
+					}}
+					class=" {isMobile
+						? 'w-[40%]'
+						: 'w-[30%] px-4 py-2'} my-2 ml-auto bg-[#6b9ad9] hover:bg-[#5b89c5] text-white rounded-full font-bold"
 				>
 					Search
 				</button>
 			</div>
 		</div>
-
 	</div>
 {/if}
 
@@ -411,7 +428,7 @@
 			<span> Show Instruments</span>
 		</div>
 		{#if newList.contacts.length > 0}
-			<div class="grid {isMobile ? "" : "grid-cols-3"} gap-4">
+			<div class="grid {isMobile ? '' : 'grid-cols-3'} gap-4">
 				{#each newList.contacts as contact}
 					<div>
 						<div class="border-2 border-gray-400 rounded-xl p-4 h-auto flex items-center">
@@ -461,28 +478,35 @@
 	<div class="col-span-4 border-2 border-gray-500 rounded-xl p-4 bg-white m-4">
 		{#if dataHolder}
 			{#if !isMobile}
-			<div class="flex w-full">
-			<button
-				class="m-2 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-				on:click={addToList}>Add to List</button
-			>
-			<div class="flex gap-2 ml-auto">
-				{#if instrumentFamily.length !== 0 }
-						<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center	">Legend : 
-							{#each instrumentFamily as family}
-								<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-							{/each}
-						</p>
-				{/if}
-			</div>
-			</div>
-			{:else}
-					<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center">
-						{#each instrumentFamily as family}
-							<div class="p-1 px-2 rounded-lg {familyToStyle(family)}"> {familyToEmoji(family)} {family} </div> 
-						{/each}
-					</div>
+				<div class="flex w-full">
 					<button
+						class="m-2 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+						on:click={addToList}>Add to List</button
+					>
+					<div class="flex gap-2 ml-auto">
+						{#if instrumentFamily.length !== 0}
+							<p class="flex gap-2 text-sm font-semibold text-[#6b7280] items-center">
+								Legend :
+								{#each instrumentFamily as family}
+									<div class="p-1 px-2 rounded-lg {familyToStyle(family)}">
+										{familyToEmoji(family)}
+										{family}
+									</div>
+								{/each}
+							</p>
+						{/if}
+					</div>
+				</div>
+			{:else}
+				<div class="grid grid-cols-2 gap-2 text-sm font-semibold text-[#6b7280] items-center">
+					{#each instrumentFamily as family}
+						<div class="p-1 px-2 rounded-lg {familyToStyle(family)}">
+							{familyToEmoji(family)}
+							{family}
+						</div>
+					{/each}
+				</div>
+				<button
 					class="m-2 mt-6 text-white bg-[#6b9ad9] hover:bg-[#5b89c5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 					on:click={addToList}>Add to List</button
 				>
@@ -493,17 +517,17 @@
 				bind:options
 				on:optionsUpdated={() => fetchData()}
 			>
-			<div class="w-full py-2">
-				<button
-					on:click={() => {
-						popUpFilter = true;
-						document.body.style.overflow = 'hidden';
-					}}
-					class="flex items-center border-2 border-gray-400 p-1 gap-2 rounded-full px-4"
-				>
-					<p class="text-gray-500 font-semibold">Filter</p>
-					<Fa icon={faSliders} class="text-[16px]" style="color: #6b7280;" />
-				</button>
+				<div class="w-full py-2">
+					<button
+						on:click={() => {
+							popUpFilter = true;
+							document.body.style.overflow = 'hidden';
+						}}
+						class="flex items-center border-2 border-gray-400 p-1 gap-2 rounded-full px-4"
+					>
+						<p class="text-gray-500 font-semibold">Filter</p>
+						<Fa icon={faSliders} class="text-[16px]" style="color: #6b7280;" />
+					</button>
 				</div>
 				<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-full mt-2">
 					<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

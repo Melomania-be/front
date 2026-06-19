@@ -1,14 +1,14 @@
 <!-- src/lib/components/recruitment/AddManualContactModal.svelte -->
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte'
-	import { X, UserPlus, AlertTriangle } from 'lucide-svelte'
-	import type { Section } from '$lib/types'
-	import type { Contact } from '$lib/types/Contact'
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { X, UserPlus, AlertTriangle } from 'lucide-svelte';
+	import type { Section } from '$lib/types';
+	import type { Contact } from '$lib/types/Contact';
 
-	export let projectId: string
-	let duplicateEmailContact: Contact | null = null
-let duplicatePhoneContact: Contact | null = null
-	const dispatch = createEventDispatcher()
+	export let projectId: string;
+	let duplicateEmailContact: Contact | null = null;
+	let duplicatePhoneContact: Contact | null = null;
+	const dispatch = createEventDispatcher();
 
 	let formData = {
 		first_name: '',
@@ -19,66 +19,63 @@ let duplicatePhoneContact: Contact | null = null
 		section_id: null as number | null,
 		notes: '',
 		contacted_by: ''
-	}
+	};
 
-	let sections: Section[] = []
-	let foundContacts: Contact[] = []
-	let saving = false
-	let errors: Record<string, string> = {}
-	let currentUserName = ''
-	let loadingUser = true
+	let sections: Section[] = [];
+	let foundContacts: Contact[] = [];
+	let saving = false;
+	let errors: Record<string, string> = {};
+	let currentUserName = '';
+	let loadingUser = true;
 
-function isSimilar(a: string, b: string) {
-	a = a.toLowerCase()
-	b = b.toLowerCase()
+	function isSimilar(a: string, b: string) {
+		a = a.toLowerCase();
+		b = b.toLowerCase();
 
-	if (
-		a.includes(b) ||
-		b.includes(a)
-	) {
-		return true
-	}
-
-	let differences = 0
-
-	for (let i = 0; i < Math.min(a.length, b.length); i++) {
-		if (a[i] !== b[i]) {
-			differences++
+		if (a.includes(b) || b.includes(a)) {
+			return true;
 		}
+
+		let differences = 0;
+
+		for (let i = 0; i < Math.min(a.length, b.length); i++) {
+			if (a[i] !== b[i]) {
+				differences++;
+			}
+		}
+
+		differences += Math.abs(a.length - b.length);
+
+		return differences <= 2;
 	}
 
-	differences += Math.abs(a.length - b.length)
-
-	return differences <= 2
-}
-
-function normalizePhone(phone: string) {
-	return phone
-		.replace(/\s|\/|\.|-/g, '')
-		.replace(/^\+32/, '0')
-		.replace(/^0032/, '0')
-}
+	function normalizePhone(phone: string) {
+		return phone
+			.replace(/\s|\/|\.|-/g, '')
+			.replace(/^\+32/, '0')
+			.replace(/^0032/, '0');
+	}
 
 	function closeModal() {
-		clearForm()
-		dispatch('close')
+		clearForm();
+		dispatch('close');
 	}
-function getFirstName(contact: any) {
-	return contact.firstName || contact.first_name || ''
-}
+	function getFirstName(contact: any) {
+		return contact.firstName || contact.first_name || '';
+	}
 
-function getLastName(contact: any) {
-	return contact.lastName || contact.last_name || ''
-}
+	function getLastName(contact: any) {
+		return contact.lastName || contact.last_name || '';
+	}
 
 	function isValidEmail(email: string): boolean {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		return emailRegex.test(email)
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
-			closeModal()
+			closeModal();
 		}
 	}
 
@@ -92,209 +89,186 @@ function getLastName(contact: any) {
 			section_id: null,
 			notes: '',
 			contacted_by: currentUserName
-		}
-		errors = {}
+		};
+		errors = {};
 	}
 
 	$: {
 		if (formData.first_name.trim() && errors.first_name) {
-			delete errors.first_name
+			delete errors.first_name;
 		}
 		if (formData.last_name.trim() && errors.last_name) {
-			delete errors.last_name
+			delete errors.last_name;
 		}
 		if ((formData.email || formData.phone || formData.messenger) && errors.contact) {
-			delete errors.contact
+			delete errors.contact;
 		}
 		if (formData.email && isValidEmail(formData.email) && errors.email) {
-			delete errors.email
+			delete errors.email;
 		}
 	}
 
 	onMount(async () => {
-		await fetchSections()
-		await getCurrentUser()
-	})
+		await fetchSections();
+		await getCurrentUser();
+	});
 
 	async function fetchSections() {
 		try {
-			const response = await fetch('/api/sections')
+			const response = await fetch('/api/sections');
 			if (response.ok) {
-				sections = await response.json()
+				sections = await response.json();
 			}
 		} catch (error) {
-			console.error('Error fetching sections:', error)
+			console.error('Error fetching sections:', error);
 		}
 	}
 
 	async function getCurrentUser() {
-		loadingUser = true
+		loadingUser = true;
 		try {
-			const response = await fetch('/api/users/current')
+			const response = await fetch('/api/users/current');
 			if (response.ok) {
-				const userData = await response.json()
-				currentUserName = userData.fullName || userData.email || 'Current user'
-				formData.contacted_by = currentUserName
+				const userData = await response.json();
+				currentUserName = userData.fullName || userData.email || 'Current user';
+				formData.contacted_by = currentUserName;
 			} else {
-				currentUserName = 'Current user'
-				formData.contacted_by = currentUserName
+				currentUserName = 'Current user';
+				formData.contacted_by = currentUserName;
 			}
 		} catch (error) {
-			console.error('Error fetching current user:', error)
-			currentUserName = 'Current user'
-			formData.contacted_by = currentUserName
+			console.error('Error fetching current user:', error);
+			currentUserName = 'Current user';
+			formData.contacted_by = currentUserName;
 		} finally {
-			loadingUser = false
+			loadingUser = false;
 		}
 	}
 
-async function searchContacts() {
-	
-	const firstName = formData.first_name.trim()
-	const lastName = formData.last_name.trim()
+	async function searchContacts() {
+		const firstName = formData.first_name.trim();
+		const lastName = formData.last_name.trim();
 
-	if (
-	firstName.length < 2 &&
-	lastName.length < 2 &&
-	!formData.email.trim() &&
-	!formData.phone.trim()
-)  {
-		foundContacts = []
-		return
-	}
+		if (
+			firstName.length < 2 &&
+			lastName.length < 2 &&
+			!formData.email.trim() &&
+			!formData.phone.trim()
+		) {
+			foundContacts = [];
+			return;
+		}
 
-	const searchQuery =
-	formData.email.trim() ||
-	formData.phone.trim() ||
-	`${firstName} ${lastName}`.trim()
+		const searchQuery =
+			formData.email.trim() || formData.phone.trim() || `${firstName} ${lastName}`.trim();
 
-	try {
-		const response = await fetch(
-			`/api/projects/${projectId}/management/recruitment/search-contacts`,
-			{
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					filter: searchQuery,
-					criteria: {
-						name: searchQuery,
-						email: '',
-						instruments: '',
-						projects: ''
+		try {
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/search-contacts`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						filter: searchQuery,
+						criteria: {
+							name: searchQuery,
+							email: '',
+							instruments: '',
+							projects: ''
+						}
+					})
+				}
+			);
+
+			if (response.ok) {
+				const data = await response.json();
+				const contacts = data.data || data || [];
+				const activeField = (document.activeElement as HTMLInputElement)?.id;
+
+				duplicateEmailContact = null;
+				duplicatePhoneContact = null;
+
+				if (formData.email.trim() && activeField === 'email') {
+					duplicateEmailContact =
+						contacts.find(
+							(contact: Contact) =>
+								contact.email?.toLowerCase() === formData.email.trim().toLowerCase()
+						) || null;
+				}
+
+				if (formData.phone.trim() && activeField === 'phone') {
+					const normalizedInputPhone = normalizePhone(formData.phone);
+
+					duplicatePhoneContact =
+						contacts.find((contact: Contact) => {
+							if (!contact.phone) return false;
+
+							return normalizePhone(contact.phone) === normalizedInputPhone;
+						}) || null;
+				}
+
+				foundContacts = contacts.filter((contact: Contact) => {
+					const first = (contact.firstName || '').toLowerCase();
+					const last = (contact.lastName || '').toLowerCase();
+					const email = (contact.email || '').toLowerCase();
+					const phone = contact.phone ? normalizePhone(contact.phone) : '';
+
+					const searchFirst = firstName.toLowerCase().trim();
+					const searchLast = lastName.toLowerCase().trim();
+					const searchEmail = formData.email.toLowerCase().trim();
+					const searchPhone = normalizePhone(formData.phone);
+
+					if (activeField === 'first_name') {
+						return searchFirst.length >= 2 && isSimilar(first, searchFirst);
 					}
-				})
+
+					if (activeField === 'last_name') {
+						return searchLast.length >= 2 && isSimilar(last, searchLast);
+					}
+
+					if (activeField === 'email') {
+						return searchEmail.length >= 3 && email.includes(searchEmail);
+					}
+
+					if (activeField === 'phone') {
+						return searchPhone.length >= 5 && phone.includes(searchPhone);
+					}
+
+					return false;
+				});
 			}
-		)
-
-		if (response.ok) {
-			const data = await response.json()
-			const contacts = data.data || data || []
-			const activeField = (document.activeElement as HTMLInputElement)?.id
-
-			duplicateEmailContact = null
-duplicatePhoneContact = null
-
-if (formData.email.trim() &&
-	activeField === 'email') {
-	duplicateEmailContact =
-		contacts.find(
-			(contact: Contact) =>
-				contact.email?.toLowerCase() ===
-				formData.email.trim().toLowerCase()
-		) || null
-}
-
-if (formData.phone.trim() &&
-	activeField === 'phone') {
-	const normalizedInputPhone = normalizePhone(formData.phone)
-
-	duplicatePhoneContact =
-		contacts.find((contact: Contact) => {
-			if (!contact.phone) return false
-
-			return (
-				normalizePhone(contact.phone) === normalizedInputPhone
-			)
-		}) || null
-}
-
-
-foundContacts = contacts.filter((contact: Contact) => {
-	const first = (contact.firstName || '').toLowerCase()
-	const last = (contact.lastName || '').toLowerCase()
-	const email = (contact.email || '').toLowerCase()
-	const phone = contact.phone
-		? normalizePhone(contact.phone)
-		: ''
-
-	const searchFirst = firstName.toLowerCase().trim()
-	const searchLast = lastName.toLowerCase().trim()
-	const searchEmail = formData.email.toLowerCase().trim()
-	const searchPhone = normalizePhone(formData.phone)
-
-	if (activeField === 'first_name') {
-		return (
-			searchFirst.length >= 2 &&
-			isSimilar(first, searchFirst)
-		)
-	}
-
-	if (activeField === 'last_name') {
-		return (
-			searchLast.length >= 2 &&
-			isSimilar(last, searchLast)
-		)
-	}
-
-	if (activeField === 'email') {
-		return (
-			searchEmail.length >= 3 &&
-			email.includes(searchEmail)
-		)
-	}
-
-	if (activeField === 'phone') {
-		return (
-			searchPhone.length >= 5 &&
-			phone.includes(searchPhone)
-		)
-	}
-
-	return false
-})
+		} catch (error) {
+			console.error('Error searching contacts:', error);
 		}
-	} catch (error) {
-		console.error('Error searching contacts:', error)
 	}
-}
 
 	async function saveContact() {
-		errors = {}
+		errors = {};
 
-		const firstName = formData.first_name.trim()
-		const lastName = formData.last_name.trim()
+		const firstName = formData.first_name.trim();
+		const lastName = formData.last_name.trim();
 
 		if (!firstName) {
-			errors.first_name = 'First name is required'
+			errors.first_name = 'First name is required';
 		}
 
 		if (!lastName) {
-			errors.last_name = 'Last name is required'
+			errors.last_name = 'Last name is required';
 		}
 
 		if (formData.email && !isValidEmail(formData.email)) {
-			errors.email = 'Invalid email format'
+			errors.email = 'Invalid email format';
 		}
 
 		if (!formData.email && !formData.phone && !formData.messenger) {
-			errors.contact = 'At least one contact method is required (email, phone or messenger)'
+			errors.contact = 'At least one contact method is required (email, phone or messenger)';
 		}
 
 		if (Object.keys(errors).length > 0) {
-			return
+			return;
 		}
 
-		saving = true
+		saving = true;
 
 		try {
 			const cleanData = {
@@ -306,31 +280,30 @@ foundContacts = contacts.filter((contact: Contact) => {
 				section_id: formData.section_id,
 				notes: formData.notes.trim() || null,
 				contacted_by: formData.contacted_by.trim() || null
-			}
+			};
 
 			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(cleanData)
-			})
+			});
 
 			if (response.ok) {
-				const newContact = await response.json()
-				dispatch('contactAdded', newContact)
-				closeModal()
+				const newContact = await response.json();
+				dispatch('contactAdded', newContact);
+				closeModal();
 			} else {
-				const errorData = await response.json()
-				console.error('Error creating contact:', errorData)
-				alert(`Error: ${errorData.error || 'Unable to create contact'}`)
+				const errorData = await response.json();
+				console.error('Error creating contact:', errorData);
+				alert(`Error: ${errorData.error || 'Unable to create contact'}`);
 			}
 		} catch (error) {
-			console.error('Error saving contact:', error)
-			alert('Error saving contact')
+			console.error('Error saving contact:', error);
+			alert('Error saving contact');
 		} finally {
-			saving = false
+			saving = false;
 		}
 	}
-
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -365,7 +338,9 @@ foundContacts = contacts.filter((contact: Contact) => {
 							type="text"
 							bind:value={formData.first_name}
 							on:input={searchContacts}
-							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.first_name ? 'border-red-500' : 'border-gray-300'}"
+							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.first_name
+								? 'border-red-500'
+								: 'border-gray-300'}"
 							placeholder="First name"
 							disabled={saving}
 						/>
@@ -383,7 +358,9 @@ foundContacts = contacts.filter((contact: Contact) => {
 							type="text"
 							bind:value={formData.last_name}
 							on:input={searchContacts}
-							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.last_name ? 'border-red-500' : 'border-gray-300'}"
+							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.last_name
+								? 'border-red-500'
+								: 'border-gray-300'}"
 							placeholder="Last name"
 							disabled={saving}
 						/>
@@ -394,68 +371,67 @@ foundContacts = contacts.filter((contact: Contact) => {
 				</div>
 			</div>
 
-{#if foundContacts.length > 0}
-	<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-		<h4 class="font-medium text-yellow-800 mb-2">
-			Possible existing contacts
-		</h4>
+			{#if foundContacts.length > 0}
+				<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+					<h4 class="font-medium text-yellow-800 mb-2">Possible existing contacts</h4>
 
-		<div class="space-y-2">
-			{#each foundContacts as contact}
-				<button
-					type="button"
-					class="w-full text-left p-3 bg-white border rounded hover:bg-gray-50"
-					on:click={() => {
-						formData.first_name = getFirstName(contact)
-						formData.last_name = getLastName(contact)
-						formData.email = contact.email || ''
-						formData.phone = contact.phone || ''
-						formData.messenger = contact.messenger || ''
-duplicateEmailContact = null
-duplicatePhoneContact = null
-						foundContacts = []
-					}}
-				>
-					<div class="font-medium">
-	{getFirstName(contact)} {getLastName(contact)}
-</div>
+					<div class="space-y-2">
+						{#each foundContacts as contact}
+							<button
+								type="button"
+								class="w-full text-left p-3 bg-white border rounded hover:bg-gray-50"
+								on:click={() => {
+									formData.first_name = getFirstName(contact);
+									formData.last_name = getLastName(contact);
+									formData.email = contact.email || '';
+									formData.phone = contact.phone || '';
+									formData.messenger = contact.messenger || '';
+									duplicateEmailContact = null;
+									duplicatePhoneContact = null;
+									foundContacts = [];
+								}}
+							>
+								<div class="font-medium">
+									{getFirstName(contact)}
+									{getLastName(contact)}
+								</div>
 
-					{#if contact.email}
-						<div class="text-sm text-gray-600">
-							{contact.email}
-						</div>
-					{/if}
+								{#if contact.email}
+									<div class="text-sm text-gray-600">
+										{contact.email}
+									</div>
+								{/if}
 
-					{#if contact.phone}
-						<div class="text-sm text-gray-600">
-							{contact.phone}
-						</div>
-					{/if}
-				</button>
-			{/each}
-		</div>
-	</div>
-{/if}
+								{#if contact.phone}
+									<div class="text-sm text-gray-600">
+										{contact.phone}
+									</div>
+								{/if}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
-{#if duplicateEmailContact}
-	<div class="mt-3 p-3 border border-yellow-400 bg-yellow-50 rounded">
-		⚠️ This email already belongs to
-		<strong>
-			{duplicateEmailContact.firstName}
-			{duplicateEmailContact.lastName}
-		</strong>
-	</div>
-{/if}
+			{#if duplicateEmailContact}
+				<div class="mt-3 p-3 border border-yellow-400 bg-yellow-50 rounded">
+					⚠️ This email already belongs to
+					<strong>
+						{duplicateEmailContact.firstName}
+						{duplicateEmailContact.lastName}
+					</strong>
+				</div>
+			{/if}
 
-{#if duplicatePhoneContact}
-	<div class="mt-3 p-3 border border-yellow-400 bg-yellow-50 rounded">
-		⚠️ This phone number already belongs to
-		<strong>
-			{duplicatePhoneContact.firstName}
-			{duplicatePhoneContact.lastName}
-		</strong>
-	</div>
-{/if}
+			{#if duplicatePhoneContact}
+				<div class="mt-3 p-3 border border-yellow-400 bg-yellow-50 rounded">
+					⚠️ This phone number already belongs to
+					<strong>
+						{duplicatePhoneContact.firstName}
+						{duplicatePhoneContact.lastName}
+					</strong>
+				</div>
+			{/if}
 
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold text-gray-900">Contact Information</h3>
@@ -463,15 +439,15 @@ duplicatePhoneContact = null
 
 				<div class="space-y-4">
 					<div>
-						<label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-							Email
-						</label>
+						<label for="email" class="block text-sm font-medium text-gray-700 mb-1"> Email </label>
 						<input
 							id="email"
 							type="email"
 							on:input={searchContacts}
 							bind:value={formData.email}
-							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.email ? 'border-red-500' : 'border-gray-300'}"
+							class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {errors.email
+								? 'border-red-500'
+								: 'border-gray-300'}"
 							placeholder="example@email.com"
 							disabled={saving}
 						/>
@@ -481,9 +457,7 @@ duplicatePhoneContact = null
 					</div>
 
 					<div>
-						<label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-							Phone
-						</label>
+						<label for="phone" class="block text-sm font-medium text-gray-700 mb-1"> Phone </label>
 						<input
 							id="phone"
 							type="tel"
@@ -582,7 +556,11 @@ duplicatePhoneContact = null
 				<div class="bg-gray-50 rounded-lg p-4">
 					<h4 class="font-medium text-gray-900 mb-2">Contact Preview</h4>
 					<div class="text-sm space-y-1">
-						<p><span class="font-medium">Name:</span> {formData.first_name.trim()} {formData.last_name.trim()}</p>
+						<p>
+							<span class="font-medium">Name:</span>
+							{formData.first_name.trim()}
+							{formData.last_name.trim()}
+						</p>
 						{#if formData.email.trim()}
 							<p><span class="font-medium">Email:</span> {formData.email.trim()}</p>
 						{/if}
@@ -593,7 +571,10 @@ duplicatePhoneContact = null
 							<p><span class="font-medium">Messenger:</span> {formData.messenger.trim()}</p>
 						{/if}
 						{#if formData.section_id}
-							<p><span class="font-medium">Section:</span> {sections.find(s => s.id === formData.section_id)?.name}</p>
+							<p>
+								<span class="font-medium">Section:</span>
+								{sections.find((s) => s.id === formData.section_id)?.name}
+							</p>
 						{/if}
 						{#if formData.contacted_by.trim()}
 							<p><span class="font-medium">Contacted by:</span> {formData.contacted_by.trim()}</p>

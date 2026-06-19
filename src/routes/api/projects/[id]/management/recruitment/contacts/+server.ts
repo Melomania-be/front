@@ -14,34 +14,43 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	try {
 		const data = await request.json();
 
-		const res = await fetch(`${API_URL}/projects/${projectId}/management/recruitment/contacts/manual`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			},
-			body: JSON.stringify(data)
-		});
+		const res = await fetch(
+			`${API_URL}/projects/${projectId}/management/recruitment/contacts/manual`,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					authorization: `${await getToken(cookies)}`
+				},
+				body: JSON.stringify(data)
+			}
+		);
 
 		return res;
 	} catch (error) {
 		console.error('Error creating manual contact:', error);
-		return new Response(JSON.stringify({
-			error: 'Failed to create manual contact'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to create manual contact'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

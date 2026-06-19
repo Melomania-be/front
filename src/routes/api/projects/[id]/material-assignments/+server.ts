@@ -26,13 +26,16 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		return res;
 	} catch (error) {
 		console.error('Error fetching material assignments:', error);
-		return new Response(JSON.stringify({
-			error: 'Internal server error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Internal server error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };
 
@@ -63,12 +66,15 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 		return res;
 	} catch (error) {
 		console.error('Error saving material assignments:', error);
-		return new Response(JSON.stringify({
-			error: 'Internal server error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Internal server error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

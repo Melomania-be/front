@@ -13,8 +13,8 @@
 	let project: Project;
 	let html = '';
 	let uniqueSubject = '';
-	let selectedTemplate : MailTemplate;
-	let templates : Array<MailTemplate>
+	let selectedTemplate: MailTemplate;
+	let templates: Array<MailTemplate>;
 
 	let url = '';
 	if (typeof window !== 'undefined') {
@@ -97,7 +97,7 @@
 				setTimeout(() => {
 					if (doc && doc.body) {
 						const contentHeight = doc.body.scrollHeight + 50;
-						iframe.style.height = Math.max(300, contentHeight) + "px";
+						iframe.style.height = Math.max(300, contentHeight) + 'px';
 					}
 				}, 100);
 			}
@@ -137,7 +137,7 @@
 				setTimeout(() => {
 					if (doc && doc.body) {
 						const contentHeight = doc.body.scrollHeight + 50;
-						iframe.style.height = Math.max(300, contentHeight) + "px";
+						iframe.style.height = Math.max(300, contentHeight) + 'px';
 					}
 				}, 100);
 			}
@@ -145,7 +145,9 @@
 	}
 
 	async function sendRecruitmentEmail() {
-		let confirmSend = confirm('Are you sure you want to send a recruitment email to every contact ?');
+		let confirmSend = confirm(
+			'Are you sure you want to send a recruitment email to every contact ?'
+		);
 		if (!confirmSend) {
 			return;
 		}
@@ -179,7 +181,9 @@
 	}
 
 	async function sendCallsheetNotification() {
-		let confirmSend = confirm('Are you sure you want to send a callsheet notification to all participants ?');
+		let confirmSend = confirm(
+			'Are you sure you want to send a callsheet notification to all participants ?'
+		);
 		if (!confirmSend) {
 			return;
 		}
@@ -211,7 +215,7 @@
 		}
 	}
 
-	async function sendMail(){
+	async function sendMail() {
 		let confirmSend = confirm(
 			`Are you sure you want to send this unique mail to the participants?`
 		);
@@ -246,10 +250,8 @@
 		}
 	}
 
-	async function sendTemplateToParticipants(){
-		let confirmSend = confirm(
-			`Are you sure you want to send this template to the participants?`
-		);
+	async function sendTemplateToParticipants() {
+		let confirmSend = confirm(`Are you sure you want to send this template to the participants?`);
 		if (!confirmSend) {
 			return;
 		}
@@ -313,7 +315,9 @@
 <ProjectHeadDisplayer {project} selectedTab={2} />
 
 {#if project}
-	<div class="relative max-w-xxl bg-[#E7E7E7] shadow dark:bg-gray-800 dark:border-gray-700 p-4 pb-[80px]">
+	<div
+		class="relative max-w-xxl bg-[#E7E7E7] shadow dark:bg-gray-800 dark:border-gray-700 p-4 pb-[80px]"
+	>
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 			<div class="border-2 rounded-lg border-[#E35656] bg-white">
 				<div class="p-3">
@@ -356,7 +360,7 @@
 					>
 						{isSendingRecruitmentEmail ? 'Sending...' : 'Send a recruitment email'}
 					</button>
-					<br><br>
+					<br /><br />
 
 					<button
 						class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] rounded-lg focus:ring-4 focus:outline-none focus:ring-blue-300"
@@ -374,11 +378,14 @@
 				<h2 class="font-bold text-lg uppercase pb-4">Unique mail</h2>
 				<button
 					class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-					on:click={() => (useTemplate = true)}>Use a template</button>
+					on:click={() => (useTemplate = true)}>Use a template</button
+				>
 				<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
 
 				<div class="ml-10 mb-10 pt-5 grid grid-cols-1 lg:grid-cols-2 gap-10">
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						<h2 class="text-xl font-bold mb-4">Write your email</h2>
 
 						<input
@@ -388,14 +395,17 @@
 							class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
 						/>
 
-						<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
+						<HtmlEditor bind:content={html} on:input={handleEditorInput} />
 
 						<button
 							class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-							on:click={sendMail}>Send</button>
+							on:click={sendMail}>Send</button
+						>
 					</div>
 
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						<h2 class="text-xl font-bold mb-4">Preview</h2>
 						<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
 							<iframe title="preview" id="preview-iframe2" class="w-full h-full border-0" />
@@ -408,10 +418,13 @@
 				<h2 class="font-bold text-lg uppercase pb-4">Template mail</h2>
 				<button
 					class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-					on:click={() => (useTemplate = false)}>Use unique mail</button>
+					on:click={() => (useTemplate = false)}>Use unique mail</button
+				>
 
 				<div class="ml-10 mb-10 pt-5 grid grid-cols-1 lg:grid-cols-2 gap-10">
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						<h2 class="text-xl font-bold mb-4">Complete the template informations</h2>
 						<p>
 							Please select the template you want to use :
@@ -425,16 +438,20 @@
 						{#if selectedTemplate}
 							<button
 								class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-								on:click={sendTemplateToParticipants}>Send</button>
+								on:click={sendTemplateToParticipants}>Send</button
+							>
 						{/if}
 					</div>
 
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						{#if selectedTemplate}
 							<div class="m-2">
 								<h2 class="text-xl font-bold mb-4">{selectedTemplate.name}</h2>
 							</div>
-							<iframe id="preview-iframe" title="Template Preview" class="w-full h-full border-0"></iframe>
+							<iframe id="preview-iframe" title="Template Preview" class="w-full h-full border-0"
+							></iframe>
 						{:else}
 							<p>Please select a template to see its content</p>
 						{/if}
@@ -446,5 +463,5 @@
 {/if}
 
 {#if isMobile}
-	<ProjectPhoneDisplayer project={project} selectedTab={2}/>
+	<ProjectPhoneDisplayer {project} selectedTab={2} />
 {/if}

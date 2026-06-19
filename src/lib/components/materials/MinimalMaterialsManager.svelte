@@ -125,7 +125,9 @@
 				}
 			} else {
 				// Si pas de projectId, charger toutes les pièces
-				const response = await fetch('/api/pieces?limit=1000&page=1&filter=&orderBy=name&order=asc');
+				const response = await fetch(
+					'/api/pieces?limit=1000&page=1&filter=&orderBy=name&order=asc'
+				);
 				if (response.ok) {
 					const data = await response.json();
 					pieces_data = data.data || data || [];
@@ -180,7 +182,7 @@
 
 				// Auto-expand materials with files on mobile
 				if (isMobile) {
-					materials.forEach(material => {
+					materials.forEach((material) => {
 						if (material.files && material.files.length > 0) {
 							expandedMaterials.add(material.id);
 						}
@@ -191,7 +193,6 @@
 				console.error('Failed to load materials');
 				materials = [];
 			}
-
 		} catch (error) {
 			console.error('Error loading materials for piece:', piece.id, error);
 			materials = [];
@@ -238,7 +239,6 @@
 			}
 
 			selectedMaterials = { ...selectedMaterials };
-
 		} catch (error) {
 			console.error('Error loading selected material for piece:', pieceId, error);
 
@@ -253,9 +253,12 @@
 
 			// Retry logic plus intelligent
 			if (retryCount < 2 && error.name !== 'AbortError') {
-				setTimeout(() => {
-					loadSelectedMaterialForPiece(pieceId, retryCount + 1);
-				}, (retryCount + 1) * 2000); // Délai progressif
+				setTimeout(
+					() => {
+						loadSelectedMaterialForPiece(pieceId, retryCount + 1);
+					},
+					(retryCount + 1) * 2000
+				); // Délai progressif
 			} else {
 				selectedMaterials[pieceId] = null;
 				selectedMaterials = { ...selectedMaterials };
@@ -301,14 +304,16 @@
 					dispatch('materialsUpdated');
 
 					// Notification globale pour callsheets et status
-					window.dispatchEvent(new CustomEvent('materialSelectionChanged', {
-						detail: {
-							pieceId,
-							materialId,
-							pieceName: selectedPiece?.name,
-							timestamp: Date.now()
-						}
-					}));
+					window.dispatchEvent(
+						new CustomEvent('materialSelectionChanged', {
+							detail: {
+								pieceId,
+								materialId,
+								pieceName: selectedPiece?.name,
+								timestamp: Date.now()
+							}
+						})
+					);
 
 					// Forcer le rechargement des données si c'est un projet
 					if (projectId) {
@@ -317,7 +322,6 @@
 				} else {
 					throw new Error(result?.error || 'Unknown backend error');
 				}
-
 			} else {
 				// Gestion d'erreur backend
 				let errorMessage = 'Backend error';
@@ -611,7 +615,7 @@
 		if (!selectedMaterialForUpload) return;
 
 		const formData = new FormData();
-		Array.from(files).forEach(file => {
+		Array.from(files).forEach((file) => {
 			formData.append('files', file);
 		});
 
@@ -653,7 +657,7 @@
 		if (!materialId) {
 			return null;
 		}
-		const material = materials.find(m => m.id === materialId) || null;
+		const material = materials.find((m) => m.id === materialId) || null;
 		return material;
 	}
 
@@ -695,7 +699,9 @@
 			{#if pieces.length === 0}
 				<!-- Empty state -->
 				<div class="text-center py-{isMobile ? '8' : '12'}">
-					<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
+					<div
+						class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4"
+					>
 						<Music class="text-gray-400" size={isMobile ? 32 : 48} />
 					</div>
 					<h3 class="font-bold text-lg text-gray-700 mb-2">
@@ -718,15 +724,23 @@
 				<div class="grid {gridCols} gap-{isMobile ? '3' : '4'}">
 					{#each pieces as piece}
 						<button
-							class="p-{isMobile ? '4' : '6'} bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-[10px] hover:border-[#6B9AD9] transition-all duration-300 text-left group"
+							class="p-{isMobile
+								? '4'
+								: '6'} bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-[10px] hover:border-[#6B9AD9] transition-all duration-300 text-left group"
 							on:click={() => loadMaterialsForPiece(piece)}
 						>
 							<div class="flex items-center gap-{isMobile ? '3' : '4'}">
-								<div class="p-{isMobile ? '2' : '3'} bg-blue-500 text-white rounded-[8px] group-hover:scale-110 transition-transform">
+								<div
+									class="p-{isMobile
+										? '2'
+										: '3'} bg-blue-500 text-white rounded-[8px] group-hover:scale-110 transition-transform"
+								>
 									<Music size={isMobile ? 20 : 24} />
 								</div>
 								<div class="flex-1 min-w-0">
-									<h3 class="font-bold {isMobile ? 'text-base' : 'text-lg'} text-gray-700 truncate">{piece.name}</h3>
+									<h3 class="font-bold {isMobile ? 'text-base' : 'text-lg'} text-gray-700 truncate">
+										{piece.name}
+									</h3>
 									<p class="text-{isMobile ? 'xs' : 'sm'} text-gray-500 truncate">
 										{piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'}
 									</p>
@@ -742,12 +756,22 @@
 		</div>
 	{:else}
 		<!-- Material management -->
-		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile ? '3' : '4'} overflow-hidden">
+		<div
+			class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-{isMobile
+				? '3'
+				: '4'} overflow-hidden"
+		>
 			<!-- Header avec navigation -->
-			<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-{isMobile ? '4' : '6'} gap-{isMobile ? '3' : '4'}">
+			<div
+				class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-{isMobile
+					? '4'
+					: '6'} gap-{isMobile ? '3' : '4'}"
+			>
 				<div class="flex items-center gap-3 {isMobile ? 'flex-wrap' : ''}">
 					<button
-						class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'text-sm' : ''}"
+						class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile
+							? 'text-sm'
+							: ''}"
 						on:click={goBackToPieces}
 					>
 						← Back to Pieces
@@ -772,9 +796,7 @@
 							{:else}
 								<div class="mt-2 flex items-center gap-2 text-sm {isMobile ? 'justify-start' : ''}">
 									<Circle class="text-orange-600" size={16} />
-									<span class="text-orange-600 font-medium">
-										No material selected
-									</span>
+									<span class="text-orange-600 font-medium"> No material selected </span>
 								</div>
 							{/if}
 						{/if}
@@ -782,11 +804,15 @@
 				</div>
 
 				<button
-					class="flex items-center gap-2 px-{isMobile ? '4' : '6'} py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
-					on:click={() => showCreateForm = true}
+					class="flex items-center gap-2 px-{isMobile
+						? '4'
+						: '6'} py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile
+						? 'justify-center w-full'
+						: ''}"
+					on:click={() => (showCreateForm = true)}
 				>
 					<Plus size={20} />
-					<span class="{isMobile ? 'text-sm' : ''}">New Material</span>
+					<span class={isMobile ? 'text-sm' : ''}>New Material</span>
 				</button>
 			</div>
 		</div>
@@ -795,17 +821,23 @@
 			<!-- Empty State -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div class="text-center py-{isMobile ? '8' : '12'}">
-					<div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4">
+					<div
+						class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-[8px] mx-auto mb-4"
+					>
 						<Package class="text-gray-400" size={isMobile ? 32 : 48} />
 					</div>
 					<h3 class="font-bold text-lg text-gray-700 mb-2">NO MATERIALS CREATED</h3>
-					<p class="text-gray-500 {isMobile ? 'text-sm' : ''} mb-4">Create the first material for this piece</p>
+					<p class="text-gray-500 {isMobile ? 'text-sm' : ''} mb-4">
+						Create the first material for this piece
+					</p>
 					<button
-						class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'w-full justify-center' : 'mx-auto'}"
-						on:click={() => showCreateForm = true}
+						class="flex items-center gap-2 px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile
+							? 'w-full justify-center'
+							: 'mx-auto'}"
+						on:click={() => (showCreateForm = true)}
 					>
 						<Plus size={20} />
-						<span class="{isMobile ? 'text-sm' : ''}">Create First Material</span>
+						<span class={isMobile ? 'text-sm' : ''}>Create First Material</span>
 					</button>
 				</div>
 			</div>
@@ -827,18 +859,26 @@
 						{@const isSelected = selectedMaterials[selectedPiece.id] === material.id}
 						{@const isExpanded = expandedMaterials.has(material.id)}
 
-						<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200 {
-							isSelected ? 'ring-2 ring-blue-500 bg-blue-50' :
-							material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : ''
-						}">
+						<div
+							class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200 {isSelected
+								? 'ring-2 ring-blue-500 bg-blue-50'
+								: material.is_default
+									? 'ring-2 ring-yellow-400 ring-opacity-50'
+									: ''}"
+						>
 							<!-- Main Item -->
-							<div class="flex items-center justify-between p-{isMobile ? '3' : '4'} cursor-pointer group">
+							<div
+								class="flex items-center justify-between p-{isMobile
+									? '3'
+									: '4'} cursor-pointer group"
+							>
 								<div class="flex items-center gap-{isMobile ? '3' : '4'} flex-1 min-w-0">
 									<!-- Selection checkbox -->
 									<div class="flex-shrink-0">
 										<button
 											class="p-1 hover:bg-gray-100 rounded transition-colors"
-											on:click={() => selectMaterial(selectedPiece.id, isSelected ? null : material.id)}
+											on:click={() =>
+												selectMaterial(selectedPiece.id, isSelected ? null : material.id)}
 											title={isSelected ? 'Deselect this material' : 'Select this material'}
 										>
 											{#if isSelected}
@@ -850,7 +890,9 @@
 									</div>
 
 									<!-- Material icon -->
-									<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
+									<div
+										class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center"
+									>
 										<Package size={isMobile ? 20 : 24} class="text-purple-600" />
 									</div>
 
@@ -858,17 +900,23 @@
 									<div class="flex-1 min-w-0 overflow-hidden">
 										<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-2">
 											<div class="flex items-center gap-2">
-												<h3 class="font-bold text-gray-900 truncate" title={material.name}>{material.name}</h3>
+												<h3 class="font-bold text-gray-900 truncate" title={material.name}>
+													{material.name}
+												</h3>
 												{#if material.is_default}
 													<Star class="text-yellow-500 fill-current" size={14} />
 												{/if}
 												{#if isSelected}
-													<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">✓ Selected</span>
+													<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+														>✓ Selected</span
+													>
 												{/if}
 											</div>
 											{#if !isMobile}
 												<div class="flex items-center gap-2 text-xs">
-													<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold border border-purple-300">
+													<span
+														class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold border border-purple-300"
+													>
 														{material.files_count || 0} file{material.files_count !== 1 ? 's' : ''}
 													</span>
 												</div>
@@ -876,7 +924,11 @@
 										</div>
 
 										<!-- Details Grid -->
-										<div class="grid grid-cols-1 {isMobile ? 'gap-1' : 'md:grid-cols-3 gap-4'} text-sm overflow-hidden">
+										<div
+											class="grid grid-cols-1 {isMobile
+												? 'gap-1'
+												: 'md:grid-cols-3 gap-4'} text-sm overflow-hidden"
+										>
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Type:</span>
 												<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'} break-words">
@@ -888,7 +940,9 @@
 											</div>
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Created:</span>
-												<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'}">{formatDate(material.createdAt)}</span>
+												<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'}"
+													>{formatDate(material.createdAt)}</span
+												>
 											</div>
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Files:</span>
@@ -923,16 +977,28 @@
 
 							<!-- Files section expansible -->
 							{#if material.files && material.files.length > 0}
-								<div class="border-t-2 border-gray-300 bg-gradient-to-r from-purple-50 to-blue-50 overflow-hidden">
+								<div
+									class="border-t-2 border-gray-300 bg-gradient-to-r from-purple-50 to-blue-50 overflow-hidden"
+								>
 									<div class="p-{isMobile ? '3' : '4'}">
-										<div class="flex {isMobile ? 'flex-col' : 'items-center justify-between'} mb-4 gap-2">
-											<h4 class="text-{isMobile ? 'sm' : 'base'} font-bold text-gray-700 flex items-center gap-2">
+										<div
+											class="flex {isMobile
+												? 'flex-col'
+												: 'items-center justify-between'} mb-4 gap-2"
+										>
+											<h4
+												class="text-{isMobile
+													? 'sm'
+													: 'base'} font-bold text-gray-700 flex items-center gap-2"
+											>
 												<FileText size={isMobile ? 14 : 16} class="text-purple-600" />
 												MATERIAL FILES ({material.files.length})
 											</h4>
 
 											<div class="flex items-center gap-2">
-												<span class="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-lg font-bold border border-green-300">
+												<span
+													class="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-lg font-bold border border-green-300"
+												>
 													✓ {material.files.length} file{material.files.length !== 1 ? 's' : ''}
 												</span>
 												{#if !isMobile}
@@ -953,9 +1019,17 @@
 										{#if isMobile || isExpanded}
 											<div class="space-y-{isMobile ? '2' : '3'} overflow-hidden">
 												{#each material.files as file}
-													<div class="flex items-center justify-between p-{isMobile ? '2' : '3'} bg-white border-2 border-gray-300 rounded-[8px] hover:border-purple-400 transition-colors group min-w-0">
-														<div class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0">
-															<div class="w-8 h-8 bg-gray-100 rounded-[6px] border border-gray-300 flex items-center justify-center flex-shrink-0">
+													<div
+														class="flex items-center justify-between p-{isMobile
+															? '2'
+															: '3'} bg-white border-2 border-gray-300 rounded-[8px] hover:border-purple-400 transition-colors group min-w-0"
+													>
+														<div
+															class="flex items-center gap-{isMobile ? '2' : '3'} flex-1 min-w-0"
+														>
+															<div
+																class="w-8 h-8 bg-gray-100 rounded-[6px] border border-gray-300 flex items-center justify-center flex-shrink-0"
+															>
 																<svelte:component
 																	this={getFileIcon(file.name)}
 																	size={isMobile ? 14 : 16}
@@ -963,29 +1037,42 @@
 																/>
 															</div>
 															<div class="flex-1 min-w-0">
-																<span class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-700 truncate block" title={file.name}>{file.name}</span>
-																<span class="text-xs text-gray-500">{formatFileSize(file.size || 0)}</span>
+																<span
+																	class="text-{isMobile
+																		? 'xs'
+																		: 'sm'} font-bold text-gray-700 truncate block"
+																	title={file.name}>{file.name}</span
+																>
+																<span class="text-xs text-gray-500"
+																	>{formatFileSize(file.size || 0)}</span
+																>
 															</div>
 														</div>
 
 														<!-- MOBILE-ALWAYS-VISIBLE file actions -->
 														<div class="flex items-center gap-1 flex-shrink-0">
 															<button
-																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
+																class="p-{isMobile
+																	? '1.5'
+																	: '2'} text-gray-600 hover:text-blue-600 rounded-[6px] hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
 																on:click={() => previewMaterialFile(file)}
 																title="Preview"
 															>
 																<Eye size={isMobile ? 12 : 14} />
 															</button>
 															<button
-																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-green-600 rounded-[6px] hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
+																class="p-{isMobile
+																	? '1.5'
+																	: '2'} text-gray-600 hover:text-green-600 rounded-[6px] hover:bg-green-50 border border-transparent hover:border-green-300 transition-colors"
 																on:click={() => downloadMaterialFile(file.id, file.name)}
 																title="Download"
 															>
 																<Download size={isMobile ? 12 : 14} />
 															</button>
 															<button
-																class="p-{isMobile ? '1.5' : '2'} text-gray-600 hover:text-red-600 rounded-[6px] hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
+																class="p-{isMobile
+																	? '1.5'
+																	: '2'} text-gray-600 hover:text-red-600 rounded-[6px] hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors"
 																on:click={() => deleteMaterialFile(file.id, file.name)}
 																title="Delete"
 															>
@@ -999,11 +1086,14 @@
 											<!-- Upload button in files section -->
 											<div class="mt-4 pt-3 border-t border-gray-200">
 												<button
-													class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md {isMobile ? 'w-full justify-center' : ''}"
+													class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md {isMobile
+														? 'w-full justify-center'
+														: ''}"
 													on:click={() => openUploader(material)}
 												>
 													<CloudUpload size={16} />
-													<span class="font-medium {isMobile ? 'text-sm' : ''}">Add More Files</span>
+													<span class="font-medium {isMobile ? 'text-sm' : ''}">Add More Files</span
+													>
 												</button>
 											</div>
 										{/if}
@@ -1014,14 +1104,18 @@
 								<div class="border-t-2 border-gray-300 bg-gray-50 overflow-hidden">
 									<div class="p-{isMobile ? '4' : '6'} text-center">
 										<FileText class="mx-auto mb-3 text-gray-400" size={isMobile ? 24 : 32} />
-										<p class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-600 mb-2">NO FILES IN THIS MATERIAL</p>
+										<p class="text-{isMobile ? 'xs' : 'sm'} font-bold text-gray-600 mb-2">
+											NO FILES IN THIS MATERIAL
+										</p>
 										<p class="text-xs text-gray-400 mb-4">Upload files to this material</p>
 										<button
-											class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'w-full justify-center' : 'mx-auto'}"
+											class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile
+												? 'w-full justify-center'
+												: 'mx-auto'}"
 											on:click={() => openUploader(material)}
 										>
 											<Upload size={16} />
-											<span class="{isMobile ? 'text-sm' : ''}">Upload Files</span>
+											<span class={isMobile ? 'text-sm' : ''}>Upload Files</span>
 										</button>
 									</div>
 								</div>
@@ -1036,8 +1130,14 @@
 
 <!-- Creation modal -->
 {#if showCreateForm}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-{isMobile ? '2' : '4'}">
-		<div class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+	<div
+		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-{isMobile
+			? '2'
+			: '4'}"
+	>
+		<div
+			class="bg-[#E7E7E7] rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+		>
 			<!-- Header -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-t-[10px] p-4">
 				<div class="flex items-center justify-between">
@@ -1052,7 +1152,7 @@
 					</div>
 					<button
 						class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors"
-						on:click={() => showCreateForm = false}
+						on:click={() => (showCreateForm = false)}
 					>
 						<X size={20} />
 					</button>
@@ -1064,9 +1164,7 @@
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 					<div class="space-y-4">
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
-								Material Name *
-							</label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Material Name * </label>
 							<input
 								type="text"
 								bind:value={newMaterialData.name}
@@ -1077,12 +1175,10 @@
 						</div>
 
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
-								Description
-							</label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Description </label>
 							<textarea
 								bind:value={newMaterialData.description}
-								rows={isMobile ? "2" : "3"}
+								rows={isMobile ? '2' : '3'}
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors resize-vertical"
 								placeholder="Material description..."
 							></textarea>
@@ -1090,9 +1186,7 @@
 
 						<div class="grid grid-cols-1 {isMobile ? '' : 'md:grid-cols-2'} gap-4">
 							<div>
-								<label class="block text-sm font-medium text-gray-700 mb-2">
-									Edition
-								</label>
+								<label class="block text-sm font-medium text-gray-700 mb-2"> Edition </label>
 								<input
 									type="text"
 									bind:value={newMaterialData.edition}
@@ -1102,9 +1196,7 @@
 							</div>
 
 							<div>
-								<label class="block text-sm font-medium text-gray-700 mb-2">
-									Publisher
-								</label>
+								<label class="block text-sm font-medium text-gray-700 mb-2"> Publisher </label>
 								<input
 									type="text"
 									bind:value={newMaterialData.editor}
@@ -1115,12 +1207,10 @@
 						</div>
 
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
-								Notes
-							</label>
+							<label class="block text-sm font-medium text-gray-700 mb-2"> Notes </label>
 							<textarea
 								bind:value={newMaterialData.notes}
-								rows={isMobile ? "2" : "3"}
+								rows={isMobile ? '2' : '3'}
 								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B9AD9] focus:border-transparent transition-colors resize-vertical"
 								placeholder="Bowings, modifications..."
 							></textarea>
@@ -1148,14 +1238,18 @@
 
 						<div class="flex {isMobile ? 'flex-col w-full gap-2' : 'gap-3'}">
 							<button
-								class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
-								on:click={() => showCreateForm = false}
+								class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile
+									? 'w-full justify-center'
+									: ''}"
+								on:click={() => (showCreateForm = false)}
 							>
 								Cancel
 							</button>
 
 							<button
-								class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile ? 'w-full' : ''}"
+								class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile
+									? 'w-full'
+									: ''}"
 								disabled={!newMaterialData.name.trim()}
 								on:click={createMaterial}
 							>
@@ -1196,102 +1290,103 @@
 
 <!-- CSS Styles -->
 <style>
-    /* Mobile-specific responsive adjustments */
-    @media (max-width: 768px) {
-        :global(.md\:grid-cols-3) {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
+	/* Mobile-specific responsive adjustments */
+	@media (max-width: 768px) {
+		:global(.md\:grid-cols-3) {
+			grid-template-columns: repeat(1, minmax(0, 1fr));
+		}
 
-        :global(.md\:grid-cols-2) {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
+		:global(.md\:grid-cols-2) {
+			grid-template-columns: repeat(1, minmax(0, 1fr));
+		}
 
-        :global(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
-            margin-top: 0.75rem;
-        }
+		:global(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
+			margin-top: 0.75rem;
+		}
 
-        :global(.space-y-3) > :not([hidden]) ~ :not([hidden]) {
-            margin-top: 0.5rem;
-        }
+		:global(.space-y-3) > :not([hidden]) ~ :not([hidden]) {
+			margin-top: 0.5rem;
+		}
 
-        :global(.space-y-2) > :not([hidden]) ~ :not([hidden]) {
-            margin-top: 0.5rem;
-        }
+		:global(.space-y-2) > :not([hidden]) ~ :not([hidden]) {
+			margin-top: 0.5rem;
+		}
 
-        :global(.gap-4) {
-            gap: 0.75rem;
-        }
+		:global(.gap-4) {
+			gap: 0.75rem;
+		}
 
-        :global(.gap-3) {
-            gap: 0.5rem;
-        }
+		:global(.gap-3) {
+			gap: 0.5rem;
+		}
 
-        :global(.gap-2) {
-            gap: 0.25rem;
-        }
+		:global(.gap-2) {
+			gap: 0.25rem;
+		}
 
-        /* Improve touch targets on mobile */
-        button {
-            min-height: 44px;
-        }
+		/* Improve touch targets on mobile */
+		button {
+			min-height: 44px;
+		}
 
-        /* Disable hover effects on mobile */
-        .group:hover {
-            transform: none;
-        }
+		/* Disable hover effects on mobile */
+		.group:hover {
+			transform: none;
+		}
 
-        .group-hover\:scale-110 {
-            transition: none;
-        }
+		.group-hover\:scale-110 {
+			transition: none;
+		}
 
-        /* Force text wrapping and prevent overflow */
-        .break-words {
-            word-wrap: break-word;
-            word-break: break-word;
-            overflow-wrap: break-word;
-        }
+		/* Force text wrapping and prevent overflow */
+		.break-words {
+			word-wrap: break-word;
+			word-break: break-word;
+			overflow-wrap: break-word;
+		}
 
-        .truncate {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+		.truncate {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 
-        .min-w-0 {
-            min-width: 0;
-        }
+		.min-w-0 {
+			min-width: 0;
+		}
 
-        .overflow-hidden {
-            overflow: hidden;
-        }
-    }
+		.overflow-hidden {
+			overflow: hidden;
+		}
+	}
 
-    /* Tablet adjustments */
-    @media (min-width: 769px) and (max-width: 1024px) {
-        :global(.lg\:grid-cols-3) {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        :global(.md\:grid-cols-3) {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
+	/* Tablet adjustments */
+	@media (min-width: 769px) and (max-width: 1024px) {
+		:global(.lg\:grid-cols-3) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		:global(.md\:grid-cols-3) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
 
-    /* Force text wrapping globally */
-    .break-words {
-        word-wrap: break-word;
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
+	/* Force text wrapping globally */
+	.break-words {
+		word-wrap: break-word;
+		word-break: break-word;
+		overflow-wrap: break-word;
+	}
 
-    /* Smooth transitions for all interactive elements */
-    button, .group {
-        transition: all 200ms ease-in-out;
-    }
+	/* Smooth transitions for all interactive elements */
+	button,
+	.group {
+		transition: all 200ms ease-in-out;
+	}
 
-    /* Ensure modal is properly centered on all screen sizes */
-    .fixed.inset-0 {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+	/* Ensure modal is properly centered on all screen sizes */
+	.fixed.inset-0 {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 </style>

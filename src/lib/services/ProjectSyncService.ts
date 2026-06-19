@@ -2,7 +2,6 @@
  * Service pour synchroniser les dossiers de pièces lors des modifications de projet
  */
 export class ProjectSyncService {
-
 	/**
 	 * Synchronise les dossiers de pièces après modification d'un projet
 	 */
@@ -52,7 +51,11 @@ export class ProjectSyncService {
 	/**
 	 * Copie les partitions d'une pièce vers un nouveau projet
 	 */
-	static async copyPieceScores(pieceId: number, fromProjectId: number, toProjectId: number): Promise<void> {
+	static async copyPieceScores(
+		pieceId: number,
+		fromProjectId: number,
+		toProjectId: number
+	): Promise<void> {
 		try {
 			const response = await fetch(`/api/filesystem/pieces/${pieceId}/copy-scores`, {
 				method: 'POST',
@@ -81,7 +84,6 @@ export class ProjectSyncService {
  * Hook pour synchroniser automatiquement les projets
  */
 export function useProjectSync() {
-
 	const syncAfterPieceChange = async (projectId: number) => {
 		await ProjectSyncService.syncProjectPieces(projectId);
 	};

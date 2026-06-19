@@ -5,7 +5,6 @@ import { ProjectSyncService } from '$lib/services/ProjectSyncService';
  * les dossiers de fichiers
  */
 export function useProjectModification() {
-
 	/**
 	 * À appeler après la création d'un projet
 	 */

@@ -43,7 +43,9 @@
 		<div class="flex items-center gap-4">
 			{#if selectedProject}
 				<button
-					class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'text-sm' : ''}"
+					class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile
+						? 'text-sm'
+						: ''}"
 					on:click={() => dispatch('projectChange', null)}
 				>
 					<ChevronLeft size={isMobile ? 16 : 20} />
@@ -84,13 +86,19 @@
 			</button>
 
 			{#if !selectedProject}
-				<div class="flex bg-gray-100 border-2 border-gray-300 rounded-[8px] p-1 {isMobile ? 'flex-1' : ''}">
+				<div
+					class="flex bg-gray-100 border-2 border-gray-300 rounded-[8px] p-1 {isMobile
+						? 'flex-1'
+						: ''}"
+				>
 					<button
-						class="flex items-center gap-2 px-{isMobile ? '3' : '4'} py-2 rounded-[6px] transition-colors font-semibold {
-							activeTab === 'projects'
-								? 'bg-[#6B9AD9] text-white border-2 border-blue-600'
-								: 'text-gray-600 hover:text-gray-800 border-2 border-transparent hover:bg-gray-200'
-						} {isMobile ? 'flex-1 justify-center text-sm' : ''}"
+						class="flex items-center gap-2 px-{isMobile
+							? '3'
+							: '4'} py-2 rounded-[6px] transition-colors font-semibold {activeTab === 'projects'
+							? 'bg-[#6B9AD9] text-white border-2 border-blue-600'
+							: 'text-gray-600 hover:text-gray-800 border-2 border-transparent hover:bg-gray-200'} {isMobile
+							? 'flex-1 justify-center text-sm'
+							: ''}"
 						on:click={() => switchTab('projects')}
 					>
 						<FolderOpen size={16} />
@@ -99,11 +107,13 @@
 						{/if}
 					</button>
 					<button
-						class="flex items-center gap-2 px-{isMobile ? '3' : '4'} py-2 rounded-[6px] transition-colors font-semibold {
-							activeTab === 'general'
-								? 'bg-[#6B9AD9] text-white border-2 border-blue-600'
-								: 'text-gray-600 hover:text-gray-800 border-2 border-transparent hover:bg-gray-200'
-						} {isMobile ? 'flex-1 justify-center text-sm' : ''}"
+						class="flex items-center gap-2 px-{isMobile
+							? '3'
+							: '4'} py-2 rounded-[6px] transition-colors font-semibold {activeTab === 'general'
+							? 'bg-[#6B9AD9] text-white border-2 border-blue-600'
+							: 'text-gray-600 hover:text-gray-800 border-2 border-transparent hover:bg-gray-200'} {isMobile
+							? 'flex-1 justify-center text-sm'
+							: ''}"
 						on:click={() => switchTab('general')}
 					>
 						<Database size={16} />
@@ -118,15 +128,15 @@
 </div>
 
 <style>
-    @media (max-width: 480px) {
-        .text-xl {
-            font-size: 1.125rem;
-            line-height: 1.75rem;
-        }
+	@media (max-width: 480px) {
+		.text-xl {
+			font-size: 1.125rem;
+			line-height: 1.75rem;
+		}
 
-        .text-lg {
-            font-size: 1rem;
-            line-height: 1.5rem;
-        }
-    }
+		.text-lg {
+			font-size: 1rem;
+			line-height: 1.5rem;
+		}
+	}
 </style>

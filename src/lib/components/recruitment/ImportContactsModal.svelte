@@ -1,187 +1,196 @@
 <!-- src/lib/components/recruitment/ImportContactsModal.svelte -->
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte'
-	import { X, Upload, Search, Users, AlertTriangle, CheckCircle } from 'lucide-svelte'
-	import type { Contact } from '$lib/types'
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { X, Upload, Search, Users, AlertTriangle, CheckCircle } from 'lucide-svelte';
+	import type { Contact } from '$lib/types';
 
-	export let projectId: string
+	export let projectId: string;
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
-	let searchQuery = ''
-	let searchResults: Contact[] = []
-	let selectedContacts: Contact[] = []
-	let searching = false
-	let importing = false
-	let searchPerformed = false
-	let initialLoadPerformed = false
+	let searchQuery = '';
+	let searchResults: Contact[] = [];
+	let selectedContacts: Contact[] = [];
+	let searching = false;
+	let importing = false;
+	let searchPerformed = false;
+	let initialLoadPerformed = false;
 
 	let importResults: {
-		imported: any[]
-		conflicts: any[]
-		errors: string[]
-	} | null = null
+		imported: any[];
+		conflicts: any[];
+		errors: string[];
+	} | null = null;
 
 	onMount(async () => {
-		await loadInitialContacts()
-	})
+		await loadInitialContacts();
+	});
 
 	async function loadInitialContacts() {
-		if (initialLoadPerformed) return
+		if (initialLoadPerformed) return;
 
-		searching = true
-		initialLoadPerformed = true
+		searching = true;
+		initialLoadPerformed = true;
 
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/search-contacts`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					filter: '',
-					criteria: {
-						name: '',
-						email: '',
-						instruments: '',
-						projects: ''
-					}
-				})
-			})
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/search-contacts`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						filter: '',
+						criteria: {
+							name: '',
+							email: '',
+							instruments: '',
+							projects: ''
+						}
+					})
+				}
+			);
 
 			if (response.ok) {
-				const data = await response.json()
-				searchResults = data.data || data || []
-				searchPerformed = true
+				const data = await response.json();
+				searchResults = data.data || data || [];
+				searchPerformed = true;
 			}
 		} catch (error) {
-			console.error('Error loading initial contacts:', error)
+			console.error('Error loading initial contacts:', error);
 		} finally {
-			searching = false
+			searching = false;
 		}
 	}
 
 	async function searchContacts() {
 		if (!searchQuery.trim()) {
-			await loadInitialContacts()
-			return
+			await loadInitialContacts();
+			return;
 		}
 
-		searching = true
-		searchPerformed = true
+		searching = true;
+		searchPerformed = true;
 
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/search-contacts`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					filter: searchQuery,
-					criteria: {
-						name: searchQuery,
-						email: searchQuery,
-						instruments: searchQuery,
-						projects: searchQuery
-					}
-				})
-			})
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/search-contacts`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						filter: searchQuery,
+						criteria: {
+							name: searchQuery,
+							email: searchQuery,
+							instruments: searchQuery,
+							projects: searchQuery
+						}
+					})
+				}
+			);
 
 			if (response.ok) {
-				const data = await response.json()
-				searchResults = data.data || data || []
+				const data = await response.json();
+				searchResults = data.data || data || [];
 			}
 		} catch (error) {
-			console.error('Error searching contacts:', error)
-			alert('Error searching contacts')
+			console.error('Error searching contacts:', error);
+			alert('Error searching contacts');
 		} finally {
-			searching = false
+			searching = false;
 		}
 	}
 
 	function toggleContactSelection(contact: Contact) {
-		const index = selectedContacts.findIndex(c => c.id === contact.id)
+		const index = selectedContacts.findIndex((c) => c.id === contact.id);
 		if (index >= 0) {
-			selectedContacts = selectedContacts.filter(c => c.id !== contact.id)
+			selectedContacts = selectedContacts.filter((c) => c.id !== contact.id);
 		} else {
-			selectedContacts = [...selectedContacts, contact]
+			selectedContacts = [...selectedContacts, contact];
 		}
 	}
 
 	function selectAllSearchResults() {
-		selectedContacts = [...searchResults]
+		selectedContacts = [...searchResults];
 	}
 
 	function clearSelection() {
-		selectedContacts = []
+		selectedContacts = [];
 	}
 
 	async function importSelectedContacts() {
-		if (selectedContacts.length === 0) return
+		if (selectedContacts.length === 0) return;
 
-		importing = true
+		importing = true;
 
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/contacts/import`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					contact_ids: selectedContacts.map(c => c.id)
-				})
-			})
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/contacts/import`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						contact_ids: selectedContacts.map((c) => c.id)
+					})
+				}
+			);
 
 			if (response.ok) {
-				importResults = await response.json()
+				importResults = await response.json();
 
 				if (importResults && importResults.imported.length > 0) {
-					dispatch('contactsImported', importResults)
+					dispatch('contactsImported', importResults);
 				}
 			} else {
-				alert('Error importing contacts')
+				alert('Error importing contacts');
 			}
 		} catch (error) {
-			console.error('Error importing contacts:', error)
-			alert('Error importing contacts')
+			console.error('Error importing contacts:', error);
+			alert('Error importing contacts');
 		} finally {
-			importing = false
+			importing = false;
 		}
 	}
 
 	function closeModal() {
-		dispatch('close')
+		dispatch('close');
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
-			closeModal()
+			closeModal();
 		} else if (event.key === 'Enter' && event.target?.tagName !== 'BUTTON') {
-			searchContacts()
+			searchContacts();
 		}
 	}
 
 	function resetSearch() {
-		searchQuery = ''
-		selectedContacts = []
-		searchPerformed = false
-		importResults = null
-		initialLoadPerformed = false
-		loadInitialContacts()
+		searchQuery = '';
+		selectedContacts = [];
+		searchPerformed = false;
+		importResults = null;
+		initialLoadPerformed = false;
+		loadInitialContacts();
 	}
 
 	function getContactDisplay(contact: Contact): string {
-		const parts = [contact.firstName, contact.lastName].filter(Boolean)
-		if (contact.email) parts.push(`(${contact.email})`)
-		return parts.join(' ')
+		const parts = [contact.firstName, contact.lastName].filter(Boolean);
+		if (contact.email) parts.push(`(${contact.email})`);
+		return parts.join(' ');
 	}
 
 	function getContactInstruments(contact: Contact): string {
-		if (!contact.instruments || contact.instruments.length === 0) return ''
-		return contact.instruments.map(i => i.name).join(', ')
+		if (!contact.instruments || contact.instruments.length === 0) return '';
+		return contact.instruments.map((i) => i.name).join(', ');
 	}
 
 	function getContactProjects(contact: Contact): string {
-		if (!contact.participants || contact.participants.length === 0) return ''
+		if (!contact.participants || contact.participants.length === 0) return '';
 		const projects = contact.participants
-			.map(p => p.project?.name)
+			.map((p) => p.project?.name)
 			.filter(Boolean)
-			.slice(0, 3)
-		return projects.join(', ') + (contact.participants.length > 3 ? '...' : '')
+			.slice(0, 3);
+		return projects.join(', ') + (contact.participants.length > 3 ? '...' : '');
 	}
 </script>
 
@@ -195,10 +204,7 @@
 				<Upload class="text-[#6B9AD9]" size={24} />
 				<h2 class="text-xl font-semibold">Import Contacts</h2>
 			</div>
-			<button
-				on:click={closeModal}
-				class="text-gray-400 hover:text-gray-600 transition-colors"
-			>
+			<button on:click={closeModal} class="text-gray-400 hover:text-gray-600 transition-colors">
 				<X size={24} />
 			</button>
 		</div>
@@ -210,7 +216,8 @@
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-900">Search contacts</h3>
 					<p class="text-sm text-gray-600">
-						All contacts are displayed by default. Use search to filter by name, email, instrument or project.
+						All contacts are displayed by default. Use search to filter by name, email, instrument
+						or project.
 					</p>
 
 					<div class="flex gap-2">
@@ -238,10 +245,7 @@
 						</button>
 
 						{#if searchQuery}
-							<button
-								on:click={resetSearch}
-								class="px-4 py-2 text-gray-600 hover:text-gray-800"
-							>
+							<button on:click={resetSearch} class="px-4 py-2 text-gray-600 hover:text-gray-800">
 								Reset
 							</button>
 						{/if}
@@ -250,7 +254,9 @@
 
 				{#if searching && !searchPerformed}
 					<div class="text-center py-8">
-						<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
+						<div
+							class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B9AD9] mx-auto mb-4"
+						></div>
 						<p class="text-gray-600">Loading contacts...</p>
 					</div>
 				{:else}
@@ -297,48 +303,50 @@
 								<div class="max-h-96 overflow-y-auto">
 									<table class="w-full text-sm">
 										<thead class="bg-gray-50 sticky top-0">
-										<tr>
-											<th class="px-4 py-3 text-left w-12">
-												<input
-													type="checkbox"
-													checked={selectedContacts.length === searchResults.length && searchResults.length > 0}
-													on:change={(e) => e.target.checked ? selectAllSearchResults() : clearSelection()}
-													class="rounded"
-												/>
-											</th>
-											<th class="px-4 py-3 text-left font-semibold">Contact</th>
-											<th class="px-4 py-3 text-left font-semibold">Instruments</th>
-											<th class="px-4 py-3 text-left font-semibold">Past projects</th>
-										</tr>
-										</thead>
-										<tbody>
-										{#each searchResults as contact}
-											<tr class="border-t hover:bg-gray-50">
-												<td class="px-4 py-3">
+											<tr>
+												<th class="px-4 py-3 text-left w-12">
 													<input
 														type="checkbox"
-														checked={selectedContacts.some(c => c.id === contact.id)}
-														on:change={() => toggleContactSelection(contact)}
+														checked={selectedContacts.length === searchResults.length &&
+															searchResults.length > 0}
+														on:change={(e) =>
+															e.target.checked ? selectAllSearchResults() : clearSelection()}
 														class="rounded"
 													/>
-												</td>
-												<td class="px-4 py-3">
-													<div class="font-medium">{contact.firstName} {contact.lastName}</div>
-													{#if contact.email}
-														<div class="text-sm text-gray-500">{contact.email}</div>
-													{/if}
-													{#if contact.phone}
-														<div class="text-sm text-gray-500">{contact.phone}</div>
-													{/if}
-												</td>
-												<td class="px-4 py-3 text-sm text-gray-600">
-													{getContactInstruments(contact) || '-'}
-												</td>
-												<td class="px-4 py-3 text-sm text-gray-600">
-													{getContactProjects(contact) || '-'}
-												</td>
+												</th>
+												<th class="px-4 py-3 text-left font-semibold">Contact</th>
+												<th class="px-4 py-3 text-left font-semibold">Instruments</th>
+												<th class="px-4 py-3 text-left font-semibold">Past projects</th>
 											</tr>
-										{/each}
+										</thead>
+										<tbody>
+											{#each searchResults as contact}
+												<tr class="border-t hover:bg-gray-50">
+													<td class="px-4 py-3">
+														<input
+															type="checkbox"
+															checked={selectedContacts.some((c) => c.id === contact.id)}
+															on:change={() => toggleContactSelection(contact)}
+															class="rounded"
+														/>
+													</td>
+													<td class="px-4 py-3">
+														<div class="font-medium">{contact.firstName} {contact.lastName}</div>
+														{#if contact.email}
+															<div class="text-sm text-gray-500">{contact.email}</div>
+														{/if}
+														{#if contact.phone}
+															<div class="text-sm text-gray-500">{contact.phone}</div>
+														{/if}
+													</td>
+													<td class="px-4 py-3 text-sm text-gray-600">
+														{getContactInstruments(contact) || '-'}
+													</td>
+													<td class="px-4 py-3 text-sm text-gray-600">
+														{getContactProjects(contact) || '-'}
+													</td>
+												</tr>
+											{/each}
 										</tbody>
 									</table>
 								</div>
@@ -356,7 +364,8 @@
 									Ready to import {selectedContacts.length} contact(s)
 								</h4>
 								<p class="text-sm text-blue-700 mt-1">
-									These contacts will be added to your recruitment list with "Not yet contacted" status.
+									These contacts will be added to your recruitment list with "Not yet contacted"
+									status.
 								</p>
 							</div>
 							<button
@@ -372,7 +381,6 @@
 						</div>
 					</div>
 				{/if}
-
 			{:else}
 				<!-- Import results -->
 				<div class="space-y-4">
@@ -390,7 +398,8 @@
 									<div class="mt-2 space-y-1">
 										{#each importResults.imported as contact}
 											<p class="text-sm text-green-800">
-												{contact.first_name} {contact.last_name}
+												{contact.first_name}
+												{contact.last_name}
 											</p>
 										{/each}
 									</div>
@@ -414,7 +423,8 @@
 									<div class="mt-2 space-y-1">
 										{#each importResults.conflicts as conflict}
 											<p class="text-sm text-yellow-800">
-												{conflict.contact.firstName} {conflict.contact.lastName}
+												{conflict.contact.firstName}
+												{conflict.contact.lastName}
 												(current status: {conflict.existing_status})
 											</p>
 										{/each}

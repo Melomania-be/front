@@ -44,33 +44,33 @@
 		notifications: number;
 		num: number;
 	}[] = [
-				{
-					url: "",
-					name: 'Project Details',
-					icon: faDiagramProject,
-					notifications: 0,
-					num: 0
-				},
-				{
-					url: "",
-					name: 'Participants',
-					icon: faUsers,
-					notifications: participantNotValidated,
-					num: 1
-				},
-				{ url: "", name: 'Mailing', icon: faEnvelope, notifications: 0, num: 2 },
-				{ url: "", name: 'Callsheet', icon: faSheetPlastic, notifications: 0, num: 3 },
-				{
-					url: "",
-					name: 'Attendances',
-					icon: faCalendarCheck,
-					notifications: 0,
-					num: 4
-				},
-				{ url: "", name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
-				{ url: "", name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
-				{ url: "", name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
-			];
+		{
+			url: '',
+			name: 'Project Details',
+			icon: faDiagramProject,
+			notifications: 0,
+			num: 0
+		},
+		{
+			url: '',
+			name: 'Participants',
+			icon: faUsers,
+			notifications: participantNotValidated,
+			num: 1
+		},
+		{ url: '', name: 'Mailing', icon: faEnvelope, notifications: 0, num: 2 },
+		{ url: '', name: 'Callsheet', icon: faSheetPlastic, notifications: 0, num: 3 },
+		{
+			url: '',
+			name: 'Attendances',
+			icon: faCalendarCheck,
+			notifications: 0,
+			num: 4
+		},
+		{ url: '', name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
+		{ url: '', name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
+		{ url: '', name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+	];
 
 	// Reactif : met à jour les URLs dès que project devient dispo
 	$: if (project) {
@@ -130,7 +130,7 @@
 	};
 
 	const checkDirection = () => {
-		screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+		screenDirection = window.innerWidth > window.innerHeight ? 'horizontal' : 'vertical';
 	};
 
 	onMount(() => {
@@ -164,7 +164,9 @@
 	}
 </script>
 
-<div class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_rgba(0,0,0,0.1)] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl">
+<div
+	class="fixed top-auto bottom-0 left-0 right-0 h-[50px] bg-white shadow-[0_0_10px_10px_rgba(0,0,0,0.1)] border-[#E7E7E7] flex justify-center items-center z-20 rounded-t-xl"
+>
 	{#if isMobile}
 		{#if project}
 			<!--Tabs-->
@@ -204,27 +206,27 @@
 							class="absolute bg-white bottom-16 right-[1px] rounded-lg shadow-xl p-4"
 						>
 							<div class=" grid grid-cols-2 gap-2">
-							{#each tabs.slice(5, tabs.length) as tab}
-								<button
-									class="flex-1 flex p-3 justify-center items-center"
-									on:click={() => goto(tab.url)}
-								>
-									<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
-										<Fa
-											icon={tab.icon}
-											class="text-[16px]"
-											style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
-										/>
-									</div>
-									{#if tab.notifications}
-										<div
-											class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
-										>
-											<span class="-mt-[6.8px]">{participantNotValidated}</span>
+								{#each tabs.slice(5, tabs.length) as tab}
+									<button
+										class="flex-1 flex p-3 justify-center items-center"
+										on:click={() => goto(tab.url)}
+									>
+										<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+											<Fa
+												icon={tab.icon}
+												class="text-[16px]"
+												style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+											/>
 										</div>
-									{/if}
-								</button>
-							{/each}
+										{#if tab.notifications}
+											<div
+												class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+											>
+												<span class="-mt-[6.8px]">{participantNotValidated}</span>
+											</div>
+										{/if}
+									</button>
+								{/each}
 							</div>
 						</div>
 					{/if}
@@ -233,9 +235,7 @@
 		{:else}
 			<div class="ml-3 w-full text-lg text-gray-400 font-semibold flex mr-3">
 				{#each tabs.slice(0, 5) as tab}
-					<button
-						class="flex-1 flex p-3 justify-center items-center"
-					>
+					<button class="flex-1 flex p-3 justify-center items-center">
 						<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
 							<Fa
 								icon={tab.icon}
@@ -252,9 +252,7 @@
 						{/if}
 					</button>
 				{/each}
-				<button
-					class="flex-1 flex p-3 justify-center items-center relative"
-				>
+				<button class="flex-1 flex p-3 justify-center items-center relative">
 					<div class="p-2 rounded-full">
 						<Fa icon={faEllipsis} class="text-[16px]" style="color: #8C8C8C;" />
 					</div>
@@ -265,27 +263,27 @@
 							class="absolute bg-white bottom-16 right-[1px] rounded-lg shadow-xl p-4"
 						>
 							<div class=" grid grid-cols-2 gap-2">
-							{#each tabs.slice(5, tabs.length) as tab}
-								<button
-									class="flex-1 flex p-3 justify-center items-center"
-									on:click={() => goto(tab.url)}
-								>
-									<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
-										<Fa
-											icon={tab.icon}
-											class="text-[16px]"
-											style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
-										/>
-									</div>
-									{#if tab.notifications}
-										<div
-											class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
-										>
-											<span class="-mt-[6.8px]">{participantNotValidated}</span>
+								{#each tabs.slice(5, tabs.length) as tab}
+									<button
+										class="flex-1 flex p-3 justify-center items-center"
+										on:click={() => goto(tab.url)}
+									>
+										<div class="{selectedTab === tab.num ? ' bg-[#6B9AD9]' : ''} p-2 rounded-full">
+											<Fa
+												icon={tab.icon}
+												class="text-[16px]"
+												style="color: {selectedTab === tab.num ? 'white;' : '#8C8C8C;'}"
+											/>
 										</div>
-									{/if}
-								</button>
-							{/each}
+										{#if tab.notifications}
+											<div
+												class="-mt-3 -ml-2 bg-red-400 text-white w-[15px] h-[15px] rounded-full text-[0.8rem] text-center flex justify-center"
+											>
+												<span class="-mt-[6.8px]">{participantNotValidated}</span>
+											</div>
+										{/if}
+									</button>
+								{/each}
 							</div>
 						</div>
 					{/if}

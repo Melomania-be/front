@@ -8,5 +8,5 @@ export interface Concert {
 	project_id: number | null;
 	place: string;
 	participants?: Participant[];
-	pivot_comment?: string
+	pivot_comment?: string;
 }

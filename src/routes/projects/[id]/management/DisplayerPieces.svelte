@@ -8,7 +8,9 @@
 </script>
 
 {#if project}
-	<div class="w-full bg-white border-2 rounded-xl pt-4 pb-4 border-[#8C8C8C] shadow dark:bg-gray-800 dark:border-gray-700">
+	<div
+		class="w-full bg-white border-2 rounded-xl pt-4 pb-4 border-[#8C8C8C] shadow dark:bg-gray-800 dark:border-gray-700"
+	>
 		<div class="sm:hidden">
 			<label for="tabs" class="sr-only">Select tab</label>
 			<select
@@ -27,27 +29,27 @@
 			<li class="w-full">
 				<button
 					on:click={() => {
-					mode = 'pieces';
-				}}
+						mode = 'pieces';
+					}}
 					type="button"
 					role="tab"
 					class="inline-block h-full w-full p-4 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600 {mode ===
-				'pieces'
-					? 'bg-gray-200 hover:bg-gray-200'
-					: 'bg-gray-50 hover:bg-gray-100'}">Pieces</button
+					'pieces'
+						? 'bg-gray-200 hover:bg-gray-200'
+						: 'bg-gray-50 hover:bg-gray-100'}">Pieces</button
 				>
 			</li>
 			<li class="w-full">
 				<button
 					on:click={() => {
-					mode = 'files';
-				}}
+						mode = 'files';
+					}}
 					type="button"
 					role="tab"
 					class="inline-block w-full p-4 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600 {mode ===
-				'files'
-					? 'bg-gray-200 hover:bg-gray-200'
-					: 'bg-gray-50 hover:bg-gray-100'}">Pieces files</button
+					'files'
+						? 'bg-gray-200 hover:bg-gray-200'
+						: 'bg-gray-50 hover:bg-gray-100'}">Pieces files</button
 				>
 			</li>
 		</ul>
@@ -63,13 +65,19 @@
 										<div class="flex items-center justify-between">
 											<div class="flex items-center space-x-1">
 												<a href="/library/pieces?filter={encodeURIComponent(piece.name || '')}">
-													<h3 class="text-sm font-medium text-gray-900 dark:text-white">{piece.name || 'Unknown Piece'}</h3>
+													<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+														{piece.name || 'Unknown Piece'}
+													</h3>
 													{#if piece.composer}
-										<span class="text-xs text-gray-500 dark:text-gray-400"
-										>{piece.composer.shortName || piece.composer.longName || 'Unknown Composer'}</span
-										>
+														<span class="text-xs text-gray-500 dark:text-gray-400"
+															>{piece.composer.shortName ||
+																piece.composer.longName ||
+																'Unknown Composer'}</span
+														>
 													{:else}
-														<span class="text-xs text-gray-500 dark:text-gray-400">Unknown Composer</span>
+														<span class="text-xs text-gray-500 dark:text-gray-400"
+															>Unknown Composer</span
+														>
 													{/if}
 												</a>
 											</div>
@@ -94,7 +102,9 @@
 									<li class="py-3 sm:py-4">
 										<div class=" grid grid-cols-1">
 											<div class="flex items-center space-x-1">
-												<h3 class="text-sm font-medium text-gray-900 dark:text-white">{piece.name || 'Unknown Piece'}</h3>
+												<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+													{piece.name || 'Unknown Piece'}
+												</h3>
 											</div>
 
 											{#if piece.folder}
@@ -103,7 +113,9 @@
 														Folder : {piece.folder.name || 'Unknown Folder'}
 													</h3>
 													{#if piece.folder.files && piece.folder.files.length > 0}
-														<ul class="divide-y divide-gray-200 dark:divide-gray-700 border text-gray-600">
+														<ul
+															class="divide-y divide-gray-200 dark:divide-gray-700 border text-gray-600"
+														>
 															{#each piece.folder.files as file}
 																{#if file}
 																	<li class="py-3 sm:py-4">
@@ -140,9 +152,13 @@
 		</div>
 	</div>
 {:else}
-	<div class="w-full bg-gray-100 border-2 rounded-xl pt-4 pb-4 border-[#8C8C8C] shadow h-64 flex justify-center items-center">
+	<div
+		class="w-full bg-gray-100 border-2 rounded-xl pt-4 pb-4 border-[#8C8C8C] shadow h-64 flex justify-center items-center"
+	>
 		<div class="text-center">
-			<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+			<div
+				class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"
+			></div>
 			<p class="text-gray-600">Loading pieces...</p>
 		</div>
 	</div>

@@ -143,10 +143,12 @@
 
 	$: if (AccountingpaymentToIndiv && categories) {
 		// Pour les paiements individuels, on affiche les catégories liées aux musiciens
-		categoriesToDisplay = categories.filter((cat) =>
-			cat.name.toLowerCase().includes('musician') ||
-			cat.name.toLowerCase().includes('musicien') ||
-			cat.id === 1 || cat.id === 2  // Garde la compatibilité avec les anciens IDs
+		categoriesToDisplay = categories.filter(
+			(cat) =>
+				cat.name.toLowerCase().includes('musician') ||
+				cat.name.toLowerCase().includes('musicien') ||
+				cat.id === 1 ||
+				cat.id === 2 // Garde la compatibilité avec les anciens IDs
 		);
 
 		// Si aucune catégorie trouvée, afficher les deux premières catégories par défaut
@@ -158,16 +160,22 @@
 	}
 
 	$: if (categories && categories.length > 0) {
-		console.log('📊 Categories loaded:', categories.map(c => ({
-			id: c.id,
-			name: c.name,
-			color: c.color,
-			isDefault: c.isDefault
-		})));
-		console.log('🔍 Categories to display:', categoriesToDisplay.map(c => ({
-			id: c.id,
-			name: c.name
-		})));
+		console.log(
+			'📊 Categories loaded:',
+			categories.map((c) => ({
+				id: c.id,
+				name: c.name,
+				color: c.color,
+				isDefault: c.isDefault
+			}))
+		);
+		console.log(
+			'🔍 Categories to display:',
+			categoriesToDisplay.map((c) => ({
+				id: c.id,
+				name: c.name
+			}))
+		);
 		console.log('💳 Payment to individual mode:', AccountingpaymentToIndiv);
 	}
 
@@ -524,9 +532,7 @@
 
 			if (key === 'amount' || key === 'categoryId' || key === 'id') {
 				return ascending ? Number(aVal) - Number(bVal) : Number(bVal) - Number(aVal);
-			}
-
-			else if (typeof aVal === 'string' && typeof bVal === 'string') {
+			} else if (typeof aVal === 'string' && typeof bVal === 'string') {
 				return ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
 			}
 
@@ -685,7 +691,9 @@
 				if (!request.ok) {
 					if (request.status >= 400 && request.status < 500) {
 						const jsonResponse = await request.json();
-						const error = jsonResponse.errors ? jsonResponse.errors[0].message : jsonResponse.message;
+						const error = jsonResponse.errors
+							? jsonResponse.errors[0].message
+							: jsonResponse.message;
 						alert(error);
 					} else if (request.status >= 500) {
 						alert('Server error');
@@ -1214,7 +1222,7 @@
 								/>
 								<span
 									class="absolute right-5 top-5 text-gray-500 pointer-events-none font-semibold text-md"
-								>€</span
+									>€</span
 								>
 							</div>
 							<div
@@ -1449,7 +1457,7 @@
 					class="bg-[#6B9AD9] {isMobile
 						? 'h-10'
 						: ''} px-4 mb-4 rounded-lg text-sm hover:bg-blue-700 text-white font-semibold ml-auto p-2"
-				>Add New</button
+					>Add New</button
 				>
 			{/if}
 		</div>
@@ -1479,16 +1487,16 @@
 				<thead
 					class="text-xs text-gray-700 uppercase border-b-2 border-gray-300 text-center dark:bg-gray-700 dark:text-gray-400 h-8"
 				>
-				<tr class="font-semibold text-md">
-					{#if showProject}
-						<th class="min-w-20 text-left">Project</th>
-					{/if}
-					<th class="min-w-60">
-						<div class="flex relative items-center">
-							<p>Name</p>
-							<button
-								class="absolute left-12"
-								on:click={() => {
+					<tr class="font-semibold text-md">
+						{#if showProject}
+							<th class="min-w-20 text-left">Project</th>
+						{/if}
+						<th class="min-w-60">
+							<div class="flex relative items-center">
+								<p>Name</p>
+								<button
+									class="absolute left-12"
+									on:click={() => {
 										if (sorting === 'nameA') {
 											sorting = 'nameD';
 											sortAccountingsBy('name', false);
@@ -1500,29 +1508,29 @@
 											sortAccountingsBy('name');
 										}
 									}}
-							>
-								{#if sorting === 'nameA'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
-									</div>
-								{:else if sorting === 'nameD'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
-									</div>
-								{:else}
-									<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
-								{/if}
-							</button>
-						</div>
-					</th>
-					<th class="min-w-24">
-						<div class="flex relative items-center">
-							<p>Bill Date</p>
-							<button
-								class="absolute left-[70px]"
-								on:click={() => {
+								>
+									{#if sorting === 'nameA'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
+										</div>
+									{:else if sorting === 'nameD'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
+										</div>
+									{:else}
+										<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
+									{/if}
+								</button>
+							</div>
+						</th>
+						<th class="min-w-24">
+							<div class="flex relative items-center">
+								<p>Bill Date</p>
+								<button
+									class="absolute left-[70px]"
+									on:click={() => {
 										if (sorting === 'billDateA') {
 											sorting = 'billDateD';
 											sortAccountingsBy('billDate', false);
@@ -1534,29 +1542,29 @@
 											sortAccountingsBy('billDate');
 										}
 									}}
-							>
-								{#if sorting === 'billDateA'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
-									</div>
-								{:else if sorting === 'billDateD'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
-									</div>
-								{:else}
-									<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
-								{/if}
-							</button>
-						</div>
-					</th>
-					<th class="min-w-24">
-						<div class="flex relative items-center">
-							<p>Bank Date</p>
-							<button
-								class="absolute left-[70px]"
-								on:click={() => {
+								>
+									{#if sorting === 'billDateA'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
+										</div>
+									{:else if sorting === 'billDateD'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
+										</div>
+									{:else}
+										<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
+									{/if}
+								</button>
+							</div>
+						</th>
+						<th class="min-w-24">
+							<div class="flex relative items-center">
+								<p>Bank Date</p>
+								<button
+									class="absolute left-[70px]"
+									on:click={() => {
 										if (sorting === 'paymentDateA') {
 											sorting = 'paymentDateD';
 											sortAccountingsBy('paymentDate', false);
@@ -1568,29 +1576,29 @@
 											sortAccountingsBy('paymentDate');
 										}
 									}}
-							>
-								{#if sorting === 'paymentDateA'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
-									</div>
-								{:else if sorting === 'paymentDateD'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
-									</div>
-								{:else}
-									<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
-								{/if}
-							</button>
-						</div>
-					</th>
-					<th class="min-w-24">
-						<div class="flex relative items-center">
-							<p>Amount</p>
-							<button
-								class="absolute left-[65px]"
-								on:click={() => {
+								>
+									{#if sorting === 'paymentDateA'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
+										</div>
+									{:else if sorting === 'paymentDateD'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
+										</div>
+									{:else}
+										<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
+									{/if}
+								</button>
+							</div>
+						</th>
+						<th class="min-w-24">
+							<div class="flex relative items-center">
+								<p>Amount</p>
+								<button
+									class="absolute left-[65px]"
+									on:click={() => {
 										if (sorting === 'amountA') {
 											sorting = 'amountD';
 											sortAccountingsBy('amount', false);
@@ -1602,29 +1610,29 @@
 											sortAccountingsBy('amount');
 										}
 									}}
-							>
-								{#if sorting === 'amountA'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
-									</div>
-								{:else if sorting === 'amountD'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
-									</div>
-								{:else}
-									<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
-								{/if}
-							</button>
-						</div>
-					</th>
-					<th class="min-w-28">
-						<div class="flex relative items-center">
-							<p>Category</p>
-							<button
-								class="absolute left-[70px]"
-								on:click={() => {
+								>
+									{#if sorting === 'amountA'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
+										</div>
+									{:else if sorting === 'amountD'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
+										</div>
+									{:else}
+										<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
+									{/if}
+								</button>
+							</div>
+						</th>
+						<th class="min-w-28">
+							<div class="flex relative items-center">
+								<p>Category</p>
+								<button
+									class="absolute left-[70px]"
+									on:click={() => {
 										if (sorting === 'categoryA') {
 											sorting = 'categoryD';
 											sortAccountingsBy('categoryId', false);
@@ -1636,88 +1644,88 @@
 											sortAccountingsBy('categoryId');
 										}
 									}}
-							>
-								{#if sorting === 'categoryA'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
-									</div>
-								{:else if sorting === 'categoryD'}
-									<div class="absolute top-[-7px]">
-										<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
-										<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
-									</div>
-								{:else}
-									<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
-								{/if}
-							</button>
-						</div>
-					</th>
-					<th>Attachments</th>
-					<th>Action</th>
-				</tr>
+								>
+									{#if sorting === 'categoryA'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #6b7280;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #d1d5db;" />
+										</div>
+									{:else if sorting === 'categoryD'}
+										<div class="absolute top-[-7px]">
+											<Fa icon={faSortUp} class="text-[14px] absolute" style="color: #d1d5db;" />
+											<Fa icon={faSortDown} class="text-[14px] absolute" style="color: #6b7280;" />
+										</div>
+									{:else}
+										<Fa icon={faSort} class="text-[14px]" style="color: #6b7280;" />
+									{/if}
+								</button>
+							</div>
+						</th>
+						<th>Attachments</th>
+						<th>Action</th>
+					</tr>
 				</thead>
 				<tbody>
-				{#if accountingsDisplayed && accountingsDisplayed.length > 0}
-					{#each accountingsDisplayed as accounting}
-						<tr
-							class="font-semibold text-gray-400 border-b border-gray-200 hover:bg-gray-50 {accounting.isIndividualPayment
+					{#if accountingsDisplayed && accountingsDisplayed.length > 0}
+						{#each accountingsDisplayed as accounting}
+							<tr
+								class="font-semibold text-gray-400 border-b border-gray-200 hover:bg-gray-50 {accounting.isIndividualPayment
 									? accounting.isMusicianFee
 										? 'bg-blue-100'
 										: 'bg-orange-100'
 									: ''}"
-						>
-							{#if showProject}
-								<td class="p-3 w-4">{accounting.projectId}</td>
-							{/if}
-							<td class="p-3">
-								{#if projectConcerts.get(accounting.projectId) < today && !accounting.paymentDate && accounting.isIndividualPayment}
-									<div>
-										<div class="flex items-center gap-2">
-											<Fa
-												icon={faTriangleExclamation}
-												class="text-[14px]"
-												style="color: #ef4444;"
-											/>
-											<span class="text-red-500">{accounting.name}</span>
+							>
+								{#if showProject}
+									<td class="p-3 w-4">{accounting.projectId}</td>
+								{/if}
+								<td class="p-3">
+									{#if projectConcerts.get(accounting.projectId) < today && !accounting.paymentDate && accounting.isIndividualPayment}
+										<div>
+											<div class="flex items-center gap-2">
+												<Fa
+													icon={faTriangleExclamation}
+													class="text-[14px]"
+													style="color: #ef4444;"
+												/>
+												<span class="text-red-500">{accounting.name}</span>
+											</div>
+											<div class="bg-red-100 border border-red-500 rounded-lg p-1 w-[85%] m-1">
+												<p class="text-[10px] leading-none text-red-500">
+													This payment hasn't been made yet, but the date of the project's last
+													concert is past.
+												</p>
+											</div>
 										</div>
-										<div class="bg-red-100 border border-red-500 rounded-lg p-1 w-[85%] m-1">
-											<p class="text-[10px] leading-none text-red-500">
-												This payment hasn't been made yet, but the date of the project's last
-												concert is past.
-											</p>
-										</div>
-									</div>
-								{:else}
-									<span>{accounting.name}</span>
-								{/if}
-							</td>
-							<td class="p-3">{accounting.billDate ? accounting.billDate : 'unknown'}</td>
-							<td class="p-3">{accounting.paymentDate ? accounting.paymentDate : 'unpaid'}</td>
-							<td class="p-3">
-								{#if accounting.amount < 0}
-									<p class=" text-red-500">{accounting.amount} €</p>
-								{:else}
-									<p class="text-green-500">+{accounting.amount} €</p>
-								{/if}
-							</td>
-							<td class="p-3">
-								{#if categories.find((c) => c.id === accounting.categoryId)}
-									<p
-										style="color: {categories.find((c) => c.id === accounting.categoryId)?.color}"
-										class="font-semibold"
-									>
-										{categories.find((c) => c.id === accounting.categoryId)?.name}
-									</p>
-								{:else}
-									<p class="text-gray-400">x</p>
-								{/if}
-							</td>
-							<td class="p-3">
-								{#if accounting.attachment}
-									<button
-										class="flex justify-center w-full"
-										on:click={() => {
+									{:else}
+										<span>{accounting.name}</span>
+									{/if}
+								</td>
+								<td class="p-3">{accounting.billDate ? accounting.billDate : 'unknown'}</td>
+								<td class="p-3">{accounting.paymentDate ? accounting.paymentDate : 'unpaid'}</td>
+								<td class="p-3">
+									{#if accounting.amount < 0}
+										<p class=" text-red-500">{accounting.amount} €</p>
+									{:else}
+										<p class="text-green-500">+{accounting.amount} €</p>
+									{/if}
+								</td>
+								<td class="p-3">
+									{#if categories.find((c) => c.id === accounting.categoryId)}
+										<p
+											style="color: {categories.find((c) => c.id === accounting.categoryId)?.color}"
+											class="font-semibold"
+										>
+											{categories.find((c) => c.id === accounting.categoryId)?.name}
+										</p>
+									{:else}
+										<p class="text-gray-400">x</p>
+									{/if}
+								</td>
+								<td class="p-3">
+									{#if accounting.attachment}
+										<button
+											class="flex justify-center w-full"
+											on:click={() => {
 												popUpAttachement = true;
 												const match = accounting.name.match(/^Payment\s(.+?)\s*:\s*(.+)$/);
 												if (match) {
@@ -1743,7 +1751,10 @@
 													AccountingAttachments = accounting.attachment.split('/').map(Number);
 													for (const att of AccountingAttachments) {
 														let file;
-														if (accountingFolder?.files && accountingFolder.files.find((f) => f.id === att)) {
+														if (
+															accountingFolder?.files &&
+															accountingFolder.files.find((f) => f.id === att)
+														) {
 															file = accountingFolder.files.find((f) => f.id === att);
 															if (file) {
 																selectedAttachements.push(file);
@@ -1752,14 +1763,14 @@
 													}
 												}
 											}}
-									>
-										<Fa icon={faEye} class="text-[16px]" style="color: #6B9AD9;" />
-									</button>
-								{/if}
-							</td>
-							<td class="p-3">
-								<button
-									on:click={() => {
+										>
+											<Fa icon={faEye} class="text-[16px]" style="color: #6B9AD9;" />
+										</button>
+									{/if}
+								</td>
+								<td class="p-3">
+									<button
+										on:click={() => {
 											fetchContacts();
 											const match = accounting.name.match(/^Payment\s(.+?)\s*:\s*(.+)$/);
 											if (match) {
@@ -1786,17 +1797,17 @@
 											popUpAdd = true;
 											updateMode = true;
 										}}
-								>
-									<Fa icon={faPenToSquare} class="text-[16px]" style="color: #6B9AD9;" />
-								</button>
-							</td>
+									>
+										<Fa icon={faPenToSquare} class="text-[16px]" style="color: #6B9AD9;" />
+									</button>
+								</td>
+							</tr>
+						{/each}
+					{:else}
+						<tr>
+							<td colspan="8" class="text-center p-4 text-gray-500">No accounting entries found</td>
 						</tr>
-					{/each}
-				{:else}
-					<tr>
-						<td colspan="8" class="text-center p-4 text-gray-500">No accounting entries found</td>
-					</tr>
-				{/if}
+					{/if}
 				</tbody>
 			</table>
 		</div>

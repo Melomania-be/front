@@ -77,7 +77,7 @@
 				}
 			}
 		}
-		console.log(projectConcerts)
+		console.log(projectConcerts);
 	});
 </script>
 
@@ -87,7 +87,9 @@
 		class="w-full p-4 mt-4 bg-white border-2 border-gray-500 rounded-xl shadow dark:bg-gray-800 dark:border-gray-700"
 	>
 		<div class="mb-4">
-			<h1 class="w-full text-center m-1 text-lg uppercase font-bold text-gray-600">Sections and Recruitments</h1>
+			<h1 class="w-full text-center m-1 text-lg uppercase font-bold text-gray-600">
+				Sections and Recruitments
+			</h1>
 		</div>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -95,7 +97,9 @@
 				<div
 					class="group text-sm block p-4 bg-white border-2 border-gray-300 rounded-lg shadow hover:shadow-md hover:border-[#6B9AD9] dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all"
 				>
-					<h6 class="mb-3 font-bold text-base tracking-tight text-gray-900 dark:text-white border-b pb-2">
+					<h6
+						class="mb-3 font-bold text-base tracking-tight text-gray-900 dark:text-white border-b pb-2"
+					>
 						{participant.project.name}
 					</h6>
 					<div class="space-y-2">

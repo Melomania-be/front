@@ -18,14 +18,12 @@
 		if (registrationResponse.ok) {
 			const data = await registrationResponse.json();
 
-
 			registration = {
 				id: data.id,
 				project: data.project ?? projectId,
 				contents: data.content,
 				form: data.form
 			};
-
 		} else {
 			const projectResponse = await fetch(`/api/projects/${projectId}`, {
 				method: 'GET'
@@ -45,8 +43,6 @@
 			}
 		}
 	});
-
 </script>
-
 
 <RegistrationModifier bind:registration {projectId} mode="modify" />

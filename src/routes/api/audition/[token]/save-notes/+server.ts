@@ -32,15 +32,17 @@ export const POST: RequestHandler = async ({ params, fetch, request }) => {
 				'Content-Type': 'application/json'
 			}
 		});
-
 	} catch (error) {
 		console.error('Error in save-notes API route:', error);
-		return new Response(JSON.stringify({
-			error: 'Internal server error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Internal server error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

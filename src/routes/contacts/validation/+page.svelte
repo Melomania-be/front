@@ -66,27 +66,34 @@
 
 	// Initialize selectedData with pre-checked fields
 	$: if (selectedContact && comparedContact) {
-        Object.entries(selectedContact).forEach(([key, value]) => {
-            if (key !== 'id' && key !== 'created_at' && key !== 'last_update' && key !== 'validated' && key !== 'recommendation_pending' && key !== 'instruments') {
-                if (selectedContact[key] === comparedContact[key]) {
-                    selectedData[key] = value;
-                }
-            }
-        });
-        if (instrumentsComp) {
-            selectedData['instruments'] = selectedContact.instruments;
-        }
-    }
+		Object.entries(selectedContact).forEach(([key, value]) => {
+			if (
+				key !== 'id' &&
+				key !== 'created_at' &&
+				key !== 'last_update' &&
+				key !== 'validated' &&
+				key !== 'recommendation_pending' &&
+				key !== 'instruments'
+			) {
+				if (selectedContact[key] === comparedContact[key]) {
+					selectedData[key] = value;
+				}
+			}
+		});
+		if (instrumentsComp) {
+			selectedData['instruments'] = selectedContact.instruments;
+		}
+	}
 
-    onMount(async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+	onMount(async () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
 		try {
 			const resAll = await fetch(
@@ -228,7 +235,7 @@
 			'comments',
 			'instruments'
 		];
-		
+
 		const missingFields = requiredFields.filter((field) => !data.hasOwnProperty(field));
 		if (missingFields.length > 0) {
 			return alert(`Missing required fields: ${missingFields.join(', ')}`);

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import RichTextEditor from '$lib/components/callsheet/RichTextEditor.svelte';
+	import Button from '$lib/components/Button.svelte';
 
 	export let content: string;
 	export let htmlMode: boolean = true;
@@ -14,8 +15,12 @@
 	function isFullHtmlDocument(content: string): boolean {
 		if (!content) return false;
 		const lowerContent = content.toLowerCase().trim();
-		return lowerContent.includes('<!doctype') ||
-			(lowerContent.includes('<html') && lowerContent.includes('<head') && lowerContent.includes('<body'));
+		return (
+			lowerContent.includes('<!doctype') ||
+			(lowerContent.includes('<html') &&
+				lowerContent.includes('<head') &&
+				lowerContent.includes('<body'))
+		);
 	}
 
 	// Function to extract body content for visual editor
@@ -40,7 +45,7 @@
 
 		// Extract head content from original
 		const headMatch = originalContent.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-		const headContent = headMatch ? headContent[1] : '';
+		const headContent = headMatch ? headMatch[1] : '';
 
 		// Extract body attributes from original
 		const bodyAttrMatch = originalContent.match(/<body([^>]*)>/i);
@@ -106,46 +111,34 @@ ${bodyContent}
 </script>
 
 <div class="h-[300px] mb-10">
-	<!-- Mode Toggle -->
 	<div class="mb-3 flex justify-between items-center border-b pb-2">
 		<div class="flex items-center gap-2">
 			<span class="text-sm text-gray-600 font-medium">Editor Mode:</span>
 			{#if isFullDocument}
-				<span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full border">
-					📄 Full HTML Document
-				</span>
+     <span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full border">
+      📄 Full HTML Document
+     </span>
 			{/if}
 		</div>
 		<div class="flex gap-2">
-			<button
-				class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-				class:bg-blue-500={editorMode === 'visual'}
-				class:text-white={editorMode === 'visual'}
-				class:bg-gray-200={editorMode !== 'visual'}
-				class:text-gray-700={editorMode !== 'visual'}
-				class:hover:bg-blue-600={editorMode === 'visual'}
-				class:hover:bg-gray-300={editorMode !== 'visual'}
+			<Button
+				variant={editorMode === 'visual' ? 'primary' : 'secondary'}
 				on:click={switchToVisual}
+				className="text-sm"
 			>
 				📝 Visual Editor
-			</button>
-			<button
-				class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-				class:bg-orange-500={editorMode === 'html'}
-				class:text-white={editorMode === 'html'}
-				class:bg-gray-200={editorMode !== 'html'}
-				class:text-gray-700={editorMode !== 'html'}
-				class:hover:bg-orange-600={editorMode === 'html'}
-				class:hover:bg-gray-300={editorMode !== 'html'}
+			</Button>
+			<Button
+				variant={editorMode === 'html' ? 'primary' : 'secondary'}
 				on:click={switchToHTML}
+				className="text-sm"
 			>
 				💻 HTML Source
-			</button>
+			</Button>
 		</div>
 	</div>
 
 	{#if editorMode === 'html'}
-		<!-- HTML Source mode -->
 		<div class="h-full">
 			<div class="mb-2 text-xs text-gray-500 bg-gray-50 p-2 rounded border">
 				💡 <strong>HTML Mode:</strong> Edit raw HTML code directly.
@@ -185,7 +178,6 @@ For complete HTML documents:
 			></textarea>
 		</div>
 	{:else}
-		<!-- Visual Editor mode - ALWAYS show RichTextEditor -->
 		<div class="h-full">
 			<div class="mb-2 text-xs text-gray-500 bg-blue-50 p-2 rounded border">
 				✨ <strong>Visual Mode:</strong> Use the toolbar buttons to format text.
@@ -196,7 +188,6 @@ For complete HTML documents:
 				{/if}
 			</div>
 
-			<!-- ALWAYS show RichTextEditor, even with empty content -->
 			<div class="h-[calc(100%-3rem)] border border-gray-300 rounded-lg overflow-hidden">
 				<RichTextEditor value={visualContent || ''} onChange={handleRichEditorChange} />
 			</div>
@@ -222,12 +213,6 @@ For complete HTML documents:
 
     textarea::-webkit-scrollbar-thumb:hover {
         background: #a1a1a1;
-    }
-
-    /* Button focus states */
-    button:focus {
-        outline: 2px solid #3b82f6;
-        outline-offset: 1px;
     }
 
     /* Ensure RichTextEditor fills the container */

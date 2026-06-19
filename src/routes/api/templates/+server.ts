@@ -18,17 +18,14 @@ export const GET: RequestHandler = async ({ cookies, url, fetch }) => {
 export const PUT: RequestHandler = async ({ cookies, fetch, request }) => {
 	const data = await request.json();
 
-	const res = await fetch(
-		`${API_URL}/templates/createOrUpdate`,
-		{
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			},
-			body: JSON.stringify(await data)
-		}
-	);
+	const res = await fetch(`${API_URL}/templates/createOrUpdate`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(await data)
+	});
 
 	return res;
 };

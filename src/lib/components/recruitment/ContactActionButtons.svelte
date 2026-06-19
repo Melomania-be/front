@@ -1,49 +1,60 @@
 <!-- src/lib/components/recruitment/ContactActionButtons.svelte -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
-	import { Mail, Phone, MessageCircle, Edit, Trash2, MoreVertical, CheckCircle, XCircle, Clock, User } from 'lucide-svelte'
-	import type { RecruitmentContact } from '$lib/types'
+	import { createEventDispatcher } from 'svelte';
+	import {
+		Mail,
+		Phone,
+		MessageCircle,
+		Edit,
+		Trash2,
+		MoreVertical,
+		CheckCircle,
+		XCircle,
+		Clock,
+		User
+	} from 'lucide-svelte';
+	import type { RecruitmentContact } from '$lib/types';
 
-	export let contact: RecruitmentContact
+	export let contact: RecruitmentContact;
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
-	let showDropdown = false
-	let notesModal = false
-	let contactedByModal = false
-	let currentNotes = contact.notes || ''
-	let currentContactedBy = contact.contacted_by || ''
+	let showDropdown = false;
+	let notesModal = false;
+	let contactedByModal = false;
+	let currentNotes = contact.notes || '';
+	let currentContactedBy = contact.contacted_by || '';
 
 	function toggleDropdown() {
-		showDropdown = !showDropdown
+		showDropdown = !showDropdown;
 	}
 
 	function updateStatus(status: string, notes?: string, contactedBy?: string) {
-		const updateData: any = { status }
-		if (notes !== undefined) updateData.notes = notes
-		if (contactedBy !== undefined) updateData.contacted_by = contactedBy
+		const updateData: any = { status };
+		if (notes !== undefined) updateData.notes = notes;
+		if (contactedBy !== undefined) updateData.contacted_by = contactedBy;
 
-		dispatch('updateStatus', updateData)
-		showDropdown = false
+		dispatch('updateStatus', updateData);
+		showDropdown = false;
 	}
 
 	function deleteContact() {
 		if (confirm(`Remove ${contact.first_name} ${contact.last_name} from recruitment?`)) {
-			dispatch('delete')
+			dispatch('delete');
 		}
-		showDropdown = false
+		showDropdown = false;
 	}
 
 	function openNotesModal() {
-		currentNotes = contact.notes || ''
-		notesModal = true
-		showDropdown = false
+		currentNotes = contact.notes || '';
+		notesModal = true;
+		showDropdown = false;
 	}
 
 	function openContactedByModal() {
-		currentContactedBy = contact.contacted_by || ''
-		contactedByModal = true
-		showDropdown = false
+		currentContactedBy = contact.contacted_by || '';
+		contactedByModal = true;
+		showDropdown = false;
 	}
 
 	function saveNotes() {
@@ -51,8 +62,8 @@
 			status: contact.status,
 			notes: currentNotes,
 			contacted_by: contact.contacted_by
-		})
-		notesModal = false
+		});
+		notesModal = false;
 	}
 
 	function saveContactedBy() {
@@ -60,41 +71,41 @@
 			status: contact.status,
 			notes: contact.notes,
 			contacted_by: currentContactedBy
-		})
-		contactedByModal = false
+		});
+		contactedByModal = false;
 	}
 
 	function sendEmail() {
 		if (contact.email) {
-			window.location.href = `mailto:${contact.email}?subject=Recruitment project`
+			window.location.href = `mailto:${contact.email}?subject=Recruitment project`;
 		}
 	}
 
 	function callPhone() {
 		if (contact.phone) {
-			window.location.href = `tel:${contact.phone}`
+			window.location.href = `tel:${contact.phone}`;
 		}
 	}
 
 	function openMessenger() {
 		if (contact.messenger) {
-			window.open(`https://m.me/${contact.messenger}`, '_blank')
+			window.open(`https://m.me/${contact.messenger}`, '_blank');
 		}
 	}
 
 	function handleClickOutside(event: MouseEvent) {
-		const target = event.target as HTMLElement
-		const dropdown = document.getElementById(`dropdown-${contact.id}`)
+		const target = event.target as HTMLElement;
+		const dropdown = document.getElementById(`dropdown-${contact.id}`);
 		if (dropdown && !dropdown.contains(target)) {
-			showDropdown = false
+			showDropdown = false;
 		}
 	}
 
 	$: if (typeof window !== 'undefined') {
 		if (showDropdown) {
-			document.addEventListener('click', handleClickOutside)
+			document.addEventListener('click', handleClickOutside);
 		} else {
-			document.removeEventListener('click', handleClickOutside)
+			document.removeEventListener('click', handleClickOutside);
 		}
 	}
 </script>
@@ -168,7 +179,9 @@
 	</div>
 
 	{#if showDropdown}
-		<div class="absolute right-0 top-8 z-10 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[180px]">
+		<div
+			class="absolute right-0 top-8 z-10 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[180px]"
+		>
 			<div class="py-1">
 				<div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase border-b">
 					Change status
@@ -176,56 +189,75 @@
 
 				<button
 					on:click={() => updateStatus('not_yet_contacted')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'not_yet_contacted' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'not_yet_contacted'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Not yet contacted
 				</button>
 
 				<button
 					on:click={() => updateStatus('awaiting_response')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'awaiting_response' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'awaiting_response'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Awaiting response
 				</button>
 
 				<button
 					on:click={() => updateStatus('to_follow_up')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'to_follow_up' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'to_follow_up'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Follow up
 				</button>
 
 				<button
 					on:click={() => updateStatus('not_available')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'not_available' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'not_available'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Not available
 				</button>
 
 				<button
 					on:click={() => updateStatus('pending_validation')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'pending_validation' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'pending_validation'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Pending validation
 				</button>
 
 				<button
 					on:click={() => updateStatus('recruited')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'recruited' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'recruited'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Recruited
 				</button>
 
 				<button
 					on:click={() => updateStatus('cancelled')}
-					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'cancelled' ? 'bg-gray-100 font-medium' : ''}"
+					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status ===
+					'cancelled'
+						? 'bg-gray-100 font-medium'
+						: ''}"
 				>
 					Cancelled
 				</button>
 
-				<div class="border-t px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
-					Actions
-				</div>
+				<div class="border-t px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Actions</div>
 
 				<button
 					on:click={openNotesModal}
@@ -259,7 +291,8 @@
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
 			<h3 class="text-lg font-semibold mb-4">
-				Edit notes - {contact.first_name} {contact.last_name}
+				Edit notes - {contact.first_name}
+				{contact.last_name}
 			</h3>
 
 			<textarea
@@ -270,7 +303,7 @@
 
 			<div class="flex justify-end gap-2 mt-4">
 				<button
-					on:click={() => notesModal = false}
+					on:click={() => (notesModal = false)}
 					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
 				>
 					Cancel
@@ -290,7 +323,8 @@
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
 			<h3 class="text-lg font-semibold mb-4">
-				Edit "Contacted by" - {contact.first_name} {contact.last_name}
+				Edit "Contacted by" - {contact.first_name}
+				{contact.last_name}
 			</h3>
 
 			<div>
@@ -311,7 +345,7 @@
 
 			<div class="flex justify-end gap-2 mt-4">
 				<button
-					on:click={() => contactedByModal = false}
+					on:click={() => (contactedByModal = false)}
 					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
 				>
 					Cancel

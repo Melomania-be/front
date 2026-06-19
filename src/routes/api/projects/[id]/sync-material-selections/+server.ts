@@ -23,13 +23,16 @@ export const POST: RequestHandler = async ({ params, cookies, fetch }) => {
 		return response;
 	} catch (error) {
 		console.error('❌ Error syncing material selections:', error);
-		return new Response(JSON.stringify({
-			success: false,
-			error: 'Sync failed',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				success: false,
+				error: 'Sync failed',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

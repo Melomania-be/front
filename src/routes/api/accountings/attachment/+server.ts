@@ -1,7 +1,6 @@
-import { API_URL } from '$env/static/private'
-import { getToken } from '$lib/server/authentification'
-import type { RequestHandler } from '@sveltejs/kit'
-
+import { API_URL } from '$env/static/private';
+import { getToken } from '$lib/server/authentification';
+import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
 	const formData = await request.formData();

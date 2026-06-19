@@ -12,10 +12,9 @@
 
 	export let data;
 
+	let project: Project | undefined;
 
-	let project : Project | undefined;
-
-	async function fetchProject(){
+	async function fetchProject() {
 		if (!data?.id) return;
 
 		const response = await fetch(`/api/projects/${data.id}`, {
@@ -50,13 +49,13 @@
 		urlSvelteApi = `/api/projects/${data.id}/management/callsheets`;
 		urlFront = `/projects/${data.id}/management/callsheets`;
 		uniqueUrl = `/projects/${data.id}/management/callsheets`;
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
 		fetchProject();
 		fetchData();
@@ -124,12 +123,11 @@
 	});
 </script>
 
-
 <ProjectHeadDisplayer {project} selectedTab={3} />
 <div class="flex flex-col bg-[#E7E7E7] p-4 gap-4 h-screen">
 	<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
 		<h2 class="font-bold text-lg uppercase">CALLSHEETS</h2>
-	
+
 		<SimpleFilterer
 			showData
 			bind:data={dataHolder}
@@ -140,25 +138,25 @@
 		></SimpleFilterer>
 
 		<div class="flex gap-4">
-		<button
-			on:click={() => goto(`${urlFront}/creation`)}
-			class="w-full h-full sm:w-auto text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
-		>
-			New callsheet
-		</button>
-
-		{#if callsheets.length > 0}
-			<a
-				href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
+			<button
+				on:click={() => goto(`${urlFront}/creation`)}
 				class="w-full h-full sm:w-auto text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
 			>
-				New callsheet from the last one
-			</a>
-		{/if}
+				New callsheet
+			</button>
+
+			{#if callsheets.length > 0}
+				<a
+					href="/projects/{data.id}/management/callsheets/{maxUpdateDate(callsheets).id}/creation"
+					class="w-full h-full sm:w-auto text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] font-medium rounded-lg text-sm md:text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition duration-300"
+				>
+					New callsheet from the last one
+				</a>
+			{/if}
 		</div>
 	</div>
 </div>
 
 {#if isMobile}
-	<ProjectPhoneDisplayer project={project} selectedTab={3}/>
+	<ProjectPhoneDisplayer {project} selectedTab={3} />
 {/if}

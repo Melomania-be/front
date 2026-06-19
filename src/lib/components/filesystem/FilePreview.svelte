@@ -34,22 +34,41 @@
 
 		if (extension === 'pdf' || mime.includes('pdf')) return 'pdf';
 
-		if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(extension) ||
-			mime.startsWith('image/')) return 'image';
+		if (
+			['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(extension) ||
+			mime.startsWith('image/')
+		)
+			return 'image';
 
-		if (['mp4', 'webm', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'm4v', '3gp', 'ogv'].includes(extension) ||
-			mime.startsWith('video/')) return 'video';
+		if (
+			['mp4', 'webm', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'm4v', '3gp', 'ogv'].includes(extension) ||
+			mime.startsWith('video/')
+		)
+			return 'video';
 
-		if (['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma', 'opus', 'oga'].includes(extension) ||
-			mime.startsWith('audio/')) return 'audio';
+		if (
+			['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma', 'opus', 'oga'].includes(extension) ||
+			mime.startsWith('audio/')
+		)
+			return 'audio';
 
-		if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension) ||
-			mime.includes('officedocument') || mime.includes('msword') || mime.includes('ms-excel') || mime.includes('ms-powerpoint')) return 'office';
+		if (
+			['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension) ||
+			mime.includes('officedocument') ||
+			mime.includes('msword') ||
+			mime.includes('ms-excel') ||
+			mime.includes('ms-powerpoint')
+		)
+			return 'office';
 
-		if (['txt', 'rtf', 'md', 'csv'].includes(extension) ||
-			mime.startsWith('text/')) return 'text';
+		if (['txt', 'rtf', 'md', 'csv'].includes(extension) || mime.startsWith('text/')) return 'text';
 
-		if (['html', 'css', 'js', 'ts', 'json', 'xml', 'sql', 'py', 'java', 'cpp', 'c', 'php'].includes(extension)) return 'code';
+		if (
+			['html', 'css', 'js', 'ts', 'json', 'xml', 'sql', 'py', 'java', 'cpp', 'c', 'php'].includes(
+				extension
+			)
+		)
+			return 'code';
 
 		return 'unknown';
 	}
@@ -329,7 +348,9 @@
 >
 	<!-- Modal Content -->
 	<div
-		class="bg-white rounded-lg shadow-2xl {fullscreen ? 'w-full h-full' : 'w-full max-w-6xl h-5/6'} flex flex-col"
+		class="bg-white rounded-lg shadow-2xl {fullscreen
+			? 'w-full h-full'
+			: 'w-full max-w-6xl h-5/6'} flex flex-col"
 	>
 		<!-- Header -->
 		<div class="flex items-center justify-between p-4 border-b border-gray-200">
@@ -344,7 +365,9 @@
 					{fileCategory.toUpperCase()}
 				</span>
 				{#if isShared}
-					<span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded border border-purple-300">
+					<span
+						class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded border border-purple-300"
+					>
 						SHARED FILE - READ ONLY
 					</span>
 				{/if}
@@ -410,7 +433,9 @@
 			{#if isLoading}
 				<div class="flex items-center justify-center h-full">
 					<div class="text-center">
-						<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+						<div
+							class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"
+						></div>
 						<p class="text-gray-600">Loading {fileName}...</p>
 					</div>
 				</div>

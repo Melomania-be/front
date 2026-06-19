@@ -3,7 +3,7 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import { onMount } from 'svelte';
 	import CallsheetShow from './CallsheetShow.svelte';
-	import RichTextEditor from './RichTextEditor.svelte'
+	import RichTextEditor from './RichTextEditor.svelte';
 
 	export let callsheet: Callsheet | null = null;
 	export let mode: 'modify' | 'create';
@@ -21,7 +21,7 @@
 	}
 
 	// Compteur pour générer des IDs uniques pour les nouveaux contenus
-	$: contentIdCounter = Math.max(...(callsheet?.contents?.map(c => c.id || 0) || [0])) + 1;
+	$: contentIdCounter = Math.max(...(callsheet?.contents?.map((c) => c.id || 0) || [0])) + 1;
 
 	// Validation des champs requis
 	function validateCallsheet() {
@@ -40,7 +40,9 @@
 			errors.push('Au moins un contenu est requis');
 		} else {
 			// Vérifier que tous les contenus ont un titre
-			const emptyTitles = callsheet.contents.filter(content => !content.title || content.title.trim() === '');
+			const emptyTitles = callsheet.contents.filter(
+				(content) => !content.title || content.title.trim() === ''
+			);
 			if (emptyTitles.length > 0) {
 				errors.push('Tous les contenus doivent avoir un titre');
 			}
@@ -119,7 +121,9 @@
 	async function loadCallsheet(projectId: string, callsheetId: string) {
 		try {
 			loadingError = '';
-			const response = await fetch(`/api/projects/${projectId}/management/callsheets/${callsheetId}`);
+			const response = await fetch(
+				`/api/projects/${projectId}/management/callsheets/${callsheetId}`
+			);
 
 			if (!response.ok) {
 				if (response.status === 404) {
@@ -197,7 +201,7 @@
 	function removeContent(contentToRemove: any) {
 		if (!callsheet || !callsheet.contents) return;
 
-		callsheet.contents = callsheet.contents.filter(content => content !== contentToRemove);
+		callsheet.contents = callsheet.contents.filter((content) => content !== contentToRemove);
 		callsheet = callsheet; // Force la réactivité
 	}
 
@@ -225,7 +229,9 @@
 
 <!-- Gestion des erreurs de chargement -->
 {#if loadingError}
-	<div class="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-600 dark:text-red-300">
+	<div
+		class="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-600 dark:text-red-300"
+	>
 		<div class="flex items-center gap-2">
 			<span class="icon-[tabler--alert-circle]" style="width: 1.5rem; height: 1.5rem;"></span>
 			<div>
@@ -256,7 +262,8 @@
 						aria-label="Activer/désactiver la modification"
 					>
 						{#if !allowModification}
-							<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"></span>
+							<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"
+							></span>
 						{:else}
 							Stop editing
 						{/if}
@@ -269,16 +276,21 @@
 
 				<!-- Messages d'erreur et de succès -->
 				{#if errorMessage}
-					<div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-600 dark:text-red-300">
+					<div
+						class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-600 dark:text-red-300"
+					>
 						<div class="flex items-center gap-2">
-							<span class="icon-[tabler--alert-circle]" style="width: 1.2rem; height: 1.2rem;"></span>
+							<span class="icon-[tabler--alert-circle]" style="width: 1.2rem; height: 1.2rem;"
+							></span>
 							{errorMessage}
 						</div>
 					</div>
 				{/if}
 
 				{#if successMessage}
-					<div class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded dark:bg-green-900 dark:border-green-600 dark:text-green-300">
+					<div
+						class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded dark:bg-green-900 dark:border-green-600 dark:text-green-300"
+					>
 						<div class="flex items-center gap-2">
 							<span class="icon-[tabler--check]" style="width: 1.2rem; height: 1.2rem;"></span>
 							{successMessage}
@@ -309,9 +321,13 @@
 
 				{#if callsheet.id}
 					<div class="mb-4">
-						<a class="text-blue-600 hover:text-blue-800 dark:text-blue-400" href="/call_sheets/{callsheet.projectId}/-1">
+						<a
+							class="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+							href="/call_sheets/{callsheet.projectId}/-1"
+						>
 							<h2 class="text-lg flex items-center gap-2">
-								<span class="icon-[tabler--external-link]" style="width: 1rem; height: 1rem;"></span>
+								<span class="icon-[tabler--external-link]" style="width: 1rem; height: 1rem;"
+								></span>
 								Link to the callsheet
 							</h2>
 						</a>
@@ -338,7 +354,9 @@
 					<div>
 						{#if callsheet.contents && callsheet.contents.length > 0}
 							{#each callsheet.contents as content (content.id || content)}
-								<div class="grid grid-cols-1 gap-1 mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
+								<div
+									class="grid grid-cols-1 gap-1 mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700"
+								>
 									<div class="flex items-center justify-center">
 										<label for="content-title-{content.id}" class="sr-only">
 											Titre du contenu
@@ -362,9 +380,7 @@
 												on:click={() => removeContent(content)}
 												aria-label="Supprimer ce contenu"
 											>
-												<span
-													class="icon-[tabler--trash]"
-													style="width: 1.2rem; height: 1.2rem;"
+												<span class="icon-[tabler--trash]" style="width: 1.2rem; height: 1.2rem;"
 												></span>
 											</button>
 										{/if}
@@ -373,10 +389,7 @@
 										<p class="text-red-500 text-sm">Le titre est requis</p>
 									{/if}
 									{#if allowModification}
-										<RichTextEditor
-											value={content.text}
-											onChange={(v) => content.text = v}
-										/>
+										<RichTextEditor value={content.text} onChange={(v) => (content.text = v)} />
 										<label class="flex items-center gap-2 mt-2 cursor-pointer">
 											<input
 												type="checkbox"
@@ -385,8 +398,8 @@
 												disabled={isLoading}
 											/>
 											<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-             Afficher ce bloc sur le formulaire d'inscription
-            </span>
+												Afficher ce bloc sur le formulaire d'inscription
+											</span>
 										</label>
 									{:else}
 										<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
@@ -409,9 +422,12 @@
 							class="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded flex items-center gap-2"
 						>
 							{#if isLoading}
-								<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+								<span
+									class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+								></span>
 							{:else}
-								<span class="icon-[tabler--device-floppy]" style="width: 1rem; height: 1rem;"></span>
+								<span class="icon-[tabler--device-floppy]" style="width: 1rem; height: 1rem;"
+								></span>
 							{/if}
 							{isLoading ? 'Sauvegarde...' : 'Save'}
 						</button>
@@ -422,7 +438,9 @@
 								class="bg-red-500 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded flex items-center gap-2"
 							>
 								{#if isLoading}
-									<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+									<span
+										class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+									></span>
 								{:else}
 									<span class="icon-[tabler--trash]" style="width: 1rem; height: 1rem;"></span>
 								{/if}
@@ -437,7 +455,9 @@
 	{:else}
 		<div class="flex justify-center items-center h-64 col-span-full">
 			<div class="text-center">
-				<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+				<div
+					class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"
+				></div>
 				<p class="text-gray-600 dark:text-gray-400">Chargement de la callsheet...</p>
 				<p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
 					Si le chargement prend trop de temps, vérifiez votre connexion ou rechargez la page.

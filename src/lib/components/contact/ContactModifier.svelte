@@ -143,72 +143,72 @@
 				class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border"
 			>
 				<tbody>
-				{#each contact.instruments as instrument}
-					<tr class="even:bg-slate-200">
-						<th>
-							{instrument.name}
-						</th>
-						<th>
-							{instrument.family}
-						</th>
-						<th>
-							{instrument.pivot_proficiency_level}
-						</th>
-						{#if allowModification}
+					{#each contact.instruments as instrument}
+						<tr class="even:bg-slate-200">
 							<th>
-								<button
-									on:click={() => {
+								{instrument.name}
+							</th>
+							<th>
+								{instrument.family}
+							</th>
+							<th>
+								{instrument.pivot_proficiency_level}
+							</th>
+							{#if allowModification}
+								<th>
+									<button
+										on:click={() => {
 											contact.instruments.splice(contact.instruments.indexOf(instrument), 1);
 											allowModification = !allowModification;
 											allowModification = !allowModification;
 										}}
-									class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
-								>Delete</button
-								>
-							</th>
-						{:else}
-							<th></th>
-						{/if}
-					</tr>
-				{/each}
-				{#if allowModification}
-					<tr class="bg-neutral-300">
-						<th colspan="2">
-							{#if instruments}
-								<select bind:value={addInstrument}>
-									<option value="none">none</option>
-									{#each instruments as instrument}
-										<option value={instrument}>{instrument.name}</option>
-									{/each}
-								</select>
+										class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+										>Delete</button
+									>
+								</th>
+							{:else}
+								<th></th>
 							{/if}
-						</th>
-						<th>
-							{addInstrument.family}
-						</th>
-						<th>
-							<select bind:value={addInstrument.pivot_proficiency_level}>
-								<option value="Amateur - low level">Amateur - low level</option>
-								<option value="Amateur - medium">Amateur - medium</option>
-								<option value="Amateur - high">Amateur - high</option>
-								<option value="Student">Student</option>
-								<option value="Professional">Professional</option>
-								<option value="High level professional">High level professional</option>
-								<input placeholder="level" bind:value={addInstrument.pivot_proficiency_level} />
-							</select></th
-						>
-						<th>
-							<button
-								class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
-								on:click={() => {
+						</tr>
+					{/each}
+					{#if allowModification}
+						<tr class="bg-neutral-300">
+							<th colspan="2">
+								{#if instruments}
+									<select bind:value={addInstrument}>
+										<option value="none">none</option>
+										{#each instruments as instrument}
+											<option value={instrument}>{instrument.name}</option>
+										{/each}
+									</select>
+								{/if}
+							</th>
+							<th>
+								{addInstrument.family}
+							</th>
+							<th>
+								<select bind:value={addInstrument.pivot_proficiency_level}>
+									<option value="Amateur - low level">Amateur - low level</option>
+									<option value="Amateur - medium">Amateur - medium</option>
+									<option value="Amateur - high">Amateur - high</option>
+									<option value="Student">Student</option>
+									<option value="Professional">Professional</option>
+									<option value="High level professional">High level professional</option>
+									<input placeholder="level" bind:value={addInstrument.pivot_proficiency_level} />
+								</select></th
+							>
+							<th>
+								<button
+									class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
+									on:click={() => {
 										contact.instruments.push(addInstrument);
 										allowModification = !allowModification;
 										allowModification = !allowModification;
 									}}>Add</button
-							>
-						</th>
-					</tr>
-				{/if}
+								>
+							</th>
+						</tr>
+					{/if}
 				</tbody>
 			</table>
 		</div>
@@ -231,14 +231,14 @@
 
 				<div>
 					last updated at : {#if contact.updatedAt}
-					<DateShow bind:startTime={contact.updatedAt} />
-				{/if}
+						<DateShow bind:startTime={contact.updatedAt} />
+					{/if}
 				</div>
 
 				<div>
 					created at : {#if contact.createdAt}
-					<DateShow bind:startTime={contact.createdAt} />
-				{/if}
+						<DateShow bind:startTime={contact.createdAt} />
+					{/if}
 				</div>
 			</div>
 		{/if}

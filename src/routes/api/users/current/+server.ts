@@ -14,12 +14,15 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 
 		return res;
 	} catch (error) {
-		return new Response(JSON.stringify({
-			error: 'Failed to get current user',
-			fullName: 'Utilisateur actuel'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to get current user',
+				fullName: 'Utilisateur actuel'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

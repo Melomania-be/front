@@ -35,28 +35,28 @@
 		updatedAt: null
 	};
 
-    onMount(async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+	onMount(async () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
-        // Vérifier s'il y a un objet selected dans l'URL
-        const selectedParam = urlParams.get('selected');
-        if (selectedParam) {
-            try {
-                selectedData = JSON.parse(decodeURIComponent(selectedParam));
-            } catch (e) {
-                console.error('Error parsing selected type of piece:', e);
-            }
-        }
+		// Vérifier s'il y a un objet selected dans l'URL
+		const selectedParam = urlParams.get('selected');
+		if (selectedParam) {
+			try {
+				selectedData = JSON.parse(decodeURIComponent(selectedParam));
+			} catch (e) {
+				console.error('Error parsing selected type of piece:', e);
+			}
+		}
 
-        fetchData();
-    });
+		fetchData();
+	});
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -161,7 +161,7 @@
 			<form class="justify-center w-full max-w-2xl mx-auto">
 				<div class="flex justify-between items-center">
 					<h1 class="text-4xl font-extrabold dark:text-white">Type of Piece</h1>
-				
+
 					<!-- Close button -->
 					<button
 						on:click={() => (selectedData = null)}
@@ -173,7 +173,8 @@
 				</div>
 
 				<label for="Name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-				>*Name</label>
+					>*Name</label
+				>
 				<div class="flex">
 					<span
 						class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"

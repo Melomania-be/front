@@ -88,25 +88,28 @@
 		});
 	}
 
-	let participantAccountings : Accounting[];
+	let participantAccountings: Accounting[];
 
 	async function fetchAccountingContact() {
-		if(currentParticipant.contact){
+		if (currentParticipant.contact) {
 			const response = await fetch(`/api/accountings/${currentParticipant.contact.id}`, {
-			method: 'GET'
-		});
-		if (!response.ok) {
-			return;
-		}
+				method: 'GET'
+			});
+			if (!response.ok) {
+				return;
+			}
 
-		participantAccountings = await response.json();
+			participantAccountings = await response.json();
 		}
-
 	}
 
 	async function updateParticipant() {
-		const data = { ...currentParticipant, is_section_leader: currentParticipant.isSectionLeader, accepted: true };
-		console.log(data.is_section_leader)
+		const data = {
+			...currentParticipant,
+			is_section_leader: currentParticipant.isSectionLeader,
+			accepted: true
+		};
+		console.log(data.is_section_leader);
 
 		if (!currentParticipant.id) {
 			const mailingResponse = await fetch(`/api/mailing/sendParticipationValidationNotifications`, {
@@ -250,16 +253,14 @@
 		if (currentParticipant) participants = [currentParticipant];
 	}
 	function openContactPage() {
-    	if (currentParticipant.contact?.id) {
-    		goto(`/contacts/${currentParticipant.contact.id}`);
+		if (currentParticipant.contact?.id) {
+			goto(`/contacts/${currentParticipant.contact.id}`);
 		}
 	}
 </script>
 
 {#if currentParticipant}
-	<div
-		class="relative max-w-xxl bg-white border-2 border-gray-400 rounded-xl p-4"
-	>
+	<div class="relative max-w-xxl bg-white border-2 border-gray-400 rounded-xl p-4">
 		<div>
 			{#if mode === 'modify'}
 				<div class="absolute top-0 right-0 p-1">
@@ -290,7 +291,7 @@
 						>
 							Open contact page
 						</button>
-						{/if}
+					{/if}
 					<div class="m-1">
 						<div class="flex w-full items-center mt-6">
 							<div class="flex-1 rounded-full border-2 h-[1px] mr-3 border-gray-400"></div>
@@ -350,7 +351,13 @@
 							<div class="flex-1 rounded-full border-2 h-[1px] ml-3 border-gray-400"></div>
 						</div>
 						{#if currentParticipant}
-						<AccountingTable accountings={participantAccountings} bind:categories showStatistic={false} showAttachments={false} bind:currentParticipant></AccountingTable>
+							<AccountingTable
+								accountings={participantAccountings}
+								bind:categories
+								showStatistic={false}
+								showAttachments={false}
+								bind:currentParticipant
+							></AccountingTable>
 						{/if}
 					</div>
 				{/if}

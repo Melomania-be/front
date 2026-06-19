@@ -117,7 +117,7 @@
 					})
 				});
 			} else {
-				throw new Error('Mode d\'édition invalide');
+				throw new Error("Mode d'édition invalide");
 			}
 
 			if (response.ok) {
@@ -161,7 +161,7 @@
 
 	function getSelectedPiece(): Piece | null {
 		if (!formData.piece_id) return null;
-		return pieces.find(p => p.id === formData.piece_id) || null;
+		return pieces.find((p) => p.id === formData.piece_id) || null;
 	}
 </script>
 
@@ -174,7 +174,8 @@
 				<h3 class="text-xl font-bold text-gray-800">{getTitle()}</h3>
 				{#if getSelectedPiece()}
 					<p class="text-sm text-gray-500 mt-1">
-						{getSelectedPiece().name} - {getSelectedPiece().composer?.shortName || getSelectedPiece().composer?.longName}
+						{getSelectedPiece().name} - {getSelectedPiece().composer?.shortName ||
+							getSelectedPiece().composer?.longName}
 					</p>
 				{/if}
 			</div>
@@ -212,7 +213,8 @@
 							<option value={null}>Sélectionnez une pièce</option>
 							{#each pieces as pieceOption}
 								<option value={pieceOption.id}>
-									{pieceOption.name} - {pieceOption.composer?.shortName || pieceOption.composer?.longName}
+									{pieceOption.name} - {pieceOption.composer?.shortName ||
+										pieceOption.composer?.longName}
 									{#if pieceOption.opus}• Op. {pieceOption.opus}{/if}
 								</option>
 							{/each}
@@ -339,9 +341,7 @@
 								class="w-4 h-4 text-[#6B9AD9] bg-gray-100 border-gray-300 rounded focus:ring-[#6B9AD9] focus:ring-2"
 								disabled={isSubmitting}
 							/>
-							<span class="ml-2 text-sm text-gray-700">
-								Dupliquer également les fichiers
-							</span>
+							<span class="ml-2 text-sm text-gray-700"> Dupliquer également les fichiers </span>
 						</label>
 					{/if}
 				</div>

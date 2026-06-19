@@ -7,12 +7,15 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 	try {
 		console.log(`API Route: Deleting audition ${params.auditionId} from project ${params.id}`);
 
-		const response = await fetch(`${API_URL}/projects/${params.id}/management/auditions/${params.auditionId}`, {
-			method: 'DELETE',
-			headers: {
-				authorization: `${await getToken(cookies)}`
+		const response = await fetch(
+			`${API_URL}/projects/${params.id}/management/auditions/${params.auditionId}`,
+			{
+				method: 'DELETE',
+				headers: {
+					authorization: `${await getToken(cookies)}`
+				}
 			}
-		});
+		);
 
 		// Log pour debugging
 		console.log(`Backend response status: ${response.status}`);
@@ -25,12 +28,15 @@ export const DELETE: RequestHandler = async ({ params, cookies, fetch }) => {
 		return response;
 	} catch (error) {
 		console.error('Error in delete audition API route:', error);
-		return new Response(JSON.stringify({
-			error: 'Internal server error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Internal server error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

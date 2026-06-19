@@ -1,56 +1,56 @@
 <!-- src/lib/components/recruitment/RecommendationActionButton.svelte -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
-	import type { RecruitmentRecommendation, Section } from '$lib/types'
+	import { createEventDispatcher } from 'svelte';
+	import type { RecruitmentRecommendation, Section } from '$lib/types';
 
-	export let recommendation: RecruitmentRecommendation
-	export let sections: Section[]
-	export let action: string
-	export let label: string
-	export let icon: any
-	export let className: string
+	export let recommendation: RecruitmentRecommendation;
+	export let sections: Section[];
+	export let action: string;
+	export let label: string;
+	export let icon: any;
+	export let className: string;
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
-	let showModal = false
-	let selectedSection: number | null = null
-	let notes = ''
+	let showModal = false;
+	let selectedSection: number | null = null;
+	let notes = '';
 
 	function handleAction() {
 		dispatch('handle', {
 			action,
 			sectionId: selectedSection,
 			notes
-		})
-		closeModal()
+		});
+		closeModal();
 	}
 
 	function closeModal() {
-		showModal = false
-		selectedSection = null
-		notes = ''
+		showModal = false;
+		selectedSection = null;
+		notes = '';
 	}
 
 	function handleClickOutside(event: MouseEvent) {
-		const target = event.target as HTMLElement
-		const modal = document.getElementById(`modal-${action}-${recommendation.id}`)
+		const target = event.target as HTMLElement;
+		const modal = document.getElementById(`modal-${action}-${recommendation.id}`);
 		if (modal && !modal.contains(target)) {
-			closeModal()
+			closeModal();
 		}
 	}
 
 	$: if (typeof window !== 'undefined') {
 		if (showModal) {
-			document.addEventListener('click', handleClickOutside)
+			document.addEventListener('click', handleClickOutside);
 		} else {
-			document.removeEventListener('click', handleClickOutside)
+			document.removeEventListener('click', handleClickOutside);
 		}
 	}
 </script>
 
 <div class="relative">
 	<button
-		on:click={() => showModal = true}
+		on:click={() => (showModal = true)}
 		class="px-3 py-2 text-sm rounded flex items-center gap-1 {className}"
 	>
 		<svelte:component this={icon} size={14} />
@@ -67,9 +67,7 @@
 			<div class="space-y-3">
 				<!-- Section selection -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Section (optional)
-					</label>
+					<label class="block text-sm font-medium text-gray-700 mb-1"> Section (optional) </label>
 					<select
 						bind:value={selectedSection}
 						class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -83,9 +81,7 @@
 
 				<!-- Notes -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Notes (optional)
-					</label>
+					<label class="block text-sm font-medium text-gray-700 mb-1"> Notes (optional) </label>
 					<textarea
 						bind:value={notes}
 						rows="2"
@@ -96,10 +92,7 @@
 
 				<!-- Actions -->
 				<div class="flex justify-end gap-2">
-					<button
-						on:click={closeModal}
-						class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
-					>
+					<button on:click={closeModal} class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800">
 						Cancel
 					</button>
 					<button

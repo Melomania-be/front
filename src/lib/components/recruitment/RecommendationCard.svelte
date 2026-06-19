@@ -1,35 +1,35 @@
 <!-- src/lib/components/recruitment/RecommendationCard.svelte -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
-	import { UserPlus, Mail, Phone, MessageCircle, Music, X, Calendar, User } from 'lucide-svelte'
-	import type { RecruitmentRecommendation, Section } from '$lib/types'
+	import { createEventDispatcher } from 'svelte';
+	import { UserPlus, Mail, Phone, MessageCircle, Music, X, Calendar, User } from 'lucide-svelte';
+	import type { RecruitmentRecommendation, Section } from '$lib/types';
 
-	export let recommendation: RecruitmentRecommendation
-	export let sections: Section[]
+	export let recommendation: RecruitmentRecommendation;
+	export let sections: Section[];
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
-	let showEmailModal = false
-	let showManualModal = false
-	let selectedSection: number | null = null
-	let notes = ''
-	let isProcessing = false
+	let showEmailModal = false;
+	let showManualModal = false;
+	let selectedSection: number | null = null;
+	let notes = '';
+	let isProcessing = false;
 
 	function formatDate(dateString: string | null | undefined): string {
-		if (!dateString) return 'Unknown date'
+		if (!dateString) return 'Unknown date';
 
 		try {
-			let date: Date
+			let date: Date;
 
 			if (typeof dateString === 'string') {
-				date = new Date(dateString)
+				date = new Date(dateString);
 			} else {
-				date = dateString as any
+				date = dateString as any;
 			}
 
 			if (isNaN(date.getTime())) {
-				console.warn('Invalid date:', dateString)
-				return 'Invalid date'
+				console.warn('Invalid date:', dateString);
+				return 'Invalid date';
 			}
 
 			return date.toLocaleDateString('en-US', {
@@ -38,62 +38,62 @@
 				year: 'numeric',
 				hour: '2-digit',
 				minute: '2-digit'
-			})
+			});
 		} catch (error) {
-			console.error('Error formatting date:', error, 'for date:', dateString)
-			return 'Invalid date'
+			console.error('Error formatting date:', error, 'for date:', dateString);
+			return 'Invalid date';
 		}
 	}
 
 	async function handleAction(action: string, sectionId?: number, actionNotes?: string) {
 		if (isProcessing) {
-			return
+			return;
 		}
 
-		isProcessing = true
+		isProcessing = true;
 
 		try {
 			dispatch('handle', {
 				action,
 				sectionId: sectionId || null,
 				notes: actionNotes || ''
-			})
+			});
 
-			closeModals()
+			closeModals();
 		} catch (error) {
-			console.error('Error handling action:', error)
+			console.error('Error handling action:', error);
 		} finally {
-			isProcessing = false
+			isProcessing = false;
 		}
 	}
 
 	function showEmailAction() {
-		selectedSection = null
-		notes = ''
-		showEmailModal = true
-		showManualModal = false
+		selectedSection = null;
+		notes = '';
+		showEmailModal = true;
+		showManualModal = false;
 	}
 
 	function showManualAction() {
-		selectedSection = null
-		notes = ''
-		showManualModal = true
-		showEmailModal = false
+		selectedSection = null;
+		notes = '';
+		showManualModal = true;
+		showEmailModal = false;
 	}
 
 	function closeModals() {
-		showEmailModal = false
-		showManualModal = false
-		selectedSection = null
-		notes = ''
+		showEmailModal = false;
+		showManualModal = false;
+		selectedSection = null;
+		notes = '';
 	}
 
 	function confirmEmailAction() {
-		handleAction('contacted_email', selectedSection, notes)
+		handleAction('contacted_email', selectedSection, notes);
 	}
 
 	function confirmManualAction() {
-		handleAction('contacted_manual', selectedSection, notes)
+		handleAction('contacted_manual', selectedSection, notes);
 	}
 
 	$: safeRecommendation = {
@@ -109,40 +109,59 @@
 		recommendation_message: recommendation?.recommendation_message || null,
 		created_at: recommendation?.created_at || recommendation?.createdAt || null,
 		status: recommendation?.status || 'pending'
-	}
+	};
 
-	$: displayName = `${safeRecommendation.recommended_first_name} ${safeRecommendation.recommended_last_name}`.trim()
-	$: recommenderName = safeRecommendation.recommender_name || 'Anonymous recommender'
-	$: hasContactInfo = !!(safeRecommendation.recommended_email || safeRecommendation.recommended_phone || safeRecommendation.recommended_messenger)
-	$: canContactByEmail = !!(safeRecommendation.recommended_email && safeRecommendation.recommended_email.includes('@'))
+	$: displayName =
+		`${safeRecommendation.recommended_first_name} ${safeRecommendation.recommended_last_name}`.trim();
+	$: recommenderName = safeRecommendation.recommender_name || 'Anonymous recommender';
+	$: hasContactInfo = !!(
+		safeRecommendation.recommended_email ||
+		safeRecommendation.recommended_phone ||
+		safeRecommendation.recommended_messenger
+	);
+	$: canContactByEmail = !!(
+		safeRecommendation.recommended_email && safeRecommendation.recommended_email.includes('@')
+	);
 
 	function getInitials(firstName: string, lastName: string): string {
-		const first = firstName?.charAt(0)?.toUpperCase() || 'F'
-		const last = lastName?.charAt(0)?.toUpperCase() || 'L'
-		return `${first}${last}`
+		const first = firstName?.charAt(0)?.toUpperCase() || 'F';
+		const last = lastName?.charAt(0)?.toUpperCase() || 'L';
+		return `${first}${last}`;
 	}
 
 	function getAvatarColor(name: string): string {
 		const colors = [
-			'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500',
-			'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500', 'bg-teal-500'
-		]
-		const index = name.length % colors.length
-		return colors[index]
+			'bg-blue-500',
+			'bg-green-500',
+			'bg-purple-500',
+			'bg-red-500',
+			'bg-yellow-500',
+			'bg-indigo-500',
+			'bg-pink-500',
+			'bg-teal-500'
+		];
+		const index = name.length % colors.length;
+		return colors[index];
 	}
 
-	$: initials = getInitials(safeRecommendation.recommended_first_name, safeRecommendation.recommended_last_name)
-	$: avatarColor = getAvatarColor(displayName)
+	$: initials = getInitials(
+		safeRecommendation.recommended_first_name,
+		safeRecommendation.recommended_last_name
+	);
+	$: avatarColor = getAvatarColor(displayName);
 </script>
 
-<div class="border border-yellow-200 bg-yellow-50 rounded-lg p-6 transition-all duration-200 hover:shadow-md">
+<div
+	class="border border-yellow-200 bg-yellow-50 rounded-lg p-6 transition-all duration-200 hover:shadow-md"
+>
 	<div class="flex flex-col space-y-4">
-
 		<!-- Header with avatar -->
 		<div class="flex items-start justify-between">
 			<div class="flex items-start gap-4 flex-1">
 				<!-- Avatar with initials -->
-				<div class="w-12 h-12 rounded-full {avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md">
+				<div
+					class="w-12 h-12 rounded-full {avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md"
+				>
 					{initials}
 				</div>
 
@@ -159,8 +178,10 @@
 					{#if safeRecommendation.recommender_email}
 						<div class="flex items-center gap-2 text-sm text-gray-500">
 							<Mail size={12} class="text-gray-400" />
-							<a href="mailto:{safeRecommendation.recommender_email}"
-								 class="text-blue-600 hover:underline transition-colors">
+							<a
+								href="mailto:{safeRecommendation.recommender_email}"
+								class="text-blue-600 hover:underline transition-colors"
+							>
 								{safeRecommendation.recommender_email}
 							</a>
 						</div>
@@ -175,7 +196,9 @@
 
 			<!-- Status badge -->
 			<div class="text-right">
-				<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+				<span
+					class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300"
+				>
 					<span class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></span>
 					New
 				</span>
@@ -195,8 +218,10 @@
 						{#if safeRecommendation.recommended_email}
 							<div class="flex items-center gap-3 p-2 bg-white rounded-md border border-gray-200">
 								<Mail size={14} class="text-blue-500 flex-shrink-0" />
-								<a href="mailto:{safeRecommendation.recommended_email}"
-									 class="text-blue-600 hover:underline transition-colors flex-1 truncate">
+								<a
+									href="mailto:{safeRecommendation.recommended_email}"
+									class="text-blue-600 hover:underline transition-colors flex-1 truncate"
+								>
 									{safeRecommendation.recommended_email}
 								</a>
 							</div>
@@ -205,8 +230,10 @@
 						{#if safeRecommendation.recommended_phone}
 							<div class="flex items-center gap-3 p-2 bg-white rounded-md border border-gray-200">
 								<Phone size={14} class="text-green-500 flex-shrink-0" />
-								<a href="tel:{safeRecommendation.recommended_phone}"
-									 class="text-green-600 hover:underline transition-colors flex-1">
+								<a
+									href="tel:{safeRecommendation.recommended_phone}"
+									class="text-green-600 hover:underline transition-colors flex-1"
+								>
 									{safeRecommendation.recommended_phone}
 								</a>
 							</div>
@@ -260,9 +287,7 @@
 						Recommendation message
 					</h5>
 					<div class="p-3 bg-gray-100 rounded-md border-2 border-dashed border-gray-300">
-						<p class="text-sm text-gray-500 italic">
-							No recommendation message provided
-						</p>
+						<p class="text-sm text-gray-500 italic">No recommendation message provided</p>
 					</div>
 				</div>
 			{/if}
@@ -292,8 +317,10 @@
 						<span>Contact by email</span>
 					</button>
 				{:else}
-					<div class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed"
-							 title="No email address provided">
+					<div
+						class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed"
+						title="No email address provided"
+					>
 						<Mail size={14} />
 						<span>Email unavailable</span>
 					</div>
@@ -314,8 +341,8 @@
 			<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
 				<p class="text-xs text-blue-700 leading-relaxed">
 					<strong>Available actions:</strong>
-					Ignore if the person is not suitable, contact by email for an automated process,
-					or add manually for a personalized contact.
+					Ignore if the person is not suitable, contact by email for an automated process, or add manually
+					for a personalized contact.
 				</p>
 			</div>
 		</div>
@@ -334,9 +361,7 @@
 			<div class="space-y-4">
 				<!-- Section selection -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Section (optional)
-					</label>
+					<label class="block text-sm font-medium text-gray-700 mb-1"> Section (optional) </label>
 					<select
 						bind:value={selectedSection}
 						class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -350,9 +375,7 @@
 
 				<!-- Notes -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Notes (optional)
-					</label>
+					<label class="block text-sm font-medium text-gray-700 mb-1"> Notes (optional) </label>
 					<textarea
 						bind:value={notes}
 						rows="2"
@@ -395,9 +418,7 @@
 			<div class="space-y-4">
 				<!-- Section selection -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Section (optional)
-					</label>
+					<label class="block text-sm font-medium text-gray-700 mb-1"> Section (optional) </label>
 					<select
 						bind:value={selectedSection}
 						class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -411,9 +432,7 @@
 
 				<!-- Notes -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Notes (optional)
-					</label>
+					<label class="block text-sm font-medium text-gray-700 mb-1"> Notes (optional) </label>
 					<textarea
 						bind:value={notes}
 						rows="2"
@@ -445,28 +464,29 @@
 {/if}
 
 <style>
-    .transition-all {
-        transition-property: all;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    }
+	.transition-all {
+		transition-property: all;
+		transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	}
 
-    a:hover {
-        text-decoration-line: underline;
-        text-decoration-style: solid;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 2px;
-    }
+	a:hover {
+		text-decoration-line: underline;
+		text-decoration-style: solid;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 2px;
+	}
 
-    .animate-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
+	.animate-pulse {
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
 
-    @keyframes pulse {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: .5;
-        }
-    }
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
 </style>

@@ -30,13 +30,16 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 			const contentType = response.headers.get('content-type');
 			if (!contentType || !contentType.includes('application/json')) {
 				console.error('Response is not JSON:', contentType);
-				return new Response(JSON.stringify({
-					success: false,
-					error: 'Invalid response format from backend'
-				}), {
-					status: 500,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({
+						success: false,
+						error: 'Invalid response format from backend'
+					}),
+					{
+						status: 500,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 
 			const result = await response.json();
@@ -49,39 +52,47 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 			const errorText = await response.text();
 			console.error('Backend error selecting material:', errorText);
 
-			return new Response(JSON.stringify({
-				success: false,
-				error: 'Backend error',
-				details: errorText,
-				status: response.status
-			}), {
-				status: response.status,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify({
+					success: false,
+					error: 'Backend error',
+					details: errorText,
+					status: response.status
+				}),
+				{
+					status: response.status,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
-
 	} catch (error) {
 		console.error('Error in material selection route:', error);
 
 		if (error.name === 'AbortError') {
-			return new Response(JSON.stringify({
-				success: false,
-				error: 'Request timeout',
-				details: 'The request took too long to complete'
-			}), {
-				status: 408,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify({
+					success: false,
+					error: 'Request timeout',
+					details: 'The request took too long to complete'
+				}),
+				{
+					status: 408,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 
-		return new Response(JSON.stringify({
-			success: false,
-			error: 'Internal server error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				success: false,
+				error: 'Internal server error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };
 
@@ -108,13 +119,16 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 			const contentType = response.headers.get('content-type');
 			if (!contentType || !contentType.includes('application/json')) {
 				console.error('Response is not JSON:', contentType);
-				return new Response(JSON.stringify({
-					materialId: null,
-					error: 'Invalid response format'
-				}), {
-					status: 200,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({
+						materialId: null,
+						error: 'Invalid response format'
+					}),
+					{
+						status: 200,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 
 			const result = await response.json();
@@ -129,26 +143,31 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 				headers: { 'Content-Type': 'application/json' }
 			});
 		}
-
 	} catch (error) {
 		console.error('Error getting material selection:', error);
 
 		if (error.name === 'AbortError') {
-			return new Response(JSON.stringify({
-				materialId: null,
-				error: 'Request timeout'
-			}), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify({
+					materialId: null,
+					error: 'Request timeout'
+				}),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 
-		return new Response(JSON.stringify({
-			materialId: null,
-			error: error.message
-		}), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				materialId: null,
+				error: error.message
+			}),
+			{
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

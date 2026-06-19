@@ -81,7 +81,7 @@
 		await fetchProject();
 		await fetchData();
 		await fetchAccountingContact();
-		console.log(accountings)
+		console.log(accountings);
 
 		if (project?.participants) {
 			for (const p of project.participants) {
@@ -146,7 +146,7 @@
 		console.log(participants);
 
 		for (const acc of accountings) {
-			if(acc.isMusicianFee){
+			if (acc.isMusicianFee) {
 				if (acc.contactId != null) {
 					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactMusicianFee[acc.contactId]) {
@@ -156,9 +156,7 @@
 					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactMusicianFee[acc.contactId] += Number(acc.amount);
 				}
-				
-			}
-			else{
+			} else {
 				if (acc.contactId != null) {
 					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactAdditionnal[acc.contactId]) {
@@ -168,16 +166,15 @@
 					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactAdditionnal[acc.contactId] += Number(acc.amount);
 				}
-				console.log(acc.amount)
+				console.log(acc.amount);
 			}
 		}
-		console.log(paymentsByContactAdditionnal , paymentsByContactMusicianFee)
+		console.log(paymentsByContactAdditionnal, paymentsByContactMusicianFee);
 	});
 
-	let accountings : Accounting[];
+	let accountings: Accounting[];
 
-	async function fetchAccountingContact(){
-
+	async function fetchAccountingContact() {
 		const response = await fetch(`/api/projects/${data.id}/management/accounting/participant`, {
 			method: 'GET'
 		});
@@ -293,10 +290,10 @@
 
 	let sorting: string = '';
 
-	function changeSorting(event : Event) {
+	function changeSorting(event: Event) {
 		const selected = (event.target as HTMLSelectElement).value;
 		sorting = selected;
-		console.log(sorting)
+		console.log(sorting);
 		if (sorting === 'email') {
 			participants.sort((a, b) => {
 				if (!a.contact?.email) return 1;
@@ -309,8 +306,7 @@
 				if (!b.contact?.firstName) return -1;
 				return a.contact.firstName.localeCompare(b.contact.firstName);
 			});
-		}
-		else if (sorting === 'lastName') {
+		} else if (sorting === 'lastName') {
 			participants.sort((a, b) => {
 				if (!a.contact?.lastName) return 1;
 				if (!b.contact?.lastName) return -1;
@@ -318,10 +314,10 @@
 			});
 		}
 		participants = [...participants];
-		console.log(participants)
-			participants.forEach(p => {
-		console.log(p.id, p.contact?.email);
-	});
+		console.log(participants);
+		participants.forEach((p) => {
+			console.log(p.id, p.contact?.email);
+		});
 	}
 </script>
 
@@ -365,10 +361,9 @@
 				on:optionsUpdated={() => fetchData()}
 			>
 				<div class="bg-gray-200 rounded-lg w-full border-2 border-gray-400 mb-6 mt-6">
-					<div class="flex {isMobile ? "flex-col" : "" }">
+					<div class="flex {isMobile ? 'flex-col' : ''}">
 						<div class="flex-1 p-4 grid grid-cols-2">
 							{#each Object.entries(HeadTable) as [colName, displayed]}
-							
 								<div class="flex items-center">
 									<input
 										class="w-4 h-4 accent-[#6b9ad9] active:accent-[#4f7cb7] ml-2 mr-2"
@@ -381,7 +376,9 @@
 							{/each}
 						</div>
 						<div
-							class="mt-4 mb-4 items-center justify-center border-2 rounded-full border-gray-500 {isMobile ? "mx-4" : "" }"
+							class="mt-4 mb-4 items-center justify-center border-2 rounded-full border-gray-500 {isMobile
+								? 'mx-4'
+								: ''}"
 						></div>
 						<div class="flex-1 w-full p-4 grid grid-cols-1">
 							<p class="font-bold text-gray-600">Forms :</p>
@@ -481,13 +478,17 @@
 									<td class="px-4 py-2 font-bold">
 										{#if participant.contact.id && (paymentsByContactMusicianFee.hasOwnProperty(participant.contact.id) || paymentsByContactAdditionnal.hasOwnProperty(participant.contact.id))}
 											{#if paymentsByContactMusicianFee.hasOwnProperty(participant.contact.id)}
-												<span class="text-blue-500 font-bold">{-paymentsByContactMusicianFee[participant.contact.id]} €</span>
+												<span class="text-blue-500 font-bold"
+													>{-paymentsByContactMusicianFee[participant.contact.id]} €</span
+												>
 											{:else}
 												<span class="text-blue-500 font-bold">0 €</span>
 											{/if}
 											+
 											{#if paymentsByContactAdditionnal.hasOwnProperty(participant.contact.id)}
-											<span class="text-orange-500 font-bold">{-paymentsByContactAdditionnal[participant.contact.id]} €</span>
+												<span class="text-orange-500 font-bold"
+													>{-paymentsByContactAdditionnal[participant.contact.id]} €</span
+												>
 											{:else}
 												<span class="text-orange-500 font-bold">0 €</span>
 											{/if}

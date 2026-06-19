@@ -14,35 +14,44 @@ export const POST: RequestHandler = async ({ params, cookies, request, fetch }) 
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	try {
 		const data = await request.json();
 
-		const res = await fetch(`${API_URL}/projects/${projectId}/management/recruitment/import-project`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			},
-			body: JSON.stringify(data)
-		});
+		const res = await fetch(
+			`${API_URL}/projects/${projectId}/management/recruitment/import-project`,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					authorization: `${await getToken(cookies)}`
+				},
+				body: JSON.stringify(data)
+			}
+		);
 
 		return res;
 	} catch (error) {
 		console.error('Error importing from project:', error);
-		return new Response(JSON.stringify({
-			error: 'Failed to import from project'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to import from project'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };
 
@@ -50,12 +59,15 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	try {
@@ -70,9 +82,9 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		if (res.ok) {
 			const projects = await res.json();
 			// Filtrer le projet actuel
-			const availableProjects = projects.data ?
-				projects.data.filter(p => p.id !== parseInt(projectId)) :
-				projects.filter(p => p.id !== parseInt(projectId));
+			const availableProjects = projects.data
+				? projects.data.filter((p) => p.id !== parseInt(projectId))
+				: projects.filter((p) => p.id !== parseInt(projectId));
 
 			return new Response(JSON.stringify(availableProjects), {
 				status: 200,
@@ -83,11 +95,14 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		return res;
 	} catch (error) {
 		console.error('Error fetching projects for import:', error);
-		return new Response(JSON.stringify({
-			error: 'Failed to fetch projects for import'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to fetch projects for import'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

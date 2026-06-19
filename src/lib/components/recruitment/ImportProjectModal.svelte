@@ -1,111 +1,150 @@
 <!-- src/lib/components/recruitment/ImportProjectModal.svelte -->
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte'
-	import { X, Users, Upload, AlertTriangle, CheckCircle, Copy, Filter, Calendar } from 'lucide-svelte'
-	import type { Project } from '$lib/types'
+	import { createEventDispatcher, onMount } from 'svelte';
+	import {
+		X,
+		Users,
+		Upload,
+		AlertTriangle,
+		CheckCircle,
+		Copy,
+		Filter,
+		Calendar
+	} from 'lucide-svelte';
+	import type { Project } from '$lib/types';
 
-	export let projectId: string
+	export let projectId: string;
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
-	let projects: Project[] = []
-	let loading = true
-	let importing = false
-	let selectedProjectId: number | null = null
-	let selectedStatuses: string[] = ['not_yet_contacted', 'awaiting_response', 'to_follow_up']
+	let projects: Project[] = [];
+	let loading = true;
+	let importing = false;
+	let selectedProjectId: number | null = null;
+	let selectedStatuses: string[] = ['not_yet_contacted', 'awaiting_response', 'to_follow_up'];
 
 	let importResults: {
-		imported: any[]
-		conflicts: any[]
-		errors: string[]
-	} | null = null
+		imported: any[];
+		conflicts: any[];
+		errors: string[];
+	} | null = null;
 
 	const statusOptions = [
-		{ value: 'not_yet_contacted', label: 'Not yet contacted', color: 'text-gray-700', bgColor: 'bg-gray-100' },
-		{ value: 'awaiting_response', label: 'Awaiting response', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-		{ value: 'to_follow_up', label: 'Follow up', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
-		{ value: 'not_available', label: 'Not available', color: 'text-red-700', bgColor: 'bg-red-100' },
-		{ value: 'pending_validation', label: 'Pending validation', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+		{
+			value: 'not_yet_contacted',
+			label: 'Not yet contacted',
+			color: 'text-gray-700',
+			bgColor: 'bg-gray-100'
+		},
+		{
+			value: 'awaiting_response',
+			label: 'Awaiting response',
+			color: 'text-blue-700',
+			bgColor: 'bg-blue-100'
+		},
+		{
+			value: 'to_follow_up',
+			label: 'Follow up',
+			color: 'text-yellow-700',
+			bgColor: 'bg-yellow-100'
+		},
+		{
+			value: 'not_available',
+			label: 'Not available',
+			color: 'text-red-700',
+			bgColor: 'bg-red-100'
+		},
+		{
+			value: 'pending_validation',
+			label: 'Pending validation',
+			color: 'text-purple-700',
+			bgColor: 'bg-purple-100'
+		},
 		{ value: 'cancelled', label: 'Cancelled', color: 'text-gray-500', bgColor: 'bg-gray-100' },
 		{ value: 'recruited', label: 'Recruited', color: 'text-green-700', bgColor: 'bg-green-100' }
-	]
+	];
 
 	onMount(async () => {
-		await fetchProjects()
-		loading = false
-	})
+		await fetchProjects();
+		loading = false;
+	});
 
 	async function fetchProjects() {
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/import-project`)
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/import-project`
+			);
 			if (response.ok) {
-				projects = await response.json()
+				projects = await response.json();
 			}
 		} catch (error) {
-			console.error('Error fetching projects:', error)
+			console.error('Error fetching projects:', error);
 		}
 	}
 
 	function toggleStatus(status: string) {
 		if (selectedStatuses.includes(status)) {
-			selectedStatuses = selectedStatuses.filter(s => s !== status)
+			selectedStatuses = selectedStatuses.filter((s) => s !== status);
 		} else {
-			selectedStatuses = [...selectedStatuses, status]
+			selectedStatuses = [...selectedStatuses, status];
 		}
 	}
 
 	function selectAllStatuses() {
-		selectedStatuses = statusOptions.map(s => s.value)
+		selectedStatuses = statusOptions.map((s) => s.value);
 	}
 
 	function clearAllStatuses() {
-		selectedStatuses = []
+		selectedStatuses = [];
 	}
 
 	async function importFromProject() {
 		if (!selectedProjectId || selectedStatuses.length === 0) {
-			alert('Please select a project and at least one status')
-			return
+			alert('Please select a project and at least one status');
+			return;
 		}
 
-		importing = true
+		importing = true;
 
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/import-project`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					source_project_id: selectedProjectId,
-					include_statuses: selectedStatuses
-				})
-			})
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/import-project`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						source_project_id: selectedProjectId,
+						include_statuses: selectedStatuses
+					})
+				}
+			);
 
 			if (response.ok) {
-				importResults = await response.json()
+				importResults = await response.json();
 			} else {
-				alert('Import error')
+				alert('Import error');
 			}
 		} catch (error) {
-			console.error('Error importing:', error)
-			alert('Import error')
+			console.error('Error importing:', error);
+			alert('Import error');
 		} finally {
-			importing = false
+			importing = false;
 		}
 	}
 
 	function closeModal() {
-		dispatch('close')
+		dispatch('close');
 	}
 
 	function resetImport() {
-		importResults = null
-		selectedProjectId = null
-		selectedStatuses = ['not_yet_contacted', 'awaiting_response', 'to_follow_up']
+		importResults = null;
+		selectedProjectId = null;
+		selectedStatuses = ['not_yet_contacted', 'awaiting_response', 'to_follow_up'];
 	}
 
 	function completeImport() {
-		dispatch('projectsImported', importResults)
-		closeModal()
+		dispatch('projectsImported', importResults);
+		closeModal();
 	}
 
 	function formatDate(dateString: string): string {
@@ -113,16 +152,16 @@
 			year: 'numeric',
 			month: 'long',
 			day: 'numeric'
-		})
+		});
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape' && !importing) {
-			closeModal()
+			closeModal();
 		}
 	}
 
-	$: selectedProject = projects.find(p => p.id === selectedProjectId)
+	$: selectedProject = projects.find((p) => p.id === selectedProjectId);
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -152,7 +191,9 @@
 		<div class="p-6">
 			{#if loading}
 				<div class="text-center py-12">
-					<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
+					<div
+						class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B9AD9] mx-auto mb-4"
+					></div>
 					<p class="text-gray-600">Loading projects...</p>
 				</div>
 			{:else if !importResults}
@@ -171,7 +212,9 @@
 						</div>
 
 						{#if projects.length === 0}
-							<div class="text-center py-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-[8px]">
+							<div
+								class="text-center py-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-[8px]"
+							>
 								<Users size={40} class="mx-auto mb-3 opacity-30 text-gray-400" />
 								<h4 class="text-base font-medium text-gray-900 mb-1">No Projects Available</h4>
 								<p class="text-sm text-gray-500">No other projects are available for import.</p>
@@ -180,8 +223,11 @@
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-2">
 								{#each projects as project}
 									<div
-										class="border-2 rounded-[8px] p-3 cursor-pointer transition-all hover:shadow-md {selectedProjectId === project.id ? 'border-[#6B9AD9] bg-blue-50' : 'border-gray-300 hover:border-[#6B9AD9]'}"
-										on:click={() => selectedProjectId = project.id}
+										class="border-2 rounded-[8px] p-3 cursor-pointer transition-all hover:shadow-md {selectedProjectId ===
+										project.id
+											? 'border-[#6B9AD9] bg-blue-50'
+											: 'border-gray-300 hover:border-[#6B9AD9]'}"
+										on:click={() => (selectedProjectId = project.id)}
 									>
 										<input
 											type="radio"
@@ -190,18 +236,24 @@
 											class="sr-only"
 										/>
 										<div class="flex items-start justify-between mb-2">
-											<div class="w-7 h-7 bg-[#6B9AD9] rounded-[6px] flex items-center justify-center flex-shrink-0">
+											<div
+												class="w-7 h-7 bg-[#6B9AD9] rounded-[6px] flex items-center justify-center flex-shrink-0"
+											>
 												<span class="text-white font-bold text-xs">
 													{project.name.charAt(0).toUpperCase()}
 												</span>
 											</div>
 											{#if selectedProjectId === project.id}
-												<div class="w-5 h-5 bg-[#6B9AD9] rounded-full flex items-center justify-center">
+												<div
+													class="w-5 h-5 bg-[#6B9AD9] rounded-full flex items-center justify-center"
+												>
 													<CheckCircle size={14} class="text-white" />
 												</div>
 											{/if}
 										</div>
-										<h4 class="font-bold text-gray-900 mb-1 text-sm leading-tight">{project.name}</h4>
+										<h4 class="font-bold text-gray-900 mb-1 text-sm leading-tight">
+											{project.name}
+										</h4>
 										<div class="flex items-center text-xs text-gray-500">
 											<Calendar size={10} class="mr-1" />
 											<span>Created {formatDate(project.createdAt)}</span>
@@ -243,7 +295,13 @@
 
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-2">
 								{#each statusOptions as option}
-									<label class="flex items-center gap-2 p-3 border-2 rounded-[6px] cursor-pointer transition-all {selectedStatuses.includes(option.value) ? 'border-[#6B9AD9] bg-blue-50' : 'border-gray-300 hover:border-[#6B9AD9] hover:bg-gray-50'}">
+									<label
+										class="flex items-center gap-2 p-3 border-2 rounded-[6px] cursor-pointer transition-all {selectedStatuses.includes(
+											option.value
+										)
+											? 'border-[#6B9AD9] bg-blue-50'
+											: 'border-gray-300 hover:border-[#6B9AD9] hover:bg-gray-50'}"
+									>
 										<input
 											type="checkbox"
 											checked={selectedStatuses.includes(option.value)}
@@ -262,9 +320,7 @@
 
 							{#if selectedStatuses.length === 0}
 								<div class="mt-3 p-2 bg-red-50 border border-red-200 rounded-[6px]">
-									<p class="text-xs text-red-700 font-medium">
-										Please select at least one status.
-									</p>
+									<p class="text-xs text-red-700 font-medium">Please select at least one status.</p>
 								</div>
 							{/if}
 						</div>
@@ -280,13 +336,16 @@
 									</div>
 									<div class="flex justify-between">
 										<span class="font-medium text-gray-700">Selected Statuses:</span>
-										<span class="font-bold text-gray-900">{selectedStatuses.length} status(es)</span>
+										<span class="font-bold text-gray-900">{selectedStatuses.length} status(es)</span
+										>
 									</div>
 									<div class="pt-2 border-t border-gray-300">
 										<div class="flex flex-wrap gap-1">
 											{#each selectedStatuses as status}
-												{@const statusConfig = statusOptions.find(s => s.value === status)}
-												<span class="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-medium {statusConfig?.bgColor} {statusConfig?.color}">
+												{@const statusConfig = statusOptions.find((s) => s.value === status)}
+												<span
+													class="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-medium {statusConfig?.bgColor} {statusConfig?.color}"
+												>
 													{statusConfig?.label}
 												</span>
 											{/each}
@@ -338,7 +397,10 @@
 										{#each importResults.conflicts as conflict}
 											<div class="flex items-center gap-2 text-sm text-yellow-800">
 												<div class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-												<span class="font-medium">{conflict.source_contact.first_name} {conflict.source_contact.last_name}</span>
+												<span class="font-medium"
+													>{conflict.source_contact.first_name}
+													{conflict.source_contact.last_name}</span
+												>
 												<span class="text-xs opacity-75">(already exists)</span>
 											</div>
 										{/each}

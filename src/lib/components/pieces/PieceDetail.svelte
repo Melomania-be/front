@@ -44,7 +44,7 @@
 
 	async function handleUpload(files: FileList) {
 		const formData = new FormData();
-		Array.from(files).forEach(file => {
+		Array.from(files).forEach((file) => {
 			formData.append('files', file);
 		});
 		formData.append('pieceId', piece.id.toString());
@@ -135,8 +135,10 @@
 			<h2 class="text-2xl font-bold text-gray-700 uppercase">{piece.name}</h2>
 			<p class="text-gray-500 mt-1">
 				by {piece.composer.longName}
-				{#if piece.opus} • Op. {piece.opus}{/if}
-				{#if piece.yearOfComposition} • {piece.yearOfComposition}{/if}
+				{#if piece.opus}
+					• Op. {piece.opus}{/if}
+				{#if piece.yearOfComposition}
+					• {piece.yearOfComposition}{/if}
 			</p>
 		</div>
 	</div>
@@ -145,12 +147,10 @@
 	<div class="border-b border-gray-200 mb-6">
 		<nav class="flex space-x-8">
 			<button
-				class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {
-					activeTab === 'materials'
-						? 'border-[#6B9AD9] text-[#6B9AD9]'
-						: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-				}"
-				on:click={() => activeTab = 'materials'}
+				class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {activeTab === 'materials'
+					? 'border-[#6B9AD9] text-[#6B9AD9]'
+					: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+				on:click={() => (activeTab = 'materials')}
 			>
 				<div class="flex items-center gap-2">
 					<Package size={16} />
@@ -159,12 +159,10 @@
 			</button>
 
 			<button
-				class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {
-					activeTab === 'legacy'
-						? 'border-[#6B9AD9] text-[#6B9AD9]'
-						: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-				}"
-				on:click={() => activeTab = 'legacy'}
+				class="py-2 px-1 border-b-2 font-medium text-sm transition-colors {activeTab === 'legacy'
+					? 'border-[#6B9AD9] text-[#6B9AD9]'
+					: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+				on:click={() => (activeTab = 'legacy')}
 			>
 				<div class="flex items-center gap-2">
 					<Folder size={16} />
@@ -177,10 +175,7 @@
 	<!-- Contenu des onglets -->
 	{#if activeTab === 'materials'}
 		<!-- Gestionnaire de matériels -->
-		<MaterialManager
-			{piece}
-			on:materialsUpdated={handleMaterialsUpdated}
-		/>
+		<MaterialManager {piece} on:materialsUpdated={handleMaterialsUpdated} />
 	{:else}
 		<!-- Ancienne section des scores -->
 		<div class="border-t-2 border-[#E7E7E7] pt-6">
@@ -191,7 +186,7 @@
 				</div>
 				<button
 					class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
-					on:click={() => showUploader = true}
+					on:click={() => (showUploader = true)}
 				>
 					<Upload size={16} />
 					Ajouter des fichiers
@@ -209,17 +204,18 @@
 					<p class="text-sm text-gray-400 mb-4">
 						Les nouveaux fichiers doivent être organisés dans des matériels.
 					</p>
-					<button
-						class="text-[#6B9AD9] hover:underline"
-						on:click={() => activeTab = 'materials'}
-					>
+					<button class="text-[#6B9AD9] hover:underline" on:click={() => (activeTab = 'materials')}>
 						Voir les matériels
 					</button>
 				</div>
 			{:else}
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 					{#each scores as score}
-						<div class="border-2 {getFileColor(score.name)} rounded-lg p-4 hover:shadow-md transition-all duration-200">
+						<div
+							class="border-2 {getFileColor(
+								score.name
+							)} rounded-lg p-4 hover:shadow-md transition-all duration-200"
+						>
 							<div class="flex items-start justify-between mb-3">
 								<div class="flex items-center gap-2">
 									<svelte:component this={getFileIcon(score.name)} size={20} />
@@ -268,13 +264,9 @@
 							{project.pieces?.length || 0} pièce{project.pieces?.length !== 1 ? 's' : ''} total
 						</p>
 						{#if project.pivot_material_id}
-							<p class="text-xs opacity-75 mt-1">
-								Matériel spécifié
-							</p>
+							<p class="text-xs opacity-75 mt-1">Matériel spécifié</p>
 						{:else}
-							<p class="text-xs opacity-75 mt-1 text-orange-200">
-								Matériel à spécifier
-							</p>
+							<p class="text-xs opacity-75 mt-1 text-orange-200">Matériel à spécifier</p>
 						{/if}
 					</div>
 				{/each}
@@ -290,6 +282,6 @@
 {#if showUploader}
 	<FileUploader
 		on:upload={(e) => handleUpload(e.detail)}
-		on:cancel={() => showUploader = false}
+		on:cancel={() => (showUploader = false)}
 	/>
 {/if}

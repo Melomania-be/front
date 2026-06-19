@@ -7,6 +7,7 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { Project } from '$lib/types/Project';
 	import DateShow from '$lib/components/DateShow.svelte';
+	import Button from '$lib/components/Button.svelte';
 
 	let meta: any = {};
 	let options: any = {
@@ -30,13 +31,13 @@
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
 		fetchData();
 	});
@@ -87,83 +88,87 @@
 	}
 </script>
 
-<div>
-	<div
-		class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700"
-	>
-		<ul class="flex flex-wrap">
-			<li class="me-2">
-				<button
-					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 {shownProjectsArray ===
-					'passedProjects'
-						? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500'
-						: ''}"
+<div class="p-4">
+	<div class="mb-6 border-b border-gray-200 pb-4">
+		<ul class="flex flex-wrap items-center gap-2">
+			<li>
+				<Button
+					variant={shownProjectsArray === 'passedProjects' ? 'primary' : 'ghost'}
 					on:click={() => {
-						shownProjectsArray = 'passedProjects';
-						shownProjects = passedProjects;
-					}}>Passed projects</button
+       shownProjectsArray = 'passedProjects';
+       shownProjects = passedProjects;
+      }}
 				>
+					Passed projects
+				</Button>
 			</li>
-			<li class="me-2">
-				<button
-					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 {shownProjectsArray ===
-					'currentProjects'
-						? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500'
-						: ''}"
-					aria-current="page"
+			<li>
+				<Button
+					variant={shownProjectsArray === 'currentProjects' ? 'primary' : 'ghost'}
 					on:click={() => {
-						shownProjectsArray = 'currentProjects';
-						shownProjects = currentProjects;
-					}}>Current projects</button
+       shownProjectsArray = 'currentProjects';
+       shownProjects = currentProjects;
+      }}
 				>
+					Current projects
+				</Button>
 			</li>
-			<li class="me-2">
-				<button
-					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 {shownProjectsArray ===
-					'allProjects'
-						? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500'
-						: ''}"
+			<li>
+				<Button
+					variant={shownProjectsArray === 'allProjects' ? 'primary' : 'ghost'}
 					on:click={() => {
-						shownProjectsArray = 'allProjects';
-						shownProjects = allProjects;
-					}}>All projects</button
+       shownProjectsArray = 'allProjects';
+       shownProjects = allProjects;
+      }}
 				>
+					All projects
+				</Button>
 			</li>
-			<li class="me-2">
-				<button
-					class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-				>
-					<a href="/projects/creation" class="border rounded-xl p-1">Create a new project</a>
-				</button>
+			<li class="ml-auto">
+				<Button href="/projects/creation" variant="primary">
+					<svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+					</svg>
+					Create a new project
+				</Button>
 			</li>
 		</ul>
 	</div>
+
 	{#if group}
 		<div>
 			{#if shownProjectsArray}
-				<div
-					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mb-1"
-				>
-					<SimpleFilterer 
-						showData={false} 
-						bind:data={group} 
-						bind:meta 
+				<div class="bg-white border border-gray-200 rounded-lg shadow p-4">
+					<SimpleFilterer
+						showData={false}
+						bind:data={group}
+						bind:meta
 						bind:options
 						on:optionsUpdated={() => fetchData()}
 					>
-						<div class=" bg-white bordermx-auto justify-center w-full">
+						<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4 w-full">
 							{#each shownProjects as project}
-								<div
-									class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
-								>
-									<a href={`/projects/${project.id}/management`}>
-										<h2 class="text-sm">{project.name}</h2>
-										<ul class="text-sm">
-											{#each project.concerts as concert}
-												<DateShow startTime={concert.startDate} endTime={concert.endDate} />
-												- {concert.place}
-											{/each}
-										</ul>
+								<div class="bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-50 transition-colors">
+									<a href={`/projects/${project.id}/management`} class="block p-5 h-full">
+										<h2 class="text-lg font-semibold text-gray-900 mb-2">{project.name}</h2>
+
+										{#if project.concerts && project.concerts.length > 0}
+											<ul class="text-sm text-gray-600 space-y-2 mt-3">
+												{#each project.concerts as concert}
+													<li class="flex items-start">
+														<svg class="w-4 h-4 mr-2 mt-0.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+														</svg>
+														<span>
+                <DateShow startTime={concert.startDate} endTime={concert.endDate} />
+                <span class="block text-gray-500">{concert.place}</span>
+               </span>
+													</li>
+												{/each}
+											</ul>
+										{:else}
+											<p class="text-sm text-gray-400 italic mt-3">No concerts scheduled</p>
+										{/if}
 									</a>
 								</div>
 							{/each}

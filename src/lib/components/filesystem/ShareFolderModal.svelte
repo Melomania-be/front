@@ -1,7 +1,18 @@
 <!-- src/lib/components/filesystem/ShareFolderModal.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { X, Share2, Copy, ExternalLink, Users, Check, MessageCircle, Send, ShieldOff, AlertTriangle } from 'lucide-svelte';
+	import {
+		X,
+		Share2,
+		Copy,
+		ExternalLink,
+		Users,
+		Check,
+		MessageCircle,
+		Send,
+		ShieldOff,
+		AlertTriangle
+	} from 'lucide-svelte';
 	import type { FileSystemItem } from '$lib/types/FileSystem';
 
 	const dispatch = createEventDispatcher();
@@ -73,7 +84,7 @@
 		try {
 			await navigator.clipboard.writeText(shareUrl);
 			copySuccess = true;
-			setTimeout(() => copySuccess = false, 2000);
+			setTimeout(() => (copySuccess = false), 2000);
 		} catch (error) {
 			console.error('Failed to copy to clipboard:', error);
 		}
@@ -81,14 +92,18 @@
 
 	function shareWhatsApp() {
 		if (shareUrl) {
-			const message = encodeURIComponent(`Check out this shared folder: ${folder.name}\n${shareUrl}`);
+			const message = encodeURIComponent(
+				`Check out this shared folder: ${folder.name}\n${shareUrl}`
+			);
 			window.open(`https://wa.me/?text=${message}`, '_blank');
 		}
 	}
 
 	function shareMessenger() {
 		if (shareUrl) {
-			const message = encodeURIComponent(`Check out this shared folder: ${folder.name}\n${shareUrl}`);
+			const message = encodeURIComponent(
+				`Check out this shared folder: ${folder.name}\n${shareUrl}`
+			);
 			window.open(`https://m.me/?text=${message}`, '_blank');
 		}
 	}
@@ -120,7 +135,9 @@
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 		<div class="bg-white rounded-[10px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
 			<!-- Header -->
-			<div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+			<div
+				class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50"
+			>
 				<div class="flex items-center gap-3">
 					<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
 						<Share2 size={20} class="text-white" />
@@ -173,7 +190,7 @@
 							</h3>
 							<button
 								class="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-								on:click={() => showRevokeConfirm = true}
+								on:click={() => (showRevokeConfirm = true)}
 								title="Revoke share link"
 							>
 								<ShieldOff size={14} />
@@ -183,7 +200,9 @@
 
 						<div class="bg-blue-50 border-2 border-blue-200 rounded-[8px] p-4">
 							<div class="flex items-center gap-3">
-								<div class="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-700 break-all">
+								<div
+									class="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-700 break-all"
+								>
 									{shareUrl}
 								</div>
 								<div class="flex gap-2">
@@ -216,7 +235,8 @@
 						</div>
 
 						<div class="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-							<strong>Note:</strong> Anyone with this link can view the folder contents. The link remains active until you revoke it.
+							<strong>Note:</strong> Anyone with this link can view the folder contents. The link remains
+							active until you revoke it.
 						</div>
 					</div>
 
@@ -256,7 +276,9 @@
 					<div class="text-center p-8">
 						<ShieldOff size={48} class="text-gray-400 mx-auto mb-4" />
 						<h3 class="font-bold text-lg text-gray-700 mb-2">NO ACTIVE SHARE LINK</h3>
-						<p class="text-gray-500 mb-4">Create a new share link to allow others to access this folder</p>
+						<p class="text-gray-500 mb-4">
+							Create a new share link to allow others to access this folder
+						</p>
 						<button
 							class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
 							on:click={generateShareUrl}
@@ -269,9 +291,7 @@
 
 			<!-- Footer -->
 			<div class="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-				<div class="text-sm text-gray-600">
-					Share settings can be managed from the folder menu
-				</div>
+				<div class="text-sm text-gray-600">Share settings can be managed from the folder menu</div>
 				<button
 					class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
 					on:click={close}
@@ -299,15 +319,16 @@
 
 					<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
 						<p class="text-sm text-red-800">
-							<strong>Warning:</strong> Revoking this link will immediately block access for anyone who has it.
-							They will no longer be able to view the shared folder and will see a "Link Revoked" message.
+							<strong>Warning:</strong> Revoking this link will immediately block access for anyone who
+							has it. They will no longer be able to view the shared folder and will see a "Link Revoked"
+							message.
 						</p>
 					</div>
 
 					<div class="flex gap-3">
 						<button
 							class="flex-1 px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
-							on:click={() => showRevokeConfirm = false}
+							on:click={() => (showRevokeConfirm = false)}
 							disabled={isRevoking}
 						>
 							Cancel
@@ -333,17 +354,17 @@
 {/if}
 
 <style>
-    @media (max-width: 768px) {
-        .max-w-2xl {
-            max-width: 95vw;
-        }
+	@media (max-width: 768px) {
+		.max-w-2xl {
+			max-width: 95vw;
+		}
 
-        .flex-col {
-            flex-direction: column;
-        }
+		.flex-col {
+			flex-direction: column;
+		}
 
-        .gap-2 {
-            gap: 0.5rem;
-        }
-    }
+		.gap-2 {
+			gap: 0.5rem;
+		}
+	}
 </style>

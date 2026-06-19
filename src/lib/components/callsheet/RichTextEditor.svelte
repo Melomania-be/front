@@ -31,7 +31,7 @@
 
 			// Remplit l'éditeur avec la valeur initiale
 			quill.root.innerHTML = value;
-			console.log(value)
+			console.log(value);
 			// Ajout image locale
 			quill.getModule('toolbar').addHandler('image', () => {
 				const input = document.createElement('input');
@@ -57,7 +57,7 @@
 			// Mise à jour du contenu
 			quill.on('text-change', () => {
 				onChange(quill.root.innerHTML);
-				console.log(value)
+				console.log(value);
 			});
 
 			// === Bouton personnalisé Google Maps ===
@@ -103,46 +103,49 @@
 	});
 </script>
 
+<div
+	bind:this={editorElem}
+	class="bg-white dark:bg-gray-800 rounded shadow p-2 min-h-[200px] text-black"
+></div>
+
 <style>
-    /* Style pour les images et cartes */
-    .ql-editor img,
-    .ql-editor iframe {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        margin: 1rem 0;
-    }
+	/* Style pour les images et cartes */
+	.ql-editor img,
+	.ql-editor iframe {
+		max-width: 100%;
+		height: auto;
+		border-radius: 8px;
+		margin: 1rem 0;
+	}
 
-    .ql-editor .map-container {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 8px;
-        background-color: #f9f9f9;
-    }
+	.ql-editor .map-container {
+		border: 1px solid #ccc;
+		border-radius: 8px;
+		padding: 8px;
+		background-color: #f9f9f9;
+	}
 
-    .bg-white {
-        background-color: white;
-    }
+	.bg-white {
+		background-color: white;
+	}
 
-    .dark .bg-gray-800 {
-        background-color: #2D3748;
-    }
+	.dark .bg-gray-800 {
+		background-color: #2d3748;
+	}
 
-    .rounded {
-        border-radius: 8px;
-    }
+	.rounded {
+		border-radius: 8px;
+	}
 
-    .shadow {
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
+	.shadow {
+		box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+	}
 
-    .p-2 {
-        padding: 8px;
-    }
+	.p-2 {
+		padding: 8px;
+	}
 
-    .text-black {
-        color: black;
-    }
+	.text-black {
+		color: black;
+	}
 </style>
-
-<div bind:this={editorElem} class="bg-white dark:bg-gray-800 rounded shadow p-2 min-h-[200px] text-black"></div>

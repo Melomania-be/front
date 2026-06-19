@@ -1,100 +1,102 @@
 <!-- src/lib/components/recruitment/RecruitmentRecommendations.svelte -->
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte'
-	import { UserPlus, Mail, Phone, MessageCircle, Music, Clock, X, Check, Eye } from 'lucide-svelte'
-	import type { RecruitmentRecommendation, Section } from '$lib/types'
-	import RecommendationCard from '$lib/components/recruitment/RecommendationCard.svelte'
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { UserPlus, Mail, Phone, MessageCircle, Music, Clock, X, Check, Eye } from 'lucide-svelte';
+	import type { RecruitmentRecommendation, Section } from '$lib/types';
+	import RecommendationCard from '$lib/components/recruitment/RecommendationCard.svelte';
 
-	export let projectId: string
+	export let projectId: string;
 
-	const dispatch = createEventDispatcher()
+	const dispatch = createEventDispatcher();
 
-	let recommendations: RecruitmentRecommendation[] = []
-	let sections: Section[] = []
-	let loading = true
+	let recommendations: RecruitmentRecommendation[] = [];
+	let sections: Section[] = [];
+	let loading = true;
 
 	onMount(async () => {
-		await Promise.all([
-			fetchRecommendations(),
-			fetchSections()
-		])
-		loading = false
-	})
+		await Promise.all([fetchRecommendations(), fetchSections()]);
+		loading = false;
+	});
 
 	async function fetchRecommendations() {
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/recommendations`)
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/recommendations`
+			);
 			if (response.ok) {
-				const data = await response.json()
+				const data = await response.json();
 				// S'assurer que les données sont dans le bon format
-				recommendations = Array.isArray(data) ? data : []
-				console.log('Recommendations loaded:', recommendations)
+				recommendations = Array.isArray(data) ? data : [];
+				console.log('Recommendations loaded:', recommendations);
 			} else {
-				console.error('Failed to fetch recommendations:', response.status)
-				recommendations = []
+				console.error('Failed to fetch recommendations:', response.status);
+				recommendations = [];
 			}
 		} catch (error) {
-			console.error('Error fetching recommendations:', error)
-			recommendations = []
+			console.error('Error fetching recommendations:', error);
+			recommendations = [];
 		}
 	}
 
 	async function fetchSections() {
 		try {
-			const response = await fetch('/api/sections')
+			const response = await fetch('/api/sections');
 			if (response.ok) {
-				sections = await response.json()
+				sections = await response.json();
 			}
 		} catch (error) {
-			console.error('Error fetching sections:', error)
-			sections = []
+			console.error('Error fetching sections:', error);
+			sections = [];
 		}
 	}
 
 	async function handleRecommendation(event) {
-		const { action, sectionId, notes } = event.detail
-		const recommendation = event.target?.recommendation || recommendations.find(r => r.id)
+		const { action, sectionId, notes } = event.detail;
+		const recommendation = event.target?.recommendation || recommendations.find((r) => r.id);
 
 		if (!recommendation) {
-			console.error('No recommendation found')
-			return
+			console.error('No recommendation found');
+			return;
 		}
 
 		try {
-			const response = await fetch(`/api/projects/${projectId}/management/recruitment/recommendations/${recommendation.id}`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					action,
-					section_id: sectionId,
-					notes
-				})
-			})
+			const response = await fetch(
+				`/api/projects/${projectId}/management/recruitment/recommendations/${recommendation.id}`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						action,
+						section_id: sectionId,
+						notes
+					})
+				}
+			);
 
 			if (response.ok) {
-				await fetchRecommendations()
-				dispatch('recommendationChange')
+				await fetchRecommendations();
+				dispatch('recommendationChange');
 
 				const actionMessages = {
-					'ignore': 'Recommendation ignored',
-					'contacted_email': 'Email sent and contact added to recruitment',
-					'contacted_manual': 'Contact added to recruitment'
-				}
+					ignore: 'Recommendation ignored',
+					contacted_email: 'Email sent and contact added to recruitment',
+					contacted_manual: 'Contact added to recruitment'
+				};
 
-				const message = actionMessages[action] || 'Action completed'
+				const message = actionMessages[action] || 'Action completed';
 			} else {
-				console.error('API request failed:', response.status)
-				const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-				alert(`Error processing: ${errorData.error || 'Unknown error'}`)
+				console.error('API request failed:', response.status);
+				const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+				alert(`Error processing: ${errorData.error || 'Unknown error'}`);
 			}
 		} catch (error) {
-			console.error('Error handling recommendation:', error)
-			alert('Error processing recommendation')
+			console.error('Error handling recommendation:', error);
+			alert('Error processing recommendation');
 		}
 	}
 
 	function onRecommendationHandle(event) {
-		const recommendation = event.target?.recommendation
+		const recommendation = event.target?.recommendation;
 		if (recommendation) {
 			const enhancedEvent = {
 				detail: {
@@ -104,30 +106,30 @@
 				target: {
 					recommendation
 				}
-			}
+			};
 
-			handleRecommendation(enhancedEvent)
+			handleRecommendation(enhancedEvent);
 		} else {
-			console.error('No recommendation found in event target')
+			console.error('No recommendation found in event target');
 		}
 	}
 
 	function getStatusBadge(status: string) {
 		const badges = {
-			'pending': { label: 'Pending', class: 'bg-yellow-100 text-yellow-800' },
-			'ignored': { label: 'Ignored', class: 'bg-gray-100 text-gray-800' },
-			'contacted_email': { label: 'Contacted by email', class: 'bg-blue-100 text-blue-800' },
-			'contacted_manual': { label: 'Contacted manually', class: 'bg-green-100 text-green-800' }
-		}
-		return badges[status] || badges['pending']
+			pending: { label: 'Pending', class: 'bg-yellow-100 text-yellow-800' },
+			ignored: { label: 'Ignored', class: 'bg-gray-100 text-gray-800' },
+			contacted_email: { label: 'Contacted by email', class: 'bg-blue-100 text-blue-800' },
+			contacted_manual: { label: 'Contacted manually', class: 'bg-green-100 text-green-800' }
+		};
+		return badges[status] || badges['pending'];
 	}
 
 	function formatDate(dateString: string): string {
-		if (!dateString) return 'Date inconnue'
+		if (!dateString) return 'Date inconnue';
 
 		try {
-			const date = new Date(dateString)
-			if (isNaN(date.getTime())) return 'Date invalide'
+			const date = new Date(dateString);
+			if (isNaN(date.getTime())) return 'Date invalide';
 
 			return date.toLocaleDateString('fr-FR', {
 				day: '2-digit',
@@ -135,24 +137,24 @@
 				year: 'numeric',
 				hour: '2-digit',
 				minute: '2-digit'
-			})
+			});
 		} catch (error) {
-			return 'Date invalide'
+			return 'Date invalide';
 		}
 	}
 
 	function getDisplayName(recommendation: RecruitmentRecommendation): string {
-		const firstName = recommendation.recommended_first_name || ''
-		const lastName = recommendation.recommended_last_name || ''
-		return `${firstName} ${lastName}`.trim() || 'Nom inconnu'
+		const firstName = recommendation.recommended_first_name || '';
+		const lastName = recommendation.recommended_last_name || '';
+		return `${firstName} ${lastName}`.trim() || 'Nom inconnu';
 	}
 
 	function getRecommenderName(recommendation: RecruitmentRecommendation): string {
-		return recommendation.recommender_name || 'Recommandateur inconnu'
+		return recommendation.recommender_name || 'Recommandateur inconnu';
 	}
 
-	$: pendingRecommendations = recommendations.filter(r => r.status === 'pending')
-	$: processedRecommendations = recommendations.filter(r => r.status !== 'pending')
+	$: pendingRecommendations = recommendations.filter((r) => r.status === 'pending');
+	$: processedRecommendations = recommendations.filter((r) => r.status !== 'pending');
 </script>
 
 <div class="bg-white border-2 border-[#8C8C8C] rounded-lg">
@@ -193,8 +195,8 @@
 										const enhancedEvent = {
 											detail: event.detail,
 											target: { recommendation }
-										}
-										handleRecommendation(enhancedEvent)
+										};
+										handleRecommendation(enhancedEvent);
 									}}
 								/>
 							</div>
@@ -228,7 +230,11 @@
 									</div>
 
 									<div class="text-right">
-										<span class="inline-block px-2 py-1 text-xs rounded-full {getStatusBadge(recommendation.status).class}">
+										<span
+											class="inline-block px-2 py-1 text-xs rounded-full {getStatusBadge(
+												recommendation.status
+											).class}"
+										>
 											{getStatusBadge(recommendation.status).label}
 										</span>
 									</div>
@@ -245,7 +251,8 @@
 					<UserPlus size={48} class="mx-auto mb-4 opacity-50" />
 					<p class="text-lg font-medium mb-2">No recommendations</p>
 					<p class="text-sm">
-						Recommendations will appear here when people are recommended via the project's recommendation link.
+						Recommendations will appear here when people are recommended via the project's
+						recommendation link.
 					</p>
 				</div>
 			{/if}

@@ -20,17 +20,20 @@
 		orderBy: string;
 		order: string;
 	} = {
-		filters:{
-			type : 'and',
-			filtersDepth1: [{type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []} , {type: 'or', filtersDepth2: []}]
+		filters: {
+			type: 'and',
+			filtersDepth1: [
+				{ type: 'or', filtersDepth2: [] },
+				{ type: 'or', filtersDepth2: [] },
+				{ type: 'or', filtersDepth2: [] },
+				{ type: 'or', filtersDepth2: [] }
+			]
 		},
 		page: 1,
 		limit: 250,
 		orderBy: 'id',
 		order: 'asc'
 	};
-
-	
 
 	onMount(async () => {
 		fetchData();
@@ -62,19 +65,19 @@
 			meta = jsonResponse.data.meta;
 			columns = jsonResponse.columns;
 
-			console.log(options)
+			console.log(options);
 		}
 	}
 </script>
 
-<div class="bg-[#E7E7E7] ">
-<AdvancedFilterer
-	bind:columns
-	bind:meta
-	bind:data
-	bind:options
-	uniqueUrl={'/contacts'}
-	on:optionsUpdated={() => fetchData()}
-	showData
-/>
+<div class="bg-[#E7E7E7]">
+	<AdvancedFilterer
+		bind:columns
+		bind:meta
+		bind:data
+		bind:options
+		uniqueUrl={'/contacts'}
+		on:optionsUpdated={() => fetchData()}
+		showData
+	/>
 </div>

@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 			console.log(`✅ Loaded ${pieces.length} pieces without pre-assignments`);
 
 			// S'assurer qu'aucun matériel n'est pré-assigné
-			const cleanPieces = pieces.map(piece => ({
+			const cleanPieces = pieces.map((piece) => ({
 				...piece,
 				pivot_material_id: null,
 				pivot_material_specified: false
@@ -34,12 +34,15 @@ export const GET: RequestHandler = async ({ params, cookies, fetch }) => {
 		return res;
 	} catch (error) {
 		console.error('Error in project pieces route:', error);
-		return new Response(JSON.stringify({
-			error: 'Internal server error',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Internal server error',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

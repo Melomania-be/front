@@ -14,12 +14,15 @@ export const GET: RequestHandler = async ({ params, cookies, url, fetch }) => {
 	const projectId = validateId(params.id);
 
 	if (!projectId) {
-		return new Response(JSON.stringify({
-			error: 'Invalid project ID'
-		}), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid project ID'
+			}),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 
 	const page = url.searchParams.get('page') || '1';
@@ -41,11 +44,14 @@ export const GET: RequestHandler = async ({ params, cookies, url, fetch }) => {
 
 		return res;
 	} catch (error) {
-		return new Response(JSON.stringify({
-			error: 'Failed to fetch recruitment contacts'
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to fetch recruitment contacts'
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

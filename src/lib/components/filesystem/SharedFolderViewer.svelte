@@ -63,7 +63,11 @@
 				error = 'Shared folder not found or link has expired';
 			} else if (response.status === 403) {
 				const errorData = await response.json().catch(() => ({}));
-				if (errorData.revoked || errorData.error?.includes('revoked') || errorData.error?.includes('expired')) {
+				if (
+					errorData.revoked ||
+					errorData.error?.includes('revoked') ||
+					errorData.error?.includes('expired')
+				) {
 					isRevoked = true;
 					error = errorData.error || 'This share link has been revoked or expired';
 				} else {
@@ -94,7 +98,11 @@
 				buildBreadcrumbs(currentFolder);
 			} else if (response.status === 403) {
 				const errorData = await response.json().catch(() => ({}));
-				if (errorData.revoked || errorData.error?.includes('revoked') || errorData.error?.includes('expired')) {
+				if (
+					errorData.revoked ||
+					errorData.error?.includes('revoked') ||
+					errorData.error?.includes('expired')
+				) {
 					isRevoked = true;
 					error = errorData.error || 'This share link has been revoked';
 					return;
@@ -151,7 +159,11 @@
 					URL.revokeObjectURL(url);
 				} else if (response.status === 403) {
 					const errorData = await response.json().catch(() => ({}));
-					if (errorData.revoked || errorData.error?.includes('revoked') || errorData.error?.includes('expired')) {
+					if (
+						errorData.revoked ||
+						errorData.error?.includes('revoked') ||
+						errorData.error?.includes('expired')
+					) {
 						isRevoked = true;
 						error = errorData.error || 'This share link has been revoked';
 						return;
@@ -273,7 +285,11 @@
 					<div class="text-sm text-gray-500 flex items-center gap-4">
 						<div class="flex items-center gap-1">
 							<Calendar size={14} />
-							<span>Shared: {folderData.shareInfo ? new Date(folderData.shareInfo.createdAt).toLocaleDateString() : 'Unknown'}</span>
+							<span
+								>Shared: {folderData.shareInfo
+									? new Date(folderData.shareInfo.createdAt).toLocaleDateString()
+									: 'Unknown'}</span
+							>
 						</div>
 						<div class="flex items-center gap-1">
 							<Eye size={14} />
@@ -298,18 +314,23 @@
 			<!-- Revoked State -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div class="text-center py-12">
-					<div class="w-20 h-20 bg-red-100 rounded-[10px] flex items-center justify-center mx-auto mb-6">
+					<div
+						class="w-20 h-20 bg-red-100 rounded-[10px] flex items-center justify-center mx-auto mb-6"
+					>
 						<XCircle class="text-red-600" size={48} />
 					</div>
 					<h3 class="font-bold text-2xl text-red-700 mb-4">SHARE LINK REVOKED</h3>
-					<p class="text-red-600 mb-6 text-lg">This share link has been revoked by the administrator and is no longer accessible.</p>
+					<p class="text-red-600 mb-6 text-lg">
+						This share link has been revoked by the administrator and is no longer accessible.
+					</p>
 					<div class="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
 						<div class="flex items-start gap-4">
 							<AlertTriangle class="text-red-600 flex-shrink-0 mt-1" size={24} />
 							<div class="text-left">
 								<h4 class="font-bold text-red-800 mb-3 text-lg">What happened?</h4>
 								<p class="text-red-700 mb-4">
-									The person who shared this folder has revoked access. This means the content is no longer available through this link.
+									The person who shared this folder has revoked access. This means the content is no
+									longer available through this link.
 								</p>
 								<p class="text-red-600 font-medium">
 									Please contact the administrators if you need access to this content.
@@ -323,12 +344,16 @@
 			<!-- Error State -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div class="text-center py-12">
-					<div class="w-16 h-16 bg-red-100 rounded-[10px] flex items-center justify-center mx-auto mb-4">
+					<div
+						class="w-16 h-16 bg-red-100 rounded-[10px] flex items-center justify-center mx-auto mb-4"
+					>
 						<Shield class="text-red-600" size={48} />
 					</div>
 					<h3 class="font-bold text-lg text-red-700 mb-2">ACCESS ERROR</h3>
 					<p class="text-red-600 mb-4">{error}</p>
-					<p class="text-sm text-gray-500">Please check your link or contact the person who shared this folder.</p>
+					<p class="text-sm text-gray-500">
+						Please check your link or contact the person who shared this folder.
+					</p>
 				</div>
 			</div>
 		{:else}
@@ -346,7 +371,11 @@
 						<div class="h-6 w-px bg-gray-300"></div>
 						<nav class="flex items-center gap-2">
 							{#each breadcrumbs as breadcrumb, i}
-								<span class="text-gray-700 font-semibold {i === breadcrumbs.length - 1 ? 'text-[#6B9AD9]' : ''}">
+								<span
+									class="text-gray-700 font-semibold {i === breadcrumbs.length - 1
+										? 'text-[#6B9AD9]'
+										: ''}"
+								>
 									{breadcrumb.name}
 								</span>
 								{#if i < breadcrumbs.length - 1}
@@ -367,7 +396,9 @@
 						</div>
 						<div>
 							<h1 class="font-bold text-lg">{currentFolder.name}</h1>
-							<p class="text-sm text-gray-600">{currentFolder.children.length} item{currentFolder.children.length !== 1 ? 's' : ''}</p>
+							<p class="text-sm text-gray-600">
+								{currentFolder.children.length} item{currentFolder.children.length !== 1 ? 's' : ''}
+							</p>
 
 							{#if !isAtSharedRoot && sharedRootFolder}
 								<p class="text-xs text-blue-600 mt-1">
@@ -379,7 +410,9 @@
 
 					<div class="space-y-4">
 						{#each currentFolder.children as item}
-							<div class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200">
+							<div
+								class="border-2 border-[#8C8C8C] rounded-[10px] overflow-hidden hover:bg-gray-50 transition-all duration-200"
+							>
 								<!-- Desktop Layout -->
 								<div class="hidden md:flex items-center justify-between p-4 cursor-pointer group">
 									<div
@@ -389,21 +422,33 @@
 										tabindex="0"
 									>
 										<!-- Icon -->
-										<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center">
-											<svelte:component this={getFileIcon(item)} size={24} class={getFileColor(item)} />
+										<div
+											class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 group-hover:border-[#6B9AD9] transition-colors flex items-center justify-center"
+										>
+											<svelte:component
+												this={getFileIcon(item)}
+												size={24}
+												class={getFileColor(item)}
+											/>
 										</div>
 
 										<!-- File Info -->
 										<div class="flex-1 min-w-0 overflow-hidden">
 											<div class="flex items-center justify-between mb-2">
-												<h3 class="font-bold text-gray-900 truncate" title={item.name}>{item.name}</h3>
+												<h3 class="font-bold text-gray-900 truncate" title={item.name}>
+													{item.name}
+												</h3>
 												<div class="flex items-center gap-2 text-xs">
 													{#if item.type === 'file'}
-														<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300">
+														<span
+															class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300"
+														>
 															{formatFileSize(item.size || 0)}
 														</span>
 													{:else}
-														<span class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold border border-green-300">
+														<span
+															class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold border border-green-300"
+														>
 															FOLDER
 														</span>
 													{/if}
@@ -433,7 +478,9 @@
 									</div>
 
 									<!-- Desktop Actions -->
-									<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+									<div
+										class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+									>
 										{#if item.type === 'file'}
 											<button
 												class="p-2 text-gray-600 hover:text-blue-600 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-300 transition-colors"
@@ -475,21 +522,33 @@
 										tabindex="0"
 									>
 										<!-- Icon -->
-										<div class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 transition-colors flex items-center justify-center">
-											<svelte:component this={getFileIcon(item)} size={24} class={getFileColor(item)} />
+										<div
+											class="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-[8px] border-2 border-gray-300 transition-colors flex items-center justify-center"
+										>
+											<svelte:component
+												this={getFileIcon(item)}
+												size={24}
+												class={getFileColor(item)}
+											/>
 										</div>
 
 										<!-- File Info -->
 										<div class="flex-1 min-w-0 overflow-hidden">
 											<div class="flex items-center justify-between mb-2">
-												<h3 class="font-bold text-gray-900 truncate" title={item.name}>{item.name}</h3>
+												<h3 class="font-bold text-gray-900 truncate" title={item.name}>
+													{item.name}
+												</h3>
 												<div class="flex items-center gap-2 text-xs">
 													{#if item.type === 'file'}
-														<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300">
+														<span
+															class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300"
+														>
 															{formatFileSize(item.size || 0)}
 														</span>
 													{:else}
-														<span class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold border border-green-300">
+														<span
+															class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold border border-green-300"
+														>
 															FOLDER
 														</span>
 													{/if}
@@ -557,7 +616,9 @@
 				<!-- Empty folder -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 					<div class="text-center py-12">
-						<div class="w-16 h-16 bg-gray-100 rounded-[10px] flex items-center justify-center mx-auto mb-4">
+						<div
+							class="w-16 h-16 bg-gray-100 rounded-[10px] flex items-center justify-center mx-auto mb-4"
+						>
 							<Folder class="text-gray-400" size={48} />
 						</div>
 						<h3 class="font-bold text-lg text-gray-700 mb-2">FOLDER IS EMPTY</h3>
@@ -585,23 +646,23 @@
 {/if}
 
 <style>
-    .break-words {
-        word-wrap: break-word;
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
+	.break-words {
+		word-wrap: break-word;
+		word-break: break-word;
+		overflow-wrap: break-word;
+	}
 
-    .truncate {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+	.truncate {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 
-    .min-w-0 {
-        min-width: 0;
-    }
+	.min-w-0 {
+		min-width: 0;
+	}
 
-    .overflow-hidden {
-        overflow: hidden;
-    }
+	.overflow-hidden {
+		overflow: hidden;
+	}
 </style>

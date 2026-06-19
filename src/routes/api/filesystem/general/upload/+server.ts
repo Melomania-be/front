@@ -32,12 +32,15 @@ export const POST: RequestHandler = async ({ cookies, request, fetch }) => {
 		return response;
 	} catch (error) {
 		console.error('Error in general upload:', error);
-		return new Response(JSON.stringify({
-			error: 'Upload failed',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Upload failed',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

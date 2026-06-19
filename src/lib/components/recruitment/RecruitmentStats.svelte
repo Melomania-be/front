@@ -1,67 +1,67 @@
 <!-- src/lib/components/recruitment/RecruitmentStats.svelte -->
 <script lang="ts">
-	import { BarChart3, TrendingUp, Users, Target } from 'lucide-svelte'
-	import type { RecruitmentStats } from '$lib/types'
+	import { BarChart3, TrendingUp, Users, Target } from 'lucide-svelte';
+	import type { RecruitmentStats } from '$lib/types';
 
-	export let stats: RecruitmentStats | undefined
+	export let stats: RecruitmentStats | undefined;
 
 	$: safeStats = {
 		total: Number(stats?.total) || 0,
-		by_status: Array.isArray(stats?.by_status) ? stats.by_status.filter(item => item && item.status) : [],
+		by_status: Array.isArray(stats?.by_status)
+			? stats.by_status.filter((item) => item && item.status)
+			: [],
 		pending_recommendations: Number(stats?.pending_recommendations) || 0
-	}
+	};
 
 	function getStatusCount(status: string): number {
 		if (!safeStats || !Array.isArray(safeStats.by_status)) {
-			return 0
+			return 0;
 		}
-		const item = safeStats.by_status.find(s => s && s.status === status)
-		return Number(item?.count) || 0
+		const item = safeStats.by_status.find((s) => s && s.status === status);
+		return Number(item?.count) || 0;
 	}
 
 	$: statusData = safeStats.by_status
-		.filter(item => item && item.status)
-		.map(item => ({
+		.filter((item) => item && item.status)
+		.map((item) => ({
 			status: item.status,
 			count: Number(item.count) || 0,
-			percentage: safeStats.total > 0
-				? Math.round(((Number(item.count) || 0) / safeStats.total) * 100)
-				: 0
-		}))
+			percentage:
+				safeStats.total > 0 ? Math.round(((Number(item.count) || 0) / safeStats.total) * 100) : 0
+		}));
 
-	$: recruitmentRate = safeStats.total > 0
-		? Math.round((getStatusCount('recruited') / safeStats.total) * 100)
-		: 0
+	$: recruitmentRate =
+		safeStats.total > 0 ? Math.round((getStatusCount('recruited') / safeStats.total) * 100) : 0;
 
 	function getStatusLabel(status: string): string {
 		const labels = {
-			'not_yet_contacted': 'Not yet contacted',
-			'awaiting_response': 'Awaiting response',
-			'to_follow_up': 'Follow up',
-			'not_available': 'Not available',
-			'pending_validation': 'Pending validation',
-			'cancelled': 'Cancelled',
-			'recruited': 'Recruited'
-		}
-		return labels[status] || status
+			not_yet_contacted: 'Not yet contacted',
+			awaiting_response: 'Awaiting response',
+			to_follow_up: 'Follow up',
+			not_available: 'Not available',
+			pending_validation: 'Pending validation',
+			cancelled: 'Cancelled',
+			recruited: 'Recruited'
+		};
+		return labels[status] || status;
 	}
 
 	function getStatusColor(status: string): string {
 		const colors = {
-			'not_yet_contacted': '#6B7280',
-			'awaiting_response': '#3B82F6',
-			'to_follow_up': '#F59E0B',
-			'not_available': '#EF4444',
-			'pending_validation': '#8B5CF6',
-			'cancelled': '#9CA3AF',
-			'recruited': '#10B981'
-		}
-		return colors[status] || '#6B7280'
+			not_yet_contacted: '#6B7280',
+			awaiting_response: '#3B82F6',
+			to_follow_up: '#F59E0B',
+			not_available: '#EF4444',
+			pending_validation: '#8B5CF6',
+			cancelled: '#9CA3AF',
+			recruited: '#10B981'
+		};
+		return colors[status] || '#6B7280';
 	}
 
 	function formatNumber(value: any): string {
-		const num = Number(value)
-		return isNaN(num) ? '0' : num.toString()
+		const num = Number(value);
+		return isNaN(num) ? '0' : num.toString();
 	}
 </script>
 
@@ -104,7 +104,9 @@
 				<div class="flex items-center justify-between">
 					<div>
 						<h3 class="text-sm font-medium text-gray-600 uppercase">Recommendations</h3>
-						<p class="text-3xl font-bold text-purple-600">{formatNumber(safeStats.pending_recommendations)}</p>
+						<p class="text-3xl font-bold text-purple-600">
+							{formatNumber(safeStats.pending_recommendations)}
+						</p>
 						<p class="text-sm text-gray-500">Pending</p>
 					</div>
 					<TrendingUp class="text-purple-500" size={32} />
@@ -136,7 +138,9 @@
 							<div class="w-full bg-gray-200 rounded-full h-2">
 								<div
 									class="h-2 rounded-full transition-all duration-500"
-									style="width: {Math.max(item.percentage, 2)}%; background-color: {getStatusColor(item.status)}"
+									style="width: {Math.max(item.percentage, 2)}%; background-color: {getStatusColor(
+										item.status
+									)}"
 								></div>
 							</div>
 						</div>

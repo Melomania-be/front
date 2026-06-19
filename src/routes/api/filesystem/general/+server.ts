@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
 			const generalFiles = await response.json();
 
 			// Filtrage côté frontend en cas de doute
-			const filteredFiles = generalFiles.filter(file => {
+			const filteredFiles = generalFiles.filter((file) => {
 				// Exclure tout fichier ayant un projectId
 				return !file.projectId && !file.pieceId;
 			});
@@ -32,12 +32,15 @@ export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
 		return response;
 	} catch (error) {
 		console.error('Error loading general files:', error);
-		return new Response(JSON.stringify({
-			error: 'Failed to load general files',
-			details: error.message
-		}), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({
+				error: 'Failed to load general files',
+				details: error.message
+			}),
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 };

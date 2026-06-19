@@ -43,8 +43,11 @@
 	{#if startTime}
 		{#if multiLine}
 			<!-- AFFICHAGE SUR DEUX LIGNES -->
-			{usableStartTime.toLocaleDateString(undefined, shortDateOptions)}<br>
-			{usableStartTime.toLocaleTimeString(undefined, timeOption)} - {usableEndTime.toLocaleTimeString(undefined, timeOption)}
+			{usableStartTime.toLocaleDateString(undefined, shortDateOptions)}<br />
+			{usableStartTime.toLocaleTimeString(undefined, timeOption)} - {usableEndTime.toLocaleTimeString(
+				undefined,
+				timeOption
+			)}
 		{:else if withTime && withDate}
 			{usableStartTime.toLocaleTimeString(undefined, timeOption)}
 			{' - '}
@@ -66,4 +69,3 @@
 		-
 	{/if}
 </span>
-

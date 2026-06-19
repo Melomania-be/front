@@ -42,8 +42,8 @@
 
 	export let orientation: 'horizontal' | 'vertical' = 'horizontal';
 
-	$ : if(meta){
-		console.log("meta" , meta)
+	$: if (meta) {
+		console.log('meta', meta);
 	}
 </script>
 

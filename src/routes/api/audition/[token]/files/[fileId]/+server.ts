@@ -1,4 +1,3 @@
-
 import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
 

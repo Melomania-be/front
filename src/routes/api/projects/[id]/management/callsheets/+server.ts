@@ -26,17 +26,14 @@ export const GET: RequestHandler = async ({ cookies, url, fetch, params }) => {
 export const POST: RequestHandler = async ({ request, cookies, params }) => {
 	const data = await request.json();
 
-	const res = await fetch(
-		`${API_URL}/projects/${params.id}/management/call_sheets`,
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				authorization: `${await getToken(cookies)}`
-			},
-			body: JSON.stringify(data)
-		}
-	);
+	const res = await fetch(`${API_URL}/projects/${params.id}/management/call_sheets`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(data)
+	});
 
 	return res;
 };

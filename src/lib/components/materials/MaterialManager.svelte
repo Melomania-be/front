@@ -1,7 +1,21 @@
 <!-- src/lib/components/materials/MaterialManager.svelte - Version avec upload TRÈS VISIBLE -->
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { Plus, Edit3, Trash2, Copy, Star, Upload, Download, FileText, Eye, BarChart3, Users, FolderOpen, CloudUpload } from 'lucide-svelte';
+	import {
+		Plus,
+		Edit3,
+		Trash2,
+		Copy,
+		Star,
+		Upload,
+		Download,
+		FileText,
+		Eye,
+		BarChart3,
+		Users,
+		FolderOpen,
+		CloudUpload
+	} from 'lucide-svelte';
 	import type { Material, Piece } from '$lib/types';
 	import MaterialEditor from './MaterialEditor.svelte';
 	import FileUploader from '../filesystem/FileUploader.svelte';
@@ -119,10 +133,13 @@
 		if (!selectedMaterial) return;
 
 		console.log('📤 Uploading files to material:', selectedMaterial.name);
-		console.log('📂 Files to upload:', Array.from(files).map(f => f.name));
+		console.log(
+			'📂 Files to upload:',
+			Array.from(files).map((f) => f.name)
+		);
 
 		const formData = new FormData();
-		Array.from(files).forEach(file => {
+		Array.from(files).forEach((file) => {
 			formData.append('files', file);
 		});
 
@@ -140,11 +157,11 @@
 			} else {
 				console.error('❌ Upload failed:', response.status);
 				const error = await response.json();
-				alert('Erreur lors de l\'upload: ' + (error.message || 'Erreur inconnue'));
+				alert("Erreur lors de l'upload: " + (error.message || 'Erreur inconnue'));
 			}
 		} catch (error) {
 			console.error('❌ Upload error:', error);
-			alert('Erreur lors de l\'upload des fichiers');
+			alert("Erreur lors de l'upload des fichiers");
 		}
 	}
 
@@ -159,7 +176,7 @@
 	// Calculer les statistiques
 	$: totalFiles = materials.reduce((sum, material) => sum + (material.files_count || 0), 0);
 	$: totalProjects = materials.reduce((sum, material) => sum + (material.projects_count || 0), 0);
-	$: defaultMaterial = materials.find(m => m.is_default);
+	$: defaultMaterial = materials.find((m) => m.is_default);
 </script>
 
 <div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
@@ -198,8 +215,8 @@
 
 		{#if canEdit}
 			<button
-					class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
-					on:click={() => openEditor('create')}
+				class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] transition-colors"
+				on:click={() => openEditor('create')}
 			>
 				<Plus size={16} />
 				Nouveau matériel
@@ -216,10 +233,7 @@
 			<FileText class="mx-auto mb-4 text-gray-400" size={48} />
 			<p class="text-gray-500 mb-4">Aucun matériel créé pour cette pièce</p>
 			{#if canEdit}
-				<button
-						class="text-[#6B9AD9] hover:underline"
-						on:click={() => openEditor('create')}
-				>
+				<button class="text-[#6B9AD9] hover:underline" on:click={() => openEditor('create')}>
 					Créer le premier matériel
 				</button>
 			{/if}
@@ -228,7 +242,11 @@
 		<!-- Liste des matériels avec upload TRÈS VISIBLE -->
 		<div class="space-y-6">
 			{#each materials as material}
-				<div class="border-2 border-gray-200 rounded-lg p-6 hover:border-[#6B9AD9] transition-all duration-200 {material.is_default ? 'ring-2 ring-yellow-400 ring-opacity-50' : ''}">
+				<div
+					class="border-2 border-gray-200 rounded-lg p-6 hover:border-[#6B9AD9] transition-all duration-200 {material.is_default
+						? 'ring-2 ring-yellow-400 ring-opacity-50'
+						: ''}"
+				>
 					<!-- En-tête du matériel -->
 					<div class="flex items-start justify-between mb-4">
 						<div class="flex-1 min-w-0">
@@ -282,7 +300,12 @@
 							<div class="flex items-center gap-4">
 								<h5 class="font-medium text-gray-700">Fichiers de ce matériel :</h5>
 								{#if material.files_count > 0}
-									<span class="text-sm text-green-600">{material.files_count} fichier{material.files_count !== 1 ? 's' : ''} disponible{material.files_count !== 1 ? 's' : ''}</span>
+									<span class="text-sm text-green-600"
+										>{material.files_count} fichier{material.files_count !== 1 ? 's' : ''} disponible{material.files_count !==
+										1
+											? 's'
+											: ''}</span
+									>
 								{:else}
 									<span class="text-sm text-orange-600">Aucun fichier ajouté</span>
 								{/if}
@@ -291,8 +314,8 @@
 							{#if canEdit}
 								<!-- ✅ BOUTON UPLOAD PRINCIPAL TRÈS VISIBLE -->
 								<button
-										class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-										on:click={() => openUploader(material)}
+									class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+									on:click={() => openUploader(material)}
 								>
 									<CloudUpload size={20} />
 									<span class="font-semibold">Ajouter des fichiers</span>
@@ -305,24 +328,24 @@
 							<div class="flex items-center gap-2 mt-4">
 								{#if projectId}
 									<button
-											class="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-											on:click={() => assignToProject(material)}
+										class="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
+										on:click={() => assignToProject(material)}
 									>
 										Utiliser dans le projet
 									</button>
 								{/if}
 
 								<button
-										class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-green-600 border border-gray-300 rounded-lg hover:border-green-300 transition-colors text-sm"
-										on:click={() => openEditor('edit', material)}
+									class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-green-600 border border-gray-300 rounded-lg hover:border-green-300 transition-colors text-sm"
+									on:click={() => openEditor('edit', material)}
 								>
 									<Edit3 size={14} />
 									Modifier
 								</button>
 
 								<button
-										class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-yellow-600 border border-gray-300 rounded-lg hover:border-yellow-300 transition-colors text-sm"
-										on:click={() => openEditor('duplicate', material)}
+									class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-yellow-600 border border-gray-300 rounded-lg hover:border-yellow-300 transition-colors text-sm"
+									on:click={() => openEditor('duplicate', material)}
 								>
 									<Copy size={14} />
 									Dupliquer
@@ -330,8 +353,8 @@
 
 								{#if !material.is_default}
 									<button
-											class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-yellow-600 border border-gray-300 rounded-lg hover:border-yellow-300 transition-colors text-sm"
-											on:click={() => setAsDefault(material)}
+										class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-yellow-600 border border-gray-300 rounded-lg hover:border-yellow-300 transition-colors text-sm"
+										on:click={() => setAsDefault(material)}
 									>
 										<Star size={14} />
 										Par défaut
@@ -339,8 +362,8 @@
 								{/if}
 
 								<button
-										class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-red-600 border border-gray-300 rounded-lg hover:border-red-300 transition-colors text-sm"
-										on:click={() => deleteMaterial(material)}
+									class="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-red-600 border border-gray-300 rounded-lg hover:border-red-300 transition-colors text-sm"
+									on:click={() => deleteMaterial(material)}
 								>
 									<Trash2 size={14} />
 									Supprimer
@@ -359,7 +382,10 @@
 					<div>
 						<h4 class="font-semibold text-gray-700 mb-1">Résumé pour "{piece.name}"</h4>
 						<p class="text-sm text-gray-600">
-							{materials.length} matériels • {totalFiles} fichiers • Utilisé dans {totalProjects} projet{totalProjects !== 1 ? 's' : ''}
+							{materials.length} matériels • {totalFiles} fichiers • Utilisé dans {totalProjects} projet{totalProjects !==
+							1
+								? 's'
+								: ''}
 						</p>
 					</div>
 					<div class="flex items-center gap-2">
@@ -374,11 +400,11 @@
 <!-- Modal d'édition -->
 {#if showEditor}
 	<MaterialEditor
-			{piece}
-			{editMode}
-			material={selectedMaterial}
-			on:saved={handleMaterialSaved}
-			on:cancelled={() => {
+		{piece}
+		{editMode}
+		material={selectedMaterial}
+		on:saved={handleMaterialSaved}
+		on:cancelled={() => {
 			showEditor = false;
 			selectedMaterial = null;
 		}}
@@ -401,8 +427,8 @@
 					</p>
 				</div>
 				<button
-						class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
-						on:click={() => {
+					class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
+					on:click={() => {
 						showUploader = false;
 						selectedMaterial = null;
 					}}
@@ -414,8 +440,8 @@
 			<!-- Composant upload -->
 			<div class="p-6">
 				<FileUploader
-						on:upload={(e) => handleFileUpload(e.detail)}
-						on:cancel={() => {
+					on:upload={(e) => handleFileUpload(e.detail)}
+					on:cancel={() => {
 						showUploader = false;
 						selectedMaterial = null;
 					}}

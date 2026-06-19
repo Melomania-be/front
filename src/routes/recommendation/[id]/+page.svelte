@@ -93,7 +93,7 @@
 			createdAt: (await new Date(recommended.createdAt))?.getTime(),
 			updatedAt: (await new Date(recommended.updatedAt))?.getTime()
 		};
-		console.log(data)
+		console.log(data);
 
 		const response = await fetch('/api/recommended/', {
 			method: 'POST',

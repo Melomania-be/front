@@ -9,18 +9,14 @@
 	let selectProcess: string[] = [];
 	let selectOptions: string[] = [];
 
-	if (
-		(form.type === 'select' || form.type === 'multiple') &&
-		form.text.split(':').length >= 1
-	) {
+	if ((form.type === 'select' || form.type === 'multiple') && form.text.split(':').length >= 1) {
 		selectProcess = form.text.split(':');
 		selectProcess.push('');
 		selectOptions = selectProcess[1].split(';');
 		selectChange();
-		console.log(selectProcess)
-		console.log(form)
+		console.log(selectProcess);
+		console.log(form);
 	}
-	
 
 	function selectChange() {
 		form.text = selectProcess[0] + ':' + selectOptions.join(';');
@@ -58,33 +54,33 @@
 					{disabled}
 				/>
 				{#if !disabled}
-				<button
-					class="m-1 flex items-center justify-center"
-					on:click={() => {
-						selectOptions = selectOptions.filter((o) => o !== option);
-						selectOptions = selectOptions;
-						selectChange();
-						form = form;
-					}}
-				>
-					<Fa icon={faTrash} style="color: #6B9AD9;" />
-				</button>
+					<button
+						class="m-1 flex items-center justify-center"
+						on:click={() => {
+							selectOptions = selectOptions.filter((o) => o !== option);
+							selectOptions = selectOptions;
+							selectChange();
+							form = form;
+						}}
+					>
+						<Fa icon={faTrash} style="color: #6B9AD9;" />
+					</button>
 				{/if}
 			</div>
 		{/each}
 		{#if !disabled}
-		<button
-			class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semibold px-2 text-sm "
-			on:click={() => {
-				selectOptions.push('');
-				selectOptions = selectOptions;
-				selectChange();
-				form = form;
-			}}
-			{disabled}
-		>
-			Add Option
-		</button>
+			<button
+				class="m-1 flex items-center justify-center bg-[#6B9AD9] rounded-lg p-1 text-white font-semibold px-2 text-sm"
+				on:click={() => {
+					selectOptions.push('');
+					selectOptions = selectOptions;
+					selectChange();
+					form = form;
+				}}
+				{disabled}
+			>
+				Add Option
+			</button>
 		{/if}
 	</div>
 {:else if form.type === 'multiple'}
@@ -98,7 +94,6 @@
 	/>
 	<div>
 		{#each selectOptions ?? [] as option}
-			
 			<div class="ml-2 flex items-center gap-2">
 				<Fa icon={faCircleRight} style="color: #6B9AD9;" />
 				<input
@@ -110,17 +105,17 @@
 					{disabled}
 				/>
 				{#if !disabled}
-				<button
-					class="m-1 flex items-center justify-center"
-					on:click={() => {
-						selectOptions = selectOptions.filter((o) => o !== option);
-						selectOptions = selectOptions;
-						selectChange();
-						form = form;
-					}}
-				>
-					<Fa icon={faTrash} style="color: #6B9AD9;" />
-				</button>
+					<button
+						class="m-1 flex items-center justify-center"
+						on:click={() => {
+							selectOptions = selectOptions.filter((o) => o !== option);
+							selectOptions = selectOptions;
+							selectChange();
+							form = form;
+						}}
+					>
+						<Fa icon={faTrash} style="color: #6B9AD9;" />
+					</button>
 				{/if}
 			</div>
 		{/each}

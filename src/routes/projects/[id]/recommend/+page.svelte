@@ -1,22 +1,34 @@
 <!-- src/routes/projects/[id]/recommend/+page.svelte - Design style callsheet -->
 <script lang="ts">
-	import { page } from '$app/stores'
-	import { onMount } from 'svelte'
-	import { goto } from '$app/navigation'
-	import { UserPlus, Music, Mail, Phone, MessageCircle, Plus, Trash2, CheckCircle, Star, Calendar, MapPin } from 'lucide-svelte'
-	import type { Project } from '$lib/types'
-	import logo from '$lib/assets/image1.png'
+	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import {
+		UserPlus,
+		Music,
+		Mail,
+		Phone,
+		MessageCircle,
+		Plus,
+		Trash2,
+		CheckCircle,
+		Star,
+		Calendar,
+		MapPin
+	} from 'lucide-svelte';
+	import type { Project } from '$lib/types';
+	import logo from '$lib/assets/image1.png';
 
-	let project: Project | undefined
-	let loading = true
-	let submitting = false
-	let submitted = false
+	let project: Project | undefined;
+	let loading = true;
+	let submitting = false;
+	let submitted = false;
 
 	// Form data
 	let recommenderInfo = {
 		name: '',
 		email: ''
-	}
+	};
 
 	let recommendations = [
 		{
@@ -28,111 +40,121 @@
 			instrument: '',
 			message: ''
 		}
-	]
+	];
 
-	let errors: Record<string, string> = {}
+	let errors: Record<string, string> = {};
 
-	$: projectId = $page.params.id
+	$: projectId = $page.params.id;
 
 	onMount(async () => {
-		await fetchProject()
-		loading = false
-	})
+		await fetchProject();
+		loading = false;
+	});
 
 	async function fetchProject() {
 		try {
-			const response = await fetch(`/api/projects/${projectId}`)
+			const response = await fetch(`/api/projects/${projectId}`);
 			if (response.ok) {
-				project = await response.json()
+				project = await response.json();
 			} else {
-				goto('/') // Redirect if project doesn't exist
+				goto('/'); // Redirect if project doesn't exist
 			}
 		} catch (error) {
-			console.error('Error fetching project:', error)
-			goto('/')
+			console.error('Error fetching project:', error);
+			goto('/');
 		}
 	}
 
 	function addRecommendation() {
 		if (recommendations.length < 5) {
-			recommendations = [...recommendations, {
-				first_name: '',
-				last_name: '',
-				email: '',
-				phone: '',
-				messenger: '',
-				instrument: '',
-				message: ''
-			}]
+			recommendations = [
+				...recommendations,
+				{
+					first_name: '',
+					last_name: '',
+					email: '',
+					phone: '',
+					messenger: '',
+					instrument: '',
+					message: ''
+				}
+			];
 		}
 	}
 
 	function removeRecommendation(index: number) {
 		if (recommendations.length > 1) {
-			recommendations = recommendations.filter((_, i) => i !== index)
+			recommendations = recommendations.filter((_, i) => i !== index);
 		}
 	}
 
 	function validateForm(): boolean {
-		errors = {}
+		errors = {};
 
 		// Recommender validation
 		if (!recommenderInfo.name.trim()) {
-			errors['recommender_name'] = 'Your name is required'
+			errors['recommender_name'] = 'Your name is required';
 		}
 
 		if (recommenderInfo.email && !isValidEmail(recommenderInfo.email)) {
-			errors['recommender_email'] = 'Invalid email format'
+			errors['recommender_email'] = 'Invalid email format';
 		}
 
 		// Recommendations validation
-		let hasValidRecommendation = false
+		let hasValidRecommendation = false;
 
 		recommendations.forEach((rec, index) => {
-			const prefix = `rec_${index}`
+			const prefix = `rec_${index}`;
 
-			if (!rec.first_name.trim() && !rec.last_name.trim() && !rec.email && !rec.phone && !rec.messenger) {
+			if (
+				!rec.first_name.trim() &&
+				!rec.last_name.trim() &&
+				!rec.email &&
+				!rec.phone &&
+				!rec.messenger
+			) {
 				// Empty recommendation, ignore it
-				return
+				return;
 			}
 
-			hasValidRecommendation = true
+			hasValidRecommendation = true;
 
 			if (!rec.first_name.trim()) {
-				errors[`${prefix}_first_name`] = 'First name required'
+				errors[`${prefix}_first_name`] = 'First name required';
 			}
 
 			if (!rec.last_name.trim()) {
-				errors[`${prefix}_last_name`] = 'Last name required'
+				errors[`${prefix}_last_name`] = 'Last name required';
 			}
 
 			if (!rec.email && !rec.phone && !rec.messenger) {
-				errors[`${prefix}_contact`] = 'At least one contact method is required'
+				errors[`${prefix}_contact`] = 'At least one contact method is required';
 			}
 
 			if (rec.email && !isValidEmail(rec.email)) {
-				errors[`${prefix}_email`] = 'Invalid email format'
+				errors[`${prefix}_email`] = 'Invalid email format';
 			}
-		})
+		});
 
 		if (!hasValidRecommendation) {
-			errors['general'] = 'At least one complete recommendation is required'
+			errors['general'] = 'At least one complete recommendation is required';
 		}
 
-		return Object.keys(errors).length === 0
+		return Object.keys(errors).length === 0;
 	}
 
 	async function submitRecommendations() {
 		if (!validateForm()) {
-			return
+			return;
 		}
 
-		submitting = true
+		submitting = true;
 
 		// Filter empty recommendations
-		const validRecommendations = recommendations.filter(rec =>
-			rec.first_name.trim() || rec.last_name.trim() || rec.email || rec.phone || rec.messenger
-		)
+		const validRecommendations = recommendations.filter(
+			(rec) =>
+				rec.first_name.trim() || rec.last_name.trim() || rec.email || rec.phone || rec.messenger
+		);
 
 		try {
 			const response = await fetch(`/api/projects/${projectId}/recommend`, {
@@ -143,53 +165,62 @@
 					recommender_email: recommenderInfo.email || null,
 					recommendations: validRecommendations
 				})
-			})
+			});
 
 			if (response.ok) {
-				submitted = true
+				submitted = true;
 			} else {
-				const errorData = await response.json()
-				alert(`Error: ${errorData.message || 'Unable to submit recommendations'}`)
+				const errorData = await response.json();
+				alert(`Error: ${errorData.message || 'Unable to submit recommendations'}`);
 			}
 		} catch (error) {
-			console.error('Error submitting recommendations:', error)
-			alert('Error sending recommendations')
+			console.error('Error submitting recommendations:', error);
+			alert('Error sending recommendations');
 		} finally {
-			submitting = false
+			submitting = false;
 		}
 	}
 
 	function isValidEmail(email: string): boolean {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		return emailRegex.test(email)
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
 	}
 
 	function resetForm() {
-		submitted = false
-		recommenderInfo = { name: '', email: '' }
-		recommendations = [{
-			first_name: '',
-			last_name: '',
-			email: '',
-			phone: '',
-			messenger: '',
-			instrument: '',
-			message: ''
-		}]
-		errors = {}
+		submitted = false;
+		recommenderInfo = { name: '', email: '' };
+		recommendations = [
+			{
+				first_name: '',
+				last_name: '',
+				email: '',
+				phone: '',
+				messenger: '',
+				instrument: '',
+				message: ''
+			}
+		];
+		errors = {};
 	}
 </script>
 
 <svelte:head>
 	<title>Recommend Musicians - {project?.name || 'Project'}</title>
-	<meta name="description" content="Recommend talented musicians for the project {project?.name || ''}" />
+	<meta
+		name="description"
+		content="Recommend talented musicians for the project {project?.name || ''}"
+	/>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
+<div
+	class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900"
+>
 	{#if loading}
 		<div class="flex items-center justify-center min-h-screen">
 			<div class="text-center">
-				<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B9AD9] mx-auto mb-4"></div>
+				<div
+					class="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B9AD9] mx-auto mb-4"
+				></div>
 				<p class="text-gray-600">Loading...</p>
 			</div>
 		</div>
@@ -197,7 +228,9 @@
 		<div class="flex items-center justify-center min-h-screen">
 			<div class="text-center">
 				<h1 class="text-2xl font-bold text-gray-800 mb-4">Project not found</h1>
-				<p class="text-gray-600">The requested project does not exist or is no longer accessible.</p>
+				<p class="text-gray-600">
+					The requested project does not exist or is no longer accessible.
+				</p>
 			</div>
 		</div>
 	{:else if submitted}
@@ -211,20 +244,29 @@
 						<img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
 
 						<!-- Overlaid title -->
-						<div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
-							<h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
+						<div
+							class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4"
+						>
+							<h1
+								class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words"
+							>
 								RECOMMENDATION - {project.name}
 							</h1>
 						</div>
 					</div>
 
 					<!-- White container overlapping the image -->
-					<div class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10">
-						<div class="bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm">
-
+					<div
+						class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10"
+					>
+						<div
+							class="bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm"
+						>
 							<!-- Success confirmation -->
 							<div class="text-center py-8">
-								<div class="flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mx-auto mb-6">
+								<div
+									class="flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mx-auto mb-6"
+								>
 									<CheckCircle class="text-green-500" size={48} />
 								</div>
 
@@ -234,21 +276,27 @@
 
 								<div class="max-w-2xl mx-auto space-y-4 text-gray-600">
 									<p class="text-lg">
-										Your recommendations for the project <strong class="text-[#6B9AD9]">{project.name}</strong> have been successfully submitted.
+										Your recommendations for the project <strong class="text-[#6B9AD9]"
+											>{project.name}</strong
+										> have been successfully submitted.
 									</p>
 									<p>
-										The project team will review your suggestions and contact the recommended individuals if appropriate.
+										The project team will review your suggestions and contact the recommended
+										individuals if appropriate.
 									</p>
 								</div>
 
 								<!-- Recommendations summary -->
 								<div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
-									<h3 class="text-lg font-semibold text-blue-900 mb-4">Summary of your recommendations</h3>
+									<h3 class="text-lg font-semibold text-blue-900 mb-4">
+										Summary of your recommendations
+									</h3>
 									<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-										{#each recommendations.filter(r => r.first_name.trim() || r.last_name.trim()) as rec, index}
+										{#each recommendations.filter((r) => r.first_name.trim() || r.last_name.trim()) as rec, index}
 											<div class="bg-white p-4 rounded-lg border border-blue-200">
 												<div class="font-medium text-gray-800">
-													{rec.first_name} {rec.last_name}
+													{rec.first_name}
+													{rec.last_name}
 												</div>
 												{#if rec.instrument}
 													<div class="text-sm text-gray-600 flex items-center gap-1 mt-1">
@@ -300,20 +348,29 @@
 						<img src={logo} alt="logo" class="w-full h-full object-cover rounded object-center" />
 
 						<!-- Overlaid title -->
-						<div class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4">
-							<h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words">
+						<div
+							class="absolute top-8 sm:top-12 md:top-16 lg:top-20 xl:top-24 left-1/2 transform -translate-x-1/2 text-center w-full px-4"
+						>
+							<h1
+								class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white drop-shadow-md break-words"
+							>
 								RECOMMENDATION - {project.name}
 							</h1>
 						</div>
 					</div>
 
 					<!-- White container overlapping the image -->
-					<div class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10">
-						<div class="bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm">
-
+					<div
+						class="relative -mt-[80px] sm:-mt-[120px] md:-mt-[150px] lg:-mt-[180px] xl:-mt-[200px] mx-2 z-10"
+					>
+						<div
+							class="bg-white dark:bg-gray-900 shadow-lg rounded-xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto border border-white/20 backdrop-blur-sm"
+						>
 							<!-- Introduction -->
 							<div class="text-center mb-8">
-								<div class="flex items-center justify-center w-16 h-16 bg-[#6B9AD9] rounded-xl mx-auto mb-4">
+								<div
+									class="flex items-center justify-center w-16 h-16 bg-[#6B9AD9] rounded-xl mx-auto mb-4"
+								>
 									<UserPlus class="text-white" size={32} />
 								</div>
 								<h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
@@ -324,15 +381,17 @@
 										for the project <strong class="text-[#6B9AD9]">{project.name}</strong>
 									</p>
 									<p>
-										Do you know talented musicians who might be interested in this project?
-										Share their contact information below!
+										Do you know talented musicians who might be interested in this project? Share
+										their contact information below!
 									</p>
 								</div>
 							</div>
 
 							<form on:submit|preventDefault={submitRecommendations} class="space-y-8">
 								<!-- Recommender information -->
-								<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+								<div
+									class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200"
+								>
 									<h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
 										<div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
 											<UserPlus class="text-white" size={16} />
@@ -342,14 +401,19 @@
 
 									<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 										<div>
-											<label for="recommender_name" class="block text-sm font-medium text-gray-700 mb-2">
+											<label
+												for="recommender_name"
+												class="block text-sm font-medium text-gray-700 mb-2"
+											>
 												Your name *
 											</label>
 											<input
 												id="recommender_name"
 												type="text"
 												bind:value={recommenderInfo.name}
-												class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors {errors.recommender_name ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+												class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors {errors.recommender_name
+													? 'border-red-500 bg-red-50'
+													: 'border-gray-300'}"
 												placeholder="Your full name"
 											/>
 											{#if errors.recommender_name}
@@ -358,22 +422,25 @@
 										</div>
 
 										<div>
-											<label for="recommender_email" class="block text-sm font-medium text-gray-700 mb-2">
+											<label
+												for="recommender_email"
+												class="block text-sm font-medium text-gray-700 mb-2"
+											>
 												Your email (optional)
 											</label>
 											<input
 												id="recommender_email"
 												type="email"
 												bind:value={recommenderInfo.email}
-												class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors {errors.recommender_email ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+												class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors {errors.recommender_email
+													? 'border-red-500 bg-red-50'
+													: 'border-gray-300'}"
 												placeholder="your@email.com"
 											/>
 											{#if errors.recommender_email}
 												<p class="text-sm text-red-600 mt-1">{errors.recommender_email}</p>
 											{/if}
-											<p class="text-xs text-gray-500 mt-2">
-												To contact you back if necessary
-											</p>
+											<p class="text-xs text-gray-500 mt-2">To contact you back if necessary</p>
 										</div>
 									</div>
 								</div>
@@ -382,7 +449,9 @@
 								<div class="space-y-6">
 									<div class="flex items-center justify-between">
 										<h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-											<div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+											<div
+												class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center"
+											>
 												<Music class="text-white" size={16} />
 											</div>
 											People to recommend
@@ -410,10 +479,14 @@
 									{/if}
 
 									{#each recommendations as recommendation, index}
-										<div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 relative">
+										<div
+											class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 relative"
+										>
 											<div class="flex items-center justify-between mb-6">
 												<h4 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-													<div class="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+													<div
+														class="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold"
+													>
 														{index + 1}
 													</div>
 													Person {index + 1}
@@ -447,11 +520,17 @@
 													<input
 														type="text"
 														bind:value={recommendation.first_name}
-														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[`rec_${index}_first_name`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[
+															`rec_${index}_first_name`
+														]
+															? 'border-red-500 bg-red-50'
+															: 'border-gray-300'}"
 														placeholder="First name"
 													/>
 													{#if errors[`rec_${index}_first_name`]}
-														<p class="text-sm text-red-600 mt-1">{errors[`rec_${index}_first_name`]}</p>
+														<p class="text-sm text-red-600 mt-1">
+															{errors[`rec_${index}_first_name`]}
+														</p>
 													{/if}
 												</div>
 
@@ -462,24 +541,36 @@
 													<input
 														type="text"
 														bind:value={recommendation.last_name}
-														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[`rec_${index}_last_name`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[
+															`rec_${index}_last_name`
+														]
+															? 'border-red-500 bg-red-50'
+															: 'border-gray-300'}"
 														placeholder="Last name"
 													/>
 													{#if errors[`rec_${index}_last_name`]}
-														<p class="text-sm text-red-600 mt-1">{errors[`rec_${index}_last_name`]}</p>
+														<p class="text-sm text-red-600 mt-1">
+															{errors[`rec_${index}_last_name`]}
+														</p>
 													{/if}
 												</div>
 
 												<!-- Contact -->
 												<div>
-													<label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+													<label
+														class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1"
+													>
 														<Mail size={14} />
 														Email
 													</label>
 													<input
 														type="email"
 														bind:value={recommendation.email}
-														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[`rec_${index}_email`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}"
+														class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors {errors[
+															`rec_${index}_email`
+														]
+															? 'border-red-500 bg-red-50'
+															: 'border-gray-300'}"
 														placeholder="email@example.com"
 													/>
 													{#if errors[`rec_${index}_email`]}
@@ -488,7 +579,9 @@
 												</div>
 
 												<div>
-													<label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+													<label
+														class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1"
+													>
 														<Phone size={14} />
 														Phone
 													</label>
@@ -501,7 +594,9 @@
 												</div>
 
 												<div>
-													<label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+													<label
+														class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1"
+													>
 														<MessageCircle size={14} />
 														Messenger
 													</label>
@@ -514,7 +609,9 @@
 												</div>
 
 												<div>
-													<label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+													<label
+														class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1"
+													>
 														<Music size={14} />
 														Instrument
 													</label>
@@ -543,7 +640,6 @@
 									{/each}
 								</div>
 
-
 								<!-- Submit button -->
 								<div class="text-center py-6">
 									<button
@@ -560,7 +656,8 @@
 									</button>
 
 									<p class="text-sm text-gray-500 mt-4">
-										By submitting this form, you agree that your recommendations will be transmitted to the project team.
+										By submitting this form, you agree that your recommendations will be transmitted
+										to the project team.
 									</p>
 								</div>
 							</form>
@@ -578,41 +675,41 @@
 </div>
 
 <style>
-    /* Subtle animation for the container */
-    .content-container {
-        animation: slideUp 0.6s ease-out;
-    }
+	/* Subtle animation for the container */
+	.content-container {
+		animation: slideUp 0.6s ease-out;
+	}
 
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+	@keyframes slideUp {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 
-    /* Improvement for very small screens */
-    @media (max-width: 360px) {
-        h1 {
-            font-size: 0.9rem !important;
-            line-height: 1.2 !important;
-        }
-    }
+	/* Improvement for very small screens */
+	@media (max-width: 360px) {
+		h1 {
+			font-size: 0.9rem !important;
+			line-height: 1.2 !important;
+		}
+	}
 
-    @media (max-width: 320px) {
-        h1 {
-            font-size: 0.8rem !important;
-            line-height: 1.1 !important;
-        }
-    }
+	@media (max-width: 320px) {
+		h1 {
+			font-size: 0.8rem !important;
+			line-height: 1.1 !important;
+		}
+	}
 
-    /* Image optimization for large screens */
-    @media (min-width: 768px) {
-        img {
-            object-position: center;
-        }
-    }
+	/* Image optimization for large screens */
+	@media (min-width: 768px) {
+		img {
+			object-position: center;
+		}
+	}
 </style>

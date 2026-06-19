@@ -92,7 +92,10 @@
 		if (group) {
 			editingGroup = group;
 			groupName = group.name;
-			selectedSections = group.sections?.map((s) => s.id).filter((id): id is number => id !== null && id !== undefined) || [];
+			selectedSections =
+				group.sections
+					?.map((s) => s.id)
+					.filter((id): id is number => id !== null && id !== undefined) || [];
 		} else {
 			editingGroup = null;
 			groupName = '';
@@ -106,7 +109,8 @@
 			editingSection = section;
 			sectionName = section.name;
 			sectionSize = section.size;
-			selectedInstruments = section.instruments?.map((i) => i.id).filter((id): id is number => id !== null) || [];
+			selectedInstruments =
+				section.instruments?.map((i) => i.id).filter((id): id is number => id !== null) || [];
 		} else {
 			editingSection = null;
 			sectionName = '';
@@ -135,8 +139,8 @@
 			return;
 		}
 
-		const selectedSectionObjects = sections.filter((s) =>
-			s.id !== null && s.id !== undefined && selectedSections.includes(s.id)
+		const selectedSectionObjects = sections.filter(
+			(s) => s.id !== null && s.id !== undefined && selectedSections.includes(s.id)
 		);
 
 		const payload = editingGroup
@@ -163,12 +167,17 @@
 			return;
 		}
 
-		const selectedInstrumentObjects = instruments.filter((i) =>
-			i.id !== null && i.id !== undefined && selectedInstruments.includes(i.id)
+		const selectedInstrumentObjects = instruments.filter(
+			(i) => i.id !== null && i.id !== undefined && selectedInstruments.includes(i.id)
 		);
 
 		const payload = editingSection
-			? { ...editingSection, name: sectionName, size: sectionSize, instruments: selectedInstrumentObjects }
+			? {
+					...editingSection,
+					name: sectionName,
+					size: sectionSize,
+					instruments: selectedInstrumentObjects
+				}
 			: { id: null, name: sectionName, size: sectionSize, instruments: selectedInstrumentObjects };
 
 		const response = await fetch(`/api/sections`, {
@@ -381,7 +390,9 @@
 							<div class="grid grid-cols-2 gap-2">
 								{#each sections as section}
 									{#if section.id !== null && section.id !== undefined}
-										<label class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+										<label
+											class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+										>
 											<input
 												type="checkbox"
 												checked={selectedSections.includes(section.id)}
@@ -464,7 +475,9 @@
 							<div class="grid grid-cols-2 gap-2">
 								{#each instruments as instrument}
 									{#if instrument.id !== null && instrument.id !== undefined}
-										<label class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+										<label
+											class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+										>
 											<input
 												type="checkbox"
 												checked={selectedInstruments.includes(instrument.id)}
@@ -557,7 +570,10 @@
 <!-- Main Content -->
 <div class="w-full min-h-screen p-4 bg-[#E7E7E7]">
 	<div class="mb-4">
-		<a href="/projects" class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2">
+		<a
+			href="/projects"
+			class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2"
+		>
 			← Back to Projects
 		</a>
 	</div>
@@ -656,7 +672,9 @@
 							<tr class="border-b hover:bg-gray-50">
 								<td class="p-3 font-semibold text-gray-700">{section.name}</td>
 								<td class="p-3 text-center">
-									<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold flex items-center justify-center gap-1">
+									<span
+										class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold flex items-center justify-center gap-1"
+									>
 										<Fa icon={faUsers} class="text-[12px]" />
 										{section.size}
 									</span>

@@ -24,7 +24,6 @@
 				contents: data.content,
 				form: data.form
 			};
-
 		} else {
 			alert('No registration form found');
 		}
@@ -36,9 +35,8 @@
 		<img src={imageBackground} alt="Background" />
 		<div class="overlay-filter"></div>
 	</div>
-	<RegistrationShow bind:registration {projectId} registrationModifierMode={false}/>
+	<RegistrationShow bind:registration {projectId} registrationModifierMode={false} />
 {/if}
-
 
 <style>
 	.fixed-background {

@@ -56,7 +56,8 @@
 						unspecifiedPieces.push({
 							piece_id: piece.id,
 							piece_name: piece.name,
-							composer_name: piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'
+							composer_name:
+								piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'
 						});
 					}
 				} catch (error) {
@@ -64,7 +65,8 @@
 					unspecifiedPieces.push({
 						piece_id: piece.id,
 						piece_name: piece.name,
-						composer_name: piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'
+						composer_name:
+							piece.composer?.shortName || piece.composer?.longName || 'Unknown composer'
 					});
 				}
 			}
@@ -99,9 +101,7 @@
 			<AlertTriangle class="text-orange-400 flex-shrink-0 mt-0.5" size={20} />
 			<div class="ml-3 flex-1">
 				<div class="flex items-center justify-between">
-					<h4 class="text-sm font-medium text-orange-800">
-						Material Assignment Required
-					</h4>
+					<h4 class="text-sm font-medium text-orange-800">Material Assignment Required</h4>
 					<button
 						class="p-1 text-orange-600 hover:text-orange-800 rounded transition-colors"
 						on:click={refreshStatus}

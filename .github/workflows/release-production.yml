@@ -52,7 +52,7 @@ jobs:
     needs: prepare-release
     uses: ./.github/workflows/_build.yml
     with:
-      environment: deploy_dev_front  # Utilise le même environment que dev
+      environment: deploy_dev_front # Utilise le même environment que dev
 
   deploy:
     name: Deploy to Production Server

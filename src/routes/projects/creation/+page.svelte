@@ -63,14 +63,14 @@
 </script>
 
 {#if loading}
-    <p>Loading...</p>
+	<p>Loading...</p>
 {:else}
-    <ProjectModifier
-        mode="create"
-        {project}
-        bind:pieces={listPieces}
-        bind:sectionGroups={listSectionGroups}
-        bind:folders={listFolders}
-        urlFront={`/projects/creation`}
-    />
+	<ProjectModifier
+		mode="create"
+		{project}
+		bind:pieces={listPieces}
+		bind:sectionGroups={listSectionGroups}
+		bind:folders={listFolders}
+		urlFront={`/projects/creation`}
+	/>
 {/if}

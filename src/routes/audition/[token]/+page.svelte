@@ -1,7 +1,7 @@
-<!-- src/routes/audition/[token]/+page.svelte - Version complète corrigée avec gestion d'erreurs améliorée -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import Button from '$lib/components/Button.svelte';
 
 	export let data;
 
@@ -256,7 +256,8 @@
 	// ✅ FONCTION DE NOTIFICATION
 	function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
 		const notification = document.createElement('div');
-		const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+		const bgColor =
+			type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
 		notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm`;
 		notification.textContent = message;
 		document.body.appendChild(notification);
@@ -313,7 +314,8 @@
 							type: 'not_found',
 							message: 'Audition not found',
 							canRetry: false,
-							supportContact: 'This audition link is invalid or has expired. Please contact the project organizers.'
+							supportContact:
+								'This audition link is invalid or has expired. Please contact the project organizers.'
 						};
 						break;
 					case 410:
@@ -321,7 +323,8 @@
 							type: 'expired',
 							message: 'Audition deadline has passed',
 							canRetry: false,
-							supportContact: 'The deadline for this audition has passed. Please contact the project organizers if you need assistance.'
+							supportContact:
+								'The deadline for this audition has passed. Please contact the project organizers if you need assistance.'
 						};
 						break;
 					case 500:
@@ -329,7 +332,8 @@
 							type: 'server_error',
 							message: 'Server error',
 							canRetry: true,
-							supportContact: 'A temporary server error occurred. Please try again in a few moments.'
+							supportContact:
+								'A temporary server error occurred. Please try again in a few moments.'
 						};
 						break;
 					default:
@@ -389,10 +393,7 @@
 		error = '';
 		errorDetails = { type: '', message: '', canRetry: false, supportContact: '' };
 
-		await Promise.all([
-			loadAudition(),
-			loadPdfs()
-		]);
+		await Promise.all([loadAudition(), loadPdfs()]);
 	}
 
 	// ======= FONCTIONS PRINCIPALES =======
@@ -557,11 +558,18 @@
 	// ✅ FONCTION SUBMIT AVEC DÉTECTION AUTO
 	async function submitAudition() {
 		if (!audition.files || audition.files.length === 0) {
-			showNotification('You must upload at least one file before submitting your audition.', 'error');
+			showNotification(
+				'You must upload at least one file before submitting your audition.',
+				'error'
+			);
 			return;
 		}
 
-		if (!confirm('Are you sure you want to submit your audition? You will not be able to modify it after submission.')) {
+		if (
+			!confirm(
+				'Are you sure you want to submit your audition? You will not be able to modify it after submission.'
+			)
+		) {
 			return;
 		}
 
@@ -589,7 +597,10 @@
 				await loadAudition();
 			} else {
 				const errorData = await response.json().catch(() => null);
-				showNotification('Error during submission: ' + (errorData?.error || 'Unknown error'), 'error');
+				showNotification(
+					'Error during submission: ' + (errorData?.error || 'Unknown error'),
+					'error'
+				);
 			}
 		} catch (err) {
 			console.error('❌ Submission error:', err);
@@ -640,18 +651,16 @@
 	<title>Audition - {audition?.project?.name || 'Melomania'}</title>
 </svelte:head>
 
-<!-- ✅ DESIGN UNIFORME : Même background que la page d'auditions -->
 <div class="bg-[#E7E7E7] p-4 min-h-screen">
 	<div class="max-w-4xl mx-auto">
-
-		<!-- ✅ Header avec design uniforme et info de debug -->
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 			<div class="flex items-center justify-between">
 				<div>
 					<h1 class="font-bold text-2xl text-gray-900">🎭 AUDITION PORTAL</h1>
 					<p class="text-gray-600 mt-2">Melomania - Collaborative Musicians Platform</p>
-					<p class="text-sm text-blue-600 mt-1 font-medium">🎵 Accepted files: Audio and Video only</p>
-					<!-- Debug info pour les développeurs -->
+					<p class="text-sm text-blue-600 mt-1 font-medium">
+						🎵 Accepted files: Audio and Video only
+					</p>
 					<p class="text-xs text-gray-400 mt-1">🔧 API: {API_BASE_URL}</p>
 				</div>
 				<div class="text-right">
@@ -664,7 +673,6 @@
 		</div>
 
 		{#if loading}
-			<!-- ✅ Loading state avec design uniforme -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-8">
 				<div class="flex justify-center items-center py-12">
 					<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -672,63 +680,100 @@
 				</div>
 			</div>
 		{:else if error}
-			<!-- ✅ AMÉLIORATION : Interface d'erreur plus détaillée -->
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div class="text-center py-8">
-					<!-- Icône selon le type d'erreur -->
 					{#if errorDetails.type === 'expired'}
-						<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
-							<svg class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+						<div
+							class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4"
+						>
+							<svg
+								class="h-8 w-8 text-yellow-600"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
 							</svg>
 						</div>
 					{:else if errorDetails.type === 'not_found' || errorDetails.type === 'invalid_link'}
-						<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-							<svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+						<div
+							class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+						>
+							<svg
+								class="h-8 w-8 text-red-600"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+								/>
 							</svg>
 						</div>
 					{:else}
-						<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
-							<svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+						<div
+							class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4"
+						>
+							<svg
+								class="h-8 w-8 text-blue-600"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
 							</svg>
 						</div>
 					{/if}
 
-					<!-- Titre et message d'erreur -->
 					<h3 class="text-lg font-medium text-gray-900 mb-2">{errorDetails.message}</h3>
 					<p class="text-sm text-gray-600 mb-6">{errorDetails.supportContact}</p>
 
-					<!-- Boutons d'action -->
 					<div class="flex flex-col sm:flex-row gap-3 justify-center">
 						{#if errorDetails.canRetry}
-							<button
+							<Button
 								on:click={retryLoading}
-								class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center space-x-2"
+								variant="primary"
+								className="px-6 py-3 font-semibold space-x-2"
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+									/>
 								</svg>
 								<span>Try Again</span>
-							</button>
+							</Button>
 						{/if}
 
-						<!-- Bouton pour copier le token (debug) -->
 						{#if errorDetails.type === 'not_found' || errorDetails.type === 'invalid_link'}
-							<button
+							<Button
+								variant="secondary"
 								on:click={() => {
-									navigator.clipboard.writeText(data.token);
-									showNotification('Token copied to clipboard', 'info');
-								}}
-								class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
+          navigator.clipboard.writeText(data.token);
+          showNotification('Token copied to clipboard', 'info');
+         }}
+								className="px-4 py-2"
 							>
 								Copy Token for Support
-							</button>
+							</Button>
 						{/if}
 					</div>
 
-					<!-- Informations techniques pour le support -->
 					{#if errorDetails.type !== 'expired'}
 						<div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg text-left">
 							<h4 class="text-sm font-medium text-gray-900 mb-2">Technical Information:</h4>
@@ -743,37 +788,49 @@
 				</div>
 			</div>
 		{:else if audition}
-			<!-- ✅ AUDITION DÉJÀ SOUMISE - Design uniforme -->
 			{#if audition.is_submitted}
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 					<h1 class="font-bold text-lg mb-4 text-center">✅ AUDITION SUBMITTED</h1>
-					<div class="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-6 text-center">
+					<div
+						class="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-6 text-center"
+					>
 						<div class="max-w-md mx-auto">
 							<div class="flex justify-center mb-4">
 								<div class="bg-green-100 rounded-full p-3">
 									<svg class="h-8 w-8 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-										<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+										<path
+											fill-rule="evenodd"
+											d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+											clip-rule="evenodd"
+										/>
 									</svg>
 								</div>
 							</div>
 							<h2 class="text-xl font-bold text-gray-900 mb-2">
-								{audition.participant?.contact?.firstName || 'Candidate'} {audition.participant?.contact?.lastName || ''}
+								{audition.participant?.contact?.firstName || 'Candidate'}
+								{audition.participant?.contact?.lastName || ''}
 							</h2>
 							<h3 class="text-lg font-semibold text-green-800 mb-4">
 								You have already submitted your audition!
 							</h3>
 							<p class="text-gray-700 mb-4">
-								Your audition was successfully submitted on <strong>{formatDateSafe(audition.submitted_at)}</strong>.
+								Your audition was successfully submitted on <strong
+							>{formatDateSafe(audition.submitted_at)}</strong
+							>.
 							</p>
 							<div class="bg-white border border-green-200 rounded-lg p-4 mb-4">
 								<p class="text-green-800 font-medium">
-									Our team will contact you as soon as possible to inform you about your application.
+									Our team will contact you as soon as possible to inform you about your
+									application.
 								</p>
 							</div>
 							<div class="text-sm text-gray-600 space-y-1">
 								<p><strong>Files submitted:</strong> {audition.files?.length || 0}</p>
 								<p><strong>Project:</strong> {audition.project?.name || 'Project not specified'}</p>
-								<p><strong>Section:</strong> {audition.participant?.section?.name || 'Section not specified'}</p>
+								<p>
+									<strong>Section:</strong>
+									{audition.participant?.section?.name || 'Section not specified'}
+								</p>
 							</div>
 
 							{#if audition.candidate_notes}
@@ -783,7 +840,6 @@
 								</div>
 							{/if}
 
-							<!-- SAFE DISPLAY OF SUBMITTED FILES -->
 							{#if audition.files && audition.files.length > 0}
 								<div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
 									<h4 class="text-sm font-semibold text-gray-800 mb-3">Submitted files:</h4>
@@ -800,9 +856,11 @@
 														</p>
 													{/if}
 												</div>
-												<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded capitalize">
-													{fileInfo.fileType}
-												</span>
+												<span
+													class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded capitalize"
+												>
+              {fileInfo.fileType}
+             </span>
 											</div>
 										{/each}
 									</div>
@@ -812,7 +870,6 @@
 					</div>
 				</div>
 			{:else}
-				<!-- ✅ PDFs DISPONIBLES - Design uniforme -->
 				{#if pdfFiles && pdfFiles.length > 0}
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 						<h1 class="font-bold text-lg mb-4">📚 REQUIRED SHEET MUSIC AND DOCUMENTS</h1>
@@ -820,22 +877,37 @@
 						<div class="mb-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
 							<div class="flex items-center">
 								<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-									<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+									<path
+										fill-rule="evenodd"
+										d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+										clip-rule="evenodd"
+									/>
 								</svg>
 								<p class="text-sm text-blue-700 font-medium">
-									<strong>Documents for your audition:</strong> Download and study the sheet music below. You will then need to upload your audio or video interpretation.
+									<strong>Documents for your audition:</strong> Download and study the sheet music below.
+									You will then need to upload your audio or video interpretation.
 								</p>
 							</div>
 						</div>
 
 						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{#each pdfFiles as pdf}
-								<div class="border-2 border-gray-300 rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
+								<div
+									class="border-2 border-gray-300 rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow"
+								>
 									<div class="flex items-start justify-between">
 										<div class="flex-1">
 											<div class="flex items-center mb-2">
-												<svg class="h-5 w-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-													<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+												<svg
+													class="h-5 w-5 text-red-500 mr-2"
+													fill="currentColor"
+													viewBox="0 0 20 20"
+												>
+													<path
+														fill-rule="evenodd"
+														d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+														clip-rule="evenodd"
+													/>
 												</svg>
 												<h3 class="text-sm font-semibold text-gray-900">{pdf.title}</h3>
 											</div>
@@ -844,12 +916,13 @@
 											{/if}
 											<p class="text-xs text-blue-600 font-medium">Section: {pdf.section}</p>
 										</div>
-										<button
+										<Button
+											variant="primary"
 											on:click={() => downloadPdf(pdf.file.id, pdf.file.name)}
-											class="ml-3 px-3 py-2 bg-[#6B9AD9] text-white text-xs rounded hover:bg-blue-600 font-semibold transition-colors"
+											className="ml-3 text-xs bg-[#6B9AD9] hover:bg-blue-600"
 										>
 											📥 Download
-										</button>
+										</Button>
 									</div>
 								</div>
 							{/each}
@@ -857,14 +930,15 @@
 
 						{#if loadingPdfs}
 							<div class="text-center py-4">
-								<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+								<div
+									class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"
+								></div>
 								<p class="text-sm text-gray-600 mt-2">Loading documents...</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
 
-				<!-- ✅ INFORMATIONS D'AUDITION - Design uniforme -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 					<h1 class="font-bold text-lg mb-4">YOUR AUDITION INFORMATION</h1>
 
@@ -872,16 +946,21 @@
 						<div>
 							<p class="text-sm text-gray-500 font-medium">Candidate</p>
 							<p class="font-semibold text-gray-900">
-								{audition.participant?.contact?.firstName || 'First name'} {audition.participant?.contact?.lastName || 'Last name'}
+								{audition.participant?.contact?.firstName || 'First name'}
+								{audition.participant?.contact?.lastName || 'Last name'}
 							</p>
 						</div>
 						<div>
 							<p class="text-sm text-gray-500 font-medium">Project</p>
-							<p class="font-semibold text-blue-600">{audition.project?.name || 'Project not specified'}</p>
+							<p class="font-semibold text-blue-600">
+								{audition.project?.name || 'Project not specified'}
+							</p>
 						</div>
 						<div>
 							<p class="text-sm text-gray-500 font-medium">Section</p>
-							<p class="font-semibold text-purple-600">{audition.participant?.section?.name || 'Section not specified'}</p>
+							<p class="font-semibold text-purple-600">
+								{audition.participant?.section?.name || 'Section not specified'}
+							</p>
 						</div>
 						{#if audition.deadline}
 							<div>
@@ -894,7 +973,9 @@
 					{#if audition.instructions}
 						<div class="mb-6">
 							<h3 class="text-lg font-medium text-gray-900 mb-2">Instructions</h3>
-							<div class="prose max-w-none text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200">
+							<div
+								class="prose max-w-none text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200"
+							>
 								{@html audition.instructions}
 							</div>
 						</div>
@@ -903,7 +984,9 @@
 					{#if audition.required_files && audition.required_files.length > 0}
 						<div class="mb-6">
 							<h3 class="text-lg font-medium text-gray-900 mb-2">Required files</h3>
-							<ul class="list-disc list-inside text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200">
+							<ul
+								class="list-disc list-inside text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200"
+							>
 								{#each audition.required_files as file}
 									<li>{file}</li>
 								{/each}
@@ -912,15 +995,17 @@
 					{/if}
 				</div>
 
-				<!-- ✅ UPLOAD DE FICHIERS - Design uniforme -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 					<h1 class="font-bold text-lg mb-4">UPLOAD AUDIO/VIDEO FILES</h1>
 
-					<!-- Alert about restriction -->
 					<div class="mb-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
 						<div class="flex items-center">
 							<svg class="h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+								<path
+									fill-rule="evenodd"
+									d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+									clip-rule="evenodd"
+								/>
 							</svg>
 							<p class="text-sm text-blue-700 font-medium">
 								<strong>Important:</strong> Only audio and video files can be uploaded for this audition.
@@ -934,8 +1019,8 @@
 							<select
 								bind:value={fileType}
 								on:change={() => {
-									resetFileSelection();
-								}}
+          resetFileSelection();
+         }}
 								class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 								disabled={uploading}
 							>
@@ -960,15 +1045,19 @@
 							/>
 
 							{#if fileValidationError}
-								<div class="mt-2 p-2 bg-red-50 border-2 border-red-200 rounded text-sm text-red-700 font-medium">
+								<div
+									class="mt-2 p-2 bg-red-50 border-2 border-red-200 rounded text-sm text-red-700 font-medium"
+								>
 									⚠️ {fileValidationError}
 								</div>
 							{/if}
 
 							{#if selectedFiles && selectedFiles.length > 0 && !fileValidationError}
-								<div class="mt-2 p-2 bg-green-50 border-2 border-green-200 rounded text-sm text-green-700">
+								<div
+									class="mt-2 p-2 bg-green-50 border-2 border-green-200 rounded text-sm text-green-700"
+								>
 									✅ File selected: <strong>{selectedFiles[0].name}</strong>
-									<br>
+									<br />
 									Size: <strong>{formatFileSize(selectedFiles[0].size)}</strong>
 								</div>
 							{/if}
@@ -990,7 +1079,6 @@
 						</div>
 					</div>
 
-					<!-- ACCEPTED TYPES - AUDIO/VIDEO ONLY -->
 					<div class="mb-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
 						<h4 class="text-sm font-medium text-blue-800 mb-2">Accepted file types:</h4>
 						<div class="text-xs text-blue-700 space-y-1">
@@ -1003,10 +1091,14 @@
 					</div>
 
 					<div class="flex items-center justify-between">
-						<button
+						<Button
+							variant="primary"
 							on:click={uploadFile}
-							disabled={uploading || !selectedFiles || !fileDescription.trim() || fileValidationError}
-							class="bg-[#6B9AD9] text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							disabled={uploading ||
+         !selectedFiles ||
+         !fileDescription.trim() ||
+         fileValidationError}
+							className="px-6 bg-[#6B9AD9] hover:bg-blue-600"
 						>
 							{#if uploading}
 								<div class="flex items-center">
@@ -1016,29 +1108,32 @@
 							{:else}
 								📤 Upload file
 							{/if}
-						</button>
+						</Button>
 
 						{#if selectedFiles && selectedFiles.length > 0 && !uploading}
-							<button
+							<Button
+								variant="ghost"
 								on:click={resetFileSelection}
-								class="text-gray-500 hover:text-gray-700 text-sm font-medium"
+								className="text-gray-500 hover:text-gray-700 text-sm font-medium"
 							>
 								Cancel selection
-							</button>
+							</Button>
 						{/if}
 					</div>
 
 					{#if uploadProgress > 0 && uploading}
 						<div class="mt-4">
 							<div class="bg-gray-200 rounded-full h-2">
-								<div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {uploadProgress}%"></div>
+								<div
+									class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+									style="width: {uploadProgress}%"
+								></div>
 							</div>
 							<p class="text-sm text-gray-600 mt-1 text-center">{uploadProgress}% uploaded</p>
 						</div>
 					{/if}
 				</div>
 
-				<!-- ✅ FICHIERS UPLOADÉS - Design uniforme -->
 				{#if audition.files && audition.files.length > 0}
 					<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6 mb-4">
 						<h1 class="font-bold text-lg mb-4">UPLOADED FILES ({audition.files.length})</h1>
@@ -1046,26 +1141,43 @@
 						<div class="space-y-3">
 							{#each audition.files as auditionFile}
 								{@const fileInfo = getFileDisplayInfo(auditionFile)}
-								<div class="flex items-center justify-between p-3 border-2 border-gray-300 rounded-lg bg-gray-50">
+								<div
+									class="flex items-center justify-between p-3 border-2 border-gray-300 rounded-lg bg-gray-50"
+								>
 									<div class="flex-1">
 										<div class="flex items-center space-x-2 mb-1">
-											<!-- Icon by type -->
 											{#if fileInfo.fileType === 'video'}
-												<svg class="h-5 w-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-													<path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+												<svg
+													class="h-5 w-5 text-purple-500"
+													fill="currentColor"
+													viewBox="0 0 20 20"
+												>
+													<path
+														d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"
+													/>
 												</svg>
 											{:else if fileInfo.fileType === 'audio'}
 												<svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-													<path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 010 1.414A4.98 4.98 0 0117 12a4.98 4.98 0 01-1.343 4.243 1 1 0 01-1.414-1.414A2.98 2.98 0 0015 12a2.98 2.98 0 00-.757-1.829 1 1 0 010-1.414z" clip-rule="evenodd" />
+													<path
+														fill-rule="evenodd"
+														d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 010 1.414A4.98 4.98 0 0117 12a4.98 4.98 0 01-1.343 4.243 1 1 0 01-1.414-1.414A2.98 2.98 0 0015 12a2.98 2.98 0 00-.757-1.829 1 1 0 010-1.414z"
+														clip-rule="evenodd"
+													/>
 												</svg>
 											{:else}
 												<svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-													<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+													<path
+														fill-rule="evenodd"
+														d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+														clip-rule="evenodd"
+													/>
 												</svg>
 											{/if}
-											<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded capitalize font-semibold">
-												{fileInfo.fileType}
-											</span>
+											<span
+												class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded capitalize font-semibold"
+											>
+             {fileInfo.fileType}
+            </span>
 										</div>
 										<p class="font-medium text-gray-900">{fileInfo.name}</p>
 										<p class="text-sm text-gray-500">{fileInfo.description}</p>
@@ -1075,26 +1187,32 @@
 											</p>
 										{/if}
 									</div>
-									<button
+									<Button
+										variant="ghost"
 										on:click={() => deleteFile(auditionFile.id)}
-										class="text-red-600 hover:text-red-800 ml-4 p-2 hover:bg-red-50 rounded transition-colors"
+										className="text-red-600 hover:text-red-800 ml-4 p-2 hover:bg-red-50"
 									>
 										<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-											<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 112 0v6a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
+											<path
+												fill-rule="evenodd"
+												d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 112 0v6a1 1 0 11-2 0V9zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V9z"
+												clip-rule="evenodd"
+											/>
 										</svg>
-									</button>
+									</Button>
 								</div>
 							{/each}
 						</div>
 					</div>
 				{/if}
 
-				<!-- ✅ FINALISATION - Design uniforme -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 					<h1 class="font-bold text-lg mb-4">FINALIZE YOUR AUDITION</h1>
 
 					<div class="mb-4">
-						<label class="block text-sm font-medium text-gray-700 mb-2">Personal notes (optional)</label>
+						<label class="block text-sm font-medium text-gray-700 mb-2"
+						>Personal notes (optional)</label
+						>
 						<textarea
 							bind:value={candidateNotes}
 							rows="4"
@@ -1108,7 +1226,11 @@
 						<div class="flex">
 							<div class="flex-shrink-0">
 								<svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-									<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+									<path
+										fill-rule="evenodd"
+										d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+										clip-rule="evenodd"
+									/>
 								</svg>
 							</div>
 							<div class="ml-3">
@@ -1120,32 +1242,31 @@
 						</div>
 					</div>
 
-					<!-- Action buttons -->
 					<div class="flex flex-col sm:flex-row gap-3 justify-between">
-						<!-- Save and exit button -->
-						<button
+						<Button
+							variant="secondary"
 							on:click={saveAndExit}
 							disabled={saving}
-							class="px-4 py-3 bg-gray-500 text-white rounded-md font-semibold hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							className="px-4 py-3 font-semibold w-full sm:w-auto"
 						>
 							{#if saving}
 								<div class="flex items-center justify-center">
-									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
 									Saving...
 								</div>
 							{:else}
 								💾 Save and exit
 							{/if}
-						</button>
+						</Button>
 
-						<!-- Submit button -->
-						<button
+						<Button
+							variant="primary"
 							on:click={submitAudition}
 							disabled={submitting || (audition.files && audition.files.length === 0)}
-							class="px-4 py-3 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-1 sm:flex-none"
+							className="px-4 py-3 font-semibold flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
 						>
 							{submitting ? 'Submitting...' : '🎯 Submit my audition permanently'}
-						</button>
+						</Button>
 					</div>
 
 					{#if audition.files && audition.files.length === 0}
@@ -1164,7 +1285,12 @@
         max-width: none;
     }
 
-    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    .prose h1,
+    .prose h2,
+    .prose h3,
+    .prose h4,
+    .prose h5,
+    .prose h6 {
         color: inherit;
         margin-top: 1rem;
         margin-bottom: 0.5rem;
@@ -1174,7 +1300,8 @@
         margin-bottom: 1rem;
     }
 
-    .prose ul, .prose ol {
+    .prose ul,
+    .prose ol {
         margin-bottom: 1rem;
         padding-left: 1.5rem;
     }

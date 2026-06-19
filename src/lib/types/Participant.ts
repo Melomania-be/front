@@ -27,7 +27,4 @@ export interface Participant {
 	audition_requested_at?: Date | null;
 	audition_deadline?: Date | null;
 	auditions?: Audition[];
-
 }
-
-

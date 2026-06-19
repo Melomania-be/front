@@ -63,7 +63,6 @@
 		initSortableWhenReady();
 	}
 
-
 	async function initSortableWhenReady() {
 		await tick(); // attend que allPiecesContainer soit bindé dans le DOM
 
@@ -289,15 +288,15 @@
 	let popUpSave = false;
 
 	let isMobile = false;
-	let screenDirection : "horizontal" | "vertical" = "vertical";
-	let windowWidth : number;
+	let screenDirection: 'horizontal' | 'vertical' = 'vertical';
+	let windowWidth: number;
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
 	};
 
 	const checkDirection = () => {
-        screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+		screenDirection = window.innerWidth > window.innerHeight ? 'horizontal' : 'vertical';
 	};
 
 	onMount(() => {
@@ -314,9 +313,11 @@
 </script>
 
 {#if popUpSave}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 ">
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 		<div
-			class="bg-white p-6 min-h-[200px] rounded-xl shadow-xl  text-center flex flex-col items-center justify-center {isMobile ? "h-[20%] w-[80%]" : "h-[20%] w-[20%]"}
+			class="bg-white p-6 min-h-[200px] rounded-xl shadow-xl text-center flex flex-col items-center justify-center {isMobile
+				? 'h-[20%] w-[80%]'
+				: 'h-[20%] w-[20%]'}
 		"
 		>
 			<h2 class="text-xl text-gray-500 font-bold mb-10">Changes saved successfully</h2>
@@ -380,7 +381,7 @@
 				</div>
 				{#if displayProjectInfo}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
-						<div class="flex flex-col ml-4 {isMobile ? "mr-4" : "w-1/2"}">
+						<div class="flex flex-col ml-4 {isMobile ? 'mr-4' : 'w-1/2'}">
 							<div
 								class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500
 										{!project.name ? 'text-red-500 placeholder-red-400' : ''}"
@@ -404,8 +405,8 @@
 							{/if}
 						</div>
 						<div>
-							<div class="flex  ml-4 w-full mt-4 {isMobile ? "flex-col" : "h-16"}">
-								<div class="flex flex-col {isMobile ? "mr-8" : "w-1/2"}">
+							<div class="flex ml-4 w-full mt-4 {isMobile ? 'flex-col' : 'h-16'}">
+								<div class="flex flex-col {isMobile ? 'mr-8' : 'w-1/2'}">
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500 flex"
 										style="width: fit-content;"
@@ -436,14 +437,17 @@
 									<a
 										href="/sectionGroups"
 										class="bg-[#6b9ad9] my-3 ml-auto mr-0 px-4 text-white pointer-events-auto hover:bg-[#4f7cb7] font-semibold justify-center flex items-center gap-2 rounded-lg
-										{isMobile ? "p-1" : ""}"
-										><button> Manage section groups </button></a
+										{isMobile ? 'p-1' : ''}"><button> Manage section groups </button></a
 									>
 								</div>
 							</div>
 							{#if project.sectionGroup}
 								<p class="ml-4 uppercase mt-3 font-semibold">Composed of</p>
-								<div class="grid  text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4 {isMobile ? "grid-cols-2" : "grid-cols-5"}">
+								<div
+									class="grid text-center gap-x-4 gap-y-3 mt-4 pb-4 mx-4 {isMobile
+										? 'grid-cols-2'
+										: 'grid-cols-5'}"
+								>
 									{#each project.sectionGroup.sections as section}
 										<div
 											class="flex flex-col border-2 border-gray-400 rounded-full text-gray-500 p-1"
@@ -485,8 +489,8 @@
 				{#if displayProjectPieces}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
 						<div class="flex gap-4 items-end">
-							<div class="flex-1 ">
-								<h4 class="text-lg top-0 text-center bg-white">Available <br> pieces</h4>
+							<div class="flex-1">
+								<h4 class="text-lg top-0 text-center bg-white">Available <br /> pieces</h4>
 								{#if allPieces.length === 0}
 									<p>No pieces available</p>
 								{:else}
@@ -520,7 +524,7 @@
 						</div>
 						<div class="pb-4 pt-4">
 							{#if allowModification}
-								<div class="flex flex-col h-16 {isMobile ? "" : "w-1/2"}">
+								<div class="flex flex-col h-16 {isMobile ? '' : 'w-1/2'}">
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
 										style="width: fit-content;"
@@ -540,7 +544,7 @@
 									</select>
 								</div>
 							{:else}
-								<div class="flex flex-col {isMobile ? "" : "w-1/2"}">
+								<div class="flex flex-col {isMobile ? '' : 'w-1/2'}">
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500 flex"
 										style="width: fit-content;"
@@ -629,7 +633,10 @@
 											{#each project.rehearsals as rehearsal}
 												<tr class="rehearsal-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={rehearsal.startDate} on:change={() => rehearsal.endDate = rehearsal.startDate}/>
+														<DatePicker
+															bind:date={rehearsal.startDate}
+															on:change={() => (rehearsal.endDate = rehearsal.startDate)}
+														/>
 													</td>
 													<td class="px-3 py-1">
 														<TimePicker bind:date={rehearsal.startDate} />
@@ -724,7 +731,11 @@
 											{#each project.concerts as concert}
 												<tr class="concert-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={concert.startDate} on:change={() => concert.endDate = concert.startDate}/> <!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
+														<DatePicker
+															bind:date={concert.startDate}
+															on:change={() => (concert.endDate = concert.startDate)}
+														/>
+														<!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
 													</td>
 													<td class="px-3 py-1">
 														<TimePicker bind:date={concert.startDate} />
@@ -793,7 +804,7 @@
 				{#if displayManagers}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
 						<div class="p-1 w-full">
-							<div class="text-sm py-6 grid  gap-4 {isMobile ? "" : "grid-cols-5"}">
+							<div class="text-sm py-6 grid gap-4 {isMobile ? '' : 'grid-cols-5'}">
 								{#if project.responsibles && project.responsibles.length === 0}
 									<p class="text-center">No project manager</p>
 								{:else}
@@ -819,66 +830,65 @@
 											{/if}
 										</div>
 									{/each}
-									
 								{/if}
 							</div>
 							{#if allowModification}
-										<div class="w-full">
-											<button
-												class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
-												on:click={() => {
-													project.responsibles = [
-														...project.responsibles,
-														...contacts.filter((contact) => {
-															if (
-																project.responsibles.find(
-																	(responsible) => responsible.id === contact.id
-																)
-															)
-																return false;
-															return contact.selected;
-														})
-													];
-												}}>Add project manager</button
-											>
+								<div class="w-full">
+									<button
+										class="bg-blue-700 text-sm px-2 py-1 rounded-lg text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 text-center"
+										on:click={() => {
+											project.responsibles = [
+												...project.responsibles,
+												...contacts.filter((contact) => {
+													if (
+														project.responsibles.find(
+															(responsible) => responsible.id === contact.id
+														)
+													)
+														return false;
+													return contact.selected;
+												})
+											];
+										}}>Add project manager</button
+									>
 
-											<SimpleFilterer
-												bind:data={dataHolder}
-												showData={false}
-												editable={false}
-												on:optionsUpdated={() => fetchData()}
-												bind:options
-												bind:meta
-											>
-												<div
-													class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
-												>
-													{#if contacts}
-														{#each contacts as contact}
-															<div
-																class="flex items-center p-4 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800"
-															>
-																<input
-																	bind:checked={contact.selected}
-																	id="bordered-checkbox-${contact.id}"
-																	type="checkbox"
-																	name="bordered-checkbox"
-																	class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-																/>
-																<label
-																	for="bordered-checkbox-${contact.id}"
-																	class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-																>
-																	{contact.firstName}
-																	{contact.lastName}
-																</label>
-															</div>
-														{/each}
-													{/if}
-												</div>
-											</SimpleFilterer>
+									<SimpleFilterer
+										bind:data={dataHolder}
+										showData={false}
+										editable={false}
+										on:optionsUpdated={() => fetchData()}
+										bind:options
+										bind:meta
+									>
+										<div
+											class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
+										>
+											{#if contacts}
+												{#each contacts as contact}
+													<div
+														class="flex items-center p-4 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800"
+													>
+														<input
+															bind:checked={contact.selected}
+															id="bordered-checkbox-${contact.id}"
+															type="checkbox"
+															name="bordered-checkbox"
+															class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+														/>
+														<label
+															for="bordered-checkbox-${contact.id}"
+															class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+														>
+															{contact.firstName}
+															{contact.lastName}
+														</label>
+													</div>
+												{/each}
+											{/if}
 										</div>
-									{/if}
+									</SimpleFilterer>
+								</div>
+							{/if}
 						</div>
 					</div>
 				{/if}
@@ -886,7 +896,7 @@
 		</div>
 
 		{#if allowModification}
-			<div class=" pt-4 flex gap-4 {isMobile ? "" : "w-1/4"}">
+			<div class=" pt-4 flex gap-4 {isMobile ? '' : 'w-1/4'}">
 				<button
 					on:click={saveProject}
 					class="hover:bg-[#4f7cb7] bg-[#6B9AD9] text-white font-bold p-2 rounded-lg flex-1"

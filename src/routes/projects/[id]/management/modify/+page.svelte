@@ -23,20 +23,20 @@
 			let tmp = await projectResponse.json();
 			project = {
 				...tmp,
-                rehearsals: tmp.rehearsals.map((r: Rehearsal) => {
-                    return { 
-                        ...r, 
-                        startDate: new Date(r.startDate), 
-                        endDate: r.endDate ? new Date(r.endDate) : null 
-                    };
-                }),
-                concerts: tmp.concerts.map((c: Rehearsal) => {
-                    return { 
-                        ...c, 
-                        startDate: new Date(c.startDate), 
-                        endDate: c.endDate ? new Date(c.endDate) : null 
-                    };
-                })
+				rehearsals: tmp.rehearsals.map((r: Rehearsal) => {
+					return {
+						...r,
+						startDate: new Date(r.startDate),
+						endDate: r.endDate ? new Date(r.endDate) : null
+					};
+				}),
+				concerts: tmp.concerts.map((c: Rehearsal) => {
+					return {
+						...c,
+						startDate: new Date(c.startDate),
+						endDate: c.endDate ? new Date(c.endDate) : null
+					};
+				})
 			};
 		} else {
 			alert('server error');
