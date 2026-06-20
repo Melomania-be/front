@@ -5,6 +5,12 @@
 	let contractorCount = 0;
 let organizationCount = 0;
 let categoryCount = 0;
+let search = '';
+$: filteredContractors = contractors.filter((contractor) =>
+	`${contractor.firstName} ${contractor.lastName}`
+		.toLowerCase()
+		.includes(search.toLowerCase())
+);
 
 	onMount(async () => {
 		const response = await fetch('/api/contractor');
@@ -65,6 +71,14 @@ categoryCount = categories.size;
 	Create Contractor
 </a>
 <div class="bg-white rounded-lg shadow p-4">
+<div class="mb-4">
+	<input
+		type="text"
+		placeholder="Search contractor..."
+		bind:value={search}
+		class="w-full md:w-96 border rounded-lg px-4 py-2"
+	/>
+</div>
 <table class="w-full border">
 	<thead>
 	<tr>
@@ -76,14 +90,14 @@ categoryCount = categories.size;
 	</tr>
 </thead>
 	<tbody>
-	{#each contractors as contractor}
+	{#each filteredContractors as contractor}
 		<tr
 	class="border-b cursor-pointer hover:bg-gray-100"
 	on:click={() => {
 		window.location.href = `/contractors/${contractor.id}`;
 	}}
 >
-			<td class="p-3">
+			<td class="p-3 font-medium text-gray-900">
 				{contractor.firstName}
 				{contractor.lastName}
 			</td>
@@ -111,6 +125,13 @@ categoryCount = categories.size;
 			</td>
 		</tr>
 	{/each}
+	{#if filteredContractors.length === 0}
+	<tr>
+		<td colspan="5" class="text-center py-8 text-gray-500">
+			No contractors found
+		</td>
+	</tr>
+{/if}
 </tbody>
 </table>
 </div>
