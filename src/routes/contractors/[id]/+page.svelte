@@ -67,19 +67,58 @@
 		<div class="mt-6 space-y-3">
 
 			<div>
-				<span class="font-semibold">Email:</span>
-				{contractor.email1 ?? '-'}
-			</div>
+	<span class="font-semibold">Emails:</span>
+
+	<div class="ml-2 mt-1">
+		{#if contractor.email1}
+			<div>{contractor.email1}</div>
+		{/if}
+
+		{#if contractor.email2}
+			<div>{contractor.email2}</div>
+		{/if}
+
+		{#if contractor.email3}
+			<div>{contractor.email3}</div>
+		{/if}
+
+		{#if !contractor.email1 && !contractor.email2 && !contractor.email3}
+			<div>-</div>
+		{/if}
+	</div>
+</div>
 
 			<div>
-				<span class="font-semibold">Phone:</span>
-				{contractor.phone1 ?? '-'}
-			</div>
+	<span class="font-semibold">Phones:</span>
+
+	<div class="ml-2 mt-1">
+		{#if contractor.phone1}
+			<div>{contractor.phone1}</div>
+		{/if}
+
+		{#if contractor.phone2}
+			<div>{contractor.phone2}</div>
+		{/if}
+
+		{#if contractor.phone3}
+			<div>{contractor.phone3}</div>
+		{/if}
+
+		{#if !contractor.phone1 && !contractor.phone2 && !contractor.phone3}
+			<div>-</div>
+		{/if}
+	</div>
+</div>
 
 			<div>
-				<span class="font-semibold">Comments:</span>
-				{contractor.comments ?? '-'}
-			</div>
+	<span class="font-semibold">Comments:</span>
+
+	<div
+		class="mt-2 p-3 border rounded bg-gray-50 max-h-40 overflow-y-auto whitespace-pre-wrap"
+	>
+		{contractor.comments ?? '-'}
+	</div>
+</div>
 
 		</div>
 

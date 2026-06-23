@@ -23,6 +23,14 @@ if (categoryResponse.ok) {
 	let firstName = '';
 	let lastName = '';
 	let email1 = '';
+	let email2 = '';
+let email3 = '';
+
+let phone1 = '';
+let phone2 = '';
+let phone3 = '';
+
+let comments = '';
 
 	async function saveContractor() {
 		const response = await fetch('/api/contractor', {
@@ -30,10 +38,20 @@ if (categoryResponse.ok) {
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({
+		body: JSON.stringify({
 	first_name: firstName,
 	last_name: lastName,
+
 	email_1: email1,
+	email_2: email2,
+	email_3: email3,
+
+	phone_1: phone1,
+	phone_2: phone2,
+	phone_3: phone3,
+
+	comments,
+
 	organization_id: Number(organizationId),
 	category_ids: selectedCategories
 })
@@ -76,6 +94,44 @@ if (categoryResponse.ok) {
 			bind:value={email1}
 		/>
 	</div>
+	<div class="mb-4">
+	<label class="block mb-1">Email 2</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={email2}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Email 3</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={email3}
+	/>
+</div>
+<div class="mb-4">
+	<label class="block mb-1">Phone 1</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={phone1}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Phone 2</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={phone2}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Phone 3</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={phone3}
+	/>
+</div>
 	<div class="mb-4">
 	<label class="block mb-1">Organization</label>
 
@@ -129,7 +185,15 @@ if (categoryResponse.ok) {
 
 	</div>
 </div>
+<div class="mb-4">
+	<label class="block mb-1">Comments</label>
 
+	<textarea
+		class="border p-2 w-full rounded"
+		rows="5"
+		bind:value={comments}
+	></textarea>
+</div>
 </div>
 
 	<button

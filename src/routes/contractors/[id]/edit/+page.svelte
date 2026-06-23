@@ -7,6 +7,14 @@ console.log(data.contractor);
 	let firstName = data.contractor.firstName ?? '';
 	let lastName = data.contractor.lastName ?? '';
 	let email1 = data.contractor.email1 ?? '';
+	let email2 = data.contractor.email2 ?? '';
+let email3 = data.contractor.email3 ?? '';
+
+let phone1 = data.contractor.phone1 ?? '';
+let phone2 = data.contractor.phone2 ?? '';
+let phone3 = data.contractor.phone3 ?? '';
+
+let comments = data.contractor.comments ?? '';
 	let organizations: any[] = [];
 	let categories: any[] = [];
 let organizationId = data.contractor.organizationId;
@@ -24,12 +32,22 @@ let selectedCategories: number[] =
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					first_name: firstName,
-					last_name: lastName,
-					email_1: email1,
-					organization_id: Number(organizationId),
-					category_ids: selectedCategories
-				})
+	first_name: firstName,
+	last_name: lastName,
+
+	email_1: email1,
+	email_2: email2,
+	email_3: email3,
+
+	phone_1: phone1,
+	phone_2: phone2,
+	phone_3: phone3,
+
+	comments,
+
+	organization_id: Number(organizationId),
+	category_ids: selectedCategories
+})
 			}
 		);
 
@@ -84,6 +102,46 @@ if (categoryResponse.ok) {
 	</div>
 
 	<div class="mb-4">
+	<label class="block mb-1">Email 2</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={email2}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Email 3</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={email3}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Phone 1</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={phone1}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Phone 2</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={phone2}
+	/>
+</div>
+
+<div class="mb-4">
+	<label class="block mb-1">Phone 3</label>
+	<input
+		class="border p-2 w-full rounded"
+		bind:value={phone3}
+	/>
+</div>
+
+	<div class="mb-4">
 	<label class="block mb-1">Organization</label>
 
 	<select
@@ -132,7 +190,15 @@ if (categoryResponse.ok) {
 
 </div>
 </div>
+<div class="mb-4">
+	<label class="block mb-1">Comments</label>
 
+	<textarea
+		rows="5"
+		class="border p-2 w-full rounded"
+		bind:value={comments}
+	></textarea>
+</div>
 	<button
 		class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
 		on:click={updateContractor}
