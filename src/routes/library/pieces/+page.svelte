@@ -13,9 +13,9 @@
 	import type { Folder } from '$lib/types/Folder';
 
 	import Fa from 'svelte-fa';
-	import { faCalendar, faGlobe, faPerson } from '@fortawesome/free-solid-svg-icons';
+	import { faCalendar, faPerson } from '@fortawesome/free-solid-svg-icons';
 
-	let selectedData: Piece | null;
+	let selectedData: Piece | null = null;
 
 	let piece: Piece[] = [];
 	let meta: any = {};
@@ -29,27 +29,24 @@
 
 	let listComposers: Composer[] = [];
 	let listTypeOfPieces: TypeOfPiece[] = [];
-	let folderList: Array<Folder> = [];
+	let folderList: Folder[] = [];
 
-	let url: string = '/api/pieces';
-	let urlFront: string = '/library/pieces';
-	let uniqueUrl: string = '/library/pieces';
-	let urlComposerS: string = '/api/composers';
-	let urlTypeOfPieces: string = '/api/type_of_pieces';
-	let urlFolders: string = '/api/folders';
-<<<<<<< Updated upstream
-=======
+	let url = '/api/pieces';
+	let urlFront = '/library/pieces';
+	let uniqueUrl = '/library/pieces';
+	let urlComposerS = '/api/composers';
+	let urlTypeOfPieces = '/api/type_of_pieces';
+	let urlFolders = '/api/folders';
 	let isProjectCreationFlow = false;
 	let isPieceCreationFlow = false;
 	let createMode = false;
 	let returnToUrl = '/projects/creation';
 	const PIECE_CREATION_DRAFT_KEY = 'pieceCreationDraft';
 	let pendingSelectedPiece: Partial<Piece> | null = null;
->>>>>>> Stashed changes
 
 	let dataHolder: TableData<Piece>;
 
-	let newPiece: Piece = {
+	let newPiece = {
 		arranger: null,
 		folderId: null,
 		folder: null,
@@ -63,9 +60,6 @@
 		typeOfPieceId: null,
 		updatedAt: null,
 		yearOfComposition: null
-<<<<<<< Updated upstream
-	};
-=======
 	} as unknown as Piece;
 
 	function serializePieceDraft() {
@@ -129,7 +123,7 @@
 			}
 
 			selectedData = normalizePieceSelection(draft.piece);
-		} catch (error) {
+		} catch {
 			clearPieceDraft();
 		}
 	}
@@ -182,53 +176,44 @@
 		urlFront = `/library/pieces?${flowParams.toString()}`;
 		uniqueUrl = urlFront;
 	}
->>>>>>> Stashed changes
 
-    onMount(async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
-<<<<<<< Updated upstream
-=======
+	onMount(async () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 		isProjectCreationFlow = urlParams.get('fromProjectCreation') === '1';
 		isPieceCreationFlow = urlParams.get('fromPieceCreation') === '1';
 		createMode = urlParams.get('create') === '1';
 		returnToUrl = urlParams.get('returnTo') || '/projects/creation';
 		updateProjectFlowUrls();
->>>>>>> Stashed changes
 
-        // Vérifier s'il y a un objet selected dans l'URL
-        const selectedParam = urlParams.get('selected');
-        if (selectedParam) {
-            try {
-                pendingSelectedPiece = JSON.parse(decodeURIComponent(selectedParam));
+		const selectedParam = urlParams.get('selected');
+		if (selectedParam) {
+			try {
+				pendingSelectedPiece = JSON.parse(decodeURIComponent(selectedParam));
 				selectedData = { ...pendingSelectedPiece } as Piece;
-            } catch (e) {
-                console.error('Error parsing selected piece:', e);
-            }
-        }
+			} catch (e) {
+				console.error('Error parsing selected piece:', e);
+			}
+		}
 
-<<<<<<< Updated upstream
-        fetchData();
-=======
 		if (createMode && !selectedData) {
 			selectedData = { ...newPiece };
 		}
 
-        await fetchData();
+		await fetchData();
 		if (pendingSelectedPiece) {
 			selectedData = normalizePieceSelection(pendingSelectedPiece);
 			pendingSelectedPiece = null;
 		} else {
 			restorePieceDraft();
 		}
->>>>>>> Stashed changes
-    });
+	});
 
 	beforeNavigate((navigation) => {
 		if (!browser) return;
@@ -256,9 +241,12 @@
 		optionInUrls += '&orderBy=' + options.orderBy;
 		optionInUrls += '&order=' + options.order;
 
-		let baseOptionInUrls = `?page=1&limit=1000000&filter=&orderBy=id&order=asc`;
+		const baseOptionInUrls = `?page=1&limit=1000000&filter=&orderBy=id&order=asc`;
+		const frontUrl = urlFront.includes('?')
+			? `${urlFront}${optionInUrls.replace('?', '&')}`
+			: `${urlFront}${optionInUrls}`;
 
-		if (browser) goto(`${urlFront}${optionInUrls}`);
+		if (browser) goto(frontUrl);
 
 		const response = await fetch(`${url}${optionInUrls}`, {
 			method: 'GET'
@@ -270,17 +258,15 @@
 			const data = await response.json();
 
 			piece = data.data;
-
 			meta = data.meta;
 
 			dataHolder = {
 				data: piece,
 				columns: ['id', 'name'],
-				notOrderedColumns: ['composer.longName']
+				notOrderedColumns: []
 			};
 		});
 
-		//récupération des composers
 		const responseComposer = await fetch(`${urlComposerS}${baseOptionInUrls}`, {
 			method: 'GET'
 		});
@@ -289,11 +275,9 @@
 
 		await responseHandlerComposer.handle(responseComposer, async () => {
 			const data = await responseComposer.json();
-
 			listComposers = data.data;
 		});
 
-		//récupération des Type Of Pieces
 		const responseTypeOfPieces = await fetch(`${urlTypeOfPieces}${baseOptionInUrls}`, {
 			method: 'GET'
 		});
@@ -302,11 +286,9 @@
 
 		await responseHandlerTypeOfPieces.handle(responseTypeOfPieces, async () => {
 			const data = await responseTypeOfPieces.json();
-
 			listTypeOfPieces = data.data;
 		});
 
-		//récupération des Folders
 		const responseFolders = await fetch(`${urlFolders}`, {
 			method: 'GET'
 		});
@@ -315,7 +297,6 @@
 
 		await responseHandlerFolders.handle(responseFolders, async () => {
 			const data = await responseFolders.json();
-
 			folderList = data;
 		});
 	}
@@ -330,9 +311,8 @@
 		}
 	}
 
-	//api piece
 	async function addPiece() {
-        if (!selectedData) return;
+		if (!selectedData) return;
 
 		if (
 			selectedData.composer &&
@@ -351,6 +331,7 @@
 				type_of_piece_id: selectedData.typeOfPiece?.id,
 				year_of_composition: selectedData.yearOfComposition || ''
 			};
+
 			if (data.id == 0) {
 				data.id = undefined;
 			}
@@ -366,8 +347,6 @@
 			errorEvent(response);
 
 			if (response.ok) {
-<<<<<<< Updated upstream
-=======
 				await response.json();
 				if ((isProjectCreationFlow || isPieceCreationFlow) && data.id === undefined) {
 					clearPieceDraft();
@@ -377,7 +356,6 @@
 				}
 
 				clearPieceDraft();
->>>>>>> Stashed changes
 				window.location.reload();
 			}
 		}
@@ -428,9 +406,7 @@
 </script>
 
 <div class="responsive-container">
-    <div class="w-full">
-<<<<<<< Updated upstream
-=======
+	<div class="w-full">
 		{#if isProjectCreationFlow}
 			<div class="mb-4 flex justify-end pr-2 pt-2">
 				<button
@@ -453,11 +429,11 @@
 				</button>
 			</div>
 		{/if}
->>>>>>> Stashed changes
-        <div class="w-full">
+
+		<div class="w-full">
 			<div class="flex flex-col items-start">
 				<button
-					on:click={() => (selectedData = newPiece)}
+					on:click={() => (selectedData = { ...newPiece })}
 					class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200"
 				>
 					Add new piece
@@ -479,235 +455,224 @@
 					</button>
 				{/if}
 			</div>
-        </div>
+		</div>
 
-        {#if selectedData != null}
-            <form class="justify-center w-full max-w-2xl mx-auto">
-                <div class="flex justify-between items-center">
-                    <h1 class="text-4xl font-extrabold dark:text-white">
-                        Piece
-                    </h1>
-                    <!-- Close button -->
-                    <button
-                        on:click={() => (selectedData = null)}
-                        type="button"
-                        class="m-2 p-2 rounded-full border border-red-700 hover:bg-red-200"
-                    >
-                        Close
-                    </button>
-                </div>
-        
-                <div class="flex">
-                    <div class="flex flex-col">
-                        <label
-                            for="website-admin"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Piece name</label
-                        >
-                        <div class="flex">
-                            <span
-                                class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
-                            >
-                                <svg
-                                    class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                    aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"
-                                    />
-                                </svg>
-                            </span>
-                            <input
-                                bind:value={selectedData.name}
-                                type="text"
-                                id="website-admin"
-                                class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="Piece name"
-                                required
-                            />
-                        </div>
-                    </div>
-        
-                    <div class="flex flex-col">
-                        <label
-                            for="website-admin"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Opus number</label
-                        >
-                        <div class="flex">
-                            <input
-                                bind:value={selectedData.opus}
-                                type="text"
-                                id="website-admin"
-                                class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="ex: Op. 9 n°2"
-                                required
-                            />
-                        </div>
-                    </div>
-                </div>
-        
-                <label
-                    for="website-admin"
-                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Arranger name</label
-                >
-                <div class="flex">
-                    <span
-                        class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
-                    >
-                        <svg
-                            class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                            aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <Fa icon={faPerson} />
-                        </svg>
-                    </span>
-                    <input
-                        bind:value={selectedData.arranger}
-                        type="text"
-                        id="website-admin"
-                        class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="Arranger name"
-                    />
-                </div>
-        
-                <label
-                    for="website-admin"
-                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                    >*Year of composition</label
-                >
-                <div class="flex">
-                    <span
-                        class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
-                    >
-                        <svg
-                            class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                            aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <Fa icon={faCalendar} />
-                        </svg>
-                    </span>
-                    <input
-                        bind:value={selectedData.yearOfComposition}
-                        type="text"
-                        id="website-admin"
-                        class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        required
-                    />
-                </div>
-        
-                <div class="flex">
-                    <div class="w-1/2">
-                        <label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >Folder</label
-                        >
-                        <select
-                            bind:value={selectedData.folder}
-                            id="Composer"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        >
-                            {#if selectedData.folder !== null}
-                                <optgroup label="Folder linked">
-                                    <option value={selectedData.folder}>{selectedData.folder.name}</option>
-                                </optgroup>
-                            {/if}
-                            <optgroup label="All folders">
-                                <option value={null}>None</option>
-                                {#if folderList}
-                                    {#each folderList as folder}
-                                        <option value={folder}>{folder.name}</option>
-                                    {/each}
-                                {/if}
-                            </optgroup>
-                        </select>
-                    </div>
-        
-                    <div class="w-1/2">
-                        <label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            >*Type of piece</label
-                        >
-                        <select
-                            bind:value={selectedData.typeOfPiece}
-                            id="Composer"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            required
-                        >
-                            {#if selectedData.typeOfPiece !== null}
-                                <optgroup label="Type of Piece">
-                                    <option value={selectedData.typeOfPiece}>{selectedData.typeOfPiece?.name}</option>
-                                </optgroup>
-                            {/if}
-                            <optgroup label="All type of Piece">
-                                <option value={null}>None</option>
-                                {#if listTypeOfPieces}
-                                    {#each listTypeOfPieces as typeOfPiece}
-                                        <option value={typeOfPiece}>{typeOfPiece.name}</option>
-                                    {/each}
-                                {/if}
-                            </optgroup>
-                        </select>
-                    </div>
-                </div>
-        
-                <form class="max-w-sm mx-auto">
-                    <label for="Composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                        >*Composer</label
-                    >
-                    <select
-                        bind:value={selectedData.composer}
-                        id="Composer"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        required
-                    >
-                        {#if selectedData.composer !== null}
-                            <optgroup label="Composer of the Piece">
-                                <option value={selectedData.composer}>{selectedData.composer.longName}</option>
-                            </optgroup>
-                        {/if}
-                        <optgroup label="All Composer">
-                            <option value={null}>None</option>
-                            {#if listComposers}
-                                {#each listComposers as composer}
-                                    <option value={composer}>{composer.longName}</option>
-                                {/each}
-                            {/if}
-                        </optgroup>
-                    </select>
-                </form>
-                <p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Required to add or edit.</p>
-        
-                <div class="flex p-2">
-                    {#if selectedData.id == 0}
-                        <button
-                            on:click={addPiece}
-                            type="submit"
-                            class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-                            >Add</button
-                        >
-                    {:else}
-                        <button
-                            on:click={addPiece}
-                            type="submit"
-                            class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
-                            >Edit</button
-                        >
-                        <button
-                            on:click={deletePiece}
-                            type="button"
-                            class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                            >Delete</button
-                        >
-                    {/if}
-                </div>
-            </form>
-        {/if}
+		{#if selectedData != null}
+			<form class="justify-center w-full max-w-2xl mx-auto" on:submit|preventDefault={addPiece}>
+				<div class="flex justify-between items-center">
+					<h1 class="text-4xl font-extrabold dark:text-white">Piece</h1>
+					<button
+						on:click={() => (selectedData = null)}
+						type="button"
+						class="m-2 p-2 rounded-full border border-red-700 hover:bg-red-200"
+					>
+						Close
+					</button>
+				</div>
+
+				<div class="flex">
+					<div class="flex flex-col">
+						<label
+							for="piece-name"
+							class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Piece name</label
+						>
+						<div class="flex">
+							<span
+								class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
+							>
+								<svg
+									class="w-4 h-4 text-gray-500 dark:text-gray-400"
+									aria-hidden="true"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="currentColor"
+									viewBox="0 0 20 20"
+								>
+									<path
+										d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"
+									/>
+								</svg>
+							</span>
+							<input
+								bind:value={selectedData.name}
+								type="text"
+								id="piece-name"
+								class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+								placeholder="Piece name"
+								required
+							/>
+						</div>
+					</div>
+
+					<div class="flex flex-col">
+						<label
+							for="piece-opus"
+							class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Opus number</label
+						>
+						<div class="flex">
+							<input
+								bind:value={selectedData.opus}
+								type="text"
+								id="piece-opus"
+								class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+								placeholder="ex: Op. 9 n°2"
+								required
+							/>
+						</div>
+					</div>
+				</div>
+
+				<label
+					for="piece-arranger"
+					class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Arranger name</label
+				>
+				<div class="flex">
+					<span
+						class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
+					>
+						<svg
+							class="w-4 h-4 text-gray-500 dark:text-gray-400"
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<Fa icon={faPerson} />
+						</svg>
+					</span>
+					<input
+						bind:value={selectedData.arranger}
+						type="text"
+						id="piece-arranger"
+						class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						placeholder="Arranger name"
+					/>
+				</div>
+
+				<label
+					for="piece-year"
+					class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">*Year of composition</label
+				>
+				<div class="flex">
+					<span
+						class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600"
+					>
+						<svg
+							class="w-4 h-4 text-gray-500 dark:text-gray-400"
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<Fa icon={faCalendar} />
+						</svg>
+					</span>
+					<input
+						bind:value={selectedData.yearOfComposition}
+						type="text"
+						id="piece-year"
+						class="rounded-none rounded-e-lg bg-gray-50 border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						required
+					/>
+				</div>
+
+				<div class="flex">
+					<div class="w-1/2">
+						<label for="piece-folder" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+							>Folder</label
+						>
+						<select
+							bind:value={selectedData.folder}
+							id="piece-folder"
+							class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						>
+							{#if selectedData.folder !== null}
+								<optgroup label="Folder linked">
+									<option value={selectedData.folder}>{selectedData.folder.name}</option>
+								</optgroup>
+							{/if}
+							<optgroup label="All folders">
+								<option value={null}>None</option>
+								{#each folderList as folder}
+									<option value={folder}>{folder.name}</option>
+								{/each}
+							</optgroup>
+						</select>
+					</div>
+
+					<div class="w-1/2">
+						<label for="piece-type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+							>*Type of piece</label
+						>
+						<select
+							bind:value={selectedData.typeOfPiece}
+							id="piece-type"
+							class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+							required
+						>
+							{#if selectedData.typeOfPiece !== null}
+								<optgroup label="Type of Piece">
+									<option value={selectedData.typeOfPiece}>{selectedData.typeOfPiece?.name}</option>
+								</optgroup>
+							{/if}
+							<optgroup label="All type of Piece">
+								<option value={null}>None</option>
+								{#each listTypeOfPieces as typeOfPiece}
+									<option value={typeOfPiece}>{typeOfPiece.name}</option>
+								{/each}
+							</optgroup>
+						</select>
+					</div>
+				</div>
+
+				<div class="max-w-sm mx-auto">
+					<label for="piece-composer" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+						>*Composer</label
+					>
+					<select
+						bind:value={selectedData.composer}
+						id="piece-composer"
+						class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						required
+					>
+						{#if selectedData.composer !== null}
+							<optgroup label="Composer of the Piece">
+								<option value={selectedData.composer}>{selectedData.composer.longName}</option>
+							</optgroup>
+						{/if}
+						<optgroup label="All Composer">
+							<option value={null}>None</option>
+							{#each listComposers as composer}
+								<option value={composer}>{composer.longName}</option>
+							{/each}
+						</optgroup>
+					</select>
+				</div>
+
+				<p class="ms-auto text-xs text-gray-500 dark:text-gray-400">*Required to add or edit.</p>
+
+				<div class="flex p-2">
+					{#if selectedData.id == 0}
+						<button
+							type="submit"
+							class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+							>Add</button
+						>
+					{:else}
+						<button
+							type="submit"
+							class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
+							>Edit</button
+						>
+						<button
+							on:click={PopupdeletePiece}
+							type="button"
+							class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+							>Delete</button
+						>
+					{/if}
+				</div>
+			</form>
+		{/if}
 
 		{#if dataHolder}
 			<SimpleFilterer
@@ -723,5 +688,5 @@
 				bind:selectedData
 			></SimpleFilterer>
 		{/if}
-    </div>
+	</div>
 </div>
