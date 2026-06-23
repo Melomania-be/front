@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { afterUpdate, onMount } from 'svelte';
 
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import SimpleFilterer from '$lib/components/SimpleFilterer.svelte';
-	import { goto } from '$app/navigation';
+	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import type { TableData } from '$lib/types/TableData';
 	import type { Piece } from '$lib/types/Piece';
@@ -37,6 +37,15 @@
 	let urlComposerS: string = '/api/composers';
 	let urlTypeOfPieces: string = '/api/type_of_pieces';
 	let urlFolders: string = '/api/folders';
+<<<<<<< Updated upstream
+=======
+	let isProjectCreationFlow = false;
+	let isPieceCreationFlow = false;
+	let createMode = false;
+	let returnToUrl = '/projects/creation';
+	const PIECE_CREATION_DRAFT_KEY = 'pieceCreationDraft';
+	let pendingSelectedPiece: Partial<Piece> | null = null;
+>>>>>>> Stashed changes
 
 	let dataHolder: TableData<Piece>;
 
@@ -54,7 +63,126 @@
 		typeOfPieceId: null,
 		updatedAt: null,
 		yearOfComposition: null
+<<<<<<< Updated upstream
 	};
+=======
+	} as unknown as Piece;
+
+	function serializePieceDraft() {
+		return {
+			isOpen: selectedData !== null,
+			piece: selectedData
+				? {
+						...selectedData,
+						composerId: selectedData.composer?.id ?? null,
+						typeOfPieceId: selectedData.typeOfPiece?.id ?? null,
+						folderId: selectedData.folder?.id ?? null,
+						composer: null,
+						typeOfPiece: null,
+						folder: null
+					}
+				: null
+		};
+	}
+
+	function normalizePieceSelection(pieceDraft: Partial<Piece>) {
+		return {
+			...pieceDraft,
+			composer:
+				listComposers.find(
+					(composer) => Number(composer.id) === Number(pieceDraft.composerId)
+				) || null,
+			typeOfPiece:
+				listTypeOfPieces.find(
+					(typeOfPiece) => Number(typeOfPiece.id) === Number(pieceDraft.typeOfPieceId)
+				) || null,
+			folder:
+				folderList.find((folder) => Number(folder.id) === Number(pieceDraft.folderId)) || null
+		} as Piece;
+	}
+
+	function persistPieceDraft() {
+		if (!browser) return;
+		const serializedDraft = JSON.stringify(serializePieceDraft());
+		window.sessionStorage.setItem(PIECE_CREATION_DRAFT_KEY, serializedDraft);
+		window.localStorage.setItem(PIECE_CREATION_DRAFT_KEY, serializedDraft);
+	}
+
+	function clearPieceDraft() {
+		if (!browser) return;
+		window.sessionStorage.removeItem(PIECE_CREATION_DRAFT_KEY);
+		window.localStorage.removeItem(PIECE_CREATION_DRAFT_KEY);
+	}
+
+	function restorePieceDraft() {
+		if (!browser) return;
+		const rawDraft =
+			window.sessionStorage.getItem(PIECE_CREATION_DRAFT_KEY) ||
+			window.localStorage.getItem(PIECE_CREATION_DRAFT_KEY);
+		if (!rawDraft) return;
+
+		try {
+			const draft = JSON.parse(rawDraft);
+			if (!draft?.isOpen || !draft?.piece) {
+				selectedData = null;
+				return;
+			}
+
+			selectedData = normalizePieceSelection(draft.piece);
+		} catch (error) {
+			clearPieceDraft();
+		}
+	}
+
+	function buildCurrentPiecePageUrl() {
+		const params = new URLSearchParams();
+		if (createMode) params.set('create', '1');
+		if (isProjectCreationFlow) params.set('fromProjectCreation', '1');
+		if (returnToUrl) params.set('returnTo', returnToUrl);
+		if (selectedData !== null) {
+			params.set('selected', encodeURIComponent(JSON.stringify(serializePieceDraft().piece)));
+		}
+		return `/library/pieces${params.toString() ? `?${params.toString()}` : ''}`;
+	}
+
+	function openComposerCreationPage() {
+		if (!browser) return;
+		persistPieceDraft();
+		const params = new URLSearchParams({
+			create: '1',
+			fromPieceCreation: '1',
+			returnTo: buildCurrentPiecePageUrl()
+		});
+		goto(`/library/composers?${params.toString()}`);
+	}
+
+	function openTypeOfPieceCreationPage() {
+		if (!browser) return;
+		persistPieceDraft();
+		const params = new URLSearchParams({
+			create: '1',
+			fromPieceCreation: '1',
+			returnTo: buildCurrentPiecePageUrl()
+		});
+		goto(`/library/type_of_pieces?${params.toString()}`);
+	}
+
+	function updateProjectFlowUrls() {
+		if (!isProjectCreationFlow) return;
+
+		const flowParams = new URLSearchParams({
+			fromProjectCreation: '1',
+			returnTo: returnToUrl
+		});
+
+		if (createMode) {
+			flowParams.set('create', '1');
+		}
+
+		urlFront = `/library/pieces?${flowParams.toString()}`;
+		uniqueUrl = urlFront;
+	}
+>>>>>>> Stashed changes
 
     onMount(async () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -65,19 +193,62 @@
             order: urlParams.get('order') || options.order,
             orderBy: urlParams.get('orderBy') || options.orderBy
         };
+<<<<<<< Updated upstream
+=======
+		isProjectCreationFlow = urlParams.get('fromProjectCreation') === '1';
+		isPieceCreationFlow = urlParams.get('fromPieceCreation') === '1';
+		createMode = urlParams.get('create') === '1';
+		returnToUrl = urlParams.get('returnTo') || '/projects/creation';
+		updateProjectFlowUrls();
+>>>>>>> Stashed changes
 
         // Vérifier s'il y a un objet selected dans l'URL
         const selectedParam = urlParams.get('selected');
         if (selectedParam) {
             try {
-                selectedData = JSON.parse(decodeURIComponent(selectedParam));
+                pendingSelectedPiece = JSON.parse(decodeURIComponent(selectedParam));
+				selectedData = { ...pendingSelectedPiece } as Piece;
             } catch (e) {
                 console.error('Error parsing selected piece:', e);
             }
         }
 
+<<<<<<< Updated upstream
         fetchData();
+=======
+		if (createMode && !selectedData) {
+			selectedData = { ...newPiece };
+		}
+
+        await fetchData();
+		if (pendingSelectedPiece) {
+			selectedData = normalizePieceSelection(pendingSelectedPiece);
+			pendingSelectedPiece = null;
+		} else {
+			restorePieceDraft();
+		}
+>>>>>>> Stashed changes
     });
+
+	beforeNavigate((navigation) => {
+		if (!browser) return;
+		if (!navigation.to?.url) {
+			clearPieceDraft();
+			return;
+		}
+
+		const pathname = navigation.to.url.pathname;
+		const search = navigation.to.url.search;
+		if (pathname === '/library/pieces') return;
+		if (
+			(pathname === '/library/composers' || pathname === '/library/type_of_pieces') &&
+			new URLSearchParams(search).get('fromPieceCreation') === '1'
+		) {
+			persistPieceDraft();
+			return;
+		}
+		clearPieceDraft();
+	});
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -95,7 +266,7 @@
 
 		const responseHandler = new ResponseHandlerClient();
 
-		responseHandler.handle(response, async () => {
+		await responseHandler.handle(response, async () => {
 			const data = await response.json();
 
 			piece = data.data;
@@ -116,7 +287,7 @@
 
 		const responseHandlerComposer = new ResponseHandlerClient();
 
-		responseHandlerComposer.handle(responseComposer, async () => {
+		await responseHandlerComposer.handle(responseComposer, async () => {
 			const data = await responseComposer.json();
 
 			listComposers = data.data;
@@ -129,7 +300,7 @@
 
 		const responseHandlerTypeOfPieces = new ResponseHandlerClient();
 
-		responseHandlerTypeOfPieces.handle(responseTypeOfPieces, async () => {
+		await responseHandlerTypeOfPieces.handle(responseTypeOfPieces, async () => {
 			const data = await responseTypeOfPieces.json();
 
 			listTypeOfPieces = data.data;
@@ -142,7 +313,7 @@
 
 		const responseHandlerFolders = new ResponseHandlerClient();
 
-		responseHandlerFolders.handle(responseFolders, async () => {
+		await responseHandlerFolders.handle(responseFolders, async () => {
 			const data = await responseFolders.json();
 
 			folderList = data;
@@ -195,6 +366,18 @@
 			errorEvent(response);
 
 			if (response.ok) {
+<<<<<<< Updated upstream
+=======
+				await response.json();
+				if ((isProjectCreationFlow || isPieceCreationFlow) && data.id === undefined) {
+					clearPieceDraft();
+					await fetchData();
+					selectedData = { ...newPiece };
+					return;
+				}
+
+				clearPieceDraft();
+>>>>>>> Stashed changes
 				window.location.reload();
 			}
 		}
@@ -236,17 +419,66 @@
 			window.location.reload();
 		}
 	}
+
+	afterUpdate(() => {
+		if (browser) {
+			persistPieceDraft();
+		}
+	});
 </script>
 
 <div class="responsive-container">
     <div class="w-full">
+<<<<<<< Updated upstream
+=======
+		{#if isProjectCreationFlow}
+			<div class="mb-4 flex justify-end pr-2 pt-2">
+				<button
+					type="button"
+					class="rounded-lg bg-[#6B9AD9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f7cb7]"
+					on:click={() => goto(returnToUrl)}
+				>
+					Back to project creation
+				</button>
+			</div>
+		{/if}
+		{#if isPieceCreationFlow}
+			<div class="mb-4 flex justify-end pr-2 pt-2">
+				<button
+					type="button"
+					class="rounded-lg bg-[#6B9AD9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f7cb7]"
+					on:click={() => goto(returnToUrl)}
+				>
+					Back to piece creation
+				</button>
+			</div>
+		{/if}
+>>>>>>> Stashed changes
         <div class="w-full">
-            <button
-                on:click={() => (selectedData = newPiece)}
-                class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200"
-            >
-                Add new piece
-            </button>
+			<div class="flex flex-col items-start">
+				<button
+					on:click={() => (selectedData = newPiece)}
+					class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200"
+				>
+					Add new piece
+				</button>
+				{#if selectedData != null}
+					<button
+						type="button"
+						class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200"
+						on:click={openTypeOfPieceCreationPage}
+					>
+						Add new type of piece
+					</button>
+					<button
+						type="button"
+						class="m-1 p-1 rounded-full border border-blue-700 hover:bg-slate-200"
+						on:click={openComposerCreationPage}
+					>
+						Add new composer
+					</button>
+				{/if}
+			</div>
         </div>
 
         {#if selectedData != null}
