@@ -1,10 +1,52 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+import { onMount } from 'svelte';
 
+let interactions = [];
+let interactionDate =
+	new Date().toISOString().split('T')[0];
+
+let interactionDescription = '';
 	export let data;
 
 	const contractor = data.contractor;
+onMount(async () => {
+	const response = await fetch(
+		`/api/contractor-interaction/${contractor.id}`
+	);
 
+	if (response.ok) {
+		interactions = await response.json();
+	}
+});
+async function addInteraction() {
+	const response = await fetch(
+		'/api/contractor-interaction',
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				contractor_contact_id: contractor.id,
+				interaction_date: interactionDate,
+				description: interactionDescription
+			})
+		}
+	);
+
+	if (!response.ok) {
+		alert('Failed to create interaction');
+		return;
+	}
+
+	const interaction = await response.json();
+
+	interactions = [interaction, ...interactions];
+
+	interactionDate = '';
+	interactionDescription = '';
+}
 	async function deleteContractor() {
 		const confirmed = confirm(
 			`Delete ${contractor.firstName} ${contractor.lastName}?`
@@ -143,5 +185,81 @@
 		</div>
 
 	</div>
+	<div class="bg-white rounded-xl shadow border p-6 mt-6">
+
+	<h2 class="text-xl font-semibold mb-4">
+		Interaction History
+	</h2>
+
+	<!-- Add Interaction Form -->
+
+	<div class="border rounded-lg p-4 mb-4 bg-gray-50">
+
+		<div class="mb-3">
+
+			<label class="block mb-1 font-medium">
+				Date
+			</label>
+
+			<input
+				type="date"
+				bind:value={interactionDate}
+				class="border rounded p-2 w-full"
+			/>
+
+		</div>
+
+		<div class="mb-3">
+
+			<label class="block mb-1 font-medium">
+				Description
+			</label>
+
+			<textarea
+				rows="4"
+				bind:value={interactionDescription}
+				class="border rounded p-2 w-full"
+			></textarea>
+
+		</div>
+
+		<button
+			class="bg-blue-600 text-white px-4 py-2 rounded"
+			on:click={addInteraction}
+		>
+			Add Interaction
+		</button>
+
+	</div>
+
+	<!-- Interaction List -->
+
+	{#if interactions.length === 0}
+
+		<p class="text-gray-500">
+			No interactions recorded.
+		</p>
+
+	{:else}
+
+		{#each interactions as interaction}
+
+			<div class="border rounded-lg p-3 mb-3">
+
+				<div class="font-semibold text-sm text-gray-600">
+					{interaction.interactionDate}
+				</div>
+
+				<div class="mt-2">
+					{interaction.description}
+				</div>
+
+			</div>
+
+		{/each}
+
+	{/if}
+
+</div>
 
 </div>
