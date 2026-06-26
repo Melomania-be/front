@@ -30,13 +30,13 @@
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
 		fetchData();
 	});
@@ -78,6 +78,12 @@
 			shownProjects = allProjects;
 			shownProjectsArray = 'allProjects';
 		});
+	}
+
+	function getPendingRegistrationsCount(project: Project) {
+		const participants = project.participants as Array<{ accepted?: boolean }> | undefined;
+
+		return participants?.filter((participant) => participant.accepted === false).length || 0;
 	}
 </script>
 
@@ -138,10 +144,10 @@
 				<div
 					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mb-1"
 				>
-					<SimpleFilterer 
-						showData={false} 
-						bind:data={group} 
-						bind:meta 
+					<SimpleFilterer
+						showData={false}
+						bind:data={group}
+						bind:meta
 						bind:options
 						on:optionsUpdated={() => fetchData()}
 					>
@@ -150,15 +156,28 @@
 								<div
 									class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-200 focus:ring-gray-100 cursor-pointer"
 								>
-									<a href={`/projects/${project.id}/management`}>
-										<h2 class="text-sm">{project.name}</h2>
+									<a href={`/projects/${project.id}/management`} class="block p-3">
+										<div class="flex flex-wrap items-start justify-between gap-2">
+											<h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+												{project.name}
+											</h2>
+											{#if getPendingRegistrationsCount(project) > 0}
+												<span
+													class="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+												>
+													{getPendingRegistrationsCount(project)}
+													new registration{getPendingRegistrationsCount(project) > 1 ? 's' : ''}
+												</span>
+											{/if}
+										</div>
 										<ul class="text-sm">
 											{#each project.concerts as concert}
-												<DateShow 
-												startTime={concert.startDate}
-			                                    endTime={concert.endDate}
-			                                    withDate={true}
-			                                    withTime={true} />
+												<DateShow
+													startTime={concert.startDate}
+													endTime={concert.endDate}
+													withDate={true}
+													withTime={true}
+												/>
 												- {concert.place}
 											{/each}
 										</ul>
