@@ -138,6 +138,7 @@
         faFolderTree,
         faMusic,
         faGuitar,
+        faCog,
         faSignOutAlt
     } from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
@@ -154,6 +155,7 @@
         { icon: faFolderTree, text: 'Files', href: '/files' },
         { icon: faMusic, text: 'Composer and pieces', href: '/library' },
         { icon: faGuitar, text: 'Sections and instruments', href: '/sectionGroups' },
+        { icon: faCog, text: 'Settings', href: '/settings' },
         { icon: faSignOutAlt, text: 'Log out', href: '/api/sign_out' }
     ];
 
