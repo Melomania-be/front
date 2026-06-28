@@ -13,7 +13,7 @@
 			<tr>
 				<th scope="col" class="px-4 py-3">Link</th>
 				<th scope="col" class="px-4 py-3">Infos</th>
-				<th scope="col" class="px-4 py-3">Action</th>
+				<th scope="col" class="px-2 py-3 sm:px-4">Action</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -27,10 +27,10 @@
 					</a>
 				</th>
 				<td class="px-4 py-4">{data.numberContact} contacts</td>
-				<th>
+				<th class="px-2 py-4 sm:px-4">
 					<a
 						href="/contacts/create"
-						class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+						class="inline-flex whitespace-nowrap text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-[11px] sm:text-sm px-2.5 sm:px-5 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
 					>
 						Create new contact
 					</a>
@@ -46,7 +46,7 @@
 					</a>
 				</th>
 				<td class="px-4 py-4">{data.numberListe} Lists</td>
-				<th>
+				<th class="px-2 py-4 sm:px-4">
 					<a
 						href="/contacts/lists/create"
 						class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
@@ -70,6 +70,7 @@
 					</span>
 					<span class="ml-2">to validate</span>
 				</td>
+				<td class="px-2 py-4 sm:px-4"></td>
 			</tr>
 			<tr class="border-b border-gray-200 dark:border-gray-700">
 				<th scope="row" class="px-4 py-4 font-medium text-blue-600 dark:text-blue-500 hover:underline">
@@ -86,6 +87,7 @@
 					</span>
 					<span class="ml-2">recommended</span>
 				</td>
+				<td class="px-2 py-4 sm:px-4"></td>
 			</tr>
 		</tbody>
 	</table>

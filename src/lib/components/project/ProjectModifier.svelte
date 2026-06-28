@@ -674,9 +674,9 @@
 								</button>
 							</div>
 						{/if}
-						<div class="flex gap-4 items-end">
-							<div class="flex-1 ">
-								<h4 class="text-lg top-0 text-center bg-white">Available <br> pieces</h4>
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 items-stretch">
+							<div class="w-full">
+								<h4 class="text-lg top-0 text-center bg-white">Available pieces</h4>
 								{#if allPieces.length === 0}
 									<p>No pieces available</p>
 								{:else}
@@ -694,8 +694,8 @@
 									</section>
 								{/if}
 							</div>
-							<div class="flex-1 mt-4 md:mt-0">
-								<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
+							<div class="w-full">
+								<h4 class="text-lg top-0 text-center bg-white">Selected pieces (ordered)</h4>
 								<section
 									bind:this={selectedPiecesContainer}
 									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
