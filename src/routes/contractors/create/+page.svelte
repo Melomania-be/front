@@ -31,6 +31,8 @@ let phone2 = '';
 let phone3 = '';
 
 let comments = '';
+let newCategory = '';
+let showNewCategory = false;
 
 	async function saveContractor() {
 		const response = await fetch('/api/contractor', {
@@ -63,6 +65,33 @@ let comments = '';
 			alert('Error creating contractor');
 		}
 	}
+	async function createCategory() {
+	const response = await fetch('/api/contractor-category', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			name: newCategory
+		})
+	});
+
+	if (response.ok) {
+		const category = await response.json();
+
+		categories = [...categories, category];
+
+		selectedCategories = [
+			...selectedCategories,
+			category.id
+		];
+
+		newCategory = '';
+		showNewCategory = false;
+	} else {
+		alert('Failed to create category');
+	}
+}
 </script>
 
 <h1 class="text-2xl font-bold mb-4">
@@ -182,8 +211,40 @@ let comments = '';
 			</label>
 
 		{/each}
+<div class="mt-4">
+
+	<button
+		type="button"
+		class="text-blue-600 hover:underline"
+		on:click={() => (showNewCategory = !showNewCategory)}
+	>
+		+ Add new category
+	</button>
+
+</div>
+{#if showNewCategory}
+
+	<div class="mt-3 flex gap-2">
+
+		<input
+			class="border rounded p-2 flex-1"
+			placeholder="Category name"
+			bind:value={newCategory}
+		/>
+
+		<button
+			type="button"
+			class="bg-green-600 text-white px-4 rounded"
+			on:click={createCategory}
+		>
+			Save
+		</button>
 
 	</div>
+
+{/if}
+	</div>
+	
 </div>
 <div class="mb-4">
 	<label class="block mb-1">Comments</label>

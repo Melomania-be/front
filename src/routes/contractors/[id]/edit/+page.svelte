@@ -13,7 +13,8 @@ let email3 = data.contractor.email3 ?? '';
 let phone1 = data.contractor.phone1 ?? '';
 let phone2 = data.contractor.phone2 ?? '';
 let phone3 = data.contractor.phone3 ?? '';
-
+let newCategory = '';
+let showNewCategory = false;
 let comments = data.contractor.comments ?? '';
 	let organizations: any[] = [];
 	let categories: any[] = [];
@@ -187,7 +188,36 @@ if (categoryResponse.ok) {
 		</label>
 
 	{/each}
+<div class="mt-4">
+	<button
+		type="button"
+		class="text-blue-600 hover:underline"
+		on:click={() => (showNewCategory = !showNewCategory)}
+	>
+		+ Add new category
+	</button>
+</div>
+{#if showNewCategory}
 
+	<div class="mt-3 flex gap-2">
+
+		<input
+			class="border rounded p-2 flex-1"
+			placeholder="Category name"
+			bind:value={newCategory}
+		/>
+
+		<button
+			type="button"
+			class="bg-green-600 text-white px-4 rounded"
+			on:click={createCategory}
+		>
+			Save
+		</button>
+
+	</div>
+
+{/if}
 </div>
 </div>
 <div class="mb-4">
