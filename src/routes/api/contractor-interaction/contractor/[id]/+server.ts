@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({
 	params
 }) => {
 	const res = await fetch(
-		`${API_URL}/contractor-interaction/${params.contractorId}`,
+		`${API_URL}/contractor-interaction/${params.id}`,
 		{
 			method: 'GET',
 			headers: {
@@ -30,7 +30,7 @@ export const PUT: RequestHandler = async ({
 	const data = await request.json();
 
 	const res = await fetch(
-		`${API_URL}/contractor-interaction/${params.contractorId}`,
+		`${API_URL}/contractor-interaction/${params.id}`,
 		{
 			method: 'PUT',
 			headers: {
@@ -50,7 +50,7 @@ export const DELETE: RequestHandler = async ({
 	params
 }) => {
 	const res = await fetch(
-		`${API_URL}/contractor-interaction/${params.contractorId}`,
+		`${API_URL}/contractor-interaction/${params.id}`,
 		{
 			method: 'DELETE',
 			headers: {

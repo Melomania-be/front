@@ -3,16 +3,18 @@
 import { onMount } from 'svelte';
 
 let interactions = [];
+let selectedFiles: Record<number, File | null> = {};
+let uploading: Record<number, boolean> = {};
 let interactionDate =
 	new Date().toISOString().split('T')[0];
 
 let interactionDescription = '';
 	export let data;
 
-	const contractor = data.contractor;
+const contractor = data.contractor;
 onMount(async () => {
 	const response = await fetch(
-		`/api/contractor-interaction/${contractor.id}`
+		`/api/contractor-interaction/contractor/${contractor.id}`
 	);
 
 	if (response.ok) {
@@ -47,6 +49,68 @@ async function addInteraction() {
 	interactionDate = '';
 	interactionDescription = '';
 }
+async function deleteInteraction(id: number) {
+	const confirmed = confirm('Delete this interaction?');
+
+	if (!confirmed) return;
+
+	const response = await fetch(
+		`/api/contractor-interaction/${id}`,
+		{
+			method: 'DELETE'
+		}
+	);
+
+	if (response.ok) {
+		interactions = interactions.filter(
+			(interaction) => interaction.id !== id
+		);
+	} else {
+		alert('Failed to delete interaction');
+	}
+}
+
+async function uploadInteractionFile(interactionId: number) {
+	const file = selectedFiles[interactionId];
+
+	if (!file) {
+		alert('Please select a file.');
+		return;
+	}
+
+	uploading[interactionId] = true;
+
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await fetch(
+		`/api/contractor-interaction/${interactionId}/upload`,
+		{
+			method: 'POST',
+			body: formData
+		}
+	);
+
+	uploading[interactionId] = false;
+
+	if (!response.ok) {
+		alert('Upload failed.');
+		return;
+	}
+
+	// reload interactions
+	const res = await fetch(
+		`/api/contractor-interaction/contractor/${contractor.id}`
+	);
+
+	if (res.ok) {
+		interactions = await res.json();
+		console.log(interactions);
+	}
+
+	selectedFiles[interactionId] = null;
+}
+
 	async function deleteContractor() {
 		const confirmed = confirm(
 			`Delete ${contractor.firstName} ${contractor.lastName}?`
@@ -244,17 +308,88 @@ async function addInteraction() {
 
 		{#each interactions as interaction}
 
-			<div class="border rounded-lg p-3 mb-3">
+			<div class="flex justify-between items-center">
 
-				<div class="font-semibold text-sm text-gray-600">
-					{interaction.interactionDate}
-				</div>
+	<div class="font-semibold text-sm text-gray-600">
+		{interaction.interactionDate}
+	</div>
 
-				<div class="mt-2">
-					{interaction.description}
-				</div>
+	<button
+		class="text-red-600 hover:underline text-sm"
+		on:click={() => deleteInteraction(interaction.id)}
+	>
+		Delete
+	</button>
 
-			</div>
+</div>
+
+<div class="mt-2">
+	{interaction.description}
+</div>
+
+{#if interaction.files?.length}
+
+	<div class="mt-3 space-y-2">
+
+		{#each interaction.files as attachment}
+<p>{attachment.file.type}</p>
+	{#if attachment.file.type === 'image'}
+
+		<a
+			href={`/api/contractor-interaction/file/${attachment.file.path.split('\\').pop()}`}
+			target="_blank"
+		>
+			<img
+				src={`/api/contractor-interaction/file/${attachment.file.path.split('\\').pop()}`}
+				alt={attachment.file.name}
+				class="mt-2 w-40 rounded-lg border shadow hover:opacity-90 cursor-pointer"
+			/>
+		</a>
+
+	{:else}
+
+		<a
+			href={`/api/contractor-interaction/file/${attachment.file.path.split('\\').pop()}`}
+			target="_blank"
+			class="text-blue-600 hover:underline"
+		>
+			📎 {attachment.file.name}
+		</a>
+
+	{/if}
+
+{/each}
+
+	</div>
+
+{/if}
+
+<div class="mt-3 flex items-center gap-3">
+
+	<input
+		type="file"
+		on:change={(e) => {
+			const files = e.currentTarget.files;
+
+			selectedFiles[interaction.id] =
+				files && files.length
+					? files[0]
+					: null;
+		}}
+	/>
+
+	<button
+		class="bg-green-600 text-white px-3 py-1 rounded"
+		disabled={uploading[interaction.id]}
+		on:click={() =>
+			uploadInteractionFile(interaction.id)}
+	>
+		{uploading[interaction.id]
+			? 'Uploading...'
+			: 'Upload file'}
+	</button>
+
+</div>
 
 		{/each}
 
