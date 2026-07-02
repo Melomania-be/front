@@ -15,6 +15,7 @@
 		faUsers,
 		faWallet,
 		faUserPlus,
+		faListCheck,
 		type IconDefinition,
 		faEllipsis
 	} from '@fortawesome/free-solid-svg-icons';
@@ -34,6 +35,7 @@
 	let auditionsUrl: string;
 	let accountingUrl: string;
 	let recruitmentUrl: string;
+	let tasksUrl: string;
 
 	let participantNotValidated: number = 0;
 
@@ -57,7 +59,8 @@
 		{ url: '', name: 'Attendances', icon: faCalendarCheck, notifications: 0, num: 4 },
 		{ url: '', name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
 		{ url: '', name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
-		{ url: '', name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+		{ url: '', name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 },
+		{ url: '', name: 'Tasks', icon: faListCheck, notifications: 0, num: 8 }
 	];
 
 	$: if (project) {
@@ -69,6 +72,7 @@
 		auditionsUrl = `/projects/${project.id}/management/auditions`;
 		accountingUrl = `/projects/${project.id}/management/accounting`;
 		recruitmentUrl = `/projects/${project.id}/management/recruitment`;
+		tasksUrl = `/projects/${project.id}/management/tasks`;
 
 		participantNotValidated = 0;
 
@@ -106,7 +110,8 @@
 			},
 			{ url: auditionsUrl, name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
 			{ url: accountingUrl, name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
-			{ url: recruitmentUrl, name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+			{ url: recruitmentUrl, name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 },
+			{ url: tasksUrl, name: 'Tasks', icon: faListCheck, notifications: 0, num: 8 }
 		];
 	}
 
@@ -152,13 +157,13 @@
 	}
 
 	function formatTimestamp(value: string | Date) {
-	    return new Date(value).toLocaleDateString('en-GB', {
-		    weekday: 'long',
-		    day: 'numeric',
-		    month: 'long',
-		    year: 'numeric'
-	    });
-    }
+		return new Date(value).toLocaleDateString('en-GB', {
+			weekday: 'long',
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric'
+		});
+	}
 </script>
 
 <div class="bg-white">
@@ -172,17 +177,11 @@
 					class="ml-4 inline-flex items-center px-3 py-1 mt-1 text-sm text-gray-400 border-[1.5px] rounded-lg"
 				>
 					<div class="">
-						<p>
-							Created at: {formatTimestamp(project.createdAt)} 
-						</p>
-
-						<p>
-							Updated at: {formatTimestamp(project.updatedAt)}
-						</p>
-
+						<p>Created at: {formatTimestamp(project.createdAt)}</p>
+						<p>Updated at: {formatTimestamp(project.updatedAt)}</p>
 					</div>
 				</div>
-				<a
+				
 					href="/projects/{project.id}/management/modify"
 					class="ml-auto mr-4 h-[50%] inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800"
 				>
@@ -275,19 +274,15 @@
 				>
 					<div class="">
 						<p>
-							Created at : {#if project}<DateShow startTime={project.createdAt} />{:else}
-								-
-							{/if}
+							Created at : {#if project}<DateShow startTime={project.createdAt} />{:else}-{/if}
 						</p>
 						<p>
-							Updated at : {#if project}<DateShow startTime={project.updatedAt} />{:else}
-								-
-							{/if}
+							Updated at : {#if project}<DateShow startTime={project.updatedAt} />{:else}-{/if}
 						</p>
 					</div>
 				</div>
 				{#if project}
-					<a
+					
 						href="/projects/{project.id}/management/modify"
 						class="ml-auto mt-auto flex items-center h-[40px] px-3 py-2 text-sm font-medium text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800"
 					>
