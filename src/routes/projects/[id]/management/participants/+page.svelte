@@ -17,6 +17,7 @@
 	import type { Form } from '$lib/types/Form';
 	import { jsPDF } from 'jspdf';
 	import autoTable from 'jspdf-autotable';
+    import { sortParticipantsBySection } from '$lib/utils/sectionOrder';
 	export let data;
 
 	let project: Project | undefined;
@@ -354,7 +355,17 @@
 		doc.setTextColor(0, 0, 0);
 
 		// Tableau des participants
-		const rows = participants.map((p) => {
+		// Ordre des sections depuis le section group du projet
+            const sectionOrderMap = new Map(
+                (project?.sectionGroup?.sections ?? []).map((s) => [s.name.trim(), s.pivot_order])
+            );
+            participants.forEach((p) => {
+                if (p.section) {
+                    p.section.pivot_order = sectionOrderMap.get(p.section.name?.trim());
+                }
+            });
+		    const sortedParticipants = sortParticipantsBySection(participants);
+		    const rows = sortedParticipants.map((p) => {
 			const sectionName = p.section?.name ?? '';
 			const sectionText = p.isSectionLeader ? `${sectionName} (section leader)` : sectionName;
 			return [
