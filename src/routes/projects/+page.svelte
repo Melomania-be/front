@@ -30,13 +30,13 @@
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
 
 		fetchData();
 	});
@@ -57,16 +57,18 @@
 
 		responseHandler.handle(response, async () => {
 			const data = await response.json();
+			const now = Date.now();
 
-			allProjects = data.data;
+			allProjects = sortProjectsByDate(data.data, now);
 			meta = data.meta;
 
-			passedProjects = allProjects.filter((project: Project) =>
-				project.concerts.every((concert: any) => new Date(concert.startDate) < new Date())
+			passedProjects = sortPassedProjects(
+				allProjects.filter((project: Project) => isPassedProject(project, now))
 			);
 
-			currentProjects = allProjects.filter((project: Project) =>
-				project.concerts.some((concert: any) => new Date(concert.startDate) >= new Date())
+			currentProjects = sortCurrentProjects(
+				allProjects.filter((project: Project) => isCurrentProject(project, now)),
+				now
 			);
 
 			group = {
@@ -77,6 +79,107 @@
 
 			shownProjects = allProjects;
 			shownProjectsArray = 'allProjects';
+		});
+	}
+
+	function getDateTime(date: Date | string | null | undefined) {
+		const time = new Date(date ?? '').getTime();
+
+		return Number.isNaN(time) ? null : time;
+	}
+
+	function getConcertTimes(project: Project) {
+		return project.concerts
+			.map((concert) => getDateTime(concert.startDate))
+			.filter((time): time is number => time !== null)
+			.sort((a, b) => a - b);
+	}
+
+	function isPassedProject(project: Project, now: number) {
+		return project.concerts.every((concert) => {
+			const concertTime = getDateTime(concert.startDate);
+
+			return concertTime !== null && concertTime < now;
+		});
+	}
+
+	function isCurrentProject(project: Project, now: number) {
+		return project.concerts.some((concert) => {
+			const concertTime = getDateTime(concert.startDate);
+
+			return concertTime !== null && concertTime >= now;
+		});
+	}
+
+	function getNextConcertTime(project: Project, now: number) {
+		return getConcertTimes(project).find((time) => time >= now) ?? null;
+	}
+
+	function getLastConcertTime(project: Project) {
+		const concertTimes = getConcertTimes(project);
+
+		return concertTimes.length > 0 ? concertTimes[concertTimes.length - 1] : null;
+	}
+
+	function compareProjectNames(projectA: Project, projectB: Project) {
+		return projectA.name.localeCompare(projectB.name);
+	}
+
+	function sortCurrentProjects(projects: Project[], now: number) {
+		return [...projects].sort((projectA, projectB) => {
+			const nextConcertA = getNextConcertTime(projectA, now);
+			const nextConcertB = getNextConcertTime(projectB, now);
+
+			if (nextConcertA !== null && nextConcertB !== null) {
+				return nextConcertA - nextConcertB || compareProjectNames(projectA, projectB);
+			}
+
+			if (nextConcertA !== null) return -1;
+			if (nextConcertB !== null) return 1;
+
+			return compareProjectNames(projectA, projectB);
+		});
+	}
+
+	function sortPassedProjects(projects: Project[]) {
+		return [...projects].sort((projectA, projectB) => {
+			const lastConcertA = getLastConcertTime(projectA);
+			const lastConcertB = getLastConcertTime(projectB);
+
+			if (lastConcertA !== null && lastConcertB !== null) {
+				return lastConcertB - lastConcertA || compareProjectNames(projectA, projectB);
+			}
+
+			if (lastConcertA !== null) return -1;
+			if (lastConcertB !== null) return 1;
+
+			return compareProjectNames(projectA, projectB);
+		});
+	}
+
+	function sortProjectsByDate(projects: Project[], now: number) {
+		return [...projects].sort((projectA, projectB) => {
+			const nextConcertA = getNextConcertTime(projectA, now);
+			const nextConcertB = getNextConcertTime(projectB, now);
+
+			if (nextConcertA !== null && nextConcertB !== null) {
+				return nextConcertA - nextConcertB || compareProjectNames(projectA, projectB);
+			}
+
+			if (nextConcertA !== null) return -1;
+			if (nextConcertB !== null) return 1;
+
+			const lastConcertA = getLastConcertTime(projectA);
+			const lastConcertB = getLastConcertTime(projectB);
+
+			if (lastConcertA !== null && lastConcertB !== null) {
+				return lastConcertB - lastConcertA || compareProjectNames(projectA, projectB);
+			}
+
+			if (lastConcertA !== null) return -1;
+			if (lastConcertB !== null) return 1;
+
+			return compareProjectNames(projectA, projectB);
 		});
 	}
 </script>
@@ -138,10 +241,10 @@
 				<div
 					class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 mb-1"
 				>
-					<SimpleFilterer 
-						showData={false} 
-						bind:data={group} 
-						bind:meta 
+					<SimpleFilterer
+						showData={false}
+						bind:data={group}
+						bind:meta
 						bind:options
 						on:optionsUpdated={() => fetchData()}
 					>
@@ -154,11 +257,12 @@
 										<h2 class="text-sm">{project.name}</h2>
 										<ul class="text-sm">
 											{#each project.concerts as concert}
-												<DateShow 
-												startTime={concert.startDate}
-			                                    endTime={concert.endDate}
-			                                    withDate={true}
-			                                    withTime={true} />
+												<DateShow
+													startTime={concert.startDate}
+													endTime={concert.endDate}
+													withDate={true}
+													withTime={true}
+												/>
 												- {concert.place}
 											{/each}
 										</ul>
