@@ -62,7 +62,11 @@
 		});
 
 		if (responseSectionsGroups.ok) {
-			sectionsGroups = await responseSectionsGroups.json();
+			const fetchedSectionGroups: SectionGroup[] = await responseSectionsGroups.json();
+			sectionsGroups = fetchedSectionGroups.map((group) => ({
+				...group,
+				sections: normalizeSectionOrder(group.sections || [])
+			}));
 		} else {
 			alert('Error loading section groups');
 		}
@@ -90,9 +94,12 @@
 
 	function openGroupPopup(group: SectionGroup | null = null) {
 		if (group) {
-			editingGroup = group;
+			const orderedSections = normalizeSectionOrder(group.sections || []);
+			editingGroup = { ...group, sections: orderedSections };
 			groupName = group.name;
-			selectedSections = group.sections?.map((s) => s.id).filter((id): id is number => id !== null && id !== undefined) || [];
+			selectedSections = orderedSections
+				.map((s) => s.id)
+				.filter((id): id is number => id !== null && id !== undefined);
 		} else {
 			editingGroup = null;
 			groupName = '';
@@ -106,7 +113,8 @@
 			editingSection = section;
 			sectionName = section.name;
 			sectionSize = section.size;
-			selectedInstruments = section.instruments?.map((i) => i.id).filter((id): id is number => id !== null) || [];
+			selectedInstruments =
+				section.instruments?.map((i) => i.id).filter((id): id is number => id !== null) || [];
 		} else {
 			editingSection = null;
 			sectionName = '';
@@ -129,15 +137,50 @@
 		popUpInstrument = true;
 	}
 
+	function normalizeSectionOrder(groupSections: Section[]) {
+		const indexedSections = groupSections.map((section, index) => ({ section, index }));
+		const hasExistingOrder = indexedSections.some(({ section }) => (section.pivot_order ?? 0) > 0);
+
+		const orderedSections = hasExistingOrder
+			? indexedSections.sort((sectionA, sectionB) => {
+					const orderA =
+						(sectionA.section.pivot_order ?? 0) > 0
+							? sectionA.section.pivot_order!
+							: Number.MAX_SAFE_INTEGER;
+					const orderB =
+						(sectionB.section.pivot_order ?? 0) > 0
+							? sectionB.section.pivot_order!
+							: Number.MAX_SAFE_INTEGER;
+
+					return orderA - orderB || sectionA.index - sectionB.index;
+				})
+			: indexedSections;
+
+		return orderedSections.map(({ section }, index) => ({
+			...section,
+			pivot_order: index + 1
+		}));
+	}
+
+	function getOrderedSelectedSections() {
+		return selectedSections
+			.map((sectionId) => {
+				return sections.find((section) => section.id === sectionId);
+			})
+			.filter((section): section is Section => section !== undefined)
+			.map((section, index) => ({
+				...section,
+				pivot_order: index + 1
+			}));
+	}
+
 	async function saveGroup() {
 		if (!groupName.trim()) {
 			alert('Please enter a group name');
 			return;
 		}
 
-		const selectedSectionObjects = sections.filter((s) =>
-			s.id !== null && s.id !== undefined && selectedSections.includes(s.id)
-		);
+		const selectedSectionObjects = getOrderedSelectedSections();
 
 		const payload = editingGroup
 			? { ...editingGroup, name: groupName, sections: selectedSectionObjects }
@@ -163,12 +206,17 @@
 			return;
 		}
 
-		const selectedInstrumentObjects = instruments.filter((i) =>
-			i.id !== null && i.id !== undefined && selectedInstruments.includes(i.id)
+		const selectedInstrumentObjects = instruments.filter(
+			(i) => i.id !== null && i.id !== undefined && selectedInstruments.includes(i.id)
 		);
 
 		const payload = editingSection
-			? { ...editingSection, name: sectionName, size: sectionSize, instruments: selectedInstrumentObjects }
+			? {
+					...editingSection,
+					name: sectionName,
+					size: sectionSize,
+					instruments: selectedInstrumentObjects
+				}
 			: { id: null, name: sectionName, size: sectionSize, instruments: selectedInstrumentObjects };
 
 		const response = await fetch(`/api/sections`, {
@@ -261,7 +309,7 @@
 		const payload = {
 			id: null,
 			name: group.name + ' (Copy)',
-			sections: group.sections
+			sections: normalizeSectionOrder(group.sections || [])
 		};
 
 		const response = await fetch(`/api/sectionGroups`, {
@@ -381,7 +429,9 @@
 							<div class="grid grid-cols-2 gap-2">
 								{#each sections as section}
 									{#if section.id !== null && section.id !== undefined}
-										<label class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+										<label
+											class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+										>
 											<input
 												type="checkbox"
 												checked={selectedSections.includes(section.id)}
@@ -464,7 +514,9 @@
 							<div class="grid grid-cols-2 gap-2">
 								{#each instruments as instrument}
 									{#if instrument.id !== null && instrument.id !== undefined}
-										<label class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+										<label
+											class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+										>
 											<input
 												type="checkbox"
 												checked={selectedInstruments.includes(instrument.id)}
@@ -557,8 +609,11 @@
 <!-- Main Content -->
 <div class="w-full min-h-screen p-4 bg-[#E7E7E7]">
 	<div class="mb-4">
-		<a href="/projects" class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2">
-			← Back to Projects
+		<a
+			href="/projects"
+			class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2"
+		>
+			&larr; Back to Projects
 		</a>
 	</div>
 
@@ -656,7 +711,9 @@
 							<tr class="border-b hover:bg-gray-50">
 								<td class="p-3 font-semibold text-gray-700">{section.name}</td>
 								<td class="p-3 text-center">
-									<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold flex items-center justify-center gap-1">
+									<span
+										class="bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold flex items-center justify-center gap-1"
+									>
 										<Fa icon={faUsers} class="text-[12px]" />
 										{section.size}
 									</span>
