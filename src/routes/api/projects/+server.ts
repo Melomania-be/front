@@ -1,42 +1,42 @@
-import { getToken } from '$lib/server/authentification';
-import { type RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
+import { getToken } from '$lib/server/authentification';
+import type { RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ cookies, fetch, url }) => {
-	const page = url.searchParams.get('page');
-	const limit = url.searchParams.get('limit');
-	const filter = url.searchParams.get('filter');
-	const orderBy = url.searchParams.get('orderBy');
-	const order = url.searchParams.get('order');
+export const GET: RequestHandler = async ({ cookies, url }) => {
+	const token = await getToken(cookies);
+	const projectId = url.searchParams.get('project_id');
 
-	const res = await fetch(
-		`${API_URL}/projects?limit=${limit}&page=${page}&filter=${filter}&orderBy=${orderBy}&order=${order}
-	`,
-		{
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application',
-				authorization: `${await getToken(cookies)}`
-			}
+	const response = await fetch(`${API_URL}/tasks?project_id=${projectId}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${token}`
 		}
-	);
+	});
 
-	return res;
+	const data = await response.json();
+	return new Response(JSON.stringify(data), {
+		status: response.status,
+		headers: { 'Content-Type': 'application/json' }
+	});
 };
 
-export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
-	const data = await request.json();
+export const POST: RequestHandler = async ({ cookies, request }) => {
+	const token = await getToken(cookies);
+	const body = await request.json();
 
-	console.log(data);
-
-	const res = await fetch(`${API_URL}/projects`, {
+	const response = await fetch(`${API_URL}/tasks`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			authorization: `${await getToken(cookies)}`
+			authorization: `${token}`
 		},
-		body: JSON.stringify(data)
+		body: JSON.stringify(body)
 	});
 
-	return res;
+	const data = await response.json();
+	return new Response(JSON.stringify(data), {
+		status: response.status,
+		headers: { 'Content-Type': 'application/json' }
+	});
 };

@@ -1,31 +1,37 @@
 import { API_URL } from '$env/static/private';
-import { StatusCodesRedirection } from '$lib/common/statusCodes';
 import { getToken } from '$lib/server/authentification';
-import { redirect, type RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
 
-export const DELETE: RequestHandler = async ({ cookies, params, fetch }) => {
-	const id = params.id;
+export const PUT: RequestHandler = async ({ cookies, request, params }) => {
+	const token = await getToken(cookies);
+	const body = await request.json();
 
-	const res = await fetch(`${API_URL}/projects/${id}`, {
-		method: 'DELETE',
-		headers: {
-			authorization: `${await getToken(cookies)}`
-		}
-	});
-
-	return res;
-};
-
-export const GET: RequestHandler = async ({ cookies, params, fetch }) => {
-	const id = params.id;
-
-	const response = await fetch(`${API_URL}/projects/${id}`, {
-		method: 'GET',
+	const response = await fetch(`${API_URL}/tasks/${params.id}`, {
+		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
-			authorization: `${await getToken(cookies)}`
+			authorization: `${token}`
+		},
+		body: JSON.stringify(body)
+	});
+
+	const data = await response.json();
+	return new Response(JSON.stringify(data), {
+		status: response.status,
+		headers: { 'Content-Type': 'application/json' }
+	});
+};
+
+export const DELETE: RequestHandler = async ({ cookies, params }) => {
+	const token = await getToken(cookies);
+
+	const response = await fetch(`${API_URL}/tasks/${params.id}`, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${token}`
 		}
 	});
 
-	return response;
+	return new Response(null, { status: response.status });
 };
