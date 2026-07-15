@@ -46,7 +46,7 @@ let selectedCategories: number[] =
 
 	comments,
 
-	organization_id: Number(organizationId),
+	organization_id: organizationId ? Number(organizationId) : null,
 	category_ids: selectedCategories
 })
 			}
@@ -72,7 +72,8 @@ if (categoryResponse.ok) {
 });
 </script>
 
-<h1 class="text-2xl font-bold mb-4">
+<div class="max-w-3xl mx-auto p-6">
+ <h1 class="text-2xl font-bold mb-6">
 	Edit Contractor
 </h1>
 
@@ -235,5 +236,6 @@ if (categoryResponse.ok) {
 	>
 		Save Changes
 	</button>
+</div>
 
 </div>
