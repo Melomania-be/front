@@ -24,9 +24,11 @@
 	let participants: Participant[] = [];
 	let participantNotValidated: number = 0;
 	let participantanswers: any;
-
+let contractorParticipants = [];
+let contractors = [];
 	let registration: Registration;
-
+let showAddContractor = false;
+let selectedContractorId: number | null = null;
 	let answers: any[] = [];
 
 	let meta: any = {};
@@ -81,6 +83,8 @@
 
 		await fetchProject();
 		await fetchData();
+		await fetchContractorParticipants();
+		await fetchContractors();
 		await fetchAccountingContact();
 		console.log(accountings)
 
@@ -184,6 +188,76 @@
 
 		accountings = await response.json();
 	}
+async function fetchContractorParticipants() {
+	const response = await fetch(
+		`/api/contractor-participant/project/${data.id}`
+	);
+
+	if (!response.ok) {
+		return;
+	}
+
+	contractorParticipants = await response.json();
+
+	console.log(contractorParticipants);
+}
+
+async function fetchContractors() {
+	const response = await fetch('/api/contractor');
+
+	if (!response.ok) {
+		return;
+	}
+
+	contractors = await response.json();
+
+	console.log(contractors);
+}
+
+async function addContractorParticipant() {
+	if (!selectedContractorId) return;
+
+	const response = await fetch('/api/contractor-participant', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			project_id: data.id,
+			contractor_contact_id: selectedContractorId
+		})
+	});
+
+	if (!response.ok) {
+		alert('Failed to add contractor.');
+		return;
+	}
+
+	await fetchContractorParticipants();
+
+	showAddContractor = false;
+	selectedContractorId = null;
+}
+
+async function deleteContractorParticipant(id: number) {
+	if (!confirm('Remove this contractor from the project?')) {
+		return;
+	}
+
+	const response = await fetch(
+		`/api/contractor-participant/${id}`,
+		{
+			method: 'DELETE'
+		}
+	);
+
+	if (!response.ok) {
+		alert('Failed to remove contractor.');
+		return;
+	}
+
+	await fetchContractorParticipants();
+}
 
 	async function fetchProject() {
 		if (!data?.id) return;
@@ -548,6 +622,116 @@
 					</table>
 				</div>
 			</SimpleFilterer>
+			<div class="mt-8 bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+	<div class="flex items-center justify-between mb-4">
+		<h1 class="font-bold text-lg">
+	CONTRACTOR PARTICIPANTS
+</h1>
+
+<button
+	class="bg-[#6B9AD9] text-white px-3 py-2 rounded-lg"
+	on:click={() => (showAddContractor = true)}
+>
+	Add contractor
+</button>
+	</div>
+
+	<table class="w-full text-left">
+		<thead class="border-b">
+			<tr>
+				<th class="py-2">First name</th>
+				<th class="py-2">Last name</th>
+				<th class="py-2">Payment</th>
+				<th></th>
+			</tr>
+		</thead>
+
+		<tbody>
+			{#each contractorParticipants as participant}
+				<tr class="border-b hover:bg-gray-100">
+					<td class="py-2">
+						{participant.contractor.firstName}
+					</td>
+
+					<td class="py-2">
+						{participant.contractor.lastName}
+					</td>
+
+					<td class="py-2 text-gray-500">
+						0 €
+					</td>
+					<td class="py-2 text-right">
+	<button
+		class="text-red-600 hover:underline"
+		on:click={() =>
+			deleteContractorParticipant(participant.id)}
+	>
+		Delete
+	</button>
+</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+</div>
+{#if showAddContractor}
+
+<div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+	<div class="bg-white rounded-lg p-6 w-[400px]">
+
+		<h2 class="font-bold text-xl mb-4">
+			Add contractor
+		</h2>
+
+		<select
+			class="w-full border rounded p-2"
+			bind:value={selectedContractorId}
+		>
+
+			<option value={null}>
+				Select contractor...
+			</option>
+
+			{#each contractors.filter(
+	(contractor) =>
+		!contractorParticipants.some(
+			(cp) => cp.contractorContactId === contractor.id
+		)
+) as contractor}
+
+				<option value={contractor.id}>
+
+					{contractor.firstName}
+					{contractor.lastName}
+
+				</option>
+
+			{/each}
+
+		</select>
+
+<div class="flex justify-end gap-3 mt-6">
+
+			<button
+				on:click={() => (showAddContractor = false)}
+			>
+				Cancel
+			</button>
+
+			<button
+				class="bg-[#6B9AD9] text-white px-3 py-2 rounded"
+				on:click={addContractorParticipant}
+			>
+				Add
+			</button>
+
+		</div>
+	</div>
+
+</div>
+
+{/if}
 		</div>
 	</div>
 

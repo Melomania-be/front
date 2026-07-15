@@ -37,6 +37,29 @@
 				</th>
 			</tr>
 			<tr class="border-b border-gray-200 dark:border-gray-700">
+	<th scope="row" class="px-4 py-4 font-medium text-blue-600 dark:text-blue-500 hover:underline">
+		<a
+			href="/contractors"
+			class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+		>
+			Contractor contacts
+		</a>
+	</th>
+
+	<td class="px-4 py-4">
+		External contacts database
+	</td>
+
+	<th>
+		<a
+			href="/contractors/create"
+			class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2"
+		>
+			Create contractor
+		</a>
+	</th>
+</tr>
+			<tr class="border-b border-gray-200 dark:border-gray-700">
 				<th scope="row" class="px-4 py-4 font-medium text-blue-600 dark:text-blue-500 hover:underline">
 					<a
 						href="/contacts/lists"
