@@ -704,6 +704,7 @@
 									>
 										{#each allPieces as piece}
 											<div
+												data-id={piece.id}
 												class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab"
 											>
 												{piece.name} - {piece.composer.shortName}
@@ -719,7 +720,7 @@
 									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
 								>
 									{#each selectedPieces as piece}
-										<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
+										<div data-id={piece.id} class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
 											{piece.name} - {piece.composer.shortName}
 										</div>
 									{/each}
