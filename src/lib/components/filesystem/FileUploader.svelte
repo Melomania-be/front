@@ -5,6 +5,9 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 
+	// IMPORT DU COMPOSANT BUTTON
+	import Button from '$lib/components/Button.svelte';
+
 	const dispatch = createEventDispatcher();
 
 	let files: FileList | null = null;
@@ -173,13 +176,13 @@
 						<p class="text-sm text-gray-600">Add files to your workspace</p>
 					</div>
 				</div>
-				<button
+				<Button
 					class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors"
 					on:click={cancel}
 					disabled={isUploading}
 				>
 					<X size={20} />
-				</button>
+				</Button>
 			</div>
 		</div>
 
@@ -190,10 +193,10 @@
 			<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-6">
 				<div
 					class="border-2 border-dashed rounded-[8px] p-8 text-center transition-colors {
-						dragActive
-							? 'border-[#6B9AD9] bg-blue-50'
-							: 'border-gray-300 hover:border-[#6B9AD9] hover:bg-gray-50'
-					}"
+       dragActive
+        ? 'border-[#6B9AD9] bg-blue-50'
+        : 'border-gray-300 hover:border-[#6B9AD9] hover:bg-gray-50'
+      }"
 					on:drop={handleDrop}
 					on:dragover={handleDragOver}
 					on:dragleave={handleDragLeave}
@@ -209,13 +212,13 @@
 					<p class="text-gray-500 mb-4">or</p>
 
 					<!-- ✅ DESIGN IDENTIQUE : Bouton principal même style -->
-					<button
+					<Button
 						class="px-6 py-3 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold"
 						on:click={() => fileInput.click()}
 						disabled={isUploading}
 					>
 						Browse Files
-					</button>
+					</Button>
 
 					<input
 						bind:this={fileInput}
@@ -236,13 +239,13 @@
 							<FileText class="text-[#6B9AD9]" size={20} />
 							SELECTED FILES ({selectedFiles.length})
 						</h2>
-						<button
+						<Button
 							class="text-sm text-gray-600 hover:text-red-600 transition-colors font-semibold"
 							on:click={() => selectedFiles = []}
 							disabled={isUploading}
 						>
 							Clear All
-						</button>
+						</Button>
 					</div>
 
 					<!-- ✅ FIX MOBILE : Hauteur max ajustée pour mobile -->
@@ -259,9 +262,9 @@
 										<div class="flex {isMobile ? 'flex-col gap-1' : 'items-center justify-between'} mb-2">
 											<h3 class="font-bold text-gray-900 truncate {isMobile ? 'text-sm' : ''}" title={file.name}>{file.name}</h3>
 											{#if !isMobile}
-												<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300">
-													{formatFileSize(file.size)}
-												</span>
+             <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-300">
+              {formatFileSize(file.size)}
+             </span>
 											{/if}
 										</div>
 
@@ -270,8 +273,8 @@
 											<div class="min-w-0">
 												<span class="font-medium text-gray-700">Type:</span>
 												<span class="text-gray-600 {isMobile ? 'ml-2' : 'block'} break-words">
-													{file.name.split('.').pop()?.toUpperCase() || 'FILE'}
-												</span>
+              {file.name.split('.').pop()?.toUpperCase() || 'FILE'}
+             </span>
 											</div>
 											{#if isMobile}
 												<div class="min-w-0">
@@ -284,14 +287,14 @@
 								</div>
 
 								<!-- ✅ DESIGN IDENTIQUE : Action button même style -->
-								<button
+								<Button
 									class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-300 transition-colors {isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}"
 									on:click={() => removeFile(index)}
 									disabled={isUploading}
 									title="Remove file"
 								>
 									<Trash2 size={16} />
-								</button>
+								</Button>
 							</div>
 						{/each}
 					</div>
@@ -313,16 +316,16 @@
 				</div>
 
 				<div class="flex {isMobile ? 'flex-col w-full gap-2' : 'gap-3'}">
-					<button
+					<Button
 						class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-colors font-semibold {isMobile ? 'w-full justify-center' : ''}"
 						on:click={cancel}
 						disabled={isUploading}
 					>
 						Cancel
-					</button>
+					</Button>
 
 					<!-- ✅ DESIGN IDENTIQUE : Upload button principal même style -->
-					<button
+					<Button
 						class="px-6 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold {isMobile ? 'w-full' : ''}"
 						disabled={selectedFiles.length === 0 || isUploading}
 						on:click={upload}
@@ -333,7 +336,7 @@
 							<Upload size={16} />
 						{/if}
 						Upload {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>
@@ -373,7 +376,7 @@
         }
 
         /* Improve touch targets on mobile */
-        button {
+        :global(button) {
             min-height: 44px;
         }
 
@@ -433,7 +436,7 @@
     }
 
     /* Smooth transitions for all interactive elements */
-    button, .group {
+    :global(button), .group {
         transition: all 200ms ease-in-out;
     }
 

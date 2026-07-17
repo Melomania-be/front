@@ -4,6 +4,9 @@
 	import { X, Upload, Search, Users, AlertTriangle, CheckCircle } from 'lucide-svelte'
 	import type { Contact } from '$lib/types'
 
+	// IMPORT DU COMPOSANT BUTTON
+	import Button from '$lib/components/Button.svelte';
+
 	export let projectId: string
 
 	const dispatch = createEventDispatcher()
@@ -195,12 +198,12 @@
 				<Upload class="text-[#6B9AD9]" size={24} />
 				<h2 class="text-xl font-semibold">Import Contacts</h2>
 			</div>
-			<button
+			<Button
 				on:click={closeModal}
 				class="text-gray-400 hover:text-gray-600 transition-colors"
 			>
 				<X size={24} />
-			</button>
+			</Button>
 		</div>
 
 		<!-- Content -->
@@ -224,7 +227,7 @@
 								on:keydown={(e) => e.key === 'Enter' && searchContacts()}
 							/>
 						</div>
-						<button
+						<Button
 							on:click={searchContacts}
 							disabled={searching}
 							class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4] disabled:opacity-50 flex items-center gap-2"
@@ -235,15 +238,15 @@
 								<Search size={16} />
 							{/if}
 							{searching ? 'Searching...' : 'Filter'}
-						</button>
+						</Button>
 
 						{#if searchQuery}
-							<button
+							<Button
 								on:click={resetSearch}
 								class="px-4 py-2 text-gray-600 hover:text-gray-800"
 							>
 								Reset
-							</button>
+							</Button>
 						{/if}
 					</div>
 				</div>
@@ -263,19 +266,19 @@
 
 							{#if searchResults.length > 0}
 								<div class="flex gap-2">
-									<button
+									<Button
 										on:click={selectAllSearchResults}
 										class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded"
 									>
 										Select all
-									</button>
+									</Button>
 									{#if selectedContacts.length > 0}
-										<button
+										<Button
 											on:click={clearSelection}
 											class="px-3 py-1 text-sm bg-red-200 hover:bg-red-300 rounded"
 										>
 											Deselect ({selectedContacts.length})
-										</button>
+										</Button>
 									{/if}
 								</div>
 							{/if}
@@ -359,7 +362,7 @@
 									These contacts will be added to your recruitment list with "Not yet contacted" status.
 								</p>
 							</div>
-							<button
+							<Button
 								on:click={importSelectedContacts}
 								disabled={importing}
 								class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
@@ -368,7 +371,7 @@
 									<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 								{/if}
 								{importing ? 'Importing...' : 'Import'}
-							</button>
+							</Button>
 						</div>
 					</div>
 				{/if}
@@ -448,22 +451,22 @@
 
 		<!-- Footer -->
 		<div class="flex justify-end gap-3 p-6 border-t bg-gray-50">
-			<button
+			<Button
 				type="button"
 				on:click={closeModal}
 				class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
 			>
 				{importResults ? 'Close' : 'Cancel'}
-			</button>
+			</Button>
 
 			{#if importResults}
-				<button
+				<Button
 					type="button"
 					on:click={resetSearch}
 					class="px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-[#5a9bb4]"
 				>
 					New import
-				</button>
+				</Button>
 			{/if}
 		</div>
 	</div>
