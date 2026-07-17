@@ -5,6 +5,9 @@
 	import type { Instrument } from '$lib/types/Instrument';
 	import DateShow from '../DateShow.svelte';
 
+	// IMPORT DU NOUVEAU COMPOSANT
+	import Button from '$lib/components/Button.svelte';
+
 	export let contact: Contact;
 	export let instruments: Array<Instrument>;
 	export let mode: 'modify' | 'create';
@@ -68,17 +71,17 @@
 >
 	{#if mode === 'modify'}
 		<div class="absolute top-0 right-0 p-1">
-			<button
+			<Button
 				on:click={() => (allowModification = !allowModification)}
 				class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
 			>
 				{#if !allowModification}
-					<span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"
-					></span>
+      <span class="icon-[tabler--edit]" style="width: 1.2rem; height: 1.2rem; color: black;"
+			></span>
 				{:else}
 					Stop editing
 				{/if}
-			</button>
+			</Button>
 		</div>
 	{/if}
 	<div class="p-5">
@@ -156,14 +159,14 @@
 						</th>
 						{#if allowModification}
 							<th>
-								<button
+								<Button
 									on:click={() => {
-											contact.instruments.splice(contact.instruments.indexOf(instrument), 1);
-											allowModification = !allowModification;
-											allowModification = !allowModification;
-										}}
+            contact.instruments.splice(contact.instruments.indexOf(instrument), 1);
+            allowModification = !allowModification;
+            allowModification = !allowModification;
+           }}
 									class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
-								>Delete</button
+								>Delete</Button
 								>
 							</th>
 						{:else}
@@ -198,13 +201,13 @@
 							</select></th
 						>
 						<th>
-							<button
+							<Button
 								class="text-blue-700 hover:text-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:text-blue-500 dark:hover:text-blue-600 dark:focus:ring-blue-800"
 								on:click={() => {
-										contact.instruments.push(addInstrument);
-										allowModification = !allowModification;
-										allowModification = !allowModification;
-									}}>Add</button
+           contact.instruments.push(addInstrument);
+           allowModification = !allowModification;
+           allowModification = !allowModification;
+          }}>Add</Button
 							>
 						</th>
 					</tr>
@@ -245,19 +248,19 @@
 
 		{#if allowModification}
 			<div>
-				<button
+				<Button
 					on:click={modifyContact}
 					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
 				>
 					Save
-				</button>
+				</Button>
 				{#if mode == 'modify'}
-					<button
+					<Button
 						on:click={deleteContact}
 						class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
 					>
 						Delete
-					</button>
+					</Button>
 				{/if}
 			</div>
 		{/if}

@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="9bbabcf5-516e-4815-aabf-ed87e10db42e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/contact/ContactModifier.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/contact/ContactModifier.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/filesystem/FileUploader.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/filesystem/FileUploader.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsModal.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/recruitment/ImportContactsModal.svelte" afterDir="false" />
     </list>
@@ -93,7 +94,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "copilot.chat.legacySessionMetadata.migrated": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "refactor/button-component-part-2",
+    "git-widget-placeholder": "refactor/button-component-part-3",
     "last_opened_file_path": "C:/Users/total informatique/Desktop/front",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
