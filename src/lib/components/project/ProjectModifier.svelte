@@ -137,12 +137,19 @@
 			},
 			animation: 200,
 			sort: false,
+			forceFallback: true,
+			fallbackTolerance: 3,
+			delay: 50,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			onAdd: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				allPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				allPieces.splice(evt.oldIndex as number, 1);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = pieces.find(p => p.id === id);
+				if (item) {
+					allPieces.splice(evt.newIndex as number, 0, item);
+					allPieces = [...allPieces];
+					selectedPieces = selectedPieces.filter(p => p.id !== id);
+				}
 			}
 		});
 
@@ -153,17 +160,28 @@
 				pull: true
 			},
 			animation: 200,
+			forceFallback: true,
+			fallbackTolerance: 3,
+			delay: 50,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			onAdd: (evt: any) => {
-				const item = allPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				selectedPieces.splice(evt.oldIndex as number, 1);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = pieces.find(p => p.id === id);
+				if (item) {
+					selectedPieces.splice(evt.newIndex as number, 0, item);
+					selectedPieces = [...selectedPieces];
+					allPieces = allPieces.filter(p => p.id !== id);
+				}
 			},
 			onUpdate: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.oldIndex as number, 1);
-				selectedPieces.splice(evt.newIndex as number, 0, item);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = selectedPieces.find(p => p.id === id);
+				if (item) {
+					const temp = selectedPieces.filter(p => p.id !== id);
+					temp.splice(evt.newIndex as number, 0, item);
+					selectedPieces = temp;
+				}
 			}
 		});
 	}
@@ -686,6 +704,7 @@
 									>
 										{#each allPieces as piece}
 											<div
+												data-id={piece.id}
 												class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab"
 											>
 												{piece.name} - {piece.composer.shortName}
@@ -701,7 +720,7 @@
 									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
 								>
 									{#each selectedPieces as piece}
-										<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
+										<div data-id={piece.id} class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
 											{piece.name} - {piece.composer.shortName}
 										</div>
 									{/each}
