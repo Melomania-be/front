@@ -1,7 +1,5 @@
-<!--src/lib/components/callsheet/ProgramSection.svelte - Version simplifiée sans infos matériel-->
 <script lang="ts">
 	import type { Callsheet } from '$lib/types/Callsheet';
-	import Accordion from '$lib/components/Accordion.svelte';
 	import { Download, Music, FileText, Eye, AlertCircle, ChevronDown, ChevronRight } from 'lucide-svelte';
 	import FilePreview from '$lib/components/filesystem/FilePreview.svelte';
 
@@ -14,7 +12,6 @@
 	let expandedPieces = new Set<number>();
 	let searchQuery = '';
 
-	// Fonction utilitaire pour formater la taille des fichiers
 	function formatFileSize(bytes: number | null | undefined): string {
 		if (!bytes || bytes === 0) return '';
 		const k = 1024;
@@ -23,12 +20,11 @@
 		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 	}
 
-	// Fonction améliorée de téléchargement avec loading state
 	async function downloadFile(fileId: number, fileName: string) {
 		if (downloadingFiles.has(fileId)) return;
 
 		downloadingFiles.add(fileId);
-		downloadingFiles = downloadingFiles; // Force reactivity
+		downloadingFiles = downloadingFiles;
 		downloadErrors.delete(fileId);
 		downloadErrors = downloadErrors;
 
@@ -50,7 +46,7 @@
 			URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
-			downloadErrors.set(fileId, error.message);
+			downloadErrors.set(fileId, error instanceof Error ? error.message : 'Download failed');
 			downloadErrors = downloadErrors;
 		} finally {
 			downloadingFiles.delete(fileId);
@@ -88,8 +84,7 @@
 		}
 	}
 
-	// Toujours retourner la couleur grise pour les fichiers
-	function getFileColor(fileName: string) {
+	function getFileColor(_fileName: string) {
 		return 'text-gray-700 bg-gray-100 border-gray-300';
 	}
 
@@ -102,20 +97,15 @@
 		expandedPieces = new Set(expandedPieces);
 	}
 
-	// Filtrage par recherche
 	function filterFiles(files: any[], query: string) {
 		if (!query.trim()) return files;
-		return files.filter(file =>
-			file.name.toLowerCase().includes(query.toLowerCase())
-		);
+		return files.filter((file) => file.name.toLowerCase().includes(query.toLowerCase()));
 	}
 
-	// Obtenir les fichiers du matériel sélectionné pour une pièce depuis les données préchargées
 	function getSelectedMaterialFiles(piece: any): any[] {
 		return piece.selectedMaterial?.files || [];
 	}
 
-	// Auto-clear errors after 5 seconds
 	$: {
 		if (downloadErrors.size > 0) {
 			setTimeout(() => {
@@ -128,9 +118,7 @@
 
 <div class="mb-10 py-8">
 	<div class="text-center mb-6">
-		<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-2">
-			Program and Scores
-		</h2>
+		<h2 class="text-2xl font-bold text-slate-500 dark:text-white mb-2">Program and Scores</h2>
 		<p class="text-sm text-gray-600 dark:text-gray-400">
 			Access all musical materials and scores for this project
 		</p>
@@ -141,14 +129,13 @@
 			{#each callsheet.project.pieces as piece}
 				{@const selectedFiles = getSelectedMaterialFiles(piece)}
 				{@const filteredFiles = filterFiles(selectedFiles, searchQuery)}
-				{@const isExpanded = expandedPieces.has(piece.id)}
+				{@const isExpanded = expandedPieces.has(Number(piece.id))}
 
 				<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-					<!-- En-tête de la pièce - Focus sur la pièce uniquement -->
-					<div class="p-3 sm:p-2 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+					<div class="p-3 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
 						<button
-							class="w-full flex items-center justify-between text-left hover:bg-white hover:bg-opacity-50 rounded p-2 transition-colors"
-							on:click={() => togglePieceExpansion(piece.id)}
+							class="w-full flex flex-col gap-3 text-left hover:bg-white hover:bg-opacity-50 rounded p-2 transition-colors sm:flex-row sm:items-center sm:justify-between"
+							on:click={() => togglePieceExpansion(Number(piece.id))}
 						>
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center gap-3">
@@ -160,11 +147,10 @@
 										{/if}
 									</div>
 									<div class="flex-1 min-w-0">
-										<!-- Focus : Informations de la pièce uniquement -->
 										<h3 class="font-semibold text-lg text-gray-900 dark:text-white truncate">
 											{piece.name}
 										</h3>
-										<div class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1">
+										<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
 											<span>{piece.composer.shortName}</span>
 											{#if piece.opus}
 												<span>Op. {piece.opus}</span>
@@ -177,38 +163,33 @@
 								</div>
 							</div>
 
-							<!-- Simple : Juste le nombre de fichiers -->
-							<div class="flex items-center gap-2 text-sm flex-shrink-0">
+							<div class="flex w-full items-center justify-start gap-2 text-sm flex-shrink-0 sm:w-auto sm:justify-end">
 								{#if selectedFiles.length > 0}
 									<div class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
 										<FileText size={14} />
-										<span>{selectedFiles.length} fichier{selectedFiles.length !== 1 ? 's' : ''}</span>
+										<span>{selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}</span>
 									</div>
 								{:else}
 									<div class="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full">
 										<AlertCircle size={14} />
-										<span>Aucun fichier</span>
+										<span>No files</span>
 									</div>
 								{/if}
 							</div>
 						</button>
 					</div>
 
-					<!-- Contenu expandable -->
 					{#if isExpanded}
 						<div class="p-4">
 							{#if filteredFiles.length === 0}
 								<div class="text-center py-8">
 									<FileText class="mx-auto mb-4 text-gray-400" size={48} />
 									<p class="text-gray-500 dark:text-gray-400">
-										{searchQuery ? 'Aucun fichier ne correspond à votre recherche' : 'Aucun fichier disponible pour cette pièce'}
+										{searchQuery ? 'No files match your search' : 'No files available for this piece'}
 									</p>
-									<p class="text-sm text-gray-400 mt-2">
-										Sélectionnez un matériel dans la gestion des fichiers
-									</p>
+									<p class="text-sm text-gray-400 mt-2">Select a material in file management</p>
 								</div>
 							{:else}
-								<!-- Simple : Grille de fichiers avec couleur grise -->
 								<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 									{#each filteredFiles as file}
 										{@const isDownloading = downloadingFiles.has(file.id)}
@@ -276,12 +257,13 @@
 		<div class="text-center py-12">
 			<Music class="mx-auto mb-4 text-gray-400" size={64} />
 			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No pieces in this project</h3>
-			<p class="text-gray-500 dark:text-gray-400">Add pieces to the project to see materials and scores here.</p>
+			<p class="text-gray-500 dark:text-gray-400">
+				Add pieces to the project to see materials and scores here.
+			</p>
 		</div>
 	{/if}
 </div>
 
-<!-- File Preview Modal -->
 {#if showPreview && currentPreviewFile}
 	<FilePreview
 		fileId={currentPreviewFile.id}
@@ -295,13 +277,11 @@
 {/if}
 
 <style>
-    /* Transitions fluides */
-    .transition-all {
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+	.transition-all {
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
 
-    /* Amélioration des hover states */
-    .hover\:shadow-sm:hover {
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
+	.hover\:shadow-sm:hover {
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	}
 </style>

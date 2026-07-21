@@ -15,15 +15,12 @@
 	let loadingError = '';
 	let callsheetLoaded = false;
 
-	// Initialisation sécurisée des contenus
 	$: if (callsheet && !callsheet.contents) {
 		callsheet.contents = [];
 	}
 
-	// Compteur pour générer des IDs uniques pour les nouveaux contenus
 	let contentIdCounter = Math.max(...(callsheet?.contents?.map(c => c.id || 0) || [0])) + 1;
 
-	// Validation des champs requis
 	function validateCallsheet() {
 		const errors = [];
 
@@ -72,16 +69,16 @@
 				id: callsheet.id,
 				project_id: callsheet.projectId,
 				version: callsheet.version.trim(),
-				contents: (callsheet.contents || []).map((content) => {
+				contents: (callsheet.contents || []).map((content, index) => {
 					return {
 						id: content.id,
 						title: content.title.trim(),
-						text: content.text
+						text: content.text,
+						order: content.order ?? index,
+						position: content.position ?? 'below'
 					};
 				})
 			};
-
-			console.log('Saving callsheet:', tmpCallsheet);
 
 			const response = await fetch(`/api/projects/${callsheet.projectId}/management/callsheets`, {
 				method: 'POST',
@@ -140,9 +137,17 @@
 
 	onMount(async () => {
 		try {
-			const res = await fetch(`/api/folders`);
+			await fetch(`/api/folders`);
 		} catch (error) {
 			console.warn('Error loading folders:', error);
+		}
+
+		if (callsheet?.contents) {
+			callsheet.contents = callsheet.contents.map((content, index) => ({
+				...content,
+				order: content.order ?? index,
+				position: content.position ?? 'below'
+			}));
 		}
 	});
 
@@ -153,9 +158,7 @@
 		}
 
 		let confirmDelete = confirm('Are you sure you want to delete this callsheet?');
-		if (!confirmDelete) {
-			return;
-		}
+		if (!confirmDelete) return;
 
 		isLoading = true;
 		errorMessage = '';
@@ -163,9 +166,7 @@
 		try {
 			const response = await fetch(
 				`/api/projects/${callsheet.projectId}/management/callsheets/${callsheet.id}`,
-				{
-					method: 'DELETE'
-				}
+				{ method: 'DELETE' }
 			);
 
 			if (response.ok) {
@@ -210,15 +211,32 @@
 			text: '',
 			callsheet_id: 0,
 			id: contentIdCounter++,
+			order: callsheet.contents.length,
+			position: 'below',
 			createdAt: new Date(),
 			updatedAt: new Date()
 		};
 		callsheet.contents.push(newContent);
 		callsheet = callsheet;
 	}
+
+	function moveUp(index: number) {
+		if (!callsheet || index === 0) return;
+		const contents = [...callsheet.contents];
+		[contents[index - 1], contents[index]] = [contents[index], contents[index - 1]];
+		contents.forEach((c, i) => (c.order = i));
+		callsheet.contents = contents;
+	}
+
+	function moveDown(index: number) {
+		if (!callsheet || index === callsheet.contents.length - 1) return;
+		const contents = [...callsheet.contents];
+		[contents[index], contents[index + 1]] = [contents[index + 1], contents[index]];
+		contents.forEach((c, i) => (c.order = i));
+		callsheet.contents = contents;
+	}
 </script>
 
-<!-- Loading error handling -->
 {#if loadingError}
 	<div class="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900 dark:border-red-600 dark:text-red-300">
 		<div class="flex items-center gap-2">
@@ -239,9 +257,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 min-h-screen bg-[#E7E7E7]">
 	{#if callsheet}
-		<div
-			class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
-		>
+		<div class="m-1 relative max-w-xxl bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
 			{#if mode === 'modify'}
 				<div class="absolute top-0 right-0 p-1">
 					<button
@@ -331,12 +347,46 @@
 					{/if}
 					<div>
 						{#if callsheet.contents && callsheet.contents.length > 0}
-							{#each callsheet.contents as content (content.id || content)}
+							{#each callsheet.contents as content, index (content.id || content)}
 								<div class="grid grid-cols-1 gap-1 mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
+									<div class="flex items-center justify-between mb-1">
+										<span class="text-sm text-gray-500 font-semibold">Block {index + 1}</span>
+										{#if allowModification}
+											<div class="flex items-center gap-2">
+												<select
+													class="border border-gray-300 rounded text-sm p-1"
+													bind:value={content.position}
+												>
+													<option value="above">Above program & events</option>
+													<option value="below">Below program & events</option>
+												</select>
+												<button
+													class="p-1 rounded hover:bg-gray-100 disabled:opacity-30"
+													on:click={() => moveUp(index)}
+													disabled={index === 0}
+												>
+													▲
+												</button>
+												<button
+													class="p-1 rounded hover:bg-gray-100 disabled:opacity-30"
+													on:click={() => moveDown(index)}
+													disabled={index === callsheet.contents.length - 1}
+												>
+													▼
+												</button>
+												<button
+													class="m-1 p-2 text-red-500 hover:text-red-700 disabled:opacity-50"
+													disabled={isLoading}
+													on:click={() => removeContent(content)}
+													aria-label="Delete this content"
+												>
+													<span class="icon-[tabler--trash]" style="width: 1.2rem; height: 1.2rem;"></span>
+												</button>
+											</div>
+										{/if}
+									</div>
 									<div class="flex items-center justify-center">
-										<label for="content-title-{content.id}" class="sr-only">
-											Content title
-										</label>
+										<label for="content-title-{content.id}" class="sr-only">Content title</label>
 										<input
 											id="content-title-{content.id}"
 											class={`border rounded px-3 py-2 flex-1 ${
@@ -349,19 +399,6 @@
 											bind:value={content.title}
 											disabled={!allowModification || isLoading}
 										/>
-										{#if allowModification}
-											<button
-												class="m-1 p-2 text-red-500 hover:text-red-700 disabled:opacity-50"
-												disabled={isLoading}
-												on:click={() => removeContent(content)}
-												aria-label="Delete this content"
-											>
-												<span
-													class="icon-[tabler--trash]"
-													style="width: 1.2rem; height: 1.2rem;"
-												></span>
-											</button>
-										{/if}
 									</div>
 									{#if allowModification && !isFieldValid(content.title)}
 										<p class="text-red-500 text-sm">Title is required</p>

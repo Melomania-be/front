@@ -404,6 +404,7 @@ async function uploadInteractionFile(interactionId: number) {
 
 </div>
 
+
 <div class="bg-white rounded-xl shadow border p-6 mt-6">
 	<h2 class="text-xl font-bold mb-4">Accounting</h2>
 
@@ -433,5 +434,4 @@ async function uploadInteractionFile(interactionId: number) {
 		</table>
 	{/if}
 </div>
-
 </div>
