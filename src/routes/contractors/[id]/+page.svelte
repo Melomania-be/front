@@ -3,6 +3,7 @@
 import { onMount } from 'svelte';
 
 let interactions = [];
+let accountings = [];
 let selectedFiles: Record<number, File | null> = {};
 let uploading: Record<number, boolean> = {};
 let interactionDate =
@@ -16,7 +17,13 @@ onMount(async () => {
 	const response = await fetch(
 		`/api/contractor-interaction/contractor/${contractor.id}`
 	);
+const accountingResponse = await fetch(
+    `/api/accounting/contractor/${contractor.id}`
+);
 
+if (accountingResponse.ok) {
+    accountings = await accountingResponse.json();
+}
 	if (response.ok) {
 		interactions = await response.json();
 	}
@@ -397,4 +404,34 @@ async function uploadInteractionFile(interactionId: number) {
 
 </div>
 
+
+<div class="bg-white rounded-xl shadow border p-6 mt-6">
+	<h2 class="text-xl font-bold mb-4">Accounting</h2>
+
+	{#if accountings.length === 0}
+		<p class="text-gray-500">No accounting entries.</p>
+	{:else}
+		<table class="w-full">
+			<thead>
+				<tr class="border-b">
+					<th class="text-left p-2">Name</th>
+					<th class="text-left p-2">Amount</th>
+					<th class="text-left p-2">Bill date</th>
+					<th class="text-left p-2">Payment date</th>
+				</tr>
+			</thead>
+
+			<tbody>
+				{#each accountings as accounting}
+					<tr class="border-b">
+						<td class="p-2">{accounting.name}</td>
+						<td class="p-2">{accounting.amount} €</td>
+						<td class="p-2">{accounting.billDate ?? '-'}</td>
+						<td class="p-2">{accounting.paymentDate ?? '-'}</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	{/if}
+</div>
 </div>

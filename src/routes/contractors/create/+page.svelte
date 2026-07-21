@@ -54,7 +54,7 @@ let showNewCategory = false;
 
 	comments,
 
-	organization_id: Number(organizationId),
+organization_id: organizationId ? Number(organizationId) : null,
 	category_ids: selectedCategories
 })
 		});
@@ -93,8 +93,8 @@ let showNewCategory = false;
 	}
 }
 </script>
-
-<h1 class="text-2xl font-bold mb-4">
+<div class="max-w-3xl mx-auto p-6">
+	<h1 class="text-2xl font-bold mb-6">
 	Create Contractor
 </h1>
 
