@@ -5,7 +5,8 @@
 	
 let categories: any[] = [];
 let selectedCategories: number[] = [];
-
+let newOrganization = '';
+let showNewOrganization = false;
 let organizations : any[] = [];
 let organizationId = '';
 onMount(async () => {
@@ -92,6 +93,30 @@ let showNewCategory = false;
 		alert('Failed to create category');
 	}
 }
+async function createOrganization() {
+	const response = await fetch('/api/organization', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			name: newOrganization
+		})
+	});
+
+	if (response.ok) {
+		const organization = await response.json();
+
+		organizations = [...organizations, organization];
+
+		organizationId = organization.id.toString();
+
+		newOrganization = '';
+		showNewOrganization = false;
+	} else {
+		alert('Failed to create organization');
+	}
+}
 </script>
 <div class="max-w-3xl mx-auto p-6">
 <h1 class="text-2xl font-bold mb-6">
@@ -176,6 +201,40 @@ let showNewCategory = false;
 		</option>
 	{/each}
 </select>
+
+<div class="mt-4">
+
+	<button
+		type="button"
+		class="text-blue-600 hover:underline"
+		on:click={() => (showNewOrganization = !showNewOrganization)}
+	>
+		+ Add new organization
+	</button>
+
+</div>
+
+{#if showNewOrganization}
+
+	<div class="mt-3 flex gap-2">
+
+		<input
+			class="border rounded p-2 flex-1"
+			placeholder="Organization name"
+			bind:value={newOrganization}
+		/>
+
+		<button
+			type="button"
+			class="bg-green-600 text-white px-4 rounded"
+			on:click={createOrganization}
+		>
+			Save
+		</button>
+
+	</div>
+
+{/if}
 
 <div class="mb-4">
 	<label class="block mb-2 font-medium">

@@ -33,7 +33,8 @@
 		numberContact: 0,
 		numberListe: 0,
 		numberValidationContact: 0,
-		numberRecommendedContact: 0
+		numberRecommendedContact: 0,
+		numberOrganization: 0
 	};
 
 	onMount(async () => {
@@ -61,7 +62,9 @@
 		const responseRecommendedContact = await fetch(`${urlRecommendedContact}${optionInUrls}`, {
 			method: 'GET'
 		});
-
+const responseOrganizations = await fetch('/api/organization', {
+	method: 'GET'
+});
 		if (responseContacts.ok) {
 			const data = await responseContacts.json();
 
@@ -95,6 +98,11 @@
 
 			console.log(metaRecommendedContact);
 		}
+		if (responseOrganizations.ok) {
+	const organizations = await responseOrganizations.json();
+
+	dashboardData.numberOrganization = organizations.length;
+}
 	}
 </script>
 

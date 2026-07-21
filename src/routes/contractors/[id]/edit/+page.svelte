@@ -9,7 +9,8 @@
 	let email1 = data.contractor.email1 ?? '';
 	let email2 = data.contractor.email2 ?? '';
 let email3 = data.contractor.email3 ?? '';
-
+let newOrganization = '';
+let showNewOrganization = false;
 let phone1 = data.contractor.phone1 ?? '';
 let phone2 = data.contractor.phone2 ?? '';
 let phone3 = data.contractor.phone3 ?? '';
@@ -95,6 +96,30 @@ async function createCategory() {
 		showNewCategory = false;
 	} else {
 		alert('Failed to create category');
+	}
+}
+async function createOrganization() {
+	const response = await fetch('/api/organization', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			name: newOrganization
+		})
+	});
+
+	if (response.ok) {
+		const organization = await response.json();
+
+		organizations = [...organizations, organization];
+
+		organizationId = organization.id.toString();
+
+		newOrganization = '';
+		showNewOrganization = false;
+	} else {
+		alert('Failed to create organization');
 	}
 }
 </script>
@@ -183,6 +208,39 @@ async function createCategory() {
 			</option>
 		{/each}
 	</select>
+	
+<div class="mt-4">
+
+	<button
+		type="button"
+		class="text-blue-600 hover:underline"
+		on:click={() => (showNewOrganization = !showNewOrganization)}
+	>
+		+ Add new organization
+	</button>
+
+</div>
+
+{#if showNewOrganization}
+
+	<div class="mt-3 flex gap-2">
+
+		<input
+			class="border rounded p-2 flex-1"
+			placeholder="Organization name"
+			bind:value={newOrganization}
+		/>
+
+		<button
+			type="button"
+			class="bg-green-600 text-white px-4 rounded"
+			on:click={createOrganization}
+		>
+			Save
+		</button>
+
+	</div>
+{/if}
 	<div class="mb-4">
 
 	<label class="block mb-2">

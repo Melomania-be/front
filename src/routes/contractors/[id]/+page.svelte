@@ -4,6 +4,7 @@ import { onMount } from 'svelte';
 
 let interactions = [];
 let accountings = [];
+
 let selectedFiles: Record<number, File | null> = {};
 let uploading: Record<number, boolean> = {};
 let interactionDate =
@@ -25,8 +26,14 @@ if (accountingResponse.ok) {
     accountings = await accountingResponse.json();
 }
 	if (response.ok) {
-		interactions = await response.json();
-	}
+    interactions = await response.json();
+
+    interactions.sort(
+        (a, b) =>
+            new Date(b.interactionDate).getTime() -
+            new Date(a.interactionDate).getTime()
+    );
+}
 });
 async function addInteraction() {
 	const response = await fetch(
@@ -112,7 +119,6 @@ async function uploadInteractionFile(interactionId: number) {
 
 	if (res.ok) {
 		interactions = await res.json();
-		console.log(interactions);
 	}
 
 	selectedFiles[interactionId] = null;
