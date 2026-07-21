@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 
 	export let data;
-console.log(data.contractor);
+
 	let firstName = data.contractor.firstName ?? '';
 	let lastName = data.contractor.lastName ?? '';
 	let email1 = data.contractor.email1 ?? '';
@@ -70,6 +70,33 @@ if (categoryResponse.ok) {
 	categories = await categoryResponse.json();
 }
 });
+async function createCategory() {
+	const response = await fetch('/api/contractor-category', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			name: newCategory
+		})
+	});
+
+	if (response.ok) {
+		const category = await response.json();
+
+		categories = [...categories, category];
+
+		selectedCategories = [
+			...selectedCategories,
+			category.id
+		];
+
+		newCategory = '';
+		showNewCategory = false;
+	} else {
+		alert('Failed to create category');
+	}
+}
 </script>
 
 <div class="max-w-3xl mx-auto p-6">
@@ -237,4 +264,5 @@ if (categoryResponse.ok) {
 		Save Changes
 	</button>
 
+</div>
 </div>

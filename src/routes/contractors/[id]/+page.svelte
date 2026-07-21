@@ -53,7 +53,7 @@ async function addInteraction() {
 
 	interactions = [interaction, ...interactions];
 
-	interactionDate = '';
+	interactionDate = new Date().toISOString().split('T')[0];
 	interactionDescription = '';
 }
 async function deleteInteraction(id: number) {

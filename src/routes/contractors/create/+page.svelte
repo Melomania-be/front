@@ -54,7 +54,7 @@ let showNewCategory = false;
 
 	comments,
 
-organization_id: organizationId ? Number(organizationId) : null,
+	organization_id: organizationId ? Number(organizationId) : null,
 	category_ids: selectedCategories
 })
 		});
@@ -94,7 +94,7 @@ organization_id: organizationId ? Number(organizationId) : null,
 }
 </script>
 <div class="max-w-3xl mx-auto p-6">
-	<h1 class="text-2xl font-bold mb-6">
+<h1 class="text-2xl font-bold mb-6">
 	Create Contractor
 </h1>
 
@@ -244,7 +244,7 @@ organization_id: organizationId ? Number(organizationId) : null,
 
 {/if}
 	</div>
-	
+</div>
 </div>
 <div class="mb-4">
 	<label class="block mb-1">Comments</label>
