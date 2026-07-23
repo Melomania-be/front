@@ -61,10 +61,28 @@ let showNewCategory = false;
 		});
 
 		if (response.ok) {
-			goto('/contractors');
+	goto('/contractors');
+} else {
+	const error = await response.json();
+
+	let message = 'An unexpected error occurred.';
+
+	try {
+		const parsed = JSON.parse(error.message);
+
+		if (parsed.errors?.length) {
+			message = parsed.errors
+				.map((e: any) => e.message)
+				.join('\n');
 		} else {
-			alert('Error creating contractor');
+			message = error.message;
 		}
+	} catch {
+		message = error.message;
+	}
+
+	alert(message);
+}
 	}
 	async function createCategory() {
 	const response = await fetch('/api/contractor-category', {
