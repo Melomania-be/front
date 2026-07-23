@@ -2,6 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
+function goBack() {
+	history.back();
+}
+
 	export let data;
 
 	let firstName = data.contractor.firstName ?? '';
@@ -125,6 +129,13 @@ async function createOrganization() {
 </script>
 
 <div class="max-w-3xl mx-auto p-6">
+<button
+	type="button"
+	class="mb-4 flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+	on:click={goBack}
+>
+	← Back
+</button>
 	<h1 class="text-2xl font-bold mb-6">
 	Edit Contractor
 </h1>

@@ -79,7 +79,8 @@ categoryCount = categories.size;
 		class="w-full md:w-96 border rounded-lg px-4 py-2"
 	/>
 </div>
-<table class="w-full border">
+<div class="overflow-x-auto">
+<table class="w-full border min-w-max">
 	<thead>
 	<tr>
 		<th class="p-3 text-left">Name</th>
@@ -134,4 +135,5 @@ categoryCount = categories.size;
 {/if}
 </tbody>
 </table>
+</div>
 </div>
