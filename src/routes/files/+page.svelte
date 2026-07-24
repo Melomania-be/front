@@ -6,8 +6,15 @@
 	import FileSystemHeader from '$lib/components/filesystem/FileSystemHeader.svelte';
 	import ProjectFileManager from '$lib/components/filesystem/ProjectFileManager.svelte';
 	import FileUploader from '$lib/components/filesystem/FileUploader.svelte';
+	import CreateFolderModal from '$lib/components/filesystem/CreateFolderModal.svelte';
 	import type { FileSystemItem, ProjectFileStructure } from '$lib/types/FileSystem';
 	import { Folder, FolderOpen, Plus, Upload, ChevronLeft, Database } from 'lucide-svelte';
+
+	type FolderCreation = {
+		name: string;
+		projectId?: number;
+		pieceId?: number;
+	};
 
 	let activeTab: 'projects' | 'general' = 'projects';
 	let projects: any[] = [];
@@ -17,6 +24,7 @@
 	let isLoading = true;
 	let isMobile = false;
 	let showGeneralUploader = false;
+	let showCreateFolderModal = false;
 	let generalBreadcrumbs: { id: number; name: string }[] = [];
 
 	const checkMobile = () => {
@@ -25,16 +33,16 @@
 		}
 	};
 
-	onMount(async () => {
+	onMount(() => {
 		checkMobile();
 		if (browser) {
 			window.addEventListener('resize', checkMobile);
 			window.addEventListener('files:navigate-home', resetToFilesHome);
 		}
 
-		await loadProjects();
-		await loadGeneralFiles();
-		isLoading = false;
+		Promise.all([loadProjects(), loadGeneralFiles()]).finally(() => {
+			isLoading = false;
+		});
 
 		return () => {
 			if (browser) {
@@ -82,11 +90,13 @@
 				const data = await response.json();
 
 				// Adapter la structure des données
-				generalFiles = Array.isArray(data) ? data.map(item => ({
-					...item,
-					updatedAt: new Date(item.updatedAt),
-					createdAt: new Date(item.createdAt)
-				})) : [];
+				generalFiles = Array.isArray(data)
+					? data.map((item) => ({
+							...item,
+							updatedAt: new Date(item.updatedAt),
+							createdAt: new Date(item.createdAt)
+						}))
+					: [];
 			}
 		} catch (error) {
 			console.error('Error loading general files:', error);
@@ -110,8 +120,8 @@
 		try {
 			const response = await fetch(`/api/filesystem/folders/${folder.id}/contents`);
 			if (response.ok) {
-				const contents = await response.json();
-				folder.children = contents.map(item => ({
+				const contents: FileSystemItem[] = await response.json();
+				folder.children = contents.map((item: FileSystemItem) => ({
 					...item,
 					updatedAt: new Date(item.updatedAt),
 					createdAt: new Date(item.createdAt)
@@ -126,7 +136,7 @@
 
 	function buildGeneralBreadcrumbs(folder: FileSystemItem) {
 		generalBreadcrumbs = [];
-		let current = folder;
+		let current: FileSystemItem | null = folder;
 
 		while (current) {
 			generalBreadcrumbs.unshift({ id: current.id, name: current.name });
@@ -148,6 +158,10 @@
 	}
 
 	// Upload pour fichiers généraux
+	function getErrorMessage(error: unknown) {
+		return error instanceof Error ? error.message : String(error);
+	}
+
 	async function handleGeneralUpload(files: FileList) {
 		const formData = new FormData();
 
@@ -155,7 +169,7 @@
 		if (files.length === 1) {
 			formData.append('file', files[0]);
 		} else {
-			Array.from(files).forEach(file => {
+			Array.from(files).forEach((file) => {
 				formData.append('files', file);
 			});
 		}
@@ -188,14 +202,14 @@
 			}
 		} catch (error) {
 			console.error('Error uploading general files:', error);
-			alert('Error uploading files: ' + error.message);
+			alert('Error uploading files: ' + getErrorMessage(error));
 		}
 	}
 
 	// Créer un dossier général
-	async function handleCreateGeneralFolder(name: string) {
+	async function handleCreateGeneralFolder(folderData: FolderCreation) {
 		try {
-			const body = { name };
+			const body: FolderCreation & { parentId?: number } = { ...folderData };
 
 			// Add parent context if in a folder
 			if (currentGeneralFolder) {
@@ -215,6 +229,7 @@
 				} else {
 					await loadGeneralFiles();
 				}
+				showCreateFolderModal = false;
 			}
 		} catch (error) {
 			console.error('Error creating general folder:', error);
@@ -273,10 +288,7 @@
 			</div>
 		{:else if activeTab === 'projects'}
 			{#if selectedProject}
-				<ProjectFileManager
-					project={selectedProject}
-					on:back={() => selectedProject = null}
-				/>
+				<ProjectFileManager project={selectedProject} on:back={() => (selectedProject = null)} />
 			{:else}
 				<!-- Project Selection Grid -->
 				<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
@@ -292,21 +304,27 @@
 
 					{#if projects.length === 0}
 						<div class="text-center py-12">
-							<div class="w-16 h-16 bg-gray-100 rounded-[10px] flex items-center justify-center mx-auto mb-4">
+							<div
+								class="w-16 h-16 bg-gray-100 rounded-[10px] flex items-center justify-center mx-auto mb-4"
+							>
 								<Folder class="text-gray-400" size={48} />
 							</div>
 							<h3 class="font-bold text-lg text-gray-700 mb-2">NO PROJECTS FOUND</h3>
 							<p class="text-gray-500">Create a project first to manage its files</p>
 						</div>
 					{:else}
-						<div class="grid grid-cols-1 {isMobile ? 'gap-3' : 'md:grid-cols-2 lg:grid-cols-3 gap-4'}">
+						<div
+							class="grid grid-cols-1 {isMobile ? 'gap-3' : 'md:grid-cols-2 lg:grid-cols-3 gap-4'}"
+						>
 							{#each projects as project}
 								<button
 									class="p-4 bg-gradient-to-r from-[#6CB1C8] to-[#5077BA] text-white rounded-[10px] hover:from-[#5a9bb4] hover:to-[#4563a0] transition-all duration-300 text-left border-2 border-blue-600"
 									on:click={() => selectProject(project)}
 								>
 									<div class="flex items-center gap-3">
-										<div class="w-12 h-12 bg-white bg-opacity-20 rounded-[8px] flex items-center justify-center">
+										<div
+											class="w-12 h-12 bg-white bg-opacity-20 rounded-[8px] flex items-center justify-center"
+										>
 											<FolderOpen size={24} />
 										</div>
 										<div class="flex-1 min-w-0">
@@ -339,7 +357,11 @@
 							<div class="h-6 w-px bg-gray-300"></div>
 							<nav class="flex items-center gap-2">
 								{#each generalBreadcrumbs as breadcrumb, i}
-									<span class="text-gray-700 font-semibold {i === generalBreadcrumbs.length - 1 ? 'text-[#6B9AD9]' : ''}">
+									<span
+										class="text-gray-700 font-semibold {i === generalBreadcrumbs.length - 1
+											? 'text-[#6B9AD9]'
+											: ''}"
+									>
 										{breadcrumb.name}
 									</span>
 									{#if i < generalBreadcrumbs.length - 1}
@@ -351,18 +373,19 @@
 
 						<div class="flex {isMobile ? 'flex-col w-full' : 'gap-2'} gap-2">
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
-								on:click={() => showGeneralUploader = true}
+								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile
+									? 'justify-center w-full'
+									: ''}"
+								on:click={() => (showGeneralUploader = true)}
 							>
 								<Upload size={16} />
 								Upload
 							</button>
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 border-2 border-green-600 transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
-								on:click={() => {
-									const name = prompt('Folder name:');
-									if (name) handleCreateGeneralFolder(name);
-								}}
+								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 border-2 border-green-600 transition-colors font-semibold {isMobile
+									? 'justify-center w-full'
+									: ''}"
+								on:click={() => (showCreateFolderModal = true)}
 							>
 								<Plus size={16} />
 								New Folder
@@ -391,18 +414,19 @@
 						</div>
 						<div class="flex {isMobile ? 'flex-col w-full' : 'gap-2'} gap-2">
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
-								on:click={() => showGeneralUploader = true}
+								class="flex items-center gap-2 px-4 py-2 bg-[#6B9AD9] text-white rounded-lg hover:bg-blue-600 border-2 border-blue-600 transition-colors font-semibold {isMobile
+									? 'justify-center w-full'
+									: ''}"
+								on:click={() => (showGeneralUploader = true)}
 							>
 								<Upload size={16} />
 								Upload Files
 							</button>
 							<button
-								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 border-2 border-green-600 transition-colors font-semibold {isMobile ? 'justify-center w-full' : ''}"
-								on:click={() => {
-									const name = prompt('Folder name:');
-									if (name) handleCreateGeneralFolder(name);
-								}}
+								class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 border-2 border-green-600 transition-colors font-semibold {isMobile
+									? 'justify-center w-full'
+									: ''}"
+								on:click={() => (showCreateFolderModal = true)}
 							>
 								<Plus size={16} />
 								New Folder
@@ -424,34 +448,44 @@
 {#if showGeneralUploader}
 	<FileUploader
 		on:upload={(e) => handleGeneralUpload(e.detail)}
-		on:cancel={() => showGeneralUploader = false}
+		on:cancel={() => (showGeneralUploader = false)}
+	/>
+{/if}
+
+{#if showCreateFolderModal}
+	<CreateFolderModal
+		{projects}
+		defaultProjectId={currentGeneralFolder?.projectId || null}
+		defaultPieceId={currentGeneralFolder?.pieceId || null}
+		on:create={(e) => handleCreateGeneralFolder(e.detail)}
+		on:cancel={() => (showCreateFolderModal = false)}
 	/>
 {/if}
 
 <style>
-    :global(.grid-cols-auto-fit) {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
+	:global(.grid-cols-auto-fit) {
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	}
 
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-        :global(.md\:grid-cols-2) {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
-        :global(.lg\:grid-cols-3) {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-        }
+	/* Mobile responsiveness */
+	@media (max-width: 768px) {
+		:global(.md\:grid-cols-2) {
+			grid-template-columns: repeat(1, minmax(0, 1fr));
+		}
+		:global(.lg\:grid-cols-3) {
+			grid-template-columns: repeat(1, minmax(0, 1fr));
+		}
 
-        :global(.gap-4) {
-            gap: 0.75rem;
-        }
+		:global(.gap-4) {
+			gap: 0.75rem;
+		}
 
-        :global(.gap-3) {
-            gap: 0.5rem;
-        }
+		:global(.gap-3) {
+			gap: 0.5rem;
+		}
 
-        button {
-            min-height: 44px;
-        }
-    }
+		button {
+			min-height: 44px;
+		}
+	}
 </style>

@@ -9,12 +9,31 @@
 	import type { MailTemplate } from '$lib/types/MailTemplate';
 	import ProjectHeadDisplayer from '../ProjectHeadDisplayer.svelte';
 	import ProjectPhoneDisplayer from '../ProjectPhoneDisplayer.svelte';
+	import { Download, MailCheck } from 'lucide-svelte';
+
+	type SentMail = {
+		id: number;
+		type: string;
+		sent: boolean;
+		createdAt: string;
+		receiver: {
+			id: number;
+			firstName: string;
+			lastName: string;
+			email: string;
+			instruments: { id: number; name: string; family: string }[];
+		} | null;
+		mailTemplate: {
+			id: number;
+			name: string;
+		} | null;
+	};
 
 	let project: Project;
 	let html = '';
 	let uniqueSubject = '';
-	let selectedTemplate : MailTemplate;
-	let templates : Array<MailTemplate>
+	let selectedTemplate: MailTemplate;
+	let templates: Array<MailTemplate>;
 
 	let url = '';
 	if (typeof window !== 'undefined') {
@@ -23,6 +42,7 @@
 
 	let lastRecruitmentNotificationSent = '';
 	let lastCallsheetNotificationSent = '';
+	let outgoingMails: SentMail[] = [];
 
 	let isSendingRecruitmentEmail = false;
 	let isSendingCallsheetNotification = false;
@@ -53,6 +73,7 @@
 					const mailData = await mailRes.json();
 					lastRecruitmentNotificationSent = mailData.lastRecruitmentNotificationSent;
 					lastCallsheetNotificationSent = mailData.lastCallsheetNotificationSent;
+					outgoingMails = mailData.outgoingMails || [];
 				} else {
 					console.error('Error fetching mailing data');
 				}
@@ -97,7 +118,7 @@
 				setTimeout(() => {
 					if (doc && doc.body) {
 						const contentHeight = doc.body.scrollHeight + 50;
-						iframe.style.height = Math.max(300, contentHeight) + "px";
+						iframe.style.height = Math.max(300, contentHeight) + 'px';
 					}
 				}, 100);
 			}
@@ -137,7 +158,7 @@
 				setTimeout(() => {
 					if (doc && doc.body) {
 						const contentHeight = doc.body.scrollHeight + 50;
-						iframe.style.height = Math.max(300, contentHeight) + "px";
+						iframe.style.height = Math.max(300, contentHeight) + 'px';
 					}
 				}, 100);
 			}
@@ -145,7 +166,9 @@
 	}
 
 	async function sendRecruitmentEmail() {
-		let confirmSend = confirm('Are you sure you want to send a recruitment email to every contact ?');
+		let confirmSend = confirm(
+			'Are you sure you want to send a recruitment email to every contact ?'
+		);
 		if (!confirmSend) {
 			return;
 		}
@@ -179,7 +202,9 @@
 	}
 
 	async function sendCallsheetNotification() {
-		let confirmSend = confirm('Are you sure you want to send a callsheet notification to all participants ?');
+		let confirmSend = confirm(
+			'Are you sure you want to send a callsheet notification to all participants ?'
+		);
 		if (!confirmSend) {
 			return;
 		}
@@ -211,7 +236,7 @@
 		}
 	}
 
-	async function sendMail(){
+	async function sendMail() {
 		let confirmSend = confirm(
 			`Are you sure you want to send this unique mail to the participants?`
 		);
@@ -246,10 +271,8 @@
 		}
 	}
 
-	async function sendTemplateToParticipants(){
-		let confirmSend = confirm(
-			`Are you sure you want to send this template to the participants?`
-		);
+	async function sendTemplateToParticipants() {
+		let confirmSend = confirm(`Are you sure you want to send this template to the participants?`);
 		if (!confirmSend) {
 			return;
 		}
@@ -279,6 +302,41 @@
 			console.error('Error sending email:', error);
 			alert('Network error, please try again');
 		}
+	}
+
+	function formatMailType(type: string) {
+		return type.replace(/_/g, ' ');
+	}
+
+	function formatInstruments(instruments: { name: string }[] = []) {
+		if (instruments.length === 0) return '-';
+		return instruments.map((instrument) => instrument.name).join(', ');
+	}
+
+	function escapeCsvValue(value: unknown) {
+		const text = String(value ?? '');
+		return `"${text.replace(/"/g, '""')}"`;
+	}
+
+	function downloadOutgoingMailsCsv() {
+		const rows = [
+			['Last name', 'First name', 'Instruments', 'Mail type'],
+			...outgoingMails.map((mail) => [
+				mail.receiver?.lastName || '',
+				mail.receiver?.firstName || '',
+				formatInstruments(mail.receiver?.instruments || []),
+				formatMailType(mail.type)
+			])
+		];
+
+		const csv = rows.map((row) => row.map(escapeCsvValue).join(',')).join('\r\n');
+		const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = csvUrl;
+		link.download = `project-${id}-sent-mails.csv`;
+		link.click();
+		URL.revokeObjectURL(csvUrl);
 	}
 
 	function handleEditorInput(event: CustomEvent<string>) {
@@ -313,7 +371,9 @@
 <ProjectHeadDisplayer {project} selectedTab={2} />
 
 {#if project}
-	<div class="relative max-w-xxl bg-[#E7E7E7] shadow dark:bg-gray-800 dark:border-gray-700 p-4 pb-[80px]">
+	<div
+		class="relative max-w-xxl bg-[#E7E7E7] shadow dark:bg-gray-800 dark:border-gray-700 p-4 pb-[80px]"
+	>
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 			<div class="border-2 rounded-lg border-[#E35656] bg-white">
 				<div class="p-3">
@@ -356,7 +416,7 @@
 					>
 						{isSendingRecruitmentEmail ? 'Sending...' : 'Send a recruitment email'}
 					</button>
-					<br><br>
+					<br /><br />
 
 					<button
 						class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] rounded-lg focus:ring-4 focus:outline-none focus:ring-blue-300"
@@ -370,15 +430,78 @@
 		</div>
 
 		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mt-4">
+			<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 bg-[#6B9AD9] rounded-[8px] flex items-center justify-center">
+						<MailCheck size={20} class="text-white" />
+					</div>
+					<div>
+						<h2 class="font-bold text-lg uppercase">Sent mails</h2>
+						<p class="text-sm text-gray-600">
+							{outgoingMails.length} mail{outgoingMails.length !== 1 ? 's' : ''}
+						</p>
+					</div>
+				</div>
+
+				<button
+					class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+					on:click={downloadOutgoingMailsCsv}
+					disabled={outgoingMails.length === 0}
+				>
+					<Download size={16} />
+					Export CSV
+				</button>
+			</div>
+
+			{#if outgoingMails.length > 0}
+				<div class="overflow-x-auto">
+					<table class="w-full text-sm text-left text-gray-700">
+						<thead class="text-xs uppercase bg-gray-100 text-gray-600">
+							<tr>
+								<th class="px-4 py-3">Date</th>
+								<th class="px-4 py-3">Last name</th>
+								<th class="px-4 py-3">First name</th>
+								<th class="px-4 py-3">Instruments</th>
+								<th class="px-4 py-3">Mail type</th>
+								<th class="px-4 py-3">Template</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each outgoingMails as outgoingMail}
+								<tr class="border-b hover:bg-gray-50">
+									<td class="px-4 py-3 whitespace-nowrap">
+										<DateShow startTime={outgoingMail.createdAt} />
+									</td>
+									<td class="px-4 py-3">{outgoingMail.receiver?.lastName || '-'}</td>
+									<td class="px-4 py-3">{outgoingMail.receiver?.firstName || '-'}</td>
+									<td class="px-4 py-3"
+										>{formatInstruments(outgoingMail.receiver?.instruments || [])}</td
+									>
+									<td class="px-4 py-3">{formatMailType(outgoingMail.type)}</td>
+									<td class="px-4 py-3">{outgoingMail.mailTemplate?.name || '-'}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<div class="text-center py-8 text-gray-500">No sent mails for this project.</div>
+			{/if}
+		</div>
+
+		<div class="bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4 mt-4">
 			{#if useTemplate === false}
 				<h2 class="font-bold text-lg uppercase pb-4">Unique mail</h2>
 				<button
 					class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-					on:click={() => (useTemplate = true)}>Use a template</button>
+					on:click={() => (useTemplate = true)}>Use a template</button
+				>
 				<p class="ml-10">This email will be sent to every accepted participant in this project.</p>
 
 				<div class="ml-10 mb-10 pt-5 grid grid-cols-1 lg:grid-cols-2 gap-10">
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						<h2 class="text-xl font-bold mb-4">Write your email</h2>
 
 						<input
@@ -388,14 +511,17 @@
 							class="mb-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
 						/>
 
-						<HtmlEditor bind:content={html} on:input={handleEditorInput}/>
+						<HtmlEditor bind:content={html} on:input={handleEditorInput} />
 
 						<button
 							class="mt-5 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-							on:click={sendMail}>Send</button>
+							on:click={sendMail}>Send</button
+						>
 					</div>
 
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						<h2 class="text-xl font-bold mb-4">Preview</h2>
 						<div class="p-4 bg-gray-100 rounded dark:bg-gray-900" style="min-height: 200px;">
 							<iframe title="preview" id="preview-iframe2" class="w-full h-full border-0" />
@@ -408,10 +534,13 @@
 				<h2 class="font-bold text-lg uppercase pb-4">Template mail</h2>
 				<button
 					class="ml-10 text-white bg-[#6B9AD9] hover:bg-[#4f7cb7] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-					on:click={() => (useTemplate = false)}>Use unique mail</button>
+					on:click={() => (useTemplate = false)}>Use unique mail</button
+				>
 
 				<div class="ml-10 mb-10 pt-5 grid grid-cols-1 lg:grid-cols-2 gap-10">
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						<h2 class="text-xl font-bold mb-4">Complete the template informations</h2>
 						<p>
 							Please select the template you want to use :
@@ -425,16 +554,20 @@
 						{#if selectedTemplate}
 							<button
 								class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-								on:click={sendTemplateToParticipants}>Send</button>
+								on:click={sendTemplateToParticipants}>Send</button
+							>
 						{/if}
 					</div>
 
-					<div class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700">
+					<div
+						class="border border-gray-500 rounded p-5 bg-white dark:bg-gray-800 dark:border-gray-700"
+					>
 						{#if selectedTemplate}
 							<div class="m-2">
 								<h2 class="text-xl font-bold mb-4">{selectedTemplate.name}</h2>
 							</div>
-							<iframe id="preview-iframe" title="Template Preview" class="w-full h-full border-0"></iframe>
+							<iframe id="preview-iframe" title="Template Preview" class="w-full h-full border-0"
+							></iframe>
 						{:else}
 							<p>Please select a template to see its content</p>
 						{/if}
@@ -446,5 +579,5 @@
 {/if}
 
 {#if isMobile}
-	<ProjectPhoneDisplayer project={project} selectedTab={2}/>
+	<ProjectPhoneDisplayer {project} selectedTab={2} />
 {/if}
