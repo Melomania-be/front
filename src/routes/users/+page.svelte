@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 
@@ -102,7 +101,6 @@
 		}
 	}
 
-
 	async function editUser(user: any) {
 		editingUser = user.id;
 		editForm = {
@@ -111,7 +109,6 @@
 			fullName: user.fullName || ''
 		};
 	}
-
 
 	async function saveUser() {
 		try {
@@ -139,6 +136,70 @@
 		editForm = { id: null, email: '', fullName: '' };
 	}
 
+	// ── Privileges ────────────────────────────────────────────────
+
+	async function updatePrivileges(userId: number, updates: {
+		role?: string;
+		canAccessContacts?: boolean;
+		canExportContacts?: boolean;
+		isActive?: boolean;
+	}) {
+		try {
+			const response = await fetch(`/api/users/${userId}/privileges`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(updates)
+			});
+			if (response.ok) {
+				await loadUsers();
+			} else {
+				const err = await response.json();
+				alert(err.error || 'Erreur lors de la mise à jour des privilèges');
+			}
+		} catch (error) {
+			console.error('Error updating privileges:', error);
+		}
+	}
+
+	// Handlers séparés pour éviter les cast TypeScript dans le template
+	function handleRoleChange(userId: number, event: Event) {
+		const value = (event.target as HTMLSelectElement).value;
+		updatePrivileges(userId, { role: value });
+	}
+
+	function handleContactsChange(userId: number, event: Event) {
+		const checked = (event.target as HTMLInputElement).checked;
+		updatePrivileges(userId, { canAccessContacts: checked });
+	}
+
+	function handleExportChange(userId: number, event: Event) {
+		const checked = (event.target as HTMLInputElement).checked;
+		updatePrivileges(userId, { canExportContacts: checked });
+	}
+
+	function handleActiveChange(userId: number, event: Event) {
+		const checked = (event.target as HTMLInputElement).checked;
+		updatePrivileges(userId, { isActive: checked });
+	}
+
+	async function assignProjects(userId: number, projectIds: number[]) {
+		try {
+			const response = await fetch(`/api/users/${userId}/projects`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ projectIds })
+			});
+			if (response.ok) {
+				alert('Projets assignés avec succès');
+			} else {
+				const err = await response.json();
+				alert(err.error || "Erreur lors de l'assignation des projets");
+			}
+		} catch (error) {
+			console.error('Error assigning projects:', error);
+		}
+	}
+
 	async function errorEvent(response: Response) {
 		if (response.status >= 400 && response.status < 500) {
 			const jsonResponse = await response.json();
@@ -159,7 +220,6 @@
 			<h2 class="text-2xl font-semibold mb-6 text-gray-800">Add a User</h2>
 
 			<form on:submit|preventDefault={addUser} class="space-y-4">
-
 				<div>
 					<label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">
 						Full Name *
@@ -236,9 +296,7 @@
 							<!-- Edit mode -->
 							<div class="space-y-3">
 								<div>
-									<label class="block text-sm font-medium text-gray-700 mb-1">
-										Full Name
-									</label>
+									<label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
 									<input
 										type="text"
 										class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -247,9 +305,7 @@
 									/>
 								</div>
 								<div>
-									<label class="block text-sm font-medium text-gray-700 mb-1">
-										Email
-									</label>
+									<label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
 									<input
 										type="email"
 										class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -277,7 +333,6 @@
 							<!-- Display mode -->
 							<div class="flex justify-between items-start">
 								<div class="flex-1">
-
 									{#if user.fullName}
 										<p class="font-semibold text-gray-900">{user.fullName}</p>
 										<p class="text-sm text-gray-600">{user.email}</p>
@@ -287,8 +342,49 @@
 									{/if}
 									<p class="text-xs text-gray-500 mt-1">Created: {user.createdAt}</p>
 									<p class="text-xs text-gray-500">Last activity: {user.token.lastUsedAt}</p>
+
+									<!-- Rôle & permissions -->
+									<div class="mt-2 flex flex-wrap gap-3 items-center">
+										<select
+											class="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500"
+											value={user.role || 'user'}
+											on:change={(e) => handleRoleChange(user.id, e)}
+										>
+											<option value="superadmin">Superadmin</option>
+											<option value="user">Utilisateur</option>
+											<option value="guest">Invité</option>
+										</select>
+
+										<label class="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+											<input
+												type="checkbox"
+												checked={user.canAccessContacts}
+												on:change={(e) => handleContactsChange(user.id, e)}
+											/>
+											Contacts
+										</label>
+
+										<label class="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+											<input
+												type="checkbox"
+												checked={user.canExportContacts}
+												on:change={(e) => handleExportChange(user.id, e)}
+											/>
+											Export
+										</label>
+
+										<label class="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+											<input
+												type="checkbox"
+												checked={user.isActive}
+												on:change={(e) => handleActiveChange(user.id, e)}
+											/>
+											Actif
+										</label>
+									</div>
 								</div>
-								<div class="flex gap-2">
+
+								<div class="flex gap-2 ml-4">
 									<button
 										type="button"
 										on:click={() => editUser(user)}

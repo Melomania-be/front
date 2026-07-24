@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import DOMPurify from 'dompurify';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
@@ -94,26 +95,34 @@
 	// SHARED: IFRAME PREVIEW
 	// =============================================
 	async function updateIframeContent(iframeId: string, content: string) {
-		if (typeof window === 'undefined') return;
-		await tick();
+        if (typeof window === 'undefined') return;
+        await tick();
 
-		const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
-		if (!iframe?.contentWindow) return;
+        const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
+        if (!iframe?.contentWindow) return;
 
-		const doc = iframe.contentDocument || iframe.contentWindow.document;
-		if (!doc) return;
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc) return;
 
-		doc.open();
-		doc.write(`<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<style>body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }</style>
-			</head>
-			<body>${content}</body>
-			</html>`);
-		doc.close();
+        // ✅ CORRECTION V-09 (frontend) : sanitisation du contenu avant injection dans l'iframe
+        // Bloque les balises dangereuses (script, iframe, object, form) et les attributs
+        // d'événements (onerror, onclick...) qui permettraient une exécution de code.
+        const safeContent = DOMPurify.sanitize(content, {
+            FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'style'],
+            FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+        });
+
+        doc.open();
+        doc.write(`<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }</style>
+            </head>
+            <body>${safeContent}</body>
+            </html>`);
+    doc.close();
 
 		setTimeout(() => {
 			if (doc.body) {
