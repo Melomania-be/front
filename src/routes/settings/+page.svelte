@@ -9,6 +9,21 @@
 		background_file_name: string | null;
 	};
 
+	const IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,image/avif';
+	const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'];
+	const IMAGE_MAX_SIZE_BYTES = 2 * 1024 * 1024;
+
+	function validateImage(file: File): string | null {
+		const ext = file.name.split('.').pop()?.toLowerCase();
+		if (!ext || !IMAGE_EXTENSIONS.includes(ext)) {
+			return 'Unsupported file type. Please use PNG, JPG, GIF, WebP or AVIF.';
+		}
+		if (file.size > IMAGE_MAX_SIZE_BYTES) {
+			return 'File is too large. Maximum size is 2MB.';
+		}
+		return null;
+	}
+
 	let settings: AppSettings = {
 		primary_color: '#343CAD',
 		has_logo: false,
@@ -43,6 +58,15 @@
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
+		const error = validateImage(file);
+		if (error) {
+			saveError = true;
+			saveMessage = error;
+			input.value = '';
+			return;
+		}
+		saveMessage = '';
+		saveError = false;
 		logoFile = file;
 		logoPreview = URL.createObjectURL(file);
 	}
@@ -51,6 +75,15 @@
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
+		const error = validateImage(file);
+		if (error) {
+			saveError = true;
+			saveMessage = error;
+			input.value = '';
+			return;
+		}
+		saveMessage = '';
+		saveError = false;
 		backgroundFile = file;
 		backgroundPreview = URL.createObjectURL(file);
 	}
@@ -144,7 +177,7 @@
 							{settings.has_logo || logoPreview ? 'Replace logo' : 'Upload logo'}
 							<input
 								type="file"
-								accept="image/*"
+								accept={IMAGE_ACCEPT}
 								class="hidden"
 								on:change={handleLogoChange}
 							/>
@@ -159,7 +192,7 @@
 							</button>
 						{/if}
 						<p class="mt-2 text-xs text-gray-400">
-							PNG, JPG, SVG or WebP. Displayed in the sidebar in place of the app name.
+							PNG, JPG, GIF, WebP or AVIF, up to 2MB. Displayed in the sidebar in place of the app name.
 						</p>
 						{#if logoPreview && settings.logo_file_name}
 							<p class="mt-1 text-xs text-gray-500">Current: {settings.logo_file_name}</p>
@@ -202,7 +235,7 @@
 							{settings.has_background || backgroundPreview ? 'Replace image' : 'Upload image'}
 							<input
 								type="file"
-								accept="image/*"
+								accept={IMAGE_ACCEPT}
 								class="hidden"
 								on:change={handleBackgroundChange}
 							/>
@@ -217,7 +250,7 @@
 							</button>
 						{/if}
 						<p class="mt-2 text-xs text-gray-400">
-							PNG, JPG or WebP. Applied as background across the main content area.
+							PNG, JPG, GIF, WebP or AVIF, up to 2MB. Applied as background across the main content area.
 						</p>
 						{#if settings.background_file_name && !backgroundPreview}
 							<p class="mt-1 text-xs text-gray-500">Current: {settings.background_file_name}</p>
