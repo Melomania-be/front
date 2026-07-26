@@ -6,6 +6,7 @@
 	import DateShow from '../DateShow.svelte';
 	import imageBackground from '$lib/assets/BackgrounImage.avif';
 	import { Steps } from 'svelte-steps';
+	import { downloadCalendarEvent } from '$lib/utils/calendarExport';
 
 	import { comment } from 'postcss';
 	import { onMount } from 'svelte';
@@ -439,16 +440,38 @@
 																		isRehearsal={event.type === 'rehearsal'}
 																	/>
 																</td>
-																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">{event.place}</td>
+																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
+																	<div class="flex flex-col gap-2">
+																		<span>{event.place}</span>
+
+																		<button
+																			type="button"
+																			on:click={() =>
+																				downloadCalendarEvent({
+																					title: `${event.type === 'concert' ? 'Concert' : 'Rehearsal'} - ${registration.project?.name}`,
+																					startDate: event.startDate,
+																					endDate: event.endDate,
+																					location: event.place,
+																					description: event.comment
+																				})}
+																			class="w-fit rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
+																		>
+																			Add to calendar
+																		</button>
+																	</div>
+																</td>
+
 																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
 																	{#if event.type === 'concert'}
 																		<div class="eventTypeConcert">{event.type}</div>
-																	{/if}
-																	{#if event.type === 'rehearsal'}
+																	{:else}
 																		<div class="eventTypeRehearsal">{event.type}</div>
 																	{/if}
 																</td>
-																<td class="px-6 py-2 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md">
+
+																<td
+																	class="px-6 py-2 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
+																>
 																	{event.comment ? event.comment : 'No comment'}
 																</td>
 															</tr>
