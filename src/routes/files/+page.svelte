@@ -29,6 +29,7 @@
 		checkMobile();
 		if (browser) {
 			window.addEventListener('resize', checkMobile);
+			window.addEventListener('files:navigate-home', resetToFilesHome);
 		}
 
 		await loadProjects();
@@ -38,9 +39,18 @@
 		return () => {
 			if (browser) {
 				window.removeEventListener('resize', checkMobile);
+				window.removeEventListener('files:navigate-home', resetToFilesHome);
 			}
 		};
 	});
+
+	function resetToFilesHome() {
+		activeTab = 'projects';
+		selectedProject = null;
+		currentGeneralFolder = null;
+		showGeneralUploader = false;
+		generalBreadcrumbs = [];
+	}
 
 	async function loadProjects() {
 		try {

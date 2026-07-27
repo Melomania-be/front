@@ -88,10 +88,11 @@
 	let popUpAdd = false;
 	let updateMode = false;
 	let updateAttachmentMode = false;
-
-	function showPopUpAdd() {
+let recipientType: 'musician' | 'contractor' = 'musician';
+	async function showPopUpAdd() {
 		popUpAdd = true;
-		fetchContacts();
+		await fetchContacts();
+await fetchContractors();
 		if (currentParticipant) {
 			AccountingpaymentToIndiv = true;
 			AccountingcontactId = currentParticipant.contact.id;
@@ -115,6 +116,7 @@
 	let AccountingAttachments: number[] = [];
 
 	let AccountingcontactId: Number | null = null;
+	let AccountingContractorId = null;
 	let AccountingNamecontactSelected: string = '';
 	let AccountingIsMusicianFee: boolean = true;
 
@@ -259,6 +261,7 @@
 				amount: AccountingAmount,
 				category_id: AccountingCategory,
 				contact_id: AccountingcontactId,
+contractor_contact_id: AccountingContractorId,
 				attachment: attachment,
 				is_individual_payment: AccountingpaymentToIndiv,
 				is_musician_fee: AccountingIsMusicianFee,
@@ -274,6 +277,7 @@
 				amount: AccountingAmount,
 				category_id: AccountingCategory,
 				contact_id: AccountingcontactId,
+contractor_contact_id: AccountingContractorId,
 				attachment: attachment,
 				is_individual_payment: AccountingpaymentToIndiv,
 				is_musician_fee: AccountingIsMusicianFee,
@@ -335,6 +339,8 @@
 		updateMode = false;
 		selectedFiles = [];
 		selectedAttachements = [];
+		recipientType = 'musician';
+AccountingContractorId = null;
 	}
 
 	async function deleteItem(item: FileSystemItem) {
@@ -401,7 +407,19 @@
 	}
 
 	let accountingDeletion = false;
+function filterContractors(search: string) {
+    AccountingContractorId = null;
 
+    if (search.trim() === '') {
+        displayedContractors = [...contractors];
+    } else {
+        displayedContractors = contractors.filter(
+            (c) =>
+                c.firstName.toLowerCase().includes(search.toLowerCase()) ||
+                c.lastName.toLowerCase().includes(search.toLowerCase())
+        );
+    }
+}
 	async function deleteAccounting() {
 		if (!AccountingId) {
 			alert('No accounting entry selected for deletion');
@@ -549,6 +567,8 @@ $: if (accountings && accountings.length > 0) {
 	}
 
 	let contacts: Contact[] = [];
+	let contractors: any[] = [];
+let displayedContractors: any[] = [];
 	let meta: any = {};
 	let options: any = {
 		filter: '',
@@ -587,6 +607,17 @@ $: if (accountings && accountings.length > 0) {
 			};
 		});
 	}
+
+	async function fetchContractors() {
+	const response = await fetch('/api/contractor');
+
+	const responseHandler = new ResponseHandlerClient();
+
+	responseHandler.handle(response, async () => {
+		contractors = await response.json();
+		displayedContractors = contractors;
+	});
+}
 
 	let displayedContacts: Contact[] = [];
 
@@ -1304,6 +1335,19 @@ $: if (accountings && accountings.length > 0) {
 											? 'w-[80%]'
 											: 'w-[50%]'}"
 								>
+								<div class="mb-4">
+    <label class="font-semibold text-gray-600">
+        Recipient
+    </label>
+
+    <select
+        bind:value={recipientType}
+        class="w-full border-2 border-gray-500 rounded-xl p-2"
+    >
+        <option value="musician">Musician</option>
+        <option value="contractor">Contractor</option>
+    </select>
+</div>
 									<div
 										class="-mb-2 text-[12px] bg-white z-20 ml-6 font-semibold pl-3 pr-3 text-gray-500"
 										style="width: fit-content;"
@@ -1311,39 +1355,72 @@ $: if (accountings && accountings.length > 0) {
 										Person Name
 									</div>
 									<input
-										class="p-2 px-3 border-2 border-gray-500 h-11 rounded-xl focus:outline-none"
-										bind:value={AccountingNamecontactSelected}
-										on:input={() => filterContacts(AccountingNamecontactSelected)}
-										placeholder="Person Name"
-										required
-									/>
+    bind:value={AccountingNamecontactSelected}
+    on:input={() => {
+        if (recipientType === 'musician') {
+            filterContacts(AccountingNamecontactSelected);
+        } else {
+            filterContractors(AccountingNamecontactSelected);
+        }
+    }}
+/>
 								</div>
 								<div
 									class="rounded-xl my-4 border-2 pt-4 border-gray-400 bg-gray-200 flex w-[95%] h-full"
 								>
 									<div class="grid grid-cols-2 gap-4 p-4 max-h-[460px] overflow-y-auto w-full">
-										{#if contacts}
-											{#each displayedContacts as contact}
-												<div
-													class="flex h-10 items-center p-4 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800"
-												>
-													<input
-														type="radio"
-														bind:group={AccountingcontactId}
-														on:change={() => {
-															AccountingNamecontactSelected =
-																contact.firstName + ' ' + contact.lastName;
-														}}
-														value={contact.id}
-														class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
-													/>
-													<div class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-														{contact.firstName}
-														{contact.lastName}
-													</div>
-												</div>
-											{/each}
-										{/if}
+										{#if recipientType === 'musician'}
+
+    {#each displayedContacts as contact}
+
+        <div class="flex h-10 items-center p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
+
+            <input
+                type="radio"
+                bind:group={AccountingcontactId}
+                value={contact.id}
+                on:change={() => {
+                    AccountingContractorId = null;
+                    AccountingNamecontactSelected =
+                        contact.firstName + ' ' + contact.lastName;
+                }}
+            />
+
+            <div class="ml-2">
+                {contact.firstName} {contact.lastName}
+            </div>
+
+        </div>
+
+    {/each}
+
+{:else}
+
+    {#each displayedContractors as contractor}
+
+        <div class="flex h-10 items-center p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
+
+            <input
+                type="radio"
+                bind:group={AccountingContractorId}
+                value={contractor.id}
+                on:change={() => {
+                    AccountingcontactId = null;
+                    AccountingNamecontactSelected =
+                        contractor.firstName + ' ' + contractor.lastName;
+                }}
+            />
+
+            <div class="ml-2">
+                {contractor.firstName} {contractor.lastName}
+            </div>
+
+        </div>
+
+    {/each}
+
+{/if}
+											
 									</div>
 								</div>
 							</div>
@@ -1370,12 +1447,13 @@ $: if (accountings && accountings.length > 0) {
 				{/if}
 				<button
 					class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded font-semibold"
-					on:click={() => {
-						addAccounting();
-						if (!updateAttachmentMode) {
-							popUpAdd = false;
-						}
-					}}
+					on:click={async () => {
+    const success = await addAccounting();
+
+    if (success && !updateAttachmentMode) {
+        popUpAdd = false;
+    }
+}}
 				>
 					{#if updateMode}
 						<p>Save</p>
@@ -1762,8 +1840,10 @@ $: if (accountings && accountings.length > 0) {
 							</td>
 							<td class="p-3">
 								<button
-									on:click={() => {
-											fetchContacts();
+									on:click={async () => {
+											
+											await fetchContacts();
+await fetchContractors();
 											const match = accounting.name.match(/^Payment\s(.+?)\s*:\s*(.+)$/);
 											if (match) {
 												AccountingpaymentToIndiv = true;
@@ -1784,6 +1864,10 @@ $: if (accountings && accountings.length > 0) {
 											AccountingAmount = accounting.amount;
 											AccountingCategory = accounting.categoryId;
 											AccountingcontactId = accounting.contactId;
+											if (accounting.contactId) {
+    recipientType = 'musician';
+    AccountingContractorId = null;
+}
 											AccountingIsMusicianFee = accounting.isMusicianFee;
 											AccountingId = accounting.id;
 											popUpAdd = true;

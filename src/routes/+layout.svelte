@@ -129,6 +129,7 @@
 <script lang="ts">
     import '../app.css';
     import { page } from '$app/stores';
+    import { goto } from '$app/navigation';
     import Fa from 'svelte-fa';
     import {
         faProjectDiagram,
@@ -164,6 +165,18 @@
 
     function toggleSidebar() {
         showSidebar = !showSidebar;
+    }
+
+    async function handleMenuClick(event: MouseEvent, item: { href: string; text: string }) {
+        if (isMobile) {
+            showSidebar = false;
+        }
+
+        if (item.href === '/files' && currentPath === '/files') {
+            event.preventDefault();
+            window.dispatchEvent(new CustomEvent('files:navigate-home'));
+            await goto('/files', { invalidateAll: true, noScroll: true });
+        }
     }
 
     let isMobile = false;
@@ -222,7 +235,7 @@
                     <li>
                         <a
                             href={item.href}
-                            on:click={()=>{if (isMobile){showSidebar=false}}}
+                            on:click={(event) => handleMenuClick(event, item)}
                             class="flex items-center p-2 text-white font-medium dark:text-gray-300 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700 transition-all {(currentPath === item.href || currentPath.startsWith(item.href + '/')) ? 'bg-white/30' : ''}"
                         >
                             <Fa icon={item.icon} class="w-5 h-5" />
