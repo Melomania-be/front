@@ -159,7 +159,12 @@
 	<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full mt-2 items-center justify-items-stretch">
 		{#if paginatorTop}
 			<div class="sm:col-start-2 col-start-1">
-				<Paginator bind:meta bind:options {changePage} />
+				<Paginator
+					bind:meta
+					bind:options
+					{changePage}
+					orientation={isMobile ? 'vertical' : 'horizontal'}
+				/>
 			</div>
 		{/if}
 	</div>

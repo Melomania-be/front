@@ -47,7 +47,7 @@
 
 	const handleResize = () => {
 		if (browser) {
-			isMobile = window.innerWidth < 768;
+			isMobile = window.innerWidth <= 1000;
 		}
 	}
 

@@ -51,13 +51,15 @@
 	<div
 		class={orientation === 'horizontal'
 			? 'flex items-center justify-end w-full'
-			: 'grid grid-cols-1 place-items-center gap-1'}
+			: 'flex flex-col items-center gap-2 w-full'}
 	>
-		<span class="grid grid-cols-4 gap-1 {orientation === 'horizontal' ? 'mx-2' : ''}">
+		<span
+			class="flex flex-nowrap items-center gap-1 whitespace-nowrap max-w-full overflow-x-auto {orientation === 'horizontal' ? 'mx-2' : ''}"
+		>
 			<button
 				type="button"
 				on:click={() => changePage(meta.firstPage)}
-				class="border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+				class="border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex shrink-0 items-center justify-center min-w-8 h-10"
 				disabled={meta.currentPage === meta.firstPage}
 			>
 				<span
@@ -68,19 +70,19 @@
 			<button
 				type="button"
 				on:click={() => changePage(meta.currentPage - 1)}
-				class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+				class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-[11px] sm:text-sm px-2 sm:px-5 py-2.5 whitespace-nowrap shrink-0 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
 				disabled={meta.currentPage === meta.firstPage}>prev</button
 			>
 			<button
 				type="button"
 				on:click={() => changePage(meta.currentPage + 1)}
-				class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+				class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-[11px] sm:text-sm px-2 sm:px-5 py-2.5 whitespace-nowrap shrink-0 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
 				disabled={meta.currentPage === meta.lastPage}>next</button
 			>
 			<button
 				type="button"
 				on:click={() => changePage(meta.lastPage)}
-				class="border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+				class="border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex shrink-0 items-center justify-center min-w-8 h-10"
 				disabled={meta.currentPage === meta.lastPage}
 				><span
 					class="icon-[material-symbols-light--last-page]"
