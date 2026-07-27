@@ -7,4 +7,5 @@ export interface ContentCallsheet {
 	text: string;
 	updatedAt: Date;
 	createdAt: Date;
+	showOnRegistration?: boolean;
 }

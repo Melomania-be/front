@@ -7,4 +7,5 @@ export interface ContentRegistration {
 	registration_id: number;
 	createdAt: Date;
 	updatedAt: Date;
+	showOnRegistration?: boolean;
 }
