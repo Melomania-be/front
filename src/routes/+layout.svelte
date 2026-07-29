@@ -2,7 +2,7 @@
     import '../app.css';
     import { page } from '$app/stores';
     import Fa from 'svelte-fa';
-    import {
+	import {
         faProjectDiagram,
         faAddressBook,
         faUsers,
@@ -142,6 +142,7 @@
         faSignOutAlt
     } from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
+	import { initMobilePushNotifications } from '$lib/client/mobilePush';
 
     export let data;
 
@@ -199,6 +200,9 @@
 		checkDirection();
 		window.addEventListener('resize', checkMobile);
 		window.addEventListener('resize', checkDirection);
+		if (data.connected) {
+			void initMobilePushNotifications();
+		}
 
 		return () => {
 			window.removeEventListener('resize', checkMobile);

@@ -1,0 +1,18 @@
+import { API_URL } from '$env/static/private';
+import { getToken } from '$lib/server/authentification';
+import type { RequestHandler } from '@sveltejs/kit';
+
+export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
+	const res = await fetch(
+		`${API_URL}/accountings/contractor/${params.id}`,
+		{
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				authorization: `${await getToken(cookies)}`
+			}
+		}
+	);
+
+	return res;
+};

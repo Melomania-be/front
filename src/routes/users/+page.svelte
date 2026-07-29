@@ -275,20 +275,20 @@
 							</div>
 						{:else}
 							<!-- Display mode -->
-							<div class="flex justify-between items-start">
-								<div class="flex-1">
+							<div class="flex justify-between items-center gap-4">
+								<div class="flex-1 min-w-0">
 
 									{#if user.fullName}
-										<p class="font-semibold text-gray-900">{user.fullName}</p>
-										<p class="text-sm text-gray-600">{user.email}</p>
+										<p class="font-semibold text-gray-900 truncate">{user.fullName}</p>
+										<p class="text-sm text-gray-600 truncate">{user.email}</p>
 									{:else}
-										<p class="font-semibold text-gray-900">{user.email}</p>
-										<p class="text-sm text-gray-500 italic">No name defined</p>
+										<p class="font-semibold text-gray-900 truncate">{user.email}</p>
+										<p class="text-sm text-gray-500 italic truncate">No name defined</p>
 									{/if}
 									<p class="text-xs text-gray-500 mt-1">Created: {user.createdAt}</p>
 									<p class="text-xs text-gray-500">Last activity: {user.token.lastUsedAt}</p>
 								</div>
-								<div class="flex gap-2">
+								<div class="flex gap-2 shrink-0">
 									<button
 										type="button"
 										on:click={() => editUser(user)}

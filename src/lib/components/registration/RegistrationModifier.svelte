@@ -11,26 +11,26 @@
 		faChevronUp,
 		faPenToSquare,
 		faTrash,
-		faTrashCan,
 		type IconDefinition
 	} from '@fortawesome/free-solid-svg-icons';
 
 	import { slide } from 'svelte/transition';
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let registration: Registration;
 	export let projectId: number;
 	export let mode: 'modify' | 'create';
 
-
 	let allowModification = mode === 'modify' ? false : true;
 
 	async function saveregistration() {
 		const tmpRegistration = {
-			content: registration.contents.map((c) => {
+			content: registration.contents.map((c, index) => {
 				return {
 					title: c.title,
-					text: c.text
+					text: c.text,
+					order: c.order ?? index,
+					position: c.position ?? 'below'
 				};
 			}),
 			form: registration.form.map((f) => {
@@ -77,15 +77,14 @@
 	let popUpSave: boolean = false;
 
 	let isMobile = false;
-	let screenDirection : "horizontal" | "vertical" = "vertical";
-	let windowWidth : number;
+	let screenDirection: 'horizontal' | 'vertical' = 'vertical';
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
 	};
 
 	const checkDirection = () => {
-        screenDirection = (window.innerWidth > window.innerHeight ? "horizontal" : "vertical");
+		screenDirection = window.innerWidth > window.innerHeight ? 'horizontal' : 'vertical';
 	};
 
 	onMount(() => {
@@ -94,19 +93,41 @@
 		window.addEventListener('resize', checkMobile);
 		window.addEventListener('resize', checkDirection);
 
+		// Initialize order and position for existing contents
+		if (registration.contents) {
+			registration.contents = registration.contents.map((content, index) => ({
+				...content,
+				order: content.order ?? index,
+				position: content.position ?? 'below'
+			}));
+		}
+
 		return () => {
 			window.removeEventListener('resize', checkMobile);
 			window.removeEventListener('resize', checkDirection);
 		};
 	});
+
+	function moveUp(index: number) {
+		if (index === 0) return;
+		const contents = [...registration.contents];
+		[contents[index - 1], contents[index]] = [contents[index], contents[index - 1]];
+		contents.forEach((c, i) => (c.order = i));
+		registration.contents = contents;
+	}
+
+	function moveDown(index: number) {
+		if (index === registration.contents.length - 1) return;
+		const contents = [...registration.contents];
+		[contents[index], contents[index + 1]] = [contents[index + 1], contents[index]];
+		contents.forEach((c, i) => (c.order = i));
+		registration.contents = contents;
+	}
 </script>
 
 {#if popUpSave}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-		<div
-			class="bg-white p-6 rounded-xl shadow-xl w-[50%] text-center flex flex-col items-center justify-center
-		"
-		>
+		<div class="bg-white p-6 rounded-xl shadow-xl w-[50%] text-center flex flex-col items-center justify-center">
 			<h2 class="text-lg font-semibold mb-2">Changes saved successfully</h2>
 			<button
 				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
@@ -121,19 +142,16 @@
 {/if}
 
 <div class="bg-[#E7E7E7] px-6 py-4">
-	<div
-		class="bg-[#6b9ad9] hover:bg-[#4f7cb7] text-white font-semibold justify-center flex items-center gap-2 rounded-lg py-1 w-[100px]"
-	>
+	<div class="bg-[#6b9ad9] hover:bg-[#4f7cb7] text-white font-semibold justify-center flex items-center gap-2 rounded-lg py-1 w-[100px]">
 		<Fa icon={faChevronLeft} class="text-[14px]" style="color: white;" />
 		<a href={`/projects/${projectId}/management`}>Back</a>
 	</div>
 </div>
-<div class="grid {isMobile ? "grid-cols-1" : "grid-cols-2"} bg-[#E7E7E7] min-h-screen pt-2 p-4">
+
+<div class="grid {isMobile ? 'grid-cols-1' : 'grid-cols-2'} bg-[#E7E7E7] min-h-screen pt-2 p-4">
 	{#if registration}
-		<div
-			class="m-1 relative max-w-xxl bg-white border-2 border-gray-400 p-4 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
-		>
-			<div class=" flex items-center">
+		<div class="m-1 relative max-w-xxl bg-white border-2 border-gray-400 p-4 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+			<div class="flex items-center">
 				{#if registration.id}
 					<button
 						class="text-white font-semibold bg-[#6b9ad9] p-1 px-3 rounded-lg"
@@ -165,14 +183,10 @@
 							class="mb-4"
 							on:click={() => {
 								displayInfo = !displayInfo;
-								if (chevronInfo === faChevronDown) {
-									chevronInfo = faChevronUp;
-								} else {
-									chevronInfo = faChevronDown;
-								}
+								chevronInfo = displayInfo ? faChevronUp : faChevronDown;
 							}}
 						>
-							<Fa icon={chevronInfo} style="color : black" />
+							<Fa icon={chevronInfo} style="color: black" />
 						</button>
 					</div>
 					{#if displayInfo}
@@ -186,11 +200,12 @@
 											text: '',
 											registration_id: 0,
 											id: null,
+											order: registration.contents.length,
+											position: 'below',
 											createdAt: new Date(),
 											updatedAt: new Date()
 										});
 										registration = registration;
-										
 									}}
 								>
 									Add content
@@ -198,34 +213,62 @@
 							{/if}
 							<div>
 								{#if registration.contents && registration.contents.length > 0}
-									{#each registration.contents as content}
-										<div
-											class="grid grid-cols-1 gap-2 bg-white border-2 border-gray-400 rounded-xl p-2 mb-4"
-										>
+									{#each registration.contents as content, index}
+										<div class="grid grid-cols-1 gap-2 bg-white border-2 border-gray-400 rounded-xl p-2 mb-4">
+											<div class="flex items-center justify-between">
+												<span class="text-sm text-gray-500 font-semibold">Block {index + 1}</span>
+												{#if allowModification}
+													<div class="flex items-center gap-2">
+														<!-- Position dropdown -->
+														<select
+															class="border border-gray-300 rounded text-sm p-1"
+															bind:value={content.position}
+														>
+															<option value="above">Above program & events</option>
+															<option value="below">Below program & events</option>
+														</select>
+														<!-- Move up -->
+														<button
+															class="p-1 rounded hover:bg-gray-100 disabled:opacity-30"
+															on:click={() => moveUp(index)}
+															disabled={index === 0}
+														>
+															▲
+														</button>
+														<!-- Move down -->
+														<button
+															class="p-1 rounded hover:bg-gray-100 disabled:opacity-30"
+															on:click={() => moveDown(index)}
+															disabled={index === registration.contents.length - 1}
+														>
+															▼
+														</button>
+														<!-- Delete -->
+														<button
+															class="m-1 ml-4 flex items-center justify-center"
+															on:click={() => {
+																registration.contents = registration.contents.filter(
+																	(c) => c.title !== content.title || c.text !== content.text
+																);
+																registration = registration;
+															}}
+														>
+															<Fa icon={faTrash} class="text-[16px]" style="color: #6b9ad9" />
+														</button>
+													</div>
+												{/if}
+											</div>
 											<div class="flex items-center justify-center">
 												<input
-													class=" flex-1 text-lg font-semibold rounded-lg bg-blue-200 pl-4"
+													class="flex-1 text-lg font-semibold rounded-lg bg-blue-200 pl-4"
 													type="text"
 													placeholder="Title"
 													bind:value={content.title}
 													disabled={!allowModification}
 												/>
-												{#if allowModification}
-													<button
-														class="m-1 ml-4 flex items-center justify-center"
-														on:click={() => {
-															registration.contents = registration.contents.filter(
-																(c) => c.title !== content.title || c.text !== content.text
-															);
-															registration = registration;
-														}}
-													>
-														<Fa icon={faTrash} class="text-[16px]" style="color: #6b9ad9" />
-													</button>
-												{/if}
 											</div>
 											{#if allowModification}
-												<div class=" {allowModification ? '' : 'hidden'} h-auto mb-12">
+												<div class="h-auto mb-12">
 													<RichTextEditor
 														value={content.text}
 														onChange={(v) => (content.text = v)}
@@ -249,14 +292,10 @@
 							class="mb-4"
 							on:click={() => {
 								displayForm = !displayForm;
-								if (chevronForm === faChevronDown) {
-									chevronForm = faChevronUp;
-								} else {
-									chevronForm = faChevronDown;
-								}
+								chevronForm = displayForm ? faChevronUp : faChevronDown;
 							}}
 						>
-							<Fa icon={chevronForm} style="color : black" />
+							<Fa icon={chevronForm} style="color: black" />
 						</button>
 					</div>
 					{#if displayForm}
@@ -266,6 +305,7 @@
 					{/if}
 				</div>
 			</div>
+
 			<div class="flex justify-center w-full gap-4 mt-4">
 				{#if allowModification}
 					<button
