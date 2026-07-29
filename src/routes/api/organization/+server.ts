@@ -10,6 +10,18 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 			authorization: `${await getToken(cookies)}`
 		}
 	});
+	return res;
+};
 
+export const POST: RequestHandler = async ({ cookies, fetch, request }) => {
+	const body = await request.json();
+	const res = await fetch(`${API_URL}/organization/create`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			authorization: `${await getToken(cookies)}`
+		},
+		body: JSON.stringify(body)
+	});
 	return res;
 };

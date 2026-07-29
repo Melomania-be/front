@@ -11,7 +11,8 @@
         faMusic,
         faGuitar,
         faSignOutAlt,
-		faPersonDigging
+		faPersonDigging,
+        faBuilding
     } from '@fortawesome/free-solid-svg-icons';
 
     export let data;
@@ -26,6 +27,7 @@
         { icon: faProjectDiagram, text: 'Projects', href: '/projects' },
         { icon: faAddressBook, text: 'Contacts', href: '/contacts' },
         { icon: faUsers, text: 'Users', href: '/users' },
+        { icon: faBuilding, text: 'Organizations', href: '/organizations' },
         { icon: faEnvelope, text: 'Mailing', href: '/mailing' },
         { icon: faFolderTree, text: 'Files', href: '/files' },
         { icon: faMusic, text: 'Composer and pieces', href: '/library' },
@@ -140,7 +142,8 @@
         faMusic,
         faGuitar,
         faSignOutAlt,
-        faCog
+        faCog,
+        faBuilding
     } from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
 
