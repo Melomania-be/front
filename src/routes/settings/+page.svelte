@@ -12,6 +12,7 @@
 	const IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,image/avif';
 	const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif'];
 	const IMAGE_MAX_SIZE_BYTES = 2 * 1024 * 1024;
+	const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 	function validateImage(file: File): string | null {
 		const ext = file.name.split('.').pop()?.toLowerCase();
@@ -20,6 +21,13 @@
 		}
 		if (file.size > IMAGE_MAX_SIZE_BYTES) {
 			return 'File is too large. Maximum size is 2MB.';
+		}
+		return null;
+	}
+
+	function validateColor(value: string): string | null {
+		if (!HEX_COLOR_PATTERN.test(value)) {
+			return 'Accent colour must be a hex code like #343CAD.';
 		}
 		return null;
 	}
@@ -89,6 +97,13 @@
 	}
 
 	async function save() {
+		const colorError = validateColor(primaryColor);
+		if (colorError) {
+			saveError = true;
+			saveMessage = colorError;
+			return;
+		}
+
 		saving = true;
 		saveMessage = '';
 		saveError = false;
@@ -274,6 +289,8 @@
 						type="text"
 						bind:value={primaryColor}
 						placeholder="#343CAD"
+						pattern="^#[0-9a-fA-F]{6}$"
+						title="Hex colour, e.g. #343CAD"
 						class="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					/>
 					<!-- Live swatch -->
