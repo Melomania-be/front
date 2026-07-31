@@ -129,6 +129,7 @@
 <script lang="ts">
     import '../app.css';
     import { page } from '$app/stores';
+    import { goto } from '$app/navigation';
     import Fa from 'svelte-fa';
     import {
         faProjectDiagram,
@@ -139,13 +140,15 @@
         faMusic,
         faGuitar,
         faCog,
-        faSignOutAlt
+        faSignOutAlt,
+        faCog
     } from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
 
     export let data;
 
     $: currentPath = $page.url.pathname;
+    $: appSettings = data.appSettings ?? { primary_color: '#343CAD', has_logo: false, has_background: false };
 
     const menu = [
         { icon: faProjectDiagram, text: 'Projects', href: '/projects' },
@@ -163,6 +166,18 @@
 
     function toggleSidebar() {
         showSidebar = !showSidebar;
+    }
+
+    async function handleMenuClick(event: MouseEvent, item: { href: string; text: string }) {
+        if (isMobile) {
+            showSidebar = false;
+        }
+
+        if (item.href === '/files' && currentPath === '/files') {
+            event.preventDefault();
+            window.dispatchEvent(new CustomEvent('files:navigate-home'));
+            await goto('/files', { invalidateAll: true, noScroll: true });
+        }
     }
 
     let isMobile = false;
@@ -199,20 +214,30 @@
 {#if data.connected}
 <div class="flex h-auto bg-gray-100 dark:bg-gray-900 {isMobile? "overflow-x-hidden" : "overflow-x-hidden"}">
     <!-- Sidebar -->
-    <aside class={`fixed top-0 left-0 z-40 w-64 h-[100dvh] transition-transform ${screenDirection === "horizontal" ? '' : '-translate-x-full'} ${showSidebar ? 'translate-x-0' : '-translate-x-full'} bg-gradient-to-t from-[#343CAD] to-[#6BB0C7] dark:bg-gray-800 border-r dark:border-gray-700`}>
+    <aside
+        class={`fixed top-0 left-0 z-40 w-64 h-[100dvh] transition-transform ${screenDirection === "horizontal" ? '' : '-translate-x-full'} ${showSidebar ? 'translate-x-0' : '-translate-x-full'} dark:bg-gray-800 border-r dark:border-gray-700`}
+        style="background: linear-gradient(to top, {appSettings.primary_color}, {appSettings.primary_color}cc)"
+    >
         <div class="h-full overflow-y-auto px-3 py-4 pb-24">
-            <h2 class="text-xl font-bold dark:text-gray-800 text-white mb-6 px-2">Melomania</h2>
+            <!-- Logo or app name -->
+            <div class="mb-6 px-2 h-10 flex items-center">
+                {#if appSettings.has_logo}
+                    <img
+                        src="/api/app_settings/logo"
+                        alt="App logo"
+                        class="max-h-10 max-w-[180px] object-contain"
+                    />
+                {:else}
+                    <h2 class="text-xl font-bold text-white">Melomania</h2>
+                {/if}
+            </div>
             <ul class="space-y-2">
                 {#each menu as item}
                     <li>
                         <a
                             href={item.href}
-                            on:click={()=>{if (isMobile){showSidebar=false}}}
-                            class="flex items-center p-2 text-white font-medium dark:text-gray-300 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-all"
-                            class:bg-blue-600={currentPath === item.href}
-                            class:dark:bg-blue-700={currentPath === item.href}
-                            class:text-blue-700={currentPath === item.href}
-                            class:dark:text-white={currentPath === item.href}
+                            on:click={(event) => handleMenuClick(event, item)}
+                            class="flex items-center p-2 text-white font-medium dark:text-gray-300 rounded-lg hover:bg-white/20 dark:hover:bg-gray-700 transition-all {(currentPath === item.href || currentPath.startsWith(item.href + '/')) ? 'bg-white/30' : ''}"
                         >
                             <Fa icon={item.icon} class="w-5 h-5" />
                             <span class="ml-3">{item.text}</span>
@@ -232,7 +257,12 @@
     {/if}
 
     <!-- Main content -->
-    <div class="bg-white w-full min-h-[100dvh] ml-0 {!isMobile ? "pl-64" : "" }">
+    <div
+        class="w-full min-h-[100dvh] ml-0 {!isMobile ? "pl-64" : ""}"
+        style={appSettings.has_background
+            ? "background-image: url('/api/app_settings/background'); background-size: cover; background-position: center; background-attachment: fixed;"
+            : "background-color: white;"}
+    >
         <!-- Mobile toggle button -->
         <button
             class="{!isMobile ? "hidden" : ""} p-2 m-2 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-700"

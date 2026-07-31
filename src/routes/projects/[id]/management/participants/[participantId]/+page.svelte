@@ -29,13 +29,13 @@
 </script>
 
 {#if participant}
-<div class="bg-[#E7E7E7] h-screen p-4">
-	<div
-		class="bg-[#6b9ad9] text-white font-semibold justify-center flex items-center gap-2 rounded-lg px-6 w-20 py-1 mb-4"
-	>
-		<Fa icon={faChevronLeft} class="text-[14px]" style="color: white;" />
-		<a href={`/projects/${data.id}/management/participants`}>Back</a>
-	</div>
+	<div class="bg-[#E7E7E7] h-screen p-4">
+		<div
+			class="bg-[#6b9ad9] text-white font-semibold justify-center flex items-center gap-2 rounded-lg px-6 w-20 py-1 mb-4"
+		>
+			<Fa icon={faChevronLeft} class="text-[14px]" style="color: white;" />
+			<a href={`/projects/${data.id}/management/participants`}>Back</a>
+		</div>
 		<ParticipantModifier
 			mode="modify"
 			id={data.id}

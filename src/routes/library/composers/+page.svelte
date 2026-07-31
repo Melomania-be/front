@@ -27,10 +27,13 @@
 	let url: string = '/api/composers';
 	let urlFront: string = '/library/composers';
 	let uniqueUrl: string = '/library/composers';
+	let isPieceCreationFlow = false;
+	let createMode = false;
+	let returnToUrl = '/library/pieces';
 
 	let dataHolder: TableData<Composer>;
 
-	let newComposer: Composer = {
+	let newComposer = {
 		birthDate: new Date(),
 		country: null,
 		createdAt: new Date(),
@@ -40,17 +43,34 @@
 		mainStyle: null,
 		shortName: null,
 		updatedAt: new Date()
-	};
+	} as unknown as Composer;
 
-    onMount(async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        options = {
-            filter: urlParams.get('filter') || options.filter,
-            limit: parseInt(urlParams.get('limit') || options.limit.toString()),
-            page: parseInt(urlParams.get('page') || options.page.toString()),
-            order: urlParams.get('order') || options.order,
-            orderBy: urlParams.get('orderBy') || options.orderBy
-        };
+	function updatePieceFlowUrls() {
+		if (!isPieceCreationFlow) return;
+		const flowParams = new URLSearchParams({
+			fromPieceCreation: '1',
+			returnTo: returnToUrl
+		});
+		if (createMode) {
+			flowParams.set('create', '1');
+		}
+		urlFront = `/library/composers?${flowParams.toString()}`;
+		uniqueUrl = urlFront;
+	}
+
+	onMount(async () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		options = {
+			filter: urlParams.get('filter') || options.filter,
+			limit: parseInt(urlParams.get('limit') || options.limit.toString()),
+			page: parseInt(urlParams.get('page') || options.page.toString()),
+			order: urlParams.get('order') || options.order,
+			orderBy: urlParams.get('orderBy') || options.orderBy
+		};
+		isPieceCreationFlow = urlParams.get('fromPieceCreation') === '1';
+		createMode = urlParams.get('create') === '1';
+		returnToUrl = urlParams.get('returnTo') || '/library/pieces';
+		updatePieceFlowUrls();
 
         // Vérifier s'il y a un objet selected dans l'URL
         const selectedParam = urlParams.get('selected');
@@ -62,8 +82,12 @@
             }
         }
 
-        fetchData();
-    });
+		if (createMode) {
+			selectedData = { ...newComposer };
+		}
+
+		fetchData();
+	});
 
 	async function fetchData() {
 		let optionInUrls = `?page=${options.page}&limit=${options.limit}`;
@@ -79,7 +103,7 @@
 
 		const responseHandler = new ResponseHandlerClient();
 
-		responseHandler.handle(response, async () => {
+		await responseHandler.handle(response, async () => {
 			const data = await response.json();
 
 			composers = data.data;
@@ -99,7 +123,7 @@
 			dataHolder = {
 				data: composers,
 				columns: ['id', 'longName'],
-				notOrderedColumns: ['pieces']
+				notOrderedColumns: ['pieces' as never]
 			};
 		});
 	}
@@ -150,12 +174,18 @@
 			errorEvent(response);
 
 			if (response.ok) {
+				if (isPieceCreationFlow && data.id === undefined) {
+					await fetchData();
+					selectedData = { ...newComposer };
+					return;
+				}
 				window.location.reload();
 			}
 		}
 	}
 
 	async function deleteComposer() {
+		if (!selectedData) return;
 		const validated = confirm('Are you sure you want to delete this file ?');
 
 		if (!validated) return;
@@ -174,6 +204,17 @@
 
 <div class="flex">
 	<div class="w-full">
+		{#if isPieceCreationFlow}
+			<div class="mb-4 flex justify-end pr-2 pt-2">
+				<button
+					type="button"
+					class="rounded-lg bg-[#6B9AD9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f7cb7]"
+					on:click={() => goto(returnToUrl)}
+				>
+					Back to piece creation
+				</button>
+			</div>
+		{/if}
 		<div class="w-full">
 			<button
 				on:click={() => (selectedData = newComposer)}
@@ -185,7 +226,7 @@
 
 		<!--affichage du composer selectionné-->
 		{#if selectedData != null}
-			<form class="justify-center w-full max-w-2xl mx-auto">
+			<form class="justify-center w-full max-w-2xl mx-auto" on:submit|preventDefault={addComposer}>
 				<div class="flex justify-between items-center">
 					<h1 class="text-4xl font-extrabold dark:text-white">Composer</h1>
                     <!-- Close button -->
@@ -337,14 +378,12 @@
 				<div class="flex p-2">
 					{#if selectedData.id == 0}
 						<button
-							on:click={addComposer}
 							type="submit"
 							class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
 							>Add</button
 						>
 					{:else}
 						<button
-							on:click={addComposer}
 							type="submit"
 							class="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
 							>Edit</button

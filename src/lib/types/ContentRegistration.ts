@@ -5,6 +5,8 @@ export interface ContentRegistration {
 	title: string;
 	text: string;
 	registration_id: number;
+	order: number;
+	position: 'above' | 'below';
 	createdAt: Date;
 	updatedAt: Date;
 }

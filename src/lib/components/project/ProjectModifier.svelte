@@ -10,7 +10,7 @@
 	import type { Concert } from '$lib/types/Concert';
 	import SimpleFilterer from '../SimpleFilterer.svelte';
 	import type { TableData } from '$lib/types/TableData';
-	import { goto } from '$app/navigation';
+	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import type { Contact } from '$lib/types/Contact';
@@ -56,8 +56,13 @@
 
 	let allPiecesSortable: any;
 	let selectedPiecesSortable: any;
+	const PROJECT_CREATION_DRAFT_KEY = 'projectCreationDraft';
+	let pendingResponsibleIds: number[] | null = null;
+	let projectDraftReady = mode !== 'create';
 
 	let initialized = false;
+
+	$: project.pieces = selectedPieces;
 
 	$: if (displayProjectPieces && !initialized) {
 		initSortableWhenReady();
@@ -132,12 +137,19 @@
 			},
 			animation: 200,
 			sort: false,
+			forceFallback: true,
+			fallbackTolerance: 3,
+			delay: 50,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			onAdd: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				allPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				allPieces.splice(evt.oldIndex as number, 1);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = pieces.find(p => p.id === id);
+				if (item) {
+					allPieces.splice(evt.newIndex as number, 0, item);
+					allPieces = [...allPieces];
+					selectedPieces = selectedPieces.filter(p => p.id !== id);
+				}
 			}
 		});
 
@@ -148,17 +160,28 @@
 				pull: true
 			},
 			animation: 200,
+			forceFallback: true,
+			fallbackTolerance: 3,
+			delay: 50,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			onAdd: (evt: any) => {
-				const item = allPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				selectedPieces.splice(evt.oldIndex as number, 1);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = pieces.find(p => p.id === id);
+				if (item) {
+					selectedPieces.splice(evt.newIndex as number, 0, item);
+					selectedPieces = [...selectedPieces];
+					allPieces = allPieces.filter(p => p.id !== id);
+				}
 			},
 			onUpdate: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.oldIndex as number, 1);
-				selectedPieces.splice(evt.newIndex as number, 0, item);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = selectedPieces.find(p => p.id === id);
+				if (item) {
+					const temp = selectedPieces.filter(p => p.id !== id);
+					temp.splice(evt.newIndex as number, 0, item);
+					selectedPieces = temp;
+				}
 			}
 		});
 	}
@@ -174,7 +197,90 @@
 
 	afterUpdate(() => {
 		toggleSortable();
+		if (projectDraftReady) {
+			persistProjectDraft();
+		}
 	});
+
+	function serializeProjectDraft() {
+		return {
+			project: {
+				name: project.name,
+				sectionGroupId: project.sectionGroup?.id ?? null,
+				folderId: project.folder?.id ?? null,
+				rehearsals: project.rehearsals,
+				concerts: project.concerts,
+				responsibleIds: project.responsibles.map((responsible) => Number(responsible.id))
+			},
+			selectedPieceIds: selectedPieces.map((piece) => Number(piece.id))
+		};
+	}
+
+	function persistProjectDraft() {
+		if (!browser || mode !== 'create') return;
+		window.sessionStorage.setItem(
+			PROJECT_CREATION_DRAFT_KEY,
+			JSON.stringify(serializeProjectDraft())
+		);
+	}
+
+	function clearProjectDraft() {
+		if (!browser) return;
+		window.sessionStorage.removeItem(PROJECT_CREATION_DRAFT_KEY);
+	}
+
+	function restoreProjectDraft() {
+		if (!browser || mode !== 'create') return;
+		const rawDraft = window.sessionStorage.getItem(PROJECT_CREATION_DRAFT_KEY);
+		if (!rawDraft) {
+			projectDraftReady = true;
+			return;
+		}
+
+		try {
+			projectDraftReady = false;
+			const draft = JSON.parse(rawDraft);
+			project.name = draft.project?.name ?? project.name;
+			project.sectionGroup =
+				sectionGroups.find((sectionGroup) => sectionGroup.id === draft.project?.sectionGroupId) ?? null;
+			project.sectionGroupId = project.sectionGroup?.id ?? null;
+			project.folder =
+				folders.find((folder) => folder.id === draft.project?.folderId) ?? undefined;
+			project.rehearsals = (draft.project?.rehearsals ?? []).map((rehearsal: any) => ({
+				...rehearsal,
+				startDate: rehearsal.startDate ? new Date(rehearsal.startDate) : new Date(),
+				endDate: rehearsal.endDate ? new Date(rehearsal.endDate) : new Date()
+			}));
+			project.concerts = (draft.project?.concerts ?? []).map((concert: any) => ({
+				...concert,
+				startDate: concert.startDate ? new Date(concert.startDate) : new Date(),
+				endDate: concert.endDate ? new Date(concert.endDate) : new Date()
+			}));
+			const restoredResponsibleIds = (draft.project?.responsibleIds ?? []).map((id: number) =>
+				Number(id)
+			);
+			pendingResponsibleIds = restoredResponsibleIds;
+			if (contacts.length > 0 || restoredResponsibleIds.length === 0) {
+				const responsibleIds = new Set(restoredResponsibleIds);
+				project.responsibles = contacts.filter((contact) => responsibleIds.has(Number(contact.id)));
+				pendingResponsibleIds = null;
+				projectDraftReady = true;
+			}
+
+			const selectedIds = new Set((draft.selectedPieceIds ?? []).map((id: number) => Number(id)));
+			selectedPieces = pieces.filter((piece) => selectedIds.has(Number(piece.id)));
+			allPieces = pieces.filter((piece) => !selectedIds.has(Number(piece.id)));
+		} catch {
+			clearProjectDraft();
+			projectDraftReady = true;
+		}
+	}
+
+	function openPieceCreationPage() {
+		if (!browser) return;
+		persistProjectDraft();
+		goto('/library/pieces?create=1&fromProjectCreation=1&returnTo=/projects/creation');
+	}
 
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
 		project.rehearsals = project.rehearsals.filter((rehearsal) => rehearsal !== delRehearsal);
@@ -335,6 +441,12 @@
 	}
 
 	$: if (browser) allowModification && fetchData();
+	$: if (mode === 'create' && pendingResponsibleIds && contacts.length > 0) {
+		const responsibleIds = new Set(pendingResponsibleIds);
+		project.responsibles = contacts.filter((contact) => responsibleIds.has(Number(contact.id)));
+		pendingResponsibleIds = null;
+		projectDraftReady = true;
+	}
 
 	let displayProjectInfo = false;
 	let chevronProjectInfo: IconDefinition = faChevronDown;
@@ -365,6 +477,7 @@
 	onMount(() => {
 		checkMobile();
 		checkDirection();
+		restoreProjectDraft();
 		window.addEventListener('resize', checkMobile);
 		window.addEventListener('resize', checkDirection);
 
@@ -372,6 +485,28 @@
 			window.removeEventListener('resize', checkMobile);
 			window.removeEventListener('resize', checkDirection);
 		};
+	});
+
+	beforeNavigate((navigation) => {
+		if (!browser || mode !== 'create') return;
+		if (!navigation.to?.url) {
+			clearProjectDraft();
+			return;
+		}
+
+		const pathname = navigation.to.url.pathname;
+		const search = navigation.to.url.search;
+		if (
+			pathname === '/library/pieces' &&
+			new URLSearchParams(search).get('fromProjectCreation') === '1'
+		) {
+			persistProjectDraft();
+			return;
+		}
+
+		if (pathname !== '/projects/creation') {
+			clearProjectDraft();
+		}
 	});
 </script>
 
@@ -546,9 +681,20 @@
 				</div>
 				{#if displayProjectPieces}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
-						<div class="flex gap-4 items-end">
-							<div class="flex-1 ">
-								<h4 class="text-lg top-0 text-center bg-white">Available <br> pieces</h4>
+						{#if allowModification && mode === 'create'}
+							<div class="mb-4">
+								<button
+									type="button"
+									class="bg-[#6b9ad9] px-4 py-2 text-white pointer-events-auto hover:bg-[#4f7cb7] font-semibold rounded-lg"
+									on:click={openPieceCreationPage}
+								>
+									Add piece
+								</button>
+							</div>
+						{/if}
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 items-stretch">
+							<div class="w-full">
+								<h4 class="text-lg top-0 text-center bg-white">Available pieces</h4>
 								{#if allPieces.length === 0}
 									<p>No pieces available</p>
 								{:else}
@@ -558,6 +704,7 @@
 									>
 										{#each allPieces as piece}
 											<div
+												data-id={piece.id}
 												class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab"
 											>
 												{piece.name} - {piece.composer.shortName}
@@ -566,14 +713,14 @@
 									</section>
 								{/if}
 							</div>
-							<div class="flex-1 mt-4 md:mt-0">
-								<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
+							<div class="w-full">
+								<h4 class="text-lg top-0 text-center bg-white">Selected pieces (ordered)</h4>
 								<section
 									bind:this={selectedPiecesContainer}
 									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
 								>
-									{#each project.pieces as piece}
-										<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
+									{#each selectedPieces as piece}
+										<div data-id={piece.id} class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
 											{piece.name} - {piece.composer.shortName}
 										</div>
 									{/each}
