@@ -62,7 +62,7 @@
 		const responseRecommendedContact = await fetch(`${urlRecommendedContact}${optionInUrls}`, {
 			method: 'GET'
 		});
-const responseOrganizations = await fetch('/api/organization', {
+const responseOrganizations = await fetch('/api/company', {
 	method: 'GET'
 });
 		if (responseContacts.ok) {

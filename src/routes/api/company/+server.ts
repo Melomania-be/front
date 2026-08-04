@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { API_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
-	const res = await fetch(`${API_URL}/organization`, {
+	const res = await fetch(`${API_URL}/company`, {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({
 }) => {
 	const data = await request.json();
 
-	const res = await fetch(`${API_URL}/organization`, {
+	const res = await fetch(`${API_URL}/company`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

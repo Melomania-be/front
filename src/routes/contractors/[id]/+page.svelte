@@ -180,7 +180,7 @@ async function uploadInteractionFile(interactionId: number) {
 		</h1>
 
 		<p class="text-gray-500 mt-1">
-			{contractor.organization?.name ?? 'No organization'}
+			{contractor.company?.name ?? 'No company'}
 		</p>
 
 		<div class="mt-6 space-y-3">

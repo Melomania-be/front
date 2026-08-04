@@ -8,15 +8,15 @@ function goBack() {
 	
 let categories: any[] = [];
 let selectedCategories: number[] = [];
-let newOrganization = '';
-let showNewOrganization = false;
-let organizations : any[] = [];
-let organizationId = '';
+let newCompany = '';
+let showNewCompany = false;
+let companies : any[] = [];
+let companyId = '';
 onMount(async () => {
-	const response = await fetch('/api/organization');
+	const response = await fetch('/api/company');
 
 	if (response.ok) {
-		organizations = await response.json();
+		companies = await response.json();
 	}
 	const categoryResponse = await fetch('/api/contractor-category');
 
@@ -58,7 +58,7 @@ let showNewCategory = false;
 
 	comments,
 
-	organization_id: organizationId ? Number(organizationId) : null,
+	company_id: companyId ? Number(companyId) : null,
 	category_ids: selectedCategories
 })
 		});
@@ -114,28 +114,28 @@ let showNewCategory = false;
 		alert('Failed to create category');
 	}
 }
-async function createOrganization() {
-	const response = await fetch('/api/organization', {
+async function createCompany() {
+	const response = await fetch('/api/company', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			name: newOrganization
+			name: newCompany
 		})
 	});
 
 	if (response.ok) {
-		const organization = await response.json();
+		const company = await response.json();
 
-		organizations = [...organizations, organization];
+		companies = [...companies, company];
 
-		organizationId = organization.id.toString();
+		companyId = company.id.toString();
 
-		newOrganization = '';
-		showNewOrganization = false;
+		newCompany = '';
+		showNewCompany = false;
 	} else {
-		alert('Failed to create organization');
+		alert('Failed to create company');
 	}
 }
 </script>
@@ -215,17 +215,17 @@ async function createOrganization() {
 	/>
 </div>
 	<div class="mb-4">
-	<label class="block mb-1">Organization</label>
+	<label class="block mb-1">Company</label>
 
 	<select
 	class="border p-2 w-full rounded"
-	bind:value={organizationId}
+	bind:value={companyId}
 >
-	<option value="">Select organization</option>
+	<option value="">Select company</option>
 
-	{#each organizations as organization}
-		<option value={organization.id}>
-			{organization.name}
+	{#each companies as company}
+		<option value={company.id}>
+			{company.name}
 		</option>
 	{/each}
 </select>
@@ -235,27 +235,27 @@ async function createOrganization() {
 	<button
 		type="button"
 		class="text-blue-600 hover:underline"
-		on:click={() => (showNewOrganization = !showNewOrganization)}
+		on:click={() => (showNewCompany = !showNewCompany)}
 	>
-		+ Add new organization
+		+ Add new company
 	</button>
 
 </div>
 
-{#if showNewOrganization}
+{#if showNewCompany}
 
 	<div class="mt-3 flex gap-2">
 
 		<input
 			class="border rounded p-2 flex-1"
-			placeholder="Organization name"
-			bind:value={newOrganization}
+			placeholder="Company name"
+			bind:value={newCompany}
 		/>
 
 		<button
 			type="button"
 			class="bg-green-600 text-white px-4 rounded"
-			on:click={createOrganization}
+			on:click={createCompany}
 		>
 			Save
 		</button>

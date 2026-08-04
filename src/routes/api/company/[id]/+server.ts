@@ -10,7 +10,7 @@ export const PUT: RequestHandler = async ({
 }) => {
 	const data = await request.json();
 
-	const res = await fetch(`${API_URL}/organization/${params.id}`, {
+	const res = await fetch(`${API_URL}/company/${params.id}`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ export const DELETE: RequestHandler = async ({
 	fetch,
 	params
 }) => {
-	const res = await fetch(`${API_URL}/organization/${params.id}`, {
+	const res = await fetch(`${API_URL}/company/${params.id}`, {
 		method: 'DELETE',
 		headers: {
 			authorization: `${await getToken(cookies)}`

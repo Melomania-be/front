@@ -1,50 +1,50 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	let organizations = [];
+	let companies = [];
 	let search = '';
-let newOrganization = '';
-let showNewOrganization = false;
+let newCompany = '';
+let showNewCompany = false;
 let editingId: number | null = null;
 let editedName = '';
-	$: filteredOrganizations = organizations.filter((organization) =>
-		organization.name
+	$: filteredCompanies = companies.filter((company) =>
+		company.name
 			.toLowerCase()
 			.includes(search.toLowerCase())
 	);
 
 	onMount(async () => {
-		const response = await fetch('/api/organization');
+		const response = await fetch('/api/company');
 
 		if (response.ok) {
-			organizations = await response.json();
+			companies = await response.json();
 		}
 	});
-	async function createOrganization() {
-	const response = await fetch('/api/organization', {
+	async function createCompany() {
+	const response = await fetch('/api/company', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			name: newOrganization
+			name: newCompany
 		})
 	});
 
 	if (response.ok) {
-		const organization = await response.json();
+		const company = await response.json();
 
-		organizations = [...organizations, organization];
+		companies = [...companies, company];
 
-		newOrganization = '';
-		showNewOrganization = false;
+		newCompany = '';
+		showNewCompany = false;
 	} else {
 		const error = await response.json();
-		alert(error.message ?? 'Failed to create organization');
+		alert(error.message ?? 'Failed to create company');
 	}
 }
-async function updateOrganization(id: number) {
-	const response = await fetch(`/api/organization/${id}`, {
+async function updateCompany(id: number) {
+	const response = await fetch(`/api/company/${id}`, {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
@@ -57,29 +57,29 @@ async function updateOrganization(id: number) {
 	if (response.ok) {
 		const updated = await response.json();
 
-		organizations = organizations.map((organization) =>
-			organization.id === id ? updated : organization
+		companies = companies.map((company) =>
+			company.id === id ? updated : company
 		);
 
 		editingId = null;
 		editedName = '';
 	} else {
 		const error = await response.json();
-		alert(error.message ?? 'Failed to update organization');
+		alert(error.message ?? 'Failed to update company');
 	}
 }
-async function deleteOrganization(id: number) {
-	if (!confirm('Are you sure you want to delete this organization?')) {
+async function deleteCompany(id: number) {
+	if (!confirm('Are you sure you want to delete this company?')) {
 		return;
 	}
 
-	const response = await fetch(`/api/organization/${id}`, {
+	const response = await fetch(`/api/company/${id}`, {
 		method: 'DELETE'
 	});
 
 	if (response.ok) {
-		organizations = organizations.filter(
-			(organization) => organization.id !== id
+		companies = companies.filter(
+			(company) => company.id !== id
 		);
 	} else {
 		const error = await response.json();
@@ -98,33 +98,33 @@ alert(message);
 </script>
 <div class="flex justify-between items-center mt-4 mb-6 px-4">
 	<h1 class="text-2xl font-bold">
-	Organizations ({organizations.length})
+	Companies ({companies.length})
 </h1>
 
 	<button
 		class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-		on:click={() => (showNewOrganization = !showNewOrganization)}
+		on:click={() => (showNewCompany = !showNewCompany)}
 	>
-		+ New Organization
+		+ New Company
 	</button>
 </div>
-{#if showNewOrganization}
+{#if showNewCompany}
 	<div class="mb-4 border rounded-lg p-4 bg-gray-50">
 		<label class="block font-medium mb-2">
-			Organization name
+		    Company name
 		</label>
 
 		<div class="flex gap-2">
 			<input
 				type="text"
-				bind:value={newOrganization}
+				bind:value={newCompany}
 				class="flex-1 border rounded px-3 py-2"
-				placeholder="Enter organization name..."
+				placeholder="Enter company name..."
 			/>
 
 			<button
 				class="bg-green-600 text-white px-4 rounded"
-				on:click={createOrganization}
+				on:click={createCompany}
 			>
 				Save
 			</button>
@@ -132,8 +132,8 @@ alert(message);
 			<button
 				class="bg-gray-500 text-white px-4 rounded"
 				on:click={() => {
-					showNewOrganization = false;
-					newOrganization = '';
+					showNewCompany = false;
+					newCompany = '';
 				}}
 			>
 				Cancel
@@ -146,7 +146,7 @@ alert(message);
 	<div class="mb-4">
 		<input
 			type="text"
-			placeholder="Search organization..."
+			placeholder="Search company..."
 			bind:value={search}
 			class="w-full md:w-96 border rounded-lg px-4 py-2"
 		/>
@@ -168,12 +168,12 @@ alert(message);
 
 	<tbody>
 
-		{#each filteredOrganizations as organization}
+		{#each filteredCompanies as company}
 <tr class="border-b hover:bg-gray-100">
 
 	<td class="p-3 font-medium">
 
-		{#if editingId === organization.id}
+		{#if editingId === company.id}
 
 			<input
 				bind:value={editedName}
@@ -182,7 +182,7 @@ alert(message);
 
 		{:else}
 
-			{organization.name}
+			{company.name}
 
 		{/if}
 
@@ -192,11 +192,11 @@ alert(message);
 
 		<div class="flex justify-center gap-2">
 
-			{#if editingId === organization.id}
+			{#if editingId === company.id}
 
 				<button
 					class="bg-green-600 text-white px-3 py-1 rounded text-sm"
-					on:click={() => updateOrganization(organization.id)}
+					on:click={() => updateCompany(company.id)}
 				>
 					Save
 				</button>
@@ -216,8 +216,8 @@ alert(message);
 				<button
 					class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm"
 					on:click={() => {
-						editingId = organization.id;
-						editedName = organization.name;
+						editingId = company.id;
+						editedName = company.name;
 					}}
 				>
 					Edit
@@ -225,7 +225,7 @@ alert(message);
 
 				<button
 	class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-	on:click={() => deleteOrganization(organization.id)}
+	on:click={() => deleteCompany(company.id)}
 >
 	Delete
 </button>
@@ -240,12 +240,12 @@ alert(message);
 
 		{/each}
 
-		{#if filteredOrganizations.length === 0}
+		{#if filteredCompanies.length === 0}
 
 			<tr>
 
 				<td class="text-center py-8 text-gray-500">
-					No organizations found
+					No companies found
 				</td>
 
 			</tr>
