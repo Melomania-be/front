@@ -4,9 +4,11 @@
 	let companies = [];
 	let search = '';
 let newCompany = '';
+let newComments = '';
 let showNewCompany = false;
 let editingId: number | null = null;
 let editedName = '';
+let editedComments = '';
 	$: filteredCompanies = companies.filter((company) =>
 		company.name
 			.toLowerCase()
@@ -27,7 +29,8 @@ let editedName = '';
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			name: newCompany
+			name: newCompany,
+			comments: newComments
 		})
 	});
 
@@ -37,6 +40,7 @@ let editedName = '';
 		companies = [...companies, company];
 
 		newCompany = '';
+		newComments = '';
 		showNewCompany = false;
 	} else {
 		const error = await response.json();
@@ -50,7 +54,8 @@ async function updateCompany(id: number) {
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			name: editedName
+			name: editedName,
+			comments: editedComments
 		})
 	});
 
@@ -63,6 +68,7 @@ async function updateCompany(id: number) {
 
 		editingId = null;
 		editedName = '';
+		editedComments = '';
 	} else {
 		const error = await response.json();
 		alert(error.message ?? 'Failed to update company');
@@ -122,6 +128,18 @@ alert(message);
 				placeholder="Enter company name..."
 			/>
 
+			<label class="block font-medium mb-2">
+    Comments
+</label>
+
+<textarea
+    bind:value={newComments}
+    class="w-full border rounded px-3 py-2 mb-4"
+    rows="3"
+    placeholder="Comments..."
+></textarea>
+
+<div class="flex gap-2">
 			<button
 				class="bg-green-600 text-white px-4 rounded"
 				on:click={createCompany}
@@ -134,10 +152,12 @@ alert(message);
 				on:click={() => {
 					showNewCompany = false;
 					newCompany = '';
+					newComments = '';
 				}}
 			>
 				Cancel
 			</button>
+</div>
 		</div>
 	</div>
 {/if}
@@ -158,6 +178,10 @@ alert(message);
 	<tr>
 		<th class="p-3 text-left">
 			Name
+		</th>
+
+		<th class="p-3 text-left">
+			Comments
 		</th>
 
 		<th class="p-3 text-center w-40">
@@ -188,6 +212,24 @@ alert(message);
 
 	</td>
 
+<td class="p-3">
+
+	{#if editingId === company.id}
+
+		<textarea
+			bind:value={editedComments}
+			class="border rounded px-2 py-1 w-full"
+			rows="2"
+		></textarea>
+
+	{:else}
+
+		{company.comments ?? '-'}
+
+	{/if}
+
+</td>
+
 	<td class="p-3 text-center">
 
 		<div class="flex justify-center gap-2">
@@ -206,6 +248,7 @@ alert(message);
 					on:click={() => {
 						editingId = null;
 						editedName = '';
+						editedComments = '';
 					}}
 				>
 					Cancel
@@ -218,6 +261,7 @@ alert(message);
 					on:click={() => {
 						editingId = company.id;
 						editedName = company.name;
+						editedComments = company.comments ?? '';
 					}}
 				>
 					Edit
