@@ -47,7 +47,7 @@
 			validated: contact.validated
 		};
 
-		let response = await fetch('/api/contacts/', {
+		let response = await fetch('/api/contacts', {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json'

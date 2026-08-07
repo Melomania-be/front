@@ -15,7 +15,9 @@
 	import RegistrationForm from '$lib/components/registration/RegistrationForm.svelte';
 	import type { Registration } from '$lib/types/Registration';
 	import type { Form } from '$lib/types/Form';
-
+	import { jsPDF } from 'jspdf';
+	import autoTable from 'jspdf-autotable';
+    import { sortParticipantsBySection } from '$lib/utils/sectionOrder';
 	export let data;
 
 	let project: Project | undefined;
@@ -23,9 +25,11 @@
 	let participants: Participant[] = [];
 	let participantNotValidated: number = 0;
 	let participantanswers: any;
-
+let contractorParticipants = [];
+let contractors = [];
 	let registration: Registration;
-
+let showAddContractor = false;
+let selectedContractorId: number | null = null;
 	let answers: any[] = [];
 
 	let meta: any = {};
@@ -80,6 +84,8 @@
 
 		await fetchProject();
 		await fetchData();
+		await fetchContractorParticipants();
+		await fetchContractors();
 		await fetchAccountingContact();
 		console.log(accountings)
 
@@ -148,24 +154,20 @@
 		for (const acc of accountings) {
 			if(acc.isMusicianFee){
 				if (acc.contactId != null) {
-					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactMusicianFee[acc.contactId]) {
 						paymentsByContactMusicianFee[acc.contactId] = 0;
 					}
 
-					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactMusicianFee[acc.contactId] += Number(acc.amount);
 				}
 				
 			}
 			else{
 				if (acc.contactId != null) {
-					// Initialise à 0 si c'est la première fois qu'on voit ce contact
 					if (!paymentsByContactAdditionnal[acc.contactId]) {
 						paymentsByContactAdditionnal[acc.contactId] = 0;
 					}
 
-					// Ajoute le montant (en s'assurant qu'il est bien un nombre)
 					paymentsByContactAdditionnal[acc.contactId] += Number(acc.amount);
 				}
 				console.log(acc.amount)
@@ -187,6 +189,76 @@
 
 		accountings = await response.json();
 	}
+async function fetchContractorParticipants() {
+	const response = await fetch(
+		`/api/contractor-participant/project/${data.id}`
+	);
+
+	if (!response.ok) {
+		return;
+	}
+
+	contractorParticipants = await response.json();
+
+	console.log(contractorParticipants);
+}
+
+async function fetchContractors() {
+	const response = await fetch('/api/contractor');
+
+	if (!response.ok) {
+		return;
+	}
+
+	contractors = await response.json();
+
+	console.log(contractors);
+}
+
+async function addContractorParticipant() {
+	if (!selectedContractorId) return;
+
+	const response = await fetch('/api/contractor-participant', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			project_id: data.id,
+			contractor_contact_id: selectedContractorId
+		})
+	});
+
+	if (!response.ok) {
+		alert('Failed to add contractor.');
+		return;
+	}
+
+	await fetchContractorParticipants();
+
+	showAddContractor = false;
+	selectedContractorId = null;
+}
+
+async function deleteContractorParticipant(id: number) {
+	if (!confirm('Remove this contractor from the project?')) {
+		return;
+	}
+
+	const response = await fetch(
+		`/api/contractor-participant/${id}`,
+		{
+			method: 'DELETE'
+		}
+	);
+
+	if (!response.ok) {
+		alert('Failed to remove contractor.');
+		return;
+	}
+
+	await fetchContractorParticipants();
+}
 
 	async function fetchProject() {
 		if (!data?.id) return;
@@ -280,13 +352,13 @@
 	function parseQuestionAndAnswers(raw: string): string {
 		const [question, answersPart] = raw.split(':', 2);
 
-		if (!answersPart) return raw; // cas où il n’y a pas de ":"
+		if (!answersPart) return raw;
 
 		const answers = answersPart
-			.replace(/^;+|;+$/g, '') // retire les ; au début/fin
-			.split(';') // transforme en tableau
-			.map((s) => s.trim()) // nettoie les espaces
-			.filter((s) => s.length > 0); // ignore les vides
+			.replace(/^;+|;+$/g, '')
+			.split(';')
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0);
 
 		return `${question.trim()} (${answers.join(', ')})`;
 	}
@@ -323,6 +395,73 @@
 		console.log(p.id, p.contact?.email);
 	});
 	}
+
+	function exportParticipantsPdf() {
+		const doc = new jsPDF();
+		const blue: [number, number, number] = [107, 154, 217];
+
+		// Titre stylisé
+		doc.setTextColor(blue[0], blue[1], blue[2]);
+		doc.setFontSize(24);
+		doc.setFont('helvetica', 'bold');
+		doc.text('Project participants', 14, 22);
+
+		// Ligne colorée sous le titre
+		doc.setDrawColor(blue[0], blue[1], blue[2]);
+		doc.setLineWidth(0.8);
+		doc.line(14, 26, 196, 26);
+
+		// Date d'export à droite
+		doc.setTextColor(120, 120, 120);
+		doc.setFontSize(9);
+		doc.setFont('helvetica', 'normal');
+		const today = new Date().toLocaleDateString('en-GB');
+		doc.text(`Exported on ${today}`, 196, 22, { align: 'right' });
+
+		// Nom du projet en sous-titre
+		doc.setTextColor(60, 60, 60);
+		doc.setFontSize(12);
+		doc.setFont('helvetica', 'normal');
+		if (project?.name) {
+			doc.text(project.name, 14, 34);
+		}
+
+		doc.setTextColor(0, 0, 0);
+
+		// Tableau des participants
+		// Ordre des sections depuis le section group du projet
+            const sectionOrderMap = new Map(
+                (project?.sectionGroup?.sections ?? []).map((s) => [s.name.trim(), s.pivot_order])
+            );
+            participants.forEach((p) => {
+                if (p.section) {
+                    p.section.pivot_order = sectionOrderMap.get(p.section.name?.trim());
+                }
+            });
+		    const sortedParticipants = sortParticipantsBySection(participants);
+		    const rows = sortedParticipants.map((p) => {
+			const sectionName = p.section?.name ?? '';
+			const sectionText = p.isSectionLeader ? `${sectionName} (section leader)` : sectionName;
+			return [
+				p.contact?.firstName ?? '',
+				p.contact?.lastName ?? '',
+				p.contact?.email ?? '',
+				p.contact?.phone ?? '',
+				sectionText
+			];
+		});
+
+		autoTable(doc, {
+			startY: 42,
+			head: [['First name', 'Last name', 'Email', 'Phone', 'Section']],
+			body: rows,
+			styles: { fontSize: 10, cellPadding: 3 },
+			headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+			alternateRowStyles: { fillColor: [245, 248, 252] }
+		});
+
+		doc.save(`participants-project-${data.id}.pdf`);
+	}
 </script>
 
 <ProjectHeadDisplayer {project} selectedTab={1} />
@@ -335,8 +474,9 @@
 					<p class={isMobile ? '' : ''}>
 						You have <strong class="text-red-400 mx-1">{participantNotValidated}</strong>
 						{participantNotValidated === 1 ? 'participant' : 'participants'} waiting for validation
-					</p>
-					<a
+						</p>
+						<a
+					
 						href="/projects/{data.id}/management/validation"
 						class="ml-auto inline-flex items-center px-3 py-2 text-sm font-semibold text-center text-white bg-[#6B9AD9] rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 					>
@@ -351,8 +491,14 @@
 			<div class="flex items-center">
 				<h1 class="font-bold text-lg">PARTICIPANTS</h1>
 				<button
-					on:click={() => goto(`${urlFront}/creation`)}
+					on:click={exportParticipantsPdf}
 					class="ml-auto px-4 py-2 text-sm bg-[#6B9AD9] text-white rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+				>
+					Export PDF
+				</button>
+				<button
+					on:click={() => goto(`${urlFront}/creation`)}
+					class="ml-2 px-4 py-2 text-sm bg-[#6B9AD9] text-white rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
 				>
 					Add a participant
 				</button>
@@ -398,20 +544,6 @@
 							{/each}
 						</div>
 					</div>
-					<!--
-					<div class="flex w-full justify-center">
-						<select
-							on:change={changeSorting}
-							class="w-1/2 items-center flex rounded-lg border-2 border-gray-500"
-							bind:value={sorting}
-						>
-							<option value={''}>None</option>
-							<option value={'email'}>Email</option>
-							<option value={'firstName'}>First Name</option>
-							<option value={'lastName'}>Last Name</option>
-						</select>
-					</div>
-					-->
 				</div>
 				<div class="w-full overflow-x-auto">
 					<table
@@ -501,6 +633,116 @@
 					</table>
 				</div>
 			</SimpleFilterer>
+			<div class="mt-8 bg-white border-2 border-[#8C8C8C] rounded-[10px] p-4">
+	<div class="flex items-center justify-between mb-4">
+		<h1 class="font-bold text-lg">
+	CONTRACTOR PARTICIPANTS
+</h1>
+
+<button
+	class="bg-[#6B9AD9] text-white px-3 py-2 rounded-lg"
+	on:click={() => (showAddContractor = true)}
+>
+	Add contractor
+</button>
+	</div>
+
+	<table class="w-full text-left">
+		<thead class="border-b">
+			<tr>
+				<th class="py-2">First name</th>
+				<th class="py-2">Last name</th>
+				<th class="py-2">Payment</th>
+				<th></th>
+			</tr>
+		</thead>
+
+		<tbody>
+			{#each contractorParticipants as participant}
+				<tr class="border-b hover:bg-gray-100">
+					<td class="py-2">
+						{participant.contractor.firstName}
+					</td>
+
+					<td class="py-2">
+						{participant.contractor.lastName}
+					</td>
+
+					<td class="py-2 text-gray-500">
+						0 €
+					</td>
+					<td class="py-2 text-right">
+	<button
+		class="text-red-600 hover:underline"
+		on:click={() =>
+			deleteContractorParticipant(participant.id)}
+	>
+		Delete
+	</button>
+</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+</div>
+{#if showAddContractor}
+
+<div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+	<div class="bg-white rounded-lg p-6 w-[400px]">
+
+		<h2 class="font-bold text-xl mb-4">
+			Add contractor
+		</h2>
+
+		<select
+			class="w-full border rounded p-2"
+			bind:value={selectedContractorId}
+		>
+
+			<option value={null}>
+				Select contractor...
+			</option>
+
+			{#each contractors.filter(
+	(contractor) =>
+		!contractorParticipants.some(
+			(cp) => cp.contractorContactId === contractor.id
+		)
+) as contractor}
+
+				<option value={contractor.id}>
+
+					{contractor.firstName}
+					{contractor.lastName}
+
+				</option>
+
+			{/each}
+
+		</select>
+
+<div class="flex justify-end gap-3 mt-6">
+
+			<button
+				on:click={() => (showAddContractor = false)}
+			>
+				Cancel
+			</button>
+
+			<button
+				class="bg-[#6B9AD9] text-white px-3 py-2 rounded"
+				on:click={addContractorParticipant}
+			>
+				Add
+			</button>
+
+		</div>
+	</div>
+
+</div>
+
+{/if}
 		</div>
 	</div>
 

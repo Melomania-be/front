@@ -10,7 +10,7 @@
 	import type { Concert } from '$lib/types/Concert';
 	import SimpleFilterer from '../SimpleFilterer.svelte';
 	import type { TableData } from '$lib/types/TableData';
-	import { goto } from '$app/navigation';
+	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import ResponseHandlerClient from '$lib/client/ResponseHandlerClient';
 	import type { Contact } from '$lib/types/Contact';
@@ -56,8 +56,13 @@
 
 	let allPiecesSortable: any;
 	let selectedPiecesSortable: any;
+	const PROJECT_CREATION_DRAFT_KEY = 'projectCreationDraft';
+	let pendingResponsibleIds: number[] | null = null;
+	let projectDraftReady = mode !== 'create';
 
 	let initialized = false;
+
+	$: project.pieces = selectedPieces;
 
 	$: if (displayProjectPieces && !initialized) {
 		initSortableWhenReady();
@@ -74,6 +79,55 @@
 		}
 	}
 
+	function toLocalDateTimeString(value: string | Date) {
+	    const d = new Date(value);
+
+	    const year = d.getFullYear();
+	    const month = String(d.getMonth() + 1).padStart(2, '0');
+	    const day = String(d.getDate()).padStart(2, '0');
+	    const hours = String(d.getHours()).padStart(2, '0');
+	    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+	    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+	function formatDate(value: string | Date) {
+	    if (!value) return '';
+
+	    let datePart: string;
+
+	    if (value instanceof Date) {
+		    const year = value.getFullYear();
+		    const month = String(value.getMonth() + 1).padStart(2, '0');
+		    const day = String(value.getDate()).padStart(2, '0');
+
+		    datePart = `${year}-${month}-${day}`;
+	    } else {
+		    datePart = value.includes('T') ? value.split('T')[0] : value.slice(0, 10);
+	        }
+
+	    const [year, month, day] = datePart.split('-').map(Number);
+	    const date = new Date(year, month - 1, day);
+
+	    return date.toLocaleDateString('en-GB', {
+		    weekday: 'long',
+		    day: 'numeric',
+		    month: 'long',
+		    year: 'numeric'
+	    });
+    }
+
+    function formatTime(value: string | Date | null = null) {
+	    const raw = value instanceof Date ? toLocalDateTimeString(value) : String(value);
+	    const timePart = raw.includes('T') ? raw.split('T')[1]?.slice(0, 5) : raw.slice(0, 5);
+
+	    if (!timePart || !timePart.includes(':')) return '';
+
+	    const [hourString, minute] = timePart.split(':');
+
+	    return `${hourString}:${minute} `;
+    }
+
 	function initializeSortable() {
 		allPiecesSortable = Sortable.create(allPiecesContainer, {
 			group: {
@@ -83,12 +137,19 @@
 			},
 			animation: 200,
 			sort: false,
+			forceFallback: true,
+			fallbackTolerance: 3,
+			delay: 50,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			onAdd: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				allPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				allPieces.splice(evt.oldIndex as number, 1);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = pieces.find(p => p.id === id);
+				if (item) {
+					allPieces.splice(evt.newIndex as number, 0, item);
+					allPieces = [...allPieces];
+					selectedPieces = selectedPieces.filter(p => p.id !== id);
+				}
 			}
 		});
 
@@ -99,17 +160,28 @@
 				pull: true
 			},
 			animation: 200,
+			forceFallback: true,
+			fallbackTolerance: 3,
+			delay: 50,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			onAdd: (evt: any) => {
-				const item = allPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.newIndex as number, 0, item);
-			},
-			onRemove: (evt: any) => {
-				selectedPieces.splice(evt.oldIndex as number, 1);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = pieces.find(p => p.id === id);
+				if (item) {
+					selectedPieces.splice(evt.newIndex as number, 0, item);
+					selectedPieces = [...selectedPieces];
+					allPieces = allPieces.filter(p => p.id !== id);
+				}
 			},
 			onUpdate: (evt: any) => {
-				const item = selectedPieces[evt.oldIndex as number];
-				selectedPieces.splice(evt.oldIndex as number, 1);
-				selectedPieces.splice(evt.newIndex as number, 0, item);
+				const id = parseInt(evt.item.getAttribute('data-id') || '0');
+				const item = selectedPieces.find(p => p.id === id);
+				if (item) {
+					const temp = selectedPieces.filter(p => p.id !== id);
+					temp.splice(evt.newIndex as number, 0, item);
+					selectedPieces = temp;
+				}
 			}
 		});
 	}
@@ -125,7 +197,90 @@
 
 	afterUpdate(() => {
 		toggleSortable();
+		if (projectDraftReady) {
+			persistProjectDraft();
+		}
 	});
+
+	function serializeProjectDraft() {
+		return {
+			project: {
+				name: project.name,
+				sectionGroupId: project.sectionGroup?.id ?? null,
+				folderId: project.folder?.id ?? null,
+				rehearsals: project.rehearsals,
+				concerts: project.concerts,
+				responsibleIds: project.responsibles.map((responsible) => Number(responsible.id))
+			},
+			selectedPieceIds: selectedPieces.map((piece) => Number(piece.id))
+		};
+	}
+
+	function persistProjectDraft() {
+		if (!browser || mode !== 'create') return;
+		window.sessionStorage.setItem(
+			PROJECT_CREATION_DRAFT_KEY,
+			JSON.stringify(serializeProjectDraft())
+		);
+	}
+
+	function clearProjectDraft() {
+		if (!browser) return;
+		window.sessionStorage.removeItem(PROJECT_CREATION_DRAFT_KEY);
+	}
+
+	function restoreProjectDraft() {
+		if (!browser || mode !== 'create') return;
+		const rawDraft = window.sessionStorage.getItem(PROJECT_CREATION_DRAFT_KEY);
+		if (!rawDraft) {
+			projectDraftReady = true;
+			return;
+		}
+
+		try {
+			projectDraftReady = false;
+			const draft = JSON.parse(rawDraft);
+			project.name = draft.project?.name ?? project.name;
+			project.sectionGroup =
+				sectionGroups.find((sectionGroup) => sectionGroup.id === draft.project?.sectionGroupId) ?? null;
+			project.sectionGroupId = project.sectionGroup?.id ?? null;
+			project.folder =
+				folders.find((folder) => folder.id === draft.project?.folderId) ?? undefined;
+			project.rehearsals = (draft.project?.rehearsals ?? []).map((rehearsal: any) => ({
+				...rehearsal,
+				startDate: rehearsal.startDate ? new Date(rehearsal.startDate) : new Date(),
+				endDate: rehearsal.endDate ? new Date(rehearsal.endDate) : new Date()
+			}));
+			project.concerts = (draft.project?.concerts ?? []).map((concert: any) => ({
+				...concert,
+				startDate: concert.startDate ? new Date(concert.startDate) : new Date(),
+				endDate: concert.endDate ? new Date(concert.endDate) : new Date()
+			}));
+			const restoredResponsibleIds = (draft.project?.responsibleIds ?? []).map((id: number) =>
+				Number(id)
+			);
+			pendingResponsibleIds = restoredResponsibleIds;
+			if (contacts.length > 0 || restoredResponsibleIds.length === 0) {
+				const responsibleIds = new Set(restoredResponsibleIds);
+				project.responsibles = contacts.filter((contact) => responsibleIds.has(Number(contact.id)));
+				pendingResponsibleIds = null;
+				projectDraftReady = true;
+			}
+
+			const selectedIds = new Set((draft.selectedPieceIds ?? []).map((id: number) => Number(id)));
+			selectedPieces = pieces.filter((piece) => selectedIds.has(Number(piece.id)));
+			allPieces = pieces.filter((piece) => !selectedIds.has(Number(piece.id)));
+		} catch {
+			clearProjectDraft();
+			projectDraftReady = true;
+		}
+	}
+
+	function openPieceCreationPage() {
+		if (!browser) return;
+		persistProjectDraft();
+		goto('/library/pieces?create=1&fromProjectCreation=1&returnTo=/projects/creation');
+	}
 
 	function removeRehearsalDate(delRehearsal: Rehearsal) {
 		project.rehearsals = project.rehearsals.filter((rehearsal) => rehearsal !== delRehearsal);
@@ -163,6 +318,19 @@
 		];
 	}
 
+	function toLocalISOString(date: Date | string) {
+	    const d = new Date(date);
+
+	    const year = d.getFullYear();
+	    const month = String(d.getMonth() + 1).padStart(2, '0');
+	    const day = String(d.getDate()).padStart(2, '0');
+	    const hours = String(d.getHours()).padStart(2, '0');
+	    const minutes = String(d.getMinutes()).padStart(2, '0');
+	    const seconds = String(d.getSeconds()).padStart(2, '0');
+
+	    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    }
+
 	async function saveProject() {
 		const projectToSend = {
 			id: project.id || null,
@@ -170,8 +338,8 @@
 			section_group_id: project.sectionGroup ? project.sectionGroup.id : null,
 			concerts: project.concerts.map((concert) => ({
 				id: concert.id ? concert.id : null,
-				start_date: new Date(concert.startDate).toISOString(),
-				end_date: concert.endDate ? new Date(concert.endDate).toISOString() : null,
+				start_date: toLocalISOString(concert.startDate),
+				end_date: concert.endDate ? toLocalISOString(concert.endDate) : null,
 				place: concert.place,
 				comment: concert.comment
 			})),
@@ -181,8 +349,8 @@
 			})),
 			rehearsals: project.rehearsals.map((rehearsal) => ({
 				id: rehearsal.id ? rehearsal.id : null,
-				start_date: new Date(rehearsal.startDate).toISOString(),
-				end_date: rehearsal.endDate ? new Date(rehearsal.endDate).toISOString() : null,
+				start_date: toLocalISOString(rehearsal.startDate),
+				end_date: rehearsal.endDate ? toLocalISOString(rehearsal.endDate) : null,
 				place: rehearsal.place,
 				comment: rehearsal.comment
 			})),
@@ -273,6 +441,12 @@
 	}
 
 	$: if (browser) allowModification && fetchData();
+	$: if (mode === 'create' && pendingResponsibleIds && contacts.length > 0) {
+		const responsibleIds = new Set(pendingResponsibleIds);
+		project.responsibles = contacts.filter((contact) => responsibleIds.has(Number(contact.id)));
+		pendingResponsibleIds = null;
+		projectDraftReady = true;
+	}
 
 	let displayProjectInfo = false;
 	let chevronProjectInfo: IconDefinition = faChevronDown;
@@ -303,6 +477,7 @@
 	onMount(() => {
 		checkMobile();
 		checkDirection();
+		restoreProjectDraft();
 		window.addEventListener('resize', checkMobile);
 		window.addEventListener('resize', checkDirection);
 
@@ -310,6 +485,28 @@
 			window.removeEventListener('resize', checkMobile);
 			window.removeEventListener('resize', checkDirection);
 		};
+	});
+
+	beforeNavigate((navigation) => {
+		if (!browser || mode !== 'create') return;
+		if (!navigation.to?.url) {
+			clearProjectDraft();
+			return;
+		}
+
+		const pathname = navigation.to.url.pathname;
+		const search = navigation.to.url.search;
+		if (
+			pathname === '/library/pieces' &&
+			new URLSearchParams(search).get('fromProjectCreation') === '1'
+		) {
+			persistProjectDraft();
+			return;
+		}
+
+		if (pathname !== '/projects/creation') {
+			clearProjectDraft();
+		}
 	});
 </script>
 
@@ -484,9 +681,20 @@
 				</div>
 				{#if displayProjectPieces}
 					<div in:slide={{ duration: 300 }} out:slide={{ duration: 200 }}>
-						<div class="flex gap-4 items-end">
-							<div class="flex-1 ">
-								<h4 class="text-lg top-0 text-center bg-white">Available <br> pieces</h4>
+						{#if allowModification && mode === 'create'}
+							<div class="mb-4">
+								<button
+									type="button"
+									class="bg-[#6b9ad9] px-4 py-2 text-white pointer-events-auto hover:bg-[#4f7cb7] font-semibold rounded-lg"
+									on:click={openPieceCreationPage}
+								>
+									Add piece
+								</button>
+							</div>
+						{/if}
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 items-stretch">
+							<div class="w-full">
+								<h4 class="text-lg top-0 text-center bg-white">Available pieces</h4>
 								{#if allPieces.length === 0}
 									<p>No pieces available</p>
 								{:else}
@@ -496,6 +704,7 @@
 									>
 										{#each allPieces as piece}
 											<div
+												data-id={piece.id}
 												class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab"
 											>
 												{piece.name} - {piece.composer.shortName}
@@ -504,14 +713,14 @@
 									</section>
 								{/if}
 							</div>
-							<div class="flex-1 mt-4 md:mt-0">
-								<h4 class="text-lg sticky top-0 bg-white">Selected pieces (ordered)</h4>
+							<div class="w-full">
+								<h4 class="text-lg top-0 text-center bg-white">Selected pieces (ordered)</h4>
 								<section
 									bind:this={selectedPiecesContainer}
 									class="list p-1 min-h-[300px] max-h-[300px] border border-black overflow-y-auto"
 								>
-									{#each project.pieces as piece}
-										<div class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
+									{#each selectedPieces as piece}
+										<div data-id={piece.id} class="item p-2 mb-2 border border-gray-300 rounded bg-white cursor-grab">
 											{piece.name} - {piece.composer.shortName}
 										</div>
 									{/each}
@@ -595,12 +804,9 @@
 												{#each project.rehearsals as rehearsal}
 													<tr class="rehearsal-entry">
 														<td class="px-3 py-1">
-															<DateShow
-																startTime={rehearsal.startDate}
-																endTime={rehearsal.endDate}
-																withTime
-																isRehearsal
-															/>
+															{formatTime(rehearsal.startDate)} - {formatTime(rehearsal.endDate)}
+					                                        {' | '}
+                                                            {formatDate(rehearsal.startDate)}
 														</td>
 														<td class="px-3 py-1">{rehearsal.place}</td>
 														<td class="px-3 py-1 max-w-xs">{rehearsal.comment}</td>
@@ -629,7 +835,7 @@
 											{#each project.rehearsals as rehearsal}
 												<tr class="rehearsal-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={rehearsal.startDate} on:change={() => rehearsal.endDate = rehearsal.startDate}/>
+														<DatePicker bind:date={rehearsal.startDate} on:change={() => rehearsal.endDate = new Date(rehearsal.startDate)}/>
 													</td>
 													<td class="px-3 py-1">
 														<TimePicker bind:date={rehearsal.startDate} />
@@ -691,11 +897,9 @@
 												{#each project.concerts as concert}
 													<tr class="concert-entry">
 														<td class="px-3 py-1">
-															<DateShow
-																startTime={concert.startDate}
-																endTime={concert.endDate}
-																withTime
-															/>
+															{formatTime(concert.startDate)} - {formatTime(concert.endDate)}
+                                                            {' | '}
+                                                            {formatDate(concert.startDate)}
 														</td>
 														<td class="px-3 py-1">{concert.place}</td>
 														<td class="px-3 py-1 whitespace-normal">{concert.comment}</td>
@@ -724,7 +928,7 @@
 											{#each project.concerts as concert}
 												<tr class="concert-entry">
 													<td class="px-3 py-1">
-														<DatePicker bind:date={concert.startDate} on:change={() => concert.endDate = concert.startDate}/> <!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
+														<DatePicker bind:date={concert.startDate} on:change={() => concert.endDate = new Date(concert.startDate)}/> <!--Changed this to avoid having to set separate start and end dates (events are always on one day). This should not change the backend.-->
 													</td>
 													<td class="px-3 py-1">
 														<TimePicker bind:date={concert.startDate} />

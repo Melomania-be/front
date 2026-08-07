@@ -2,12 +2,11 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 
 	export let callsheet: Callsheet;
+	export let positionFilter: 'above' | 'below' | 'all' = 'all';
 
-	let blocks = [...(callsheet.contents || [])]
-		.filter(c => c.show_on_registration === true)
-		.sort((a, b) => a.position - b.position);
-
-	const token = localStorage.getItem('token'); // ou sessionStorage.getItem('token')
+	$: blocks = [...(callsheet.contents || [])]
+		.filter(c => positionFilter === 'all' || (c.position ?? 'below') === positionFilter)
+		.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 </script>
 
 {#if blocks.length > 0}
@@ -19,7 +18,6 @@
 						{@html content.title}
 					</h2>
 				</div>
-
 				<div class="prose dark:prose-invert max-w-none prose-sm sm:prose-base overflow-hidden break-words">
 					{@html content.text}
 				</div>
@@ -29,104 +27,57 @@
 {/if}
 
 <style>
-    /* Gestion responsive du contenu texte */
     :global(.prose) {
         word-wrap: break-word;
         overflow-wrap: break-word;
         hyphens: auto;
     }
-
-    /* Images responsives */
     :global(.prose img) {
         max-width: 100% !important;
         height: auto !important;
         object-fit: cover;
         border-radius: 8px;
     }
-
-    /* Tableaux responsives */
     :global(.prose table) {
         display: block;
         max-width: 100%;
         overflow-x: auto;
         white-space: nowrap;
     }
-
-    /* Gestion des longs mots et URLs */
     :global(.prose p) {
         word-break: break-word;
         overflow-wrap: break-word;
     }
-
-    /* Listes responsives */
     :global(.prose ul, .prose ol) {
         padding-left: 1rem;
     }
-
-    /* Blockquotes responsives */
     :global(.prose blockquote) {
         margin-left: 0.5rem;
         margin-right: 0.5rem;
         padding-left: 1rem;
         padding-right: 0.5rem;
     }
-
-    /* Code blocks responsives */
     :global(.prose pre) {
         overflow-x: auto;
         max-width: 100%;
         white-space: pre-wrap;
         word-wrap: break-word;
     }
-
-    /* Iframes et embeds responsives */
     :global(.prose iframe) {
         max-width: 100% !important;
         height: auto;
     }
-
-    /* Styles spécifiques mobile */
     @media (max-width: 640px) {
-        :global(.prose) {
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-
-        :global(.prose h1) {
-            font-size: 1.5rem;
-        }
-
-        :global(.prose h2) {
-            font-size: 1.25rem;
-        }
-
-        :global(.prose h3) {
-            font-size: 1.125rem;
-        }
-
-        :global(.prose p) {
-            margin-bottom: 0.75rem;
-        }
-
-        :global(.prose blockquote) {
-            margin-left: 0;
-            margin-right: 0;
-            padding-left: 0.75rem;
-        }
-
-        :global(.prose ul, .prose ol) {
-            padding-left: 0.75rem;
-        }
+        :global(.prose) { font-size: 0.875rem; line-height: 1.5; }
+        :global(.prose h1) { font-size: 1.5rem; }
+        :global(.prose h2) { font-size: 1.25rem; }
+        :global(.prose h3) { font-size: 1.125rem; }
+        :global(.prose p) { margin-bottom: 0.75rem; }
+        :global(.prose blockquote) { margin-left: 0; margin-right: 0; padding-left: 0.75rem; }
+        :global(.prose ul, .prose ol) { padding-left: 0.75rem; }
     }
-
-    /* Très petits écrans */
     @media (max-width: 360px) {
-        :global(.prose) {
-            font-size: 0.8rem;
-        }
-
-        :global(.prose table) {
-            font-size: 0.75rem;
-        }
+        :global(.prose) { font-size: 0.8rem; }
+        :global(.prose table) { font-size: 0.75rem; }
     }
 </style>

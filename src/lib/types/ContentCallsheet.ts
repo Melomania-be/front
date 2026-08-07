@@ -5,7 +5,8 @@ export interface ContentCallsheet {
 	callsheet_id: number;
 	title: string;
 	text: string;
+	order: number;
+	position: 'above' | 'below';
 	updatedAt: Date;
 	createdAt: Date;
-	showOnRegistration?: boolean;
 }

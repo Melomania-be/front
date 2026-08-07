@@ -2,6 +2,7 @@
 	import type { Callsheet } from '$lib/types/Callsheet';
 	import DateShow from '../DateShow.svelte';
 	import { Calendar, MapPin, MessageSquare } from 'lucide-svelte';
+	import { downloadCalendarEvent } from '$lib/utils/calendarExport';
 
 	export let callsheet: Callsheet;
 
@@ -57,6 +58,20 @@
 							<span class="text-purple-500 flex-shrink-0"><MapPin size={16} class="sm:w-[18px] sm:h-[18px]" /></span>
 							<span class="text-gray-800 dark:text-white font-medium break-words">{event.place}</span>
 						</div>
+						<button
+							type="button"
+							on:click={() =>
+								downloadCalendarEvent({
+									title: `${event.type === 'concert' ? 'Concert' : 'Rehearsal'} - ${callsheet.project.name}`,
+									startDate: event.startDate,
+									endDate: event.endDate,
+									location: event.place,
+									description: event.comment
+								})}
+							class="mb-3 sm:mb-4 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+						>
+							Add to calendar
+						</button>
 
 						<!-- Comment compact -->
 						{#if event.comment}

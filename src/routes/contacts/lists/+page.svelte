@@ -8,6 +8,8 @@
 	import type { TableData } from '$lib/types/TableData';
 	import type { List } from '$lib/types/List';
 	import type { CustomList } from '$lib/types/CustomList';
+	import ModuleHeader from '$lib/components/ModuleHeader.svelte';
+	import { List as ListIcon } from 'lucide-svelte';
 
 	let lists: CustomList[] = [];
 	let meta: any = {};
@@ -79,15 +81,24 @@
 	}
 </script>
 
-<div>
-	{#if dataHolder}
-		<SimpleFilterer
-			showData={true}
-			bind:data={dataHolder}
-			bind:meta
-			bind:options
-			bind:uniqueUrl
-			on:optionsUpdated={() => fetchData()}
-		></SimpleFilterer>
-	{/if}
+<div class="bg-[#E7E7E7] min-h-screen pb-4">
+	<ModuleHeader
+		title="Contact Lists"
+		description="Manage your custom contact lists and mailing groups"
+		icon={ListIcon}
+		on:refresh={() => fetchData()}
+	/>
+
+	<div class="border-2 border-gray-500 rounded-xl p-4 bg-white m-4">
+		{#if dataHolder}
+			<SimpleFilterer
+				showData={true}
+				bind:data={dataHolder}
+				bind:meta
+				bind:options
+				bind:uniqueUrl
+				on:optionsUpdated={() => fetchData()}
+			></SimpleFilterer>
+		{/if}
+	</div>
 </div>
