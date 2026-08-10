@@ -24,6 +24,9 @@ jobs:
         run: npx playwright install --with-deps
 
       # --- DÉMARRAGE DU SERVEUR (Version de Production) ---
+      - name: Create .env file
+        run: echo "API_URL=http://localhost:3333" > .env
+
       - name: Build frontend
         run: npm run build
 
