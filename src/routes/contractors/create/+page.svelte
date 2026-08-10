@@ -244,7 +244,7 @@ organization_id: organizationId ? Number(organizationId) : null,
 
 {/if}
 	</div>
-	
+</div>
 </div>
 <div class="mb-4">
 	<label class="block mb-1">Comments</label>

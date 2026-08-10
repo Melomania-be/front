@@ -75,7 +75,8 @@
 						title: content.title.trim(),
 						text: content.text,
 						order: content.order ?? index,
-						position: content.position ?? 'below'
+						position: content.position ?? 'below',
+						showOnRegistration: content.showOnRegistration || false // <-- AJOUT DE TA VERSION
 					};
 				})
 			};
@@ -146,7 +147,8 @@
 			callsheet.contents = callsheet.contents.map((content, index) => ({
 				...content,
 				order: content.order ?? index,
-				position: content.position ?? 'below'
+				position: content.position ?? 'below',
+				showOnRegistration: content.showOnRegistration || false // <-- AJOUT DE TA VERSION
 			}));
 		}
 	});
@@ -213,6 +215,7 @@
 			id: contentIdCounter++,
 			order: callsheet.contents.length,
 			position: 'below',
+			showOnRegistration: false, // <-- AJOUT DE TA VERSION
 			createdAt: new Date(),
 			updatedAt: new Date()
 		};
@@ -303,10 +306,10 @@
 					<input
 						id="version-input"
 						class={`border rounded px-3 py-2 w-full ${
-							allowModification && !isFieldValid(callsheet.version)
-								? 'border-red-400 bg-red-50 dark:bg-red-900 dark:border-red-600'
-								: 'border-gray-300 dark:border-gray-600'
-						} ${!allowModification ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`}
+        allowModification && !isFieldValid(callsheet.version)
+         ? 'border-red-400 bg-red-50 dark:bg-red-900 dark:border-red-600'
+         : 'border-gray-300 dark:border-gray-600'
+       } ${!allowModification ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`}
 						type="text"
 						placeholder="Enter version (e.g. 1.0, v2.1, etc.)"
 						bind:value={callsheet.version}
@@ -339,10 +342,10 @@
 							on:click={addNewContent}
 							aria-label="Add new content"
 						>
-							<span class="flex items-center gap-2">
-								<span class="icon-[tabler--plus]" style="width: 1rem; height: 1rem;"></span>
-								Add content
-							</span>
+        <span class="flex items-center gap-2">
+         <span class="icon-[tabler--plus]" style="width: 1rem; height: 1rem;"></span>
+         Add content
+        </span>
 						</button>
 					{/if}
 					<div>
@@ -390,10 +393,10 @@
 										<input
 											id="content-title-{content.id}"
 											class={`border rounded px-3 py-2 flex-1 ${
-												allowModification && !isFieldValid(content.title)
-													? 'border-red-400 bg-red-50 dark:bg-red-900'
-													: 'border-gray-300 dark:border-gray-600'
-											} ${!allowModification ? 'bg-gray-100 dark:bg-gray-600' : 'bg-white dark:bg-gray-800'}`}
+             allowModification && !isFieldValid(content.title)
+              ? 'border-red-400 bg-red-50 dark:bg-red-900'
+              : 'border-gray-300 dark:border-gray-600'
+            } ${!allowModification ? 'bg-gray-100 dark:bg-gray-600' : 'bg-white dark:bg-gray-800'}`}
 											type="text"
 											placeholder="Content title *"
 											bind:value={content.title}
@@ -408,6 +411,18 @@
 											value={content.text}
 											onChange={(v) => content.text = v}
 										/>
+										<!-- AJOUT DE TA VERSION : La checkbox pour le formulaire d'inscription -->
+										<label class="flex items-center gap-2 mt-2 cursor-pointer">
+											<input
+												type="checkbox"
+												class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+												bind:checked={content.showOnRegistration}
+												disabled={isLoading}
+											/>
+											<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+             Afficher ce bloc sur le formulaire d'inscription
+            </span>
+										</label>
 									{:else}
 										<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
 									{/if}

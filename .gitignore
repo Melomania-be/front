@@ -16,3 +16,4 @@ vite.config.ts.timestamp-*
 /playwright/.cache/
 /playwright/.auth/
 tests/.auth/
+

@@ -9,4 +9,5 @@ export interface ContentCallsheet {
 	position: 'above' | 'below';
 	updatedAt: Date;
 	createdAt: Date;
+	showOnRegistration?: boolean;
 }
