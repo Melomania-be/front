@@ -103,9 +103,9 @@
 		...newContact,
 		answers: registration.form
 			? registration.form.map((form) => {
-					const answer = newContact.answers.find((answer) => answer.formId === form.id);
-					return answer || { text: '', formId: form.id! };
-				})
+				const answer = newContact.answers.find((answer) => answer.formId === form.id);
+				return answer || { text: '', formId: form.id! };
+			})
 			: []
 	};
 
@@ -158,7 +158,7 @@
 		if(registrationModifierMode){
 			return
 		}
-		
+
 		let hasError = false;
 
 		if (newContact.rehearsals.length === 0) {
@@ -272,13 +272,15 @@
 
 	let showPopupSubmit = false;
 
-	// Sorted content blocks
+	// Sorted and FILTERED content blocks (Intégration de TA version showOnRegistration)
 	$: aboveContents = (registration.contents || [])
 		.filter(c => c.position === 'above')
+		.filter(c => c.showOnRegistration || c.show_on_registration) // <-- TON FILTRE
 		.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	$: belowContents = (registration.contents || [])
 		.filter(c => !c.position || c.position === 'below')
+		.filter(c => c.showOnRegistration || c.show_on_registration) // <-- TON FILTRE
 		.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 </script>
 
@@ -292,16 +294,16 @@
 			<button
 				class="mt-4 w-[30%] mr-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
-					step = 1;
-					showPopup = false;
-				}}>Cancel</button
+      step = 1;
+      showPopup = false;
+     }}>Cancel</button
 			>
 			<button
 				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
-					step = 2;
-					showPopup = false;
-				}}>OK</button
+      step = 2;
+      showPopup = false;
+     }}>OK</button
 			>
 		</div>
 	</div>
@@ -319,9 +321,9 @@
 			<button
 				class="mt-4 w-[30%] ml-6 px-4 py-2 bg-[#6b9ad9] text-white font-bold rounded"
 				on:click={() => {
-					showPopupSubmit = false;
-					window.location.reload();
-				}}>OK</button
+      showPopupSubmit = false;
+      window.location.reload();
+     }}>OK</button
 			>
 		</div>
 	</div>
@@ -350,8 +352,8 @@
 			<button
 				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
-					openInformationPopup = false;
-				}}>Close</button
+      openInformationPopup = false;
+     }}>Close</button
 			>
 		</div>
 	</div>
@@ -411,76 +413,77 @@
 										<div class="mb-3 ml-5 mr-5">
 											<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border-separate border-spacing-y-2">
 												<thead class="text-s text-black uppercase dark:bg-gray-700 dark:text-gray-400">
-													<tr>
-														<th class="px-6 py-2">Date</th>
-														<th class="px-6 py-2">Time</th>
-														<th class="px-6 py-2">Place</th>
-														<th class="px-6 py-2">Type</th>
-														<th class="px-6 py-2">Comment</th>
-													</tr>
+												<tr>
+													<th class="px-6 py-2">Date</th>
+													<th class="px-6 py-2">Time</th>
+													<th class="px-6 py-2">Place</th>
+													<th class="px-6 py-2">Type</th>
+													<th class="px-6 py-2">Comment</th>
+												</tr>
 												</thead>
 												<tbody>
-													{#if combinedEvents.length > 0}
-														{#each combinedEvents as event}
-															<tr class="bg-white dark:bg-gray-800">
-																<th scope="row" class="px-6 py-2 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md">
-																	<DateShow
-																		startTime={event.startDate}
-																		endTime={event.endDate}
-																		withTime={false}
-																		isRehearsal={event.type === 'rehearsal'}
-																	/>
-																</th>
-																<td class="px-6 py-2 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-gray-300">
-																	<DateShow
-																		startTime={event.startDate}
-																		endTime={event.endDate}
-																		withTime={true}
-																		withDate={false}
-																		isRehearsal={event.type === 'rehearsal'}
-																	/>
-																</td>
-																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
-																	<div class="flex flex-col gap-2">
-																		<span>{event.place}</span>
+												{#if combinedEvents.length > 0}
+													{#each combinedEvents as event}
+														<tr class="bg-white dark:bg-gray-800">
+															<th scope="row" class="px-6 py-2 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md">
+																<DateShow
+																	startTime={event.startDate}
+																	endTime={event.endDate}
+																	withTime={false}
+																	isRehearsal={event.type === 'rehearsal'}
+																/>
+															</th>
+															<td class="px-6 py-2 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-gray-300">
+																<DateShow
+																	startTime={event.startDate}
+																	endTime={event.endDate}
+																	withTime={true}
+																	withDate={false}
+																	isRehearsal={event.type === 'rehearsal'}
+																/>
+															</td>
+															<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
+																<div class="flex flex-col gap-2">
+																	<span>{event.place}</span>
 
-																		<button
-																			type="button"
-																			on:click={() =>
-																				downloadCalendarEvent({
-																					title: `${event.type === 'concert' ? 'Concert' : 'Rehearsal'} - ${registration.project?.name}`,
-																					startDate: event.startDate,
-																					endDate: event.endDate,
-																					location: event.place,
-																					description: event.comment
-																				})}
-																			class="w-fit rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
-																		>
-																			Add to calendar
-																		</button>
-																	</div>
-																</td>
+																	<!-- Bouton Add to calendar du serveur -->
+																	<button
+																		type="button"
+																		on:click={() =>
+                     downloadCalendarEvent({
+                      title: `${event.type === 'concert' ? 'Concert' : 'Rehearsal'} - ${registration.project?.name}`,
+                      startDate: event.startDate,
+                      endDate: event.endDate,
+                      location: event.place,
+                      description: event.comment
+                     })}
+																		class="w-fit rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
+																	>
+																		Add to calendar
+																	</button>
+																</div>
+															</td>
 
-																<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
-																	{#if event.type === 'concert'}
-																		<div class="eventTypeConcert">{event.type}</div>
-																	{:else}
-																		<div class="eventTypeRehearsal">{event.type}</div>
-																	{/if}
-																</td>
+															<td class="px-6 py-2 border-t-2 border-b-2 border-gray-300">
+																{#if event.type === 'concert'}
+																	<div class="eventTypeConcert">{event.type}</div>
+																{:else}
+																	<div class="eventTypeRehearsal">{event.type}</div>
+																{/if}
+															</td>
 
-																<td
-																	class="px-6 py-2 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
-																>
-																	{event.comment ? event.comment : 'No comment'}
-																</td>
-															</tr>
-														{/each}
-													{:else}
-														<tr>
-															<td class="px-6 py-4 border border-gray-300" colspan="5">No events found</td>
+															<td
+																class="px-6 py-2 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md"
+															>
+																{event.comment ? event.comment : 'No comment'}
+															</td>
 														</tr>
-													{/if}
+													{/each}
+												{:else}
+													<tr>
+														<td class="px-6 py-4 border border-gray-300" colspan="5">No events found</td>
+													</tr>
+												{/if}
 												</tbody>
 											</table>
 										</div>
@@ -540,28 +543,28 @@
 											<div class="w-full flex">
 												<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border-separate border-spacing-y-2">
 													<thead class="text-s text-black uppercase dark:bg-gray-700 dark:text-gray-400">
-														<tr>
-															<th scope="col" class="px-6 py-2">Composer</th>
-															<th scope="col" class="px-6 py-2">Title</th>
-														</tr>
+													<tr>
+														<th scope="col" class="px-6 py-2">Composer</th>
+														<th scope="col" class="px-6 py-2">Title</th>
+													</tr>
 													</thead>
 													<tbody>
-														{#if registration.project?.pieces}
-															{#each registration.project.pieces as piece}
-																<tr class="bg-white dark:bg-gray-800">
-																	<td class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md">
-																		{piece.composer.shortName}
-																	</td>
-																	<th scope="row" class="px-6 py-3 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md">
-																		{piece.name}
-																	</th>
-																</tr>
-															{/each}
-														{:else}
-															<tr>
-																<td class="px-6 py-4" colspan="3">No pieces found</td>
+													{#if registration.project?.pieces}
+														{#each registration.project.pieces as piece}
+															<tr class="bg-white dark:bg-gray-800">
+																<td class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md">
+																	{piece.composer.shortName}
+																</td>
+																<th scope="row" class="px-6 py-3 border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md">
+																	{piece.name}
+																</th>
 															</tr>
-														{/if}
+														{/each}
+													{:else}
+														<tr>
+															<td class="px-6 py-4" colspan="3">No pieces found</td>
+														</tr>
+													{/if}
 													</tbody>
 												</table>
 											</div>
@@ -585,6 +588,7 @@
 								{/if}
 
 								{#if tabName === 'info'}
+									<!-- Application du tri du serveur avec les blocs filtrés par ton "showOnRegistration" -->
 									{#if registration.contents && registration.contents.length > 0}
 										<div class="bg-[#ececec] h-full pl-7 pr-7 overflow-y-auto pb-7">
 											<!-- ABOVE blocks -->
@@ -733,24 +737,24 @@
 								<button
 									class="from-body-button"
 									on:click={() => {
-										if (validateContactFields()) {
-											newContact.concerts = [];
-											newContact.rehearsals = [];
-											const selectedSection = registration.project?.sectionGroup?.sections?.find(
-												(section) => section.id === newContact.section_id
-											);
-											if (selectedSection && selectedSection.size) {
-												const isFull =
-													(participants.find((p) => p.section_id === selectedSection.id)?.participants_count ?? 0) >=
-													selectedSection.size;
-												if (isFull) {
-													showPopup = true;
-													return;
-												}
-											}
-											step = step + 1;
-										}
-									}}
+           if (validateContactFields()) {
+            newContact.concerts = [];
+            newContact.rehearsals = [];
+            const selectedSection = registration.project?.sectionGroup?.sections?.find(
+             (section) => section.id === newContact.section_id
+            );
+            if (selectedSection && selectedSection.size) {
+             const isFull =
+              (participants.find((p) => p.section_id === selectedSection.id)?.participants_count ?? 0) >=
+              selectedSection.size;
+             if (isFull) {
+              showPopup = true;
+              return;
+             }
+            }
+            step = step + 1;
+           }
+          }}
 								>
 									Next
 								</button>
@@ -766,74 +770,74 @@
 								{#if !isMobile}
 									<table class="w-full text-xs text-left rtl:text-right text-gray-500 dark:text-gray-400 border-separate border-spacing-y-2 ml-3">
 										<thead class="text-s text-black uppercase dark:bg-gray-700 dark:text-gray-400">
-											<tr>
-												<th class="px-6 py-3">Select</th>
-												<th class="px-6 py-3">Date</th>
-												<th class="px-6 py-3">Time</th>
-												<th class="px-6 py-3">Location</th>
-												<th class="px-6 py-3">Type</th>
-												<th class="px-6 py-3">Additional information</th>
-												<th class="px-6 py-3">Add a comment</th>
-											</tr>
+										<tr>
+											<th class="px-6 py-3">Select</th>
+											<th class="px-6 py-3">Date</th>
+											<th class="px-6 py-3">Time</th>
+											<th class="px-6 py-3">Location</th>
+											<th class="px-6 py-3">Type</th>
+											<th class="px-6 py-3">Additional information</th>
+											<th class="px-6 py-3">Add a comment</th>
+										</tr>
 										</thead>
 										<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-											{#if combinedEvents.length > 0}
-												{#each combinedEvents as event}
-													<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-														<td class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md">
-															<input
-																class="w-5 h-5 accent-[#30598f] ml-2 mr-2"
-																type="checkbox"
-																id={`${event.type}-${event.id}`}
-																value={event.id}
-																on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
-															/>
-														</td>
-														<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300">
-															<DateShow
-																startTime={event.startDate}
-																endTime={event.endDate}
-																withTime={false}
-																isRehearsal={event.type === 'rehearsal'}
-															/>
-														</td>
-														<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300">
-															<DateShow
-																startTime={event.startDate}
-																endTime={event.endDate}
-																withTime={true}
-																withDate={false}
-																isRehearsal={event.type === 'rehearsal'}
-															/>
-														</td>
-														<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300">{event.place}</td>
-														<td class="px-6 py-3 border-t-2 border-b-2 border-gray-300">
-															{#if event.type === 'concert'}
-																<div class="eventTypeConcert">{event.type}</div>
-															{/if}
-															{#if event.type === 'rehearsal'}
-																<div class="eventTypeRehearsal">{event.type}</div>
-															{/if}
-														</td>
-														<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300 {event.comment ? '' : 'text-gray-300'}">
-															{event.comment ? event.comment : 'No additional information'}
-														</td>
-														<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md">
-															<input
-																id={`comment-concert-${event.id}`}
-																class="bg-[#ebebeb] p-1 pl-2 pr-8 rounded"
-																type="text"
-																placeholder="Write your comment..."
-																on:input={(e) => handleTextInput(e, event.id ?? 0, 'concert')}
-															/>
-														</td>
-													</tr>
-												{/each}
-											{:else}
-												<tr>
-													<td class="px-6 py-4" colspan="3">No concert found</td>
+										{#if combinedEvents.length > 0}
+											{#each combinedEvents as event}
+												<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+													<td class="px-6 py-3 font-medium whitespace-nowrap dark:text-white border-t-2 border-b-2 border-l-2 border-gray-300 rounded-l-md">
+														<input
+															class="w-5 h-5 accent-[#30598f] ml-2 mr-2"
+															type="checkbox"
+															id={`${event.type}-${event.id}`}
+															value={event.id}
+															on:change={(e) => handleCheckboxChange(e, event.id ?? 0, (event.type === 'concert' ? 'concert' : 'rehearsal'))}
+														/>
+													</td>
+													<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300">
+														<DateShow
+															startTime={event.startDate}
+															endTime={event.endDate}
+															withTime={false}
+															isRehearsal={event.type === 'rehearsal'}
+														/>
+													</td>
+													<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300">
+														<DateShow
+															startTime={event.startDate}
+															endTime={event.endDate}
+															withTime={true}
+															withDate={false}
+															isRehearsal={event.type === 'rehearsal'}
+														/>
+													</td>
+													<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300">{event.place}</td>
+													<td class="px-6 py-3 border-t-2 border-b-2 border-gray-300">
+														{#if event.type === 'concert'}
+															<div class="eventTypeConcert">{event.type}</div>
+														{/if}
+														{#if event.type === 'rehearsal'}
+															<div class="eventTypeRehearsal">{event.type}</div>
+														{/if}
+													</td>
+													<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-gray-300 {event.comment ? '' : 'text-gray-300'}">
+														{event.comment ? event.comment : 'No additional information'}
+													</td>
+													<td class="px-6 py-3 font-medium dark:text-white border-t-2 border-b-2 border-r-2 border-gray-300 rounded-r-md">
+														<input
+															id={`comment-concert-${event.id}`}
+															class="bg-[#ebebeb] p-1 pl-2 pr-8 rounded"
+															type="text"
+															placeholder="Write your comment..."
+															on:input={(e) => handleTextInput(e, event.id ?? 0, 'concert')}
+														/>
+													</td>
 												</tr>
-											{/if}
+											{/each}
+										{:else}
+											<tr>
+												<td class="px-6 py-4" colspan="3">No concert found</td>
+											</tr>
+										{/if}
 										</tbody>
 									</table>
 								{/if}
@@ -901,7 +905,7 @@
 													</div>
 													{#if event.comment}
 														<button class="h-full flex mb-auto mt-1 mr-1 ml-auto"
-															on:click={() => showInformationPopUp(event.comment, (event.type === 'concert' ? 'concert' : 'rehearsal'), event.startDate)}
+																		on:click={() => showInformationPopUp(event.comment, (event.type === 'concert' ? 'concert' : 'rehearsal'), event.startDate)}
 														>
 															<Fa icon={faCircleInfo} class="text-[20px]" style="color: #6B9AD9;" />
 														</button>
@@ -944,130 +948,130 @@
 </div>
 
 <style>
-	.registration-content {
-		box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
-	}
-	.from-body {
-		display: flex;
-		flex-direction: column;
-	}
-	.form-body-buttons {
-		display: flex;
-		box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.2);
-		justify-content: center;
-	}
-	.from-body-button {
-		height: 35px;
-		border-radius: 7px;
-		width: 100%;
-		margin: 1%;
-		margin-left: 7%;
-		margin-right: 7%;
-		background-color: #7dbbe4;
-		color: white;
-		font-weight: bold;
-		font-size: larger;
-	}
-	.form-body-content {
-		background-color: #ececec;
-		width: 100%;
-		overflow-y: auto;
-	}
-	.registration-bloc {
-		width: 100%;
-		display: flex;
-		justify-content: center;
-	}
-	.form-head {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		height: auto;
-		width: 100%;
-	}
-	.tabs {
-		justify-content: center;
-		align-items: center;
-		margin-top: 15px;
-		width: 100%;
-		height: 70%;
-		pointer-events: none;
-		font-size: small;
-	}
-	.tabs-details {
-		margin-top: -10px;
-		width: 100%;
-		display: flex;
-		padding-left: 5vw;
-		gap: 5vw;
-		font-weight: 500;
-		color: #929292;
-	}
-	.tabs-details button {
-		position: relative;
-		bottom: 0;
-		justify-content: end;
-	}
-	.tabs-details button.active {
-		color: #7dbbe4;
-		border-bottom: 3px solid #7dbbe4;
-		padding-bottom: 7px;
-		bottom: 0px;
-	}
-	.eventTypeRehearsal {
-		background-color: #6b9ad9;
-		border-radius: 5px;
-		color: white;
-		font-weight: 500;
-		text-align: center;
-		vertical-align: middle;
-		padding-left: 15px;
-		padding-right: 15px;
-		padding-bottom: 2px;
-		width: fit-content;
-	}
-	.eventTypeConcert {
-		background-color: #a584d2;
-		border-radius: 5px;
-		color: white;
-		font-weight: 500;
-		text-align: center;
-		vertical-align: middle;
-		padding-left: 15px;
-		padding-right: 15px;
-		padding-bottom: 2px;
-		width: fit-content;
-	}
-	.content-contact {
-		padding-left: 30%;
-		padding-right: 30%;
-		font-size: medium;
-	}
-	@media (max-width: 700px) {
-		.registration-content {
-			width: 90%;
-			border-radius: 10px;
-			margin-bottom: 2px;
-			background-color: white;
-			box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
-			overflow: hidden;
-		}
-		.phoneEvent {
-			background-color: white;
-			border: 2px solid #989898;
-			border-radius: 12px;
-			padding-left: 50px;
-			margin: 15px;
-			padding: 5px;
-		}
-		.tabs-details {
-			font-size: medium;
-		}
-		.content-contact {
-			padding-left: 10%;
-			padding-right: 10%;
-			font-size: small;
-		}
-	}
+    .registration-content {
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
+    }
+    .from-body {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-body-buttons {
+        display: flex;
+        box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.2);
+        justify-content: center;
+    }
+    .from-body-button {
+        height: 35px;
+        border-radius: 7px;
+        width: 100%;
+        margin: 1%;
+        margin-left: 7%;
+        margin-right: 7%;
+        background-color: #7dbbe4;
+        color: white;
+        font-weight: bold;
+        font-size: larger;
+    }
+    .form-body-content {
+        background-color: #ececec;
+        width: 100%;
+        overflow-y: auto;
+    }
+    .registration-bloc {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .form-head {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: auto;
+        width: 100%;
+    }
+    .tabs {
+        justify-content: center;
+        align-items: center;
+        margin-top: 15px;
+        width: 100%;
+        height: 70%;
+        pointer-events: none;
+        font-size: small;
+    }
+    .tabs-details {
+        margin-top: -10px;
+        width: 100%;
+        display: flex;
+        padding-left: 5vw;
+        gap: 5vw;
+        font-weight: 500;
+        color: #929292;
+    }
+    .tabs-details button {
+        position: relative;
+        bottom: 0;
+        justify-content: end;
+    }
+    .tabs-details button.active {
+        color: #7dbbe4;
+        border-bottom: 3px solid #7dbbe4;
+        padding-bottom: 7px;
+        bottom: 0px;
+    }
+    .eventTypeRehearsal {
+        background-color: #6b9ad9;
+        border-radius: 5px;
+        color: white;
+        font-weight: 500;
+        text-align: center;
+        vertical-align: middle;
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-bottom: 2px;
+        width: fit-content;
+    }
+    .eventTypeConcert {
+        background-color: #a584d2;
+        border-radius: 5px;
+        color: white;
+        font-weight: 500;
+        text-align: center;
+        vertical-align: middle;
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-bottom: 2px;
+        width: fit-content;
+    }
+    .content-contact {
+        padding-left: 30%;
+        padding-right: 30%;
+        font-size: medium;
+    }
+    @media (max-width: 700px) {
+        .registration-content {
+            width: 90%;
+            border-radius: 10px;
+            margin-bottom: 2px;
+            background-color: white;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.382);
+            overflow: hidden;
+        }
+        .phoneEvent {
+            background-color: white;
+            border: 2px solid #989898;
+            border-radius: 12px;
+            padding-left: 50px;
+            margin: 15px;
+            padding: 5px;
+        }
+        .tabs-details {
+            font-size: medium;
+        }
+        .content-contact {
+            padding-left: 10%;
+            padding-right: 10%;
+            font-size: small;
+        }
+    }
 </style>

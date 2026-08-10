@@ -4,9 +4,17 @@
 	export let callsheet: Callsheet;
 	export let positionFilter: 'above' | 'below' | 'all' = 'all';
 
+	// Le "$:" rend le tableau réactif si les données changent
 	$: blocks = [...(callsheet.contents || [])]
+		// 1. Filtre du serveur (au-dessus ou en-dessous)
 		.filter(c => positionFilter === 'all' || (c.position ?? 'below') === positionFilter)
+		// 2. Ton filtre (afficher uniquement ceux cochés pour l'inscription)
+		.filter(c => c.show_on_registration === true || c.showOnRegistration === true)
+		// 3. Tri du serveur (basé sur le nouvel ordre des blocs)
 		.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+	// Sécurisation du localStorage pour éviter les erreurs côté serveur (SSR)
+	const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 </script>
 
 {#if blocks.length > 0}

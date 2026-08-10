@@ -9,4 +9,5 @@ export interface ContentRegistration {
 	position: 'above' | 'below';
 	createdAt: Date;
 	updatedAt: Date;
+	showOnRegistration?: boolean;
 }

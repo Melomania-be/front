@@ -12,6 +12,7 @@
 		faEnvelope,
 		faMusic,
 		faSheetPlastic,
+		faTasks,
 		faUsers,
 		faWallet,
 		faUserPlus,
@@ -34,6 +35,7 @@
 	let auditionsUrl: string;
 	let accountingUrl: string;
 	let recruitmentUrl: string;
+	let tasksUrl: string;
 
 	let participantNotValidated: number = 0;
 
@@ -57,7 +59,8 @@
 		{ url: '', name: 'Attendances', icon: faCalendarCheck, notifications: 0, num: 4 },
 		{ url: '', name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
 		{ url: '', name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
-		{ url: '', name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+		{ url: '', name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 },
+		{ url: '', name: 'Tasks', icon: faTasks, notifications: 0, num: 8 }
 	];
 
 	$: if (project) {
@@ -69,6 +72,7 @@
 		auditionsUrl = `/projects/${project.id}/management/auditions`;
 		accountingUrl = `/projects/${project.id}/management/accounting`;
 		recruitmentUrl = `/projects/${project.id}/management/recruitment`;
+		tasksUrl = `/projects/${project.id}/management/tasks`;
 
 		participantNotValidated = 0;
 
@@ -106,7 +110,8 @@
 			},
 			{ url: auditionsUrl, name: 'Auditions', icon: faMusic, notifications: 0, num: 5 },
 			{ url: accountingUrl, name: 'Accounting', icon: faWallet, notifications: 0, num: 6 },
-			{ url: recruitmentUrl, name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 }
+			{ url: recruitmentUrl, name: 'Recruitment', icon: faUserPlus, notifications: 0, num: 7 },
+			{ url: tasksUrl, name: 'Tasks', icon: faTasks, notifications: 0, num: 8 }
 		];
 	}
 

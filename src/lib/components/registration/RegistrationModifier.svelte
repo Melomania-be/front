@@ -11,11 +11,12 @@
 		faChevronUp,
 		faPenToSquare,
 		faTrash,
+		faTrashCan,
 		type IconDefinition
 	} from '@fortawesome/free-solid-svg-icons';
 
 	import { slide } from 'svelte/transition';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	export let registration: Registration;
 	export let projectId: number;
@@ -30,7 +31,8 @@
 					title: c.title,
 					text: c.text,
 					order: c.order ?? index,
-					position: c.position ?? 'below'
+					position: c.position ?? 'below',
+					showOnRegistration: c.showOnRegistration || false // <-- TA VERSION
 				};
 			}),
 			form: registration.form.map((f) => {
@@ -78,6 +80,7 @@
 
 	let isMobile = false;
 	let screenDirection: 'horizontal' | 'vertical' = 'vertical';
+	let windowWidth: number;
 
 	const checkMobile = () => {
 		isMobile = window.innerWidth <= 1000;
@@ -93,12 +96,13 @@
 		window.addEventListener('resize', checkMobile);
 		window.addEventListener('resize', checkDirection);
 
-		// Initialize order and position for existing contents
+		// Initialisation de l'ordre, la position, ET la case à cocher
 		if (registration.contents) {
 			registration.contents = registration.contents.map((content, index) => ({
 				...content,
 				order: content.order ?? index,
-				position: content.position ?? 'below'
+				position: content.position ?? 'below',
+				showOnRegistration: content.showOnRegistration || false
 			}));
 		}
 
@@ -132,10 +136,10 @@
 			<button
 				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
-					popUpSave = false;
-					allowModification = false;
-					goto(`/projects/${projectId}/management/registration`);
-				}}>OK</button
+      popUpSave = false;
+      allowModification = false;
+      goto(`/projects/${projectId}/management/registration`);
+     }}>OK</button
 			>
 		</div>
 	</div>
@@ -182,9 +186,9 @@
 						<button
 							class="mb-4"
 							on:click={() => {
-								displayInfo = !displayInfo;
-								chevronInfo = displayInfo ? faChevronUp : faChevronDown;
-							}}
+         displayInfo = !displayInfo;
+         chevronInfo = displayInfo ? faChevronUp : faChevronDown;
+        }}
 						>
 							<Fa icon={chevronInfo} style="color: black" />
 						</button>
@@ -195,18 +199,19 @@
 								<button
 									class="bg-red-400 text-white p-2 rounded m-1 mb-4 font-semibold"
 									on:click={() => {
-										registration.contents.push({
-											title: '',
-											text: '',
-											registration_id: 0,
-											id: null,
-											order: registration.contents.length,
-											position: 'below',
-											createdAt: new Date(),
-											updatedAt: new Date()
-										});
-										registration = registration;
-									}}
+           registration.contents.push({
+            title: '',
+            text: '',
+            showOnRegistration: false, // <-- TA VERSION
+            registration_id: 0,
+            id: null,
+            order: registration.contents.length,
+            position: 'below',
+            createdAt: new Date(),
+            updatedAt: new Date()
+           });
+           registration = registration;
+          }}
 								>
 									Add content
 								</button>
@@ -247,35 +252,41 @@
 														<button
 															class="m-1 ml-4 flex items-center justify-center"
 															on:click={() => {
-																registration.contents = registration.contents.filter(
-																	(c) => c.title !== content.title || c.text !== content.text
-																);
-																registration = registration;
-															}}
+                 // Méthode de suppression plus fiable de ta version
+                 registration.contents = registration.contents.filter((c) => c !== content);
+                 registration = registration;
+                }}
 														>
 															<Fa icon={faTrash} class="text-[16px]" style="color: #6b9ad9" />
 														</button>
 													</div>
 												{/if}
 											</div>
-											<div class="flex items-center justify-center">
+
+											<div class="flex items-center justify-between gap-4 mt-1">
 												<input
-													class="flex-1 text-lg font-semibold rounded-lg bg-blue-200 pl-4"
+													class="flex-1 text-lg font-semibold rounded-lg bg-blue-200 pl-4 py-1"
 													type="text"
 													placeholder="Title"
 													bind:value={content.title}
 													disabled={!allowModification}
 												/>
+												<!-- Case à cocher de ta version -->
+												<label class="flex items-center gap-1 text-sm font-medium mr-2">
+													<input type="checkbox" bind:checked={content.showOnRegistration} disabled={!allowModification} />
+													Show on registration
+												</label>
 											</div>
+
 											{#if allowModification}
-												<div class="h-auto mb-12">
+												<div class="h-auto mb-12 mt-2">
 													<RichTextEditor
 														value={content.text}
 														onChange={(v) => (content.text = v)}
 													/>
 												</div>
 											{:else}
-												<div class="prose dark:prose-invert max-w-none">{@html content.text}</div>
+												<div class="prose dark:prose-invert max-w-none mt-2">{@html content.text}</div>
 											{/if}
 										</div>
 									{/each}
@@ -291,9 +302,9 @@
 						<button
 							class="mb-4"
 							on:click={() => {
-								displayForm = !displayForm;
-								chevronForm = displayForm ? faChevronUp : faChevronDown;
-							}}
+         displayForm = !displayForm;
+         chevronForm = displayForm ? faChevronUp : faChevronDown;
+        }}
 						>
 							<Fa icon={chevronForm} style="color: black" />
 						</button>
