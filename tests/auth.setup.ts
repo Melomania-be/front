@@ -9,16 +9,15 @@ setup('authenticate', async ({ page }) => {
 		});
 	});
 
-	// On attend que la page et le réseau soient totalement chargés
 	await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle' })
 	await page.waitForTimeout(2000)
 
 	await page.locator('#email').fill('admin@admin.admin')
 	await page.locator('#password').fill('admin')
 
-	// L'astuce ultime : on synchronise le clic et l'attente de la redirection
+	// On utilise waitForURL avec 'load' au lieu de 'networkidle'
 	await Promise.all([
-		page.waitForNavigation({ url: 'http://localhost:5173/', waitUntil: 'networkidle' }),
+		page.waitForURL('http://localhost:5173/', { waitUntil: 'load', timeout: 30000 }),
 		page.locator('button[type="submit"]').click()
 	])
 
