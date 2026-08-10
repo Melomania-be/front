@@ -23,16 +23,16 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # --- DÉMARRAGE DES SERVEURS ---
-      - name: Start backend server
-        run: npm run start:api &  # ⚠️ À modifier : mets la vraie commande qui lance ton backend
+      # --- DÉMARRAGE DU SERVEUR (Version de Production) ---
+      - name: Build frontend
+        run: npm run build
 
-      - name: Start frontend server
-        run: npm run dev &        # ⚠️ À modifier : mets la vraie commande de ton front (ex: npm run dev)
+      - name: Start frontend server (Preview)
+        run: npm run preview -- --port 5173 &
 
-      - name: Wait for servers
-        run: npx wait-on http://localhost:5173  # ⚠️ À modifier : mets l'URL et le port de ton front
-      # ------------------------------
+      - name: Wait for frontend
+        run: npx wait-on http://localhost:5173
+      # ----------------------------------------------------
 
       - name: Run Playwright tests
         run: npx playwright test
