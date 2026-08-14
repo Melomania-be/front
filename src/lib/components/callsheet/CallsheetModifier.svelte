@@ -21,7 +21,8 @@
 	}
 
 	// Compteur pour générer des IDs uniques pour les nouveaux contenus
-	$: contentIdCounter = Math.max(...(callsheet?.contents?.map(c => c.id || 0) || [0])) + 1;
+	// ✅ let simple (pas $:) pour pouvoir l'incrémenter dans addNewContent
+	let contentIdCounter = -1; // IDs négatifs = temporaires (non encore en base)
 
 	// Validation des champs requis
 	function validateCallsheet() {
@@ -73,11 +74,13 @@
 				id: callsheet.id,
 				project_id: callsheet.projectId,
 				version: callsheet.version.trim(),
-				contents: (callsheet.contents || []).map((content) => {
+				// ✅ position incluse dans la sauvegarde
+				contents: (callsheet.contents || []).map((content, index) => {
 					return {
 						id: content.id,
 						title: content.title.trim(),
-						text: content.text
+						text: content.text,
+						position: content.position !== undefined ? content.position : index,
 					};
 				})
 			};
@@ -188,19 +191,20 @@
 	}
 
 	// Fonction pour vérifier si un champ est valide
-	function isFieldValid(field: string) {
-		return field && field.trim() !== '';
+	function isFieldValid(field: string | null | undefined) {
+		return field != null && field.trim() !== '';
 	}
 
 	// Fonction pour supprimer un contenu spécifique
 	function removeContent(contentToRemove: any) {
 		if (!callsheet || !callsheet.contents) return;
-
-		callsheet.contents = callsheet.contents.filter(content => content !== contentToRemove);
-		callsheet = callsheet; // Force la réactivité
+		const contents = callsheet.contents
+			.filter(content => content !== contentToRemove)
+			.map((c, i) => ({ ...c, position: i }));
+		callsheet = { ...callsheet, contents };
 	}
 
-	// Fonction pour ajouter un nouveau contenu
+	// ✅ Fonction pour ajouter un nouveau contenu (avec position)
 	function addNewContent() {
 		if (!callsheet) return;
 
@@ -212,12 +216,34 @@
 			title: '',
 			text: '',
 			callsheet_id: 0,
-			id: contentIdCounter++, // ID temporaire unique
+			id: contentIdCounter--, // IDs négatifs décroissants = temporaires uniques
+			position: callsheet.contents.length,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		};
-		callsheet.contents.push(newContent);
-		callsheet = callsheet; // Force la réactivité
+		// ✅ Réassignation complète pour déclencher la réactivité Svelte
+		callsheet = {
+			...callsheet,
+			contents: [...callsheet.contents, newContent]
+		};
+	}
+
+	// ✅ Déplacer un bloc vers le haut
+	function moveUp(index: number) {
+		if (!callsheet || index === 0) return;
+		const contents = [...callsheet.contents];
+		[contents[index - 1], contents[index]] = [contents[index], contents[index - 1]];
+		contents.forEach((c, i) => (c.position = i));
+		callsheet = { ...callsheet, contents };
+	}
+
+	// ✅ Déplacer un bloc vers le bas
+	function moveDown(index: number) {
+		if (!callsheet || index === callsheet.contents.length - 1) return;
+		const contents = [...callsheet.contents];
+		[contents[index], contents[index + 1]] = [contents[index + 1], contents[index]];
+		contents.forEach((c, i) => (c.position = i));
+		callsheet = { ...callsheet, contents };
 	}
 </script>
 
@@ -335,9 +361,40 @@
 					{/if}
 					<div>
 						{#if callsheet.contents && callsheet.contents.length > 0}
-							{#each callsheet.contents as content (content.id || content)}
+							<!-- ✅ index ajouté pour moveUp / moveDown -->
+							{#each callsheet.contents as content, index (content.id || content)}
 								<div class="grid grid-cols-1 gap-1 mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
-									<div class="flex items-center justify-center">
+
+									<!-- ✅ Ligne titre + boutons déplacement + bouton suppression -->
+									<div class="flex items-center gap-1">
+
+										<!-- Boutons ↑ ↓ (visibles uniquement en mode édition) -->
+										{#if allowModification}
+											<div class="flex flex-col gap-0.5">
+												<button
+													type="button"
+													class="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+													disabled={index === 0 || isLoading}
+													on:click={() => moveUp(index)}
+													aria-label="Déplacer vers le haut"
+													title="Monter"
+												>
+													<span class="icon-[tabler--arrow-up]" style="width: 1rem; height: 1rem;"></span>
+												</button>
+												<button
+													type="button"
+													class="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+													disabled={index === callsheet.contents.length - 1 || isLoading}
+													on:click={() => moveDown(index)}
+													aria-label="Déplacer vers le bas"
+													title="Descendre"
+												>
+													<span class="icon-[tabler--arrow-down]" style="width: 1rem; height: 1rem;"></span>
+												</button>
+											</div>
+										{/if}
+
+										<!-- Champ titre -->
 										<label for="content-title-{content.id}" class="sr-only">
 											Titre du contenu
 										</label>
@@ -353,6 +410,8 @@
 											bind:value={content.title}
 											disabled={!allowModification || isLoading}
 										/>
+
+										<!-- Bouton suppression -->
 										{#if allowModification}
 											<button
 												class="m-1 p-2 text-red-500 hover:text-red-700 disabled:opacity-50"
@@ -367,9 +426,11 @@
 											</button>
 										{/if}
 									</div>
+
 									{#if allowModification && !isFieldValid(content.title)}
 										<p class="text-red-500 text-sm">Le titre est requis</p>
 									{/if}
+
 									{#if allowModification}
 										<RichTextEditor
 											value={content.text}

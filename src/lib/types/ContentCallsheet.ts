@@ -5,6 +5,7 @@ export interface ContentCallsheet {
 	callsheet_id: number;
 	title: string;
 	text: string;
+	position: number;
 	updatedAt: Date;
 	createdAt: Date;
 }
