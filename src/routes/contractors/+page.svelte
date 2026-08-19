@@ -3,7 +3,7 @@
 
 	let contractors = [];
 	let contractorCount = 0;
-let organizationCount = 0;
+let companyCount = 0;
 let categoryCount = 0;
 let search = '';
 $: filteredContractors = contractors.filter((contractor) =>
@@ -22,13 +22,13 @@ $: filteredContractors = contractors.filter((contractor) =>
 		contractors = data;
 		contractorCount = contractors.length;
 
-const organizations = new Set(
+const companies = new Set(
 	contractors
-		.map((c) => c.organization?.name)
+		.map((c) => c.company?.name)
 		.filter(Boolean)
 );
 
-organizationCount = organizations.size;
+companyCount = companies.size;
 
 const categories = new Set();
 
@@ -54,8 +54,8 @@ categoryCount = categories.size;
 	</div>
 
 	<div class="bg-white rounded shadow p-4 text-center">
-		<p class="text-gray-500 text-sm">Organizations</p>
-		<p class="text-3xl font-bold">{organizationCount}</p>
+		<p class="text-gray-500 text-sm">Company</p>
+		<p class="text-3xl font-bold">{companyCount}</p>
 	</div>
 
 	<div class="bg-white rounded shadow p-4 text-center">
@@ -79,11 +79,12 @@ categoryCount = categories.size;
 		class="w-full md:w-96 border rounded-lg px-4 py-2"
 	/>
 </div>
-<table class="w-full border">
+<div class="overflow-x-auto">
+<table class="w-full border min-w-max">
 	<thead>
 	<tr>
 		<th class="p-3 text-left">Name</th>
-		<th class="p-3 text-left">Organization</th>
+		<th class="p-3 text-left">Company</th>
 		<th class="p-3 text-left">Email</th>
 		<th class="p-3 text-left">Phone</th>
 		<th class="p-3 text-left">Categories</th>
@@ -103,7 +104,7 @@ categoryCount = categories.size;
 			</td>
 
 			<td class="p-3">
-				{contractor.organization?.name ?? '-'}
+				{contractor.company?.name ?? '-'}
 			</td>
 
 			<td class="p-3">
@@ -134,4 +135,5 @@ categoryCount = categories.size;
 {/if}
 </tbody>
 </table>
+</div>
 </div>

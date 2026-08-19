@@ -1,18 +1,22 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	
+
+function goBack() {
+	history.back();
+}
 	
 let categories: any[] = [];
 let selectedCategories: number[] = [];
-
-let organizations : any[] = [];
-let organizationId = '';
+let newCompany = '';
+let showNewCompany = false;
+let companies : any[] = [];
+let companyId = '';
 onMount(async () => {
-	const response = await fetch('/api/organization');
+	const response = await fetch('/api/company');
 
 	if (response.ok) {
-		organizations = await response.json();
+		companies = await response.json();
 	}
 	const categoryResponse = await fetch('/api/contractor-category');
 
@@ -54,16 +58,34 @@ let showNewCategory = false;
 
 	comments,
 
-organization_id: organizationId ? Number(organizationId) : null,
+	company_id: companyId ? Number(companyId) : null,
 	category_ids: selectedCategories
 })
 		});
 
 		if (response.ok) {
-			goto('/contractors');
+	goto('/contractors');
+} else {
+	const error = await response.json();
+
+	let message = 'An unexpected error occurred.';
+
+	try {
+		const parsed = JSON.parse(error.message);
+
+		if (parsed.errors?.length) {
+			message = parsed.errors
+				.map((e: any) => e.message)
+				.join('\n');
 		} else {
-			alert('Error creating contractor');
+			message = error.message;
 		}
+	} catch {
+		message = error.message;
+	}
+
+	alert(message);
+}
 	}
 	async function createCategory() {
 	const response = await fetch('/api/contractor-category', {
@@ -92,9 +114,40 @@ organization_id: organizationId ? Number(organizationId) : null,
 		alert('Failed to create category');
 	}
 }
+async function createCompany() {
+	const response = await fetch('/api/company', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			name: newCompany
+		})
+	});
+
+	if (response.ok) {
+		const company = await response.json();
+
+		companies = [...companies, company];
+
+		companyId = company.id.toString();
+
+		newCompany = '';
+		showNewCompany = false;
+	} else {
+		alert('Failed to create company');
+	}
+}
 </script>
 <div class="max-w-3xl mx-auto p-6">
-	<h1 class="text-2xl font-bold mb-6">
+<button
+	type="button"
+	class="mb-4 flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+	on:click={goBack}
+>
+	← Back
+</button>
+<h1 class="text-2xl font-bold mb-6">
 	Create Contractor
 </h1>
 
@@ -162,20 +215,54 @@ organization_id: organizationId ? Number(organizationId) : null,
 	/>
 </div>
 	<div class="mb-4">
-	<label class="block mb-1">Organization</label>
+	<label class="block mb-1">Company</label>
 
 	<select
 	class="border p-2 w-full rounded"
-	bind:value={organizationId}
+	bind:value={companyId}
 >
-	<option value="">Select organization</option>
+	<option value="">Select company</option>
 
-	{#each organizations as organization}
-		<option value={organization.id}>
-			{organization.name}
+	{#each companies as company}
+		<option value={company.id}>
+			{company.name}
 		</option>
 	{/each}
 </select>
+
+<div class="mt-4">
+
+	<button
+		type="button"
+		class="text-blue-600 hover:underline"
+		on:click={() => (showNewCompany = !showNewCompany)}
+	>
+		+ Add new company
+	</button>
+
+</div>
+
+{#if showNewCompany}
+
+	<div class="mt-3 flex gap-2">
+
+		<input
+			class="border rounded p-2 flex-1"
+			placeholder="Company name"
+			bind:value={newCompany}
+		/>
+
+		<button
+			type="button"
+			class="bg-green-600 text-white px-4 rounded"
+			on:click={createCompany}
+		>
+			Save
+		</button>
+
+	</div>
+
+{/if}
 
 <div class="mb-4">
 	<label class="block mb-2 font-medium">
@@ -244,7 +331,7 @@ organization_id: organizationId ? Number(organizationId) : null,
 
 {/if}
 	</div>
-	
+</div>
 </div>
 <div class="mb-4">
 	<label class="block mb-1">Comments</label>

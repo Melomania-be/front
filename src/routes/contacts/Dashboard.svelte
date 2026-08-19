@@ -1,10 +1,11 @@
 <script lang="ts">
 	export let data: {
-		numberContact: number;
-		numberListe: number;
-		numberValidationContact: number;
-		numberRecommendedContact: number;
-	};
+	numberContact: number;
+	numberListe: number;
+	numberValidationContact: number;
+	numberRecommendedContact: number;
+	numberOrganization: number;
+};
 </script>
 
 <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -59,6 +60,46 @@
 					</a>
 				</th>
 			</tr>
+			<tr class="border-b border-gray-200 dark:border-gray-700">
+
+	<th
+		scope="row"
+		class="px-2 sm:px-4 py-3 font-medium text-blue-600 dark:text-blue-500 hover:underline"
+	>
+		<a
+			href="/company"
+			class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm px-2 sm:px-5 py-1.5 sm:py-2 whitespace-nowrap dark:bg-blue-600 dark:hover:bg-blue-700"
+		>
+			<span class="hidden sm:inline">
+				Companies
+			</span>
+
+			<span class="inline sm:hidden">
+				Comps
+			</span>
+		</a>
+	</th>
+
+	<td class="px-2 sm:px-4 py-3 whitespace-nowrap">
+		{data.numberOrganization} companies
+	</td>
+
+	<th>
+		<a
+			href="/company"
+			class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm px-2 sm:px-5 py-1.5 sm:py-2 whitespace-nowrap dark:bg-blue-600 dark:hover:bg-blue-700"
+		>
+			<span class="hidden sm:inline">
+				View Companies
+			</span>
+
+			<span class="inline sm:hidden">
+				Open
+			</span>
+		</a>
+	</th>
+
+</tr>
 			<tr class="border-b border-gray-200 dark:border-gray-700">
 				<th scope="row" class="px-2 sm:px-4 py-3 font-medium text-blue-600 dark:text-blue-500 hover:underline">
 					<a
