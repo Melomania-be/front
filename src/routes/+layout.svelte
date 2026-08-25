@@ -139,6 +139,7 @@
         faFolderTree,
         faMusic,
         faGuitar,
+        faCog,
         faSignOutAlt,
         faCog
     } from '@fortawesome/free-solid-svg-icons';
