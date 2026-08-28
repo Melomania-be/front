@@ -30,7 +30,8 @@
 					title: c.title,
 					text: c.text,
 					order: c.order ?? index,
-					position: c.position ?? 'below'
+					position: c.position ?? 'below',
+					showOnRegistration: c.showOnRegistration || false
 				};
 			}),
 			form: registration.form.map((f) => {
@@ -98,7 +99,8 @@
 			registration.contents = registration.contents.map((content, index) => ({
 				...content,
 				order: content.order ?? index,
-				position: content.position ?? 'below'
+				position: content.position ?? 'below',
+				showOnRegistration: content.showOnRegistration || false
 			}));
 		}
 
@@ -132,10 +134,10 @@
 			<button
 				class="mt-4 w-[30%] px-4 py-2 bg-[#6b9ad9] text-white rounded"
 				on:click={() => {
-					popUpSave = false;
-					allowModification = false;
-					goto(`/projects/${projectId}/management/registration`);
-				}}>OK</button
+      popUpSave = false;
+      allowModification = false;
+      goto(`/projects/${projectId}/management/registration`);
+     }}>OK</button
 			>
 		</div>
 	</div>
@@ -182,9 +184,9 @@
 						<button
 							class="mb-4"
 							on:click={() => {
-								displayInfo = !displayInfo;
-								chevronInfo = displayInfo ? faChevronUp : faChevronDown;
-							}}
+         displayInfo = !displayInfo;
+         chevronInfo = displayInfo ? faChevronUp : faChevronDown;
+        }}
 						>
 							<Fa icon={chevronInfo} style="color: black" />
 						</button>
@@ -195,18 +197,19 @@
 								<button
 									class="bg-red-400 text-white p-2 rounded m-1 mb-4 font-semibold"
 									on:click={() => {
-										registration.contents.push({
-											title: '',
-											text: '',
-											registration_id: 0,
-											id: null,
-											order: registration.contents.length,
-											position: 'below',
-											createdAt: new Date(),
-											updatedAt: new Date()
-										});
-										registration = registration;
-									}}
+           registration.contents.push({
+            title: '',
+            text: '',
+            registration_id: 0,
+            id: null,
+            order: registration.contents.length,
+            position: 'below',
+            showOnRegistration: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+           });
+           registration = registration;
+          }}
 								>
 									Add content
 								</button>
@@ -247,18 +250,18 @@
 														<button
 															class="m-1 ml-4 flex items-center justify-center"
 															on:click={() => {
-																registration.contents = registration.contents.filter(
-																	(c) => c.title !== content.title || c.text !== content.text
-																);
-																registration = registration;
-															}}
+                 registration.contents = registration.contents.filter(
+                  (c) => c !== content
+                 );
+                 registration = registration;
+                }}
 														>
 															<Fa icon={faTrash} class="text-[16px]" style="color: #6b9ad9" />
 														</button>
 													</div>
 												{/if}
 											</div>
-											<div class="flex items-center justify-center">
+											<div class="flex items-center justify-center mt-2">
 												<input
 													class="flex-1 text-lg font-semibold rounded-lg bg-blue-200 pl-4"
 													type="text"
@@ -266,6 +269,11 @@
 													bind:value={content.title}
 													disabled={!allowModification}
 												/>
+												<!-- Case à cocher intégrée proprement -->
+												<label class="ml-4 flex items-center gap-1 text-sm font-medium">
+													<input type="checkbox" bind:checked={content.showOnRegistration} disabled={!allowModification} />
+													Show on registration
+												</label>
 											</div>
 											{#if allowModification}
 												<div class="h-auto mb-12">
@@ -291,9 +299,9 @@
 						<button
 							class="mb-4"
 							on:click={() => {
-								displayForm = !displayForm;
-								chevronForm = displayForm ? faChevronUp : faChevronDown;
-							}}
+         displayForm = !displayForm;
+         chevronForm = displayForm ? faChevronUp : faChevronDown;
+        }}
 						>
 							<Fa icon={chevronForm} style="color: black" />
 						</button>
