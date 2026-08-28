@@ -1,8 +1,10 @@
-<!-- src/lib/components/recruitment/ContactActionButtons.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
 	import { Mail, Phone, MessageCircle, Edit, Trash2, MoreVertical, CheckCircle, XCircle, Clock, User } from 'lucide-svelte'
 	import type { RecruitmentContact } from '$lib/types'
+
+	// IMPORT DU NOUVEAU COMPOSANT
+	import Button from '$lib/components/Button.svelte';
 
 	export let contact: RecruitmentContact
 
@@ -102,69 +104,69 @@
 <div class="relative" id="dropdown-{contact.id}">
 	<div class="flex flex-wrap items-center gap-1">
 		{#if contact.email}
-			<button
+			<Button
 				on:click={sendEmail}
 				class="p-1 text-blue-600 hover:bg-blue-100 rounded"
 				title="Send email"
 			>
 				<Mail size={14} />
-			</button>
+			</Button>
 		{/if}
 
 		{#if contact.phone}
-			<button
+			<Button
 				on:click={callPhone}
 				class="p-1 text-green-600 hover:bg-green-100 rounded"
 				title="Call"
 			>
 				<Phone size={14} />
-			</button>
+			</Button>
 		{/if}
 
 		{#if contact.messenger}
-			<button
+			<Button
 				on:click={openMessenger}
 				class="p-1 text-purple-600 hover:bg-purple-100 rounded"
 				title="Messenger"
 			>
 				<MessageCircle size={14} />
-			</button>
+			</Button>
 		{/if}
 
 		{#if contact.status === 'not_yet_contacted'}
-			<button
+			<Button
 				on:click={() => updateStatus('awaiting_response')}
 				class="p-1 text-blue-600 hover:bg-blue-100 rounded"
 				title="Mark as contacted"
 			>
 				<Clock size={14} />
-			</button>
+			</Button>
 		{/if}
 
 		{#if contact.status === 'awaiting_response' || contact.status === 'to_follow_up'}
-			<button
+			<Button
 				on:click={() => updateStatus('recruited')}
 				class="p-1 text-green-600 hover:bg-green-100 rounded"
 				title="Mark as recruited"
 			>
 				<CheckCircle size={14} />
-			</button>
-			<button
+			</Button>
+			<Button
 				on:click={() => updateStatus('not_available')}
 				class="p-1 text-red-600 hover:bg-red-100 rounded"
 				title="Mark as not available"
 			>
 				<XCircle size={14} />
-			</button>
+			</Button>
 		{/if}
 
-		<button
+		<Button
 			on:click={toggleDropdown}
 			class="p-1 text-gray-600 hover:bg-gray-100 rounded"
 			title="More actions"
 		>
 			<MoreVertical size={14} />
-		</button>
+		</Button>
 	</div>
 
 	{#if showDropdown}
@@ -174,82 +176,82 @@
 					Change status
 				</div>
 
-				<button
+				<Button
 					on:click={() => updateStatus('not_yet_contacted')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'not_yet_contacted' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Not yet contacted
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={() => updateStatus('awaiting_response')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'awaiting_response' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Awaiting response
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={() => updateStatus('to_follow_up')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'to_follow_up' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Follow up
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={() => updateStatus('not_available')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'not_available' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Not available
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={() => updateStatus('pending_validation')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'pending_validation' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Pending validation
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={() => updateStatus('recruited')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'recruited' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Recruited
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={() => updateStatus('cancelled')}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 {contact.status === 'cancelled' ? 'bg-gray-100 font-medium' : ''}"
 				>
 					Cancelled
-				</button>
+				</Button>
 
 				<div class="border-t px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
 					Actions
 				</div>
 
-				<button
+				<Button
 					on:click={openNotesModal}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
 				>
 					<Edit size={14} />
 					Edit notes
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={openContactedByModal}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
 				>
 					<User size={14} />
 					Edit "Contacted by"
-				</button>
+				</Button>
 
-				<button
+				<Button
 					on:click={deleteContact}
 					class="w-full px-3 py-2 text-left text-sm hover:bg-red-100 text-red-600 flex items-center gap-2"
 				>
 					<Trash2 size={14} />
 					Delete
-				</button>
+				</Button>
 			</div>
 		</div>
 	{/if}
@@ -269,18 +271,18 @@
 			></textarea>
 
 			<div class="flex justify-end gap-2 mt-4">
-				<button
+				<Button
 					on:click={() => notesModal = false}
 					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
 				>
 					Cancel
-				</button>
-				<button
+				</Button>
+				<Button
 					on:click={saveNotes}
 					class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
 				>
 					Save
-				</button>
+				</Button>
 			</div>
 		</div>
 	</div>
@@ -310,18 +312,18 @@
 			</div>
 
 			<div class="flex justify-end gap-2 mt-4">
-				<button
+				<Button
 					on:click={() => contactedByModal = false}
 					class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
 				>
 					Cancel
-				</button>
-				<button
+				</Button>
+				<Button
 					on:click={saveContactedBy}
 					class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
 				>
 					Save
-				</button>
+				</Button>
 			</div>
 		</div>
 	</div>
